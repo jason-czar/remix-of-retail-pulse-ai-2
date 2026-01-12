@@ -8,21 +8,49 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from "recharts";
+import { useVolumeAnalytics } from "@/hooks/use-stocktwits";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useMemo } from "react";
 
-const generateVolumeData = () => {
-  const data = [];
+interface VolumeChartProps {
+  symbol: string;
+  start?: string;
+  end?: string;
+  timeRange?: string;
+}
+
+const generateVolumeData = (timeRange: string) => {
   const now = new Date();
   const baselineVolume = 5000;
   
-  for (let i = 24; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-    // Create a spike around 6 hours ago
-    const spikeMultiplier = i === 6 ? 3.5 : i === 5 || i === 7 ? 2 : 1;
+  const ranges: Record<string, { points: number; intervalMs: number }> = {
+    '1H': { points: 12, intervalMs: 5 * 60 * 1000 },
+    '6H': { points: 24, intervalMs: 15 * 60 * 1000 },
+    '24H': { points: 24, intervalMs: 60 * 60 * 1000 },
+    '7D': { points: 28, intervalMs: 6 * 60 * 60 * 1000 },
+    '30D': { points: 30, intervalMs: 24 * 60 * 60 * 1000 },
+  };
+  
+  const config = ranges[timeRange] || ranges['24H'];
+  const data = [];
+  
+  for (let i = config.points - 1; i >= 0; i--) {
+    const time = new Date(now.getTime() - i * config.intervalMs);
+    // Create a spike at random points
+    const spikeMultiplier = i === Math.floor(config.points / 4) ? 3.5 : 
+                           i === Math.floor(config.points / 4) - 1 || i === Math.floor(config.points / 4) + 1 ? 2 : 1;
     const volume = Math.round(baselineVolume * spikeMultiplier * (0.7 + Math.random() * 0.6));
     const isSpike = volume > baselineVolume * 2;
     
+    let timeLabel: string;
+    if (timeRange === '7D' || timeRange === '30D') {
+      timeLabel = time.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } else {
+      timeLabel = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    }
+    
     data.push({
-      time: time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      time: timeLabel,
       volume,
       baseline: baselineVolume,
       isSpike
@@ -31,13 +59,30 @@ const generateVolumeData = () => {
   return data;
 };
 
-const data = generateVolumeData();
+export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeChartProps) {
+  const { data: apiData, isLoading } = useVolumeAnalytics(symbol);
+  
+  const chartData = useMemo(() => {
+    if (apiData && apiData.length > 0) {
+      return apiData;
+    }
+    return generateVolumeData(timeRange);
+  }, [apiData, timeRange]);
 
-export function VolumeChart({ symbol }: { symbol: string }) {
+  const baseline = useMemo(() => {
+    if (chartData.length === 0) return 5000;
+    const volumes = chartData.map(d => d.volume);
+    return Math.round(volumes.reduce((a, b) => a + b, 0) / volumes.length);
+  }, [chartData]);
+
+  if (isLoading) {
+    return <Skeleton className="h-[400px] w-full" />;
+  }
+
   return (
     <div className="h-[400px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="hsl(168 84% 45%)" stopOpacity={0.8}/>
@@ -72,7 +117,7 @@ export function VolumeChart({ symbol }: { symbol: string }) {
             formatter={(value: number) => [`${value.toLocaleString()} messages`, "Volume"]}
           />
           <ReferenceLine 
-            y={5000} 
+            y={baseline} 
             stroke="hsl(215 20% 55%)" 
             strokeDasharray="5 5"
             label={{ value: "Baseline", position: "right", fill: "hsl(215 20% 55%)", fontSize: 12 }}
