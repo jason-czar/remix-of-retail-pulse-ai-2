@@ -173,6 +173,48 @@ export type Database = {
         }
         Relationships: []
       }
+      sentiment_history: {
+        Row: {
+          bearish_count: number
+          bullish_count: number
+          created_at: string
+          dominant_emotion: string | null
+          dominant_narrative: string | null
+          id: string
+          message_volume: number
+          neutral_count: number
+          recorded_at: string
+          sentiment_score: number
+          symbol: string
+        }
+        Insert: {
+          bearish_count?: number
+          bullish_count?: number
+          created_at?: string
+          dominant_emotion?: string | null
+          dominant_narrative?: string | null
+          id?: string
+          message_volume?: number
+          neutral_count?: number
+          recorded_at?: string
+          sentiment_score: number
+          symbol: string
+        }
+        Update: {
+          bearish_count?: number
+          bullish_count?: number
+          created_at?: string
+          dominant_emotion?: string | null
+          dominant_narrative?: string | null
+          id?: string
+          message_volume?: number
+          neutral_count?: number
+          recorded_at?: string
+          sentiment_score?: number
+          symbol?: string
+        }
+        Relationships: []
+      }
       watchlists: {
         Row: {
           created_at: string
