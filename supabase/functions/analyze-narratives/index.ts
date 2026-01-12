@@ -50,8 +50,10 @@ serve(async (req) => {
 
     if (cached) {
       console.log(`Cache hit for ${symbol} ${timeRange}`);
+      const cachedNarratives = cached.narratives;
+      const messageCount = cached.message_count || 0;
       return new Response(
-        JSON.stringify({ narratives: cached.narratives, cached: true }),
+        JSON.stringify({ narratives: cachedNarratives, messageCount, cached: true }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -77,10 +79,12 @@ serve(async (req) => {
 
     if (messages.length === 0) {
       return new Response(
-        JSON.stringify({ narratives: [], message: "No messages found for analysis" }),
+        JSON.stringify({ narratives: [], messageCount: 0, message: "No messages found for analysis" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const totalMessages = messages.length;
 
     // Prepare message content for AI analysis
     const messageTexts = messages
@@ -228,7 +232,7 @@ ${messageTexts}`,
     console.log(`Cached ${narratives.length} narratives for ${symbol} ${timeRange}`);
 
     return new Response(
-      JSON.stringify({ narratives, cached: false }),
+      JSON.stringify({ narratives, messageCount: totalMessages, cached: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

@@ -20,6 +20,7 @@ export interface EmotionAnalysisResult {
   dominantEmotion: string;
   emotionalIntensity: "low" | "moderate" | "high" | "extreme";
   historicalData: EmotionTimePoint[];
+  messageCount: number;
   cached: boolean;
 }
 
