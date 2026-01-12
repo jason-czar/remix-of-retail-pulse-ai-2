@@ -1,30 +1,24 @@
 import { 
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend
+  Cell,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar
 } from "recharts";
-import { useMemo } from "react";
-import { useEmotionsAnalytics } from "@/hooks/use-stocktwits";
+import { useMemo, useState } from "react";
+import { useEmotionAnalysis, EmotionScore } from "@/hooks/use-emotion-analysis";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Emotion definitions based on spec
-const emotions = [
-  { name: "Excitement", color: "hsl(168 84% 45%)" },
-  { name: "Fear", color: "hsl(0 72% 51%)" },
-  { name: "Hopefulness", color: "hsl(142 71% 45%)" },
-  { name: "Frustration", color: "hsl(38 92% 50%)" },
-  { name: "Conviction", color: "hsl(199 89% 48%)" },
-  { name: "Disappointment", color: "hsl(280 65% 60%)" },
-  { name: "Sarcasm", color: "hsl(330 81% 60%)" },
-  { name: "Humor", color: "hsl(45 93% 47%)" },
-  { name: "Grit", color: "hsl(262 83% 58%)" },
-  { name: "Surprise", color: "hsl(173 80% 40%)" }
-];
+import { Sparkles, AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
 
@@ -35,116 +29,256 @@ interface EmotionChartProps {
   end?: string;
 }
 
-const getRangeConfig = (timeRange: TimeRange) => {
-  const ranges: Record<TimeRange, { points: number; intervalMs: number; label: (d: Date) => string }> = {
-    '1H': {
-      points: 12,
-      intervalMs: 5 * 60 * 1000,
-      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-    },
-    '6H': {
-      points: 24,
-      intervalMs: 15 * 60 * 1000,
-      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-    },
-    '24H': {
-      points: 24,
-      intervalMs: 60 * 60 * 1000,
-      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-    },
-    '7D': {
-      points: 28,
-      intervalMs: 6 * 60 * 60 * 1000,
-      label: (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    },
-    '30D': {
-      points: 30,
-      intervalMs: 24 * 60 * 60 * 1000,
-      label: (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    },
-  };
-
-  return ranges[timeRange];
+// Emotion colors
+const emotionColors: Record<string, string> = {
+  "Excitement": "hsl(168 84% 45%)",
+  "Fear": "hsl(0 72% 51%)",
+  "Hopefulness": "hsl(142 71% 45%)",
+  "Frustration": "hsl(38 92% 50%)",
+  "Conviction": "hsl(199 89% 48%)",
+  "Disappointment": "hsl(280 65% 60%)",
+  "Sarcasm": "hsl(330 81% 60%)",
+  "Humor": "hsl(45 93% 47%)",
+  "Grit": "hsl(262 83% 58%)",
+  "Surprise": "hsl(173 80% 40%)"
 };
 
-const generateEmotionData = (timeRange: TimeRange) => {
-  const data: Record<string, any>[] = [];
-  const now = new Date();
-  const { points, intervalMs, label } = getRangeConfig(timeRange);
-
-  for (let i = points - 1; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * intervalMs);
-    const entry: Record<string, any> = { time: label(time) };
-
-    emotions.forEach((emotion, idx) => {
-      const phase = (i + idx * 1.5) / Math.max(4, points / 6);
-      const baseValue = 10 + Math.sin(phase) * 8;
-      entry[emotion.name] = Math.round(Math.max(0, Math.min(30, baseValue + (Math.random() - 0.5) * 6)));
-    });
-
-    data.push(entry);
+const getTrendIcon = (trend: string) => {
+  switch (trend) {
+    case "rising":
+      return <TrendingUp className="h-3 w-3 text-emerald-400" />;
+    case "falling":
+      return <TrendingDown className="h-3 w-3 text-red-400" />;
+    default:
+      return <Minus className="h-3 w-3 text-muted-foreground" />;
   }
-
-  return data;
 };
 
-export function EmotionChart({ symbol, timeRange = '24H', start, end }: EmotionChartProps) {
-  const { data: apiData, isLoading } = useEmotionsAnalytics(symbol, timeRange, start, end);
+const getIntensityColor = (intensity: string) => {
+  switch (intensity) {
+    case "extreme":
+      return "bg-red-500/20 text-red-400 border-red-500/30";
+    case "high":
+      return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+    case "moderate":
+      return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    default:
+      return "bg-muted text-muted-foreground border-border";
+  }
+};
+
+export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
+  const [viewMode, setViewMode] = useState<"bar" | "radar">("bar");
+  const { data, isLoading, error } = useEmotionAnalysis(symbol, timeRange);
   
   const chartData = useMemo(() => {
-    if (apiData && apiData.length > 0) {
-      return apiData;
+    if (!data?.emotions || data.emotions.length === 0) {
+      return [];
     }
-    return generateEmotionData(timeRange);
-  }, [apiData, timeRange]);
+    
+    return data.emotions
+      .map((emotion: EmotionScore) => ({
+        ...emotion,
+        fill: emotionColors[emotion.name] || "hsl(215 20% 55%)",
+      }))
+      .sort((a, b) => b.score - a.score);
+  }, [data]);
 
   if (isLoading) {
-    return <Skeleton className="h-[500px] w-full" />;
+    return (
+      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Sparkles className="h-5 w-5 animate-pulse text-primary" />
+          <span className="text-sm">AI is analyzing emotions in {symbol} messages...</span>
+        </div>
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-sm">Failed to analyze emotions. Please try again.</p>
+      </div>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+        <Sparkles className="h-8 w-8" />
+        <p className="text-sm">No emotions found for {symbol}. Try a different time range.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="h-[500px] w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" />
-          <XAxis 
-            dataKey="time" 
-            stroke="hsl(215 20% 55%)" 
-            fontSize={12}
-            tickLine={false}
-          />
-          <YAxis 
-            stroke="hsl(215 20% 55%)" 
-            fontSize={12}
-            tickLine={false}
-            domain={[0, 30]}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(222 47% 8%)",
-              border: "1px solid hsl(217 33% 17%)",
-              borderRadius: "8px",
-              boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-            }}
-            labelStyle={{ color: "hsl(210 40% 98%)" }}
-          />
-          <Legend 
-            wrapperStyle={{ paddingTop: "20px" }}
-            formatter={(value) => <span style={{ color: "hsl(210 40% 98%)", fontSize: "12px" }}>{value}</span>}
-          />
-          {emotions.map((emotion) => (
-            <Line
-              key={emotion.name}
-              type="monotone"
-              dataKey={emotion.name}
-              stroke={emotion.color}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4, fill: emotion.color }}
+    <div className="h-[550px] w-full">
+      {/* Header with metadata */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>AI-powered emotion analysis from {symbol} messages</span>
+          {data?.cached && (
+            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">cached</span>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {data?.dominantEmotion && (
+            <Badge variant="outline" className="text-xs">
+              Dominant: {data.dominantEmotion}
+            </Badge>
+          )}
+          {data?.emotionalIntensity && (
+            <Badge variant="outline" className={`text-xs ${getIntensityColor(data.emotionalIntensity)}`}>
+              {data.emotionalIntensity} intensity
+            </Badge>
+          )}
+          
+          <div className="flex gap-1 ml-2">
+            <Button
+              variant={viewMode === "bar" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setViewMode("bar")}
+            >
+              <BarChart3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "radar" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setViewMode("radar")}
+            >
+              <Target className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      {viewMode === "bar" ? (
+        <ResponsiveContainer width="100%" height="75%">
+          <BarChart 
+            data={chartData} 
+            layout="vertical"
+            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" horizontal={false} />
+            <XAxis 
+              type="number"
+              domain={[0, 100]}
+              stroke="hsl(215 20% 55%)" 
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
             />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
+            <YAxis 
+              type="category"
+              dataKey="name"
+              stroke="hsl(215 20% 55%)" 
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+              width={110}
+              tick={({ x, y, payload }) => (
+                <g transform={`translate(${x},${y})`}>
+                  <text
+                    x={-5}
+                    y={0}
+                    dy={4}
+                    textAnchor="end"
+                    fill="hsl(210 40% 98%)"
+                    fontSize={12}
+                  >
+                    {payload.value}
+                  </text>
+                </g>
+              )}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "hsl(222 47% 8%)",
+                border: "1px solid hsl(217 33% 17%)",
+                borderRadius: "8px",
+                boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
+              }}
+              labelStyle={{ color: "hsl(210 40% 98%)" }}
+              formatter={(value: number, name: string, props: any) => [
+                <div key="tooltip" className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-lg">{value}</span>
+                    <span className="text-muted-foreground text-xs">/ 100 score</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span>{props.payload.percentage}% of messages</span>
+                    {getTrendIcon(props.payload.trend)}
+                    <span className="text-muted-foreground">{props.payload.trend}</span>
+                  </div>
+                  {props.payload.examples?.length > 0 && (
+                    <div className="text-xs text-muted-foreground italic border-t border-border pt-2 mt-1">
+                      "{props.payload.examples[0]}"
+                    </div>
+                  )}
+                </div>,
+                ""
+              ]}
+            />
+            <Bar 
+              dataKey="score" 
+              radius={[0, 4, 4, 0]}
+              maxBarSize={35}
+            >
+              {chartData.map((entry: any, index: number) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <ResponsiveContainer width="100%" height="75%">
+          <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+            <PolarGrid stroke="hsl(217 33% 17%)" />
+            <PolarAngleAxis 
+              dataKey="name" 
+              tick={{ fill: "hsl(210 40% 98%)", fontSize: 11 }}
+            />
+            <PolarRadiusAxis 
+              angle={90} 
+              domain={[0, 100]} 
+              tick={{ fill: "hsl(215 20% 55%)", fontSize: 10 }}
+            />
+            <Radar
+              name="Score"
+              dataKey="score"
+              stroke="hsl(199 89% 48%)"
+              fill="hsl(199 89% 48%)"
+              fillOpacity={0.3}
+              strokeWidth={2}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      )}
+      
+      {/* Legend with trends */}
+      <div className="flex flex-wrap gap-3 mt-4 justify-center">
+        {chartData.slice(0, 5).map((emotion: any) => (
+          <div 
+            key={emotion.name}
+            className="flex items-center gap-2 text-xs bg-card/50 px-3 py-1.5 rounded-full border border-border"
+          >
+            <div 
+              className="w-2.5 h-2.5 rounded-full" 
+              style={{ backgroundColor: emotion.fill }}
+            />
+            <span className="text-foreground font-medium">{emotion.name}</span>
+            <span className="text-muted-foreground">{emotion.score}</span>
+            {getTrendIcon(emotion.trend)}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
