@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
@@ -6,12 +6,36 @@ import {
   Bell, 
   Menu,
   Search,
-  Zap
+  Zap,
+  User,
+  LogOut,
+  Settings,
+  Key
 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const getInitials = (email: string) => {
+    return email.substring(0, 2).toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border/50">
@@ -65,16 +89,62 @@ export function Header() {
             <Button variant="ghost" size="icon" className="hidden md:flex">
               <Search className="h-5 w-5" />
             </Button>
-            <Link to="/login">
-              <Button variant="ghost" className="hidden md:flex">
-                Sign in
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button variant="hero" className="hidden md:flex">
-                Get Started
-              </Button>
-            </Link>
+            
+            {!loading && (
+              <>
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                        <Avatar className="h-10 w-10 border-2 border-primary/30">
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {getInitials(user.email || "U")}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end">
+                      <div className="px-2 py-1.5">
+                        <p className="text-sm font-medium">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">Free Plan</p>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings" className="flex items-center">
+                          <Settings className="mr-2 h-4 w-4" />
+                          Settings
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings/api-keys" className="flex items-center">
+                          <Key className="mr-2 h-4 w-4" />
+                          API Keys
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut} className="text-bearish">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <>
+                    <Link to="/login">
+                      <Button variant="ghost" className="hidden md:flex">
+                        Sign in
+                      </Button>
+                    </Link>
+                    <Link to="/signup">
+                      <Button variant="hero" className="hidden md:flex">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
+            
             <Button 
               variant="ghost" 
               size="icon" 
@@ -117,14 +187,30 @@ export function Header() {
               >
                 API Documentation
               </Link>
-              <div className="flex gap-2 pt-4 border-t border-border/50">
-                <Link to="/login" className="flex-1">
-                  <Button variant="outline" className="w-full">Sign in</Button>
-                </Link>
-                <Link to="/signup" className="flex-1">
-                  <Button variant="hero" className="w-full">Get Started</Button>
-                </Link>
-              </div>
+              {user ? (
+                <div className="pt-4 border-t border-border/50">
+                  <Link to="/settings" className="flex items-center gap-2 py-2 text-muted-foreground hover:text-foreground">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                  <button 
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 py-2 text-bearish w-full"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2 pt-4 border-t border-border/50">
+                  <Link to="/login" className="flex-1">
+                    <Button variant="outline" className="w-full">Sign in</Button>
+                  </Link>
+                  <Link to="/signup" className="flex-1">
+                    <Button variant="hero" className="w-full">Get Started</Button>
+                  </Link>
+                </div>
+              )}
             </nav>
           </div>
         )}
