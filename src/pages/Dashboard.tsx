@@ -16,24 +16,31 @@ import {
   BarChart3,
   Bell,
   Star,
-  Plus
+  Plus,
+  AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTrending } from "@/hooks/use-stocktwits";
 import { useDefaultWatchlist } from "@/hooks/use-watchlist";
+import { useAlerts, Alert } from "@/hooks/use-alerts";
+import { useMarketOverview } from "@/hooks/use-market-overview";
+import { formatDistanceToNow } from "date-fns";
 
-// Mock alerts data (will be replaced with real alerts later)
-const alerts = [
-  { symbol: "NVDA", type: "Sentiment Surge", message: "Sentiment up 15% in last hour", time: "5 min ago", severity: "high" },
-  { symbol: "TSLA", type: "Sentiment Flip", message: "Flipped from bullish to bearish", time: "23 min ago", severity: "medium" },
-  { symbol: "AAPL", type: "Volume Spike", message: "3x baseline message volume", time: "1 hour ago", severity: "low" },
-];
+const ALERT_TYPE_LABELS: Record<string, string> = {
+  sentiment_spike: "Sentiment Surge",
+  sentiment_drop: "Sentiment Drop", 
+  volume_surge: "Volume Spike",
+  bullish_threshold: "Bullish Alert",
+  bearish_threshold: "Bearish Alert",
+};
 
 export default function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [watchlistManagerOpen, setWatchlistManagerOpen] = useState(false);
   const { data: trending = [], isLoading: trendingLoading } = useTrending();
   const { data: watchlist, isLoading: watchlistLoading } = useDefaultWatchlist();
+  const { data: alerts = [], isLoading: alertsLoading } = useAlerts();
+  const { overall, sectors, isLoading: marketLoading } = useMarketOverview();
 
   // Get symbols from user's watchlist
   const watchlistSymbols = watchlist?.symbols || [];
@@ -135,30 +142,29 @@ export default function Dashboard() {
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <OverviewCard 
-                  label="Overall Market" 
-                  value={62} 
-                  trend="bullish" 
-                  change={3.2}
-                />
-                <OverviewCard 
-                  label="Tech Sector" 
-                  value={71} 
-                  trend="bullish" 
-                  change={8.5}
-                />
-                <OverviewCard 
-                  label="Meme Stocks" 
-                  value={48} 
-                  trend="neutral" 
-                  change={-1.2}
-                />
-                <OverviewCard 
-                  label="Crypto-Related" 
-                  value={55} 
-                  trend="bullish" 
-                  change={5.7}
-                />
+                {marketLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                  ))
+                ) : (
+                  <>
+                    <OverviewCard 
+                      label={overall.label}
+                      value={overall.value}
+                      trend={overall.trend}
+                      change={overall.change}
+                    />
+                    {sectors.slice(0, 3).map((sector) => (
+                      <OverviewCard 
+                        key={sector.label}
+                        label={sector.label}
+                        value={sector.value}
+                        trend={sector.trend}
+                        change={sector.change}
+                      />
+                    ))}
+                  </>
+                )}
               </div>
             </Card>
           </div>
@@ -171,14 +177,37 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Bell className="h-5 w-5 text-primary" />
                   Recent Alerts
+                  {alerts.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {alerts.filter(a => a.is_active).length}
+                    </Badge>
+                  )}
                 </h2>
-                <Button variant="ghost" size="sm">View All</Button>
+                <Link to="/settings">
+                  <Button variant="ghost" size="sm">View All</Button>
+                </Link>
               </div>
               
               <div className="space-y-4">
-                {alerts.map((alert, idx) => (
-                  <AlertItem key={idx} {...alert} />
-                ))}
+                {alertsLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))
+                ) : alerts.length === 0 ? (
+                  <div className="text-center py-6">
+                    <AlertCircle className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No alerts set up yet</p>
+                    <Link to="/settings">
+                      <Button variant="link" size="sm" className="mt-2">
+                        Create your first alert
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  alerts.slice(0, 3).map((alert) => (
+                    <RealAlertItem key={alert.id} alert={alert} />
+                  ))
+                )}
               </div>
             </Card>
 
@@ -318,28 +347,44 @@ function OverviewCard({
   );
 }
 
-function AlertItem({
-  symbol,
-  type,
-  message,
-  time,
-  severity
-}: {
-  symbol: string;
-  type: string;
-  message: string;
-  time: string;
-  severity: string;
-}) {
+function RealAlertItem({ alert }: { alert: Alert }) {
+  const typeLabel = ALERT_TYPE_LABELS[alert.alert_type] || alert.alert_type;
+  const timeAgo = formatDistanceToNow(new Date(alert.created_at), { addSuffix: true });
+  
+  const getMessage = () => {
+    switch (alert.alert_type) {
+      case "sentiment_spike":
+        return `Alert when sentiment rises by ${alert.threshold || 15}%`;
+      case "sentiment_drop":
+        return `Alert when sentiment drops by ${alert.threshold || 15}%`;
+      case "volume_surge":
+        return `Alert when volume exceeds ${alert.threshold || 2}x baseline`;
+      case "bullish_threshold":
+        return `Alert when bullish sentiment exceeds ${alert.threshold || 70}%`;
+      case "bearish_threshold":
+        return `Alert when bearish sentiment exceeds ${alert.threshold || 70}%`;
+      default:
+        return `Threshold: ${alert.threshold || "N/A"}`;
+    }
+  };
+
   return (
-    <div className="p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer">
+    <Link 
+      to={`/symbol/${alert.symbol}`}
+      className="block p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+    >
       <div className="flex items-center justify-between mb-1">
-        <span className="font-mono font-semibold">${symbol}</span>
-        <span className="text-xs text-muted-foreground">{time}</span>
+        <span className="font-mono font-semibold">${alert.symbol}</span>
+        <div className="flex items-center gap-2">
+          {!alert.is_active && (
+            <Badge variant="secondary" className="text-xs">Paused</Badge>
+          )}
+          <span className="text-xs text-muted-foreground">{timeAgo}</span>
+        </div>
       </div>
-      <div className="text-sm font-medium text-primary mb-1">{type}</div>
-      <div className="text-sm text-muted-foreground">{message}</div>
-    </div>
+      <div className="text-sm font-medium text-primary mb-1">{typeLabel}</div>
+      <div className="text-sm text-muted-foreground">{getMessage()}</div>
+    </Link>
   );
 }
 
