@@ -136,7 +136,12 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="h-4 w-4 text-primary" />
-          <span>AI-powered emotion analysis from {symbol} messages</span>
+          <span>AI-powered emotion analysis</span>
+          {data?.messageCount && data.messageCount > 0 && (
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-medium">
+              {data.messageCount.toLocaleString()} messages analyzed
+            </span>
+          )}
           {data?.cached && (
             <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">cached</span>
           )}

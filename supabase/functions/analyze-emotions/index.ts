@@ -58,8 +58,13 @@ serve(async (req) => {
 
     if (cached) {
       console.log(`Cache hit for emotions ${symbol} ${timeRange}`);
+      const cachedData = typeof cached.emotions === 'object' ? cached.emotions : {};
       return new Response(
-        JSON.stringify({ emotions: cached.emotions, cached: true }),
+        JSON.stringify({ 
+          ...cachedData,
+          messageCount: cachedData.messageCount || 0,
+          cached: true 
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -85,10 +90,12 @@ serve(async (req) => {
 
     if (messages.length === 0) {
       return new Response(
-        JSON.stringify({ emotions: [], message: "No messages found for analysis" }),
+        JSON.stringify({ emotions: [], messageCount: 0, message: "No messages found for analysis" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const totalMessages = messages.length;
 
     // Group messages by time periods for historical analysis
     const messagesWithTime = messages.slice(0, 300).map((m: any) => ({
@@ -327,6 +334,7 @@ ${messageTexts}`
       dominantEmotion: result.dominantEmotion,
       emotionalIntensity: result.emotionalIntensity,
       historicalData: historicalWithTimestamps,
+      messageCount: totalMessages,
     };
 
     // Cache the results (1 hour expiry)

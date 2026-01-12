@@ -9,6 +9,7 @@ export interface Narrative {
 
 export interface NarrativeAnalysisResult {
   narratives: Narrative[];
+  messageCount: number;
   cached: boolean;
 }
 
