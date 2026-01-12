@@ -26,7 +26,7 @@ import {
 
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
-  const [timeRange, setTimeRange] = useState('7D');
+  const [timeRange, setTimeRange] = useState('24H');
   
   // Calculate date range based on selection
   const { start, end } = useMemo(() => {
