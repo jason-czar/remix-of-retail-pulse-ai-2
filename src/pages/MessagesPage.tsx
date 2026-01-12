@@ -43,7 +43,7 @@ export default function MessagesPage() {
   const start = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
   const end = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
-  const { data: messages = [], isLoading, error, refetch } = useSymbolMessages(symbol, 100, start, end);
+  const { data: messages = [], isLoading, error, refetch } = useSymbolMessages(symbol, 500, start, end);
   const { data: stats } = useSymbolStats(symbol);
 
   // Filter messages by sentiment
