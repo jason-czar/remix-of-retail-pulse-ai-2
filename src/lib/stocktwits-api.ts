@@ -55,6 +55,19 @@ export interface Message {
   symbols?: string[];
 }
 
+export interface MessageCursor {
+  created_at: string;
+  id: string;
+}
+
+export interface MessagesResponse {
+  messages: Message[];
+  total: number;
+  has_more: boolean;
+  next_cursor?: MessageCursor;
+  page_size: number;
+}
+
 export interface SentimentData {
   time: string;
   sentiment: number;
@@ -160,8 +173,20 @@ export const stocktwitsApi = {
     }
   },
 
-  // Get messages for a symbol with optional date range
+  // Get messages for a symbol with optional date range (simple version for backwards compatibility)
   async getMessages(symbol: string, limit = 50, start?: string, end?: string): Promise<Message[]> {
+    const result = await this.getMessagesPaginated(symbol, limit, start, end);
+    return result.messages;
+  },
+
+  // Get messages with full pagination support
+  async getMessagesPaginated(
+    symbol: string, 
+    limit = 50, 
+    start?: string, 
+    end?: string,
+    cursor?: MessageCursor
+  ): Promise<MessagesResponse> {
     try {
       const params: Record<string, string> = { 
         symbol, 
@@ -169,32 +194,68 @@ export const stocktwitsApi = {
       };
       if (start) params.start = start;
       if (end) params.end = end;
+      if (cursor?.created_at) params.cursor_created_at = cursor.created_at;
+      if (cursor?.id) params.cursor_id = cursor.id;
       
       const response = await callApi('messages', params);
       
-      // The API returns { messages: [...], total: number }
+      // The API returns { messages: [...], total: number, has_more: boolean, next_cursor: {...} }
       const data = response?.messages || response?.data || response;
       
-      if (Array.isArray(data)) {
-        return data.map((msg: any) => ({
-          id: msg.id?.toString() || msg.message_id?.toString() || Math.random().toString(),
-          user: msg.user?.username || msg.username || 'anonymous',
-          userName: msg.user?.name,
-          userAvatar: msg.user?.avatar_url,
-          content: msg.body || msg.content || msg.text || '',
-          sentiment: mapSentiment(msg.entities?.sentiment?.basic || msg.sentiment),
-          emotions: msg.emotions || [],
-          time: formatTime(msg.created_at),
-          created_at: msg.created_at,
-          symbols: msg.symbols?.map((s: any) => s.symbol) || [symbol],
-        }));
-      }
+      const messages: Message[] = Array.isArray(data) ? data.map((msg: any) => ({
+        id: msg.id?.toString() || msg.message_id?.toString() || Math.random().toString(),
+        user: msg.user?.username || msg.username || 'anonymous',
+        userName: msg.user?.name || msg.name,
+        userAvatar: msg.user?.avatar_url || msg.avatar_url,
+        content: msg.body || msg.content || msg.text || '',
+        sentiment: mapSentiment(msg.sentiment_bullish, msg.sentiment_bearish, msg.entities?.sentiment?.basic || msg.sentiment),
+        emotions: msg.emotions || [],
+        time: formatTime(msg.created_at),
+        created_at: msg.created_at,
+        symbols: msg.symbols?.map((s: any) => typeof s === 'string' ? s : s.symbol) || [symbol],
+      })) : [];
       
-      return [];
+      return {
+        messages,
+        total: response?.total || messages.length,
+        has_more: response?.has_more || false,
+        next_cursor: response?.next_cursor,
+        page_size: response?.page_size || messages.length,
+      };
     } catch (error) {
       console.error('Failed to fetch messages:', error);
-      return [];
+      return { messages: [], total: 0, has_more: false, page_size: 0 };
     }
+  },
+
+  // Fetch all messages using cursor-based pagination
+  async getAllMessages(
+    symbol: string,
+    start?: string,
+    end?: string,
+    maxMessages = 10000,
+    onProgress?: (fetched: number, total: number) => void
+  ): Promise<Message[]> {
+    const allMessages: Message[] = [];
+    let cursor: MessageCursor | undefined;
+    let hasMore = true;
+    const pageSize = 2000; // Max allowed by API
+    
+    while (hasMore && allMessages.length < maxMessages) {
+      const result = await this.getMessagesPaginated(symbol, pageSize, start, end, cursor);
+      allMessages.push(...result.messages);
+      hasMore = result.has_more;
+      cursor = result.next_cursor;
+      
+      if (onProgress) {
+        onProgress(allMessages.length, result.total);
+      }
+      
+      // Stop if we've fetched all or reached max
+      if (!hasMore || allMessages.length >= maxMessages) break;
+    }
+    
+    return allMessages.slice(0, maxMessages);
   },
 
   // Get sentiment analytics with optional date range
@@ -499,6 +560,26 @@ function generateSummary(symbol: string, data: any): string {
 }
 
 // Helper functions
+function mapSentiment(
+  bullishScore?: number, 
+  bearishScore?: number, 
+  sentimentLabel?: string
+): 'bullish' | 'bearish' | 'neutral' {
+  // If we have numeric scores, use them
+  if (typeof bullishScore === 'number' && typeof bearishScore === 'number') {
+    if (bullishScore > bearishScore && bullishScore > 0.4) return 'bullish';
+    if (bearishScore > bullishScore && bearishScore > 0.4) return 'bearish';
+    return 'neutral';
+  }
+  
+  // Fall back to label
+  if (!sentimentLabel) return 'neutral';
+  const s = String(sentimentLabel).toLowerCase();
+  if (s === 'bullish' || s.includes('bull')) return 'bullish';
+  if (s === 'bearish' || s.includes('bear')) return 'bearish';
+  return 'neutral';
+}
+
 function seededRandom(seed: number): number {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
@@ -510,20 +591,6 @@ function formatVolume(volume: number): string {
   return volume.toString();
 }
 
-function mapSentiment(sentiment: any): 'bullish' | 'bearish' | 'neutral' {
-  if (typeof sentiment === 'string') {
-    const lower = sentiment.toLowerCase();
-    if (lower === 'bullish' || lower.includes('bullish')) return 'bullish';
-    if (lower === 'bearish' || lower.includes('bearish')) return 'bearish';
-    return 'neutral';
-  }
-  if (typeof sentiment === 'number') {
-    if (sentiment > 0) return 'bullish';
-    if (sentiment < 0) return 'bearish';
-    return 'neutral';
-  }
-  return 'neutral';
-}
 
 function formatTime(timestamp: string): string {
   if (!timestamp) return 'just now';

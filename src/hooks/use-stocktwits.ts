@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { stocktwitsApi } from "@/lib/stocktwits-api";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { stocktwitsApi, MessageCursor } from "@/lib/stocktwits-api";
 
 export function useTrending() {
   return useQuery({
@@ -20,6 +20,7 @@ export function useSymbolStats(symbol: string) {
   });
 }
 
+// Simple messages hook (backwards compatible)
 export function useSymbolMessages(symbol: string, limit = 50, start?: string, end?: string) {
   return useQuery({
     queryKey: ['stocktwits', 'messages', symbol, limit, start, end],
@@ -27,6 +28,29 @@ export function useSymbolMessages(symbol: string, limit = 50, start?: string, en
     enabled: !!symbol,
     refetchInterval: 30000,
     staleTime: 15000,
+  });
+}
+
+// Infinite scroll messages with cursor-based pagination
+export function useSymbolMessagesInfinite(symbol: string, start?: string, end?: string, pageSize = 100) {
+  return useInfiniteQuery({
+    queryKey: ['stocktwits', 'messages-infinite', symbol, start, end, pageSize],
+    queryFn: ({ pageParam }) => 
+      stocktwitsApi.getMessagesPaginated(symbol, pageSize, start, end, pageParam as MessageCursor | undefined),
+    initialPageParam: undefined as MessageCursor | undefined,
+    getNextPageParam: (lastPage) => lastPage.has_more ? lastPage.next_cursor : undefined,
+    enabled: !!symbol,
+    staleTime: 15000,
+  });
+}
+
+// Fetch all messages at once (for AI analysis)
+export function useAllSymbolMessages(symbol: string, start?: string, end?: string, maxMessages = 10000) {
+  return useQuery({
+    queryKey: ['stocktwits', 'all-messages', symbol, start, end, maxMessages],
+    queryFn: () => stocktwitsApi.getAllMessages(symbol, start, end, maxMessages),
+    enabled: !!symbol,
+    staleTime: 60000, // Cache for 1 minute
   });
 }
 
