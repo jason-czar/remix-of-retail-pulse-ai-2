@@ -120,14 +120,58 @@ export default function HistoryBackfillUploader() {
           throw new Error("Message data not found");
         }
 
-        const { data, error } = await supabase.functions.invoke("backfill-history", {
-          body: {
-            symbol: file.symbol,
-            messages,
-          },
-        });
+        let totalNarratives = 0;
+        let totalEmotions = 0;
+        let totalBuckets = 0;
+        let allErrors: string[] = [];
+        let startIndex = 0;
+        let hasMore = true;
+        const batchSize = 8; // Process 8 buckets at a time to avoid timeout
 
-        if (error) throw error;
+        // Process in batches
+        while (hasMore) {
+          const { data, error } = await supabase.functions.invoke("backfill-history", {
+            body: {
+              symbol: file.symbol,
+              messages,
+              startIndex,
+              batchSize,
+            },
+          });
+
+          if (error) throw error;
+          
+          if (data.error) throw new Error(data.error);
+
+          totalNarratives += data.narrativeRecords || 0;
+          totalEmotions += data.emotionRecords || 0;
+          totalBuckets = data.totalBuckets || totalBuckets;
+          allErrors.push(...(data.errors || []));
+          hasMore = data.hasMore;
+          startIndex = data.nextIndex;
+
+          // Update progress
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === i
+                ? {
+                    ...f,
+                    result: {
+                      bucketsProcessed: data.batchEnd || 0,
+                      narrativeRecords: totalNarratives,
+                      emotionRecords: totalEmotions,
+                      errors: allErrors,
+                    },
+                  }
+                : f
+            )
+          );
+
+          // Small delay between batches
+          if (hasMore) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
 
         setFiles((prev) =>
           prev.map((f, idx) =>
@@ -136,10 +180,10 @@ export default function HistoryBackfillUploader() {
                   ...f,
                   status: "success",
                   result: {
-                    bucketsProcessed: data.bucketsProcessed || 0,
-                    narrativeRecords: data.narrativeRecords || 0,
-                    emotionRecords: data.emotionRecords || 0,
-                    errors: data.errors || [],
+                    bucketsProcessed: totalBuckets,
+                    narrativeRecords: totalNarratives,
+                    emotionRecords: totalEmotions,
+                    errors: allErrors,
                   },
                 }
               : f
@@ -149,7 +193,7 @@ export default function HistoryBackfillUploader() {
         // Clean up stored data
         delete (window as any)[`backfill_${file.symbol}`];
 
-        toast.success(`${file.symbol}: Created ${data.narrativeRecords + data.emotionRecords} history records`);
+        toast.success(`${file.symbol}: Created ${totalNarratives + totalEmotions} history records`);
 
       } catch (err: any) {
         console.error("Processing error:", err);

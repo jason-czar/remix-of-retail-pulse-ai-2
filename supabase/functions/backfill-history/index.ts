@@ -251,13 +251,78 @@ async function analyzeEmotions(messages: StocktwitsMessage[], apiKey: string): P
 // Delay helper
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Process a single bucket and return results
+async function processBucket(
+  bucket: TimeBucket, 
+  symbol: string, 
+  lovableApiKey: string,
+  supabase: any
+): Promise<{ narrativeRecords: number; emotionRecords: number; errors: string[] }> {
+  const result = { narrativeRecords: 0, emotionRecords: 0, errors: [] as string[] };
+  
+  try {
+    // Analyze narratives
+    const narratives = await analyzeNarratives(bucket.messages, lovableApiKey);
+    
+    if (narratives.length > 0) {
+      const dominantNarrative = narratives.sort((a, b) => b.count - a.count)[0]?.name || null;
+      
+      const { error: narrativeError } = await supabase.from("narrative_history").insert({
+        symbol: symbol.toUpperCase(),
+        period_type: bucket.periodType,
+        recorded_at: bucket.timestamp.toISOString(),
+        narratives: narratives,
+        dominant_narrative: dominantNarrative,
+        message_count: bucket.messages.length,
+      });
+
+      if (narrativeError) {
+        console.error("Narrative insert error:", narrativeError);
+        result.errors.push(`Narrative: ${narrativeError.message}`);
+      } else {
+        result.narrativeRecords++;
+      }
+    }
+
+    await delay(200);
+
+    // Analyze emotions
+    const emotions = await analyzeEmotions(bucket.messages, lovableApiKey);
+    
+    if (emotions.length > 0) {
+      const dominantEmotion = emotions.sort((a, b) => b.score - a.score)[0]?.name || null;
+      
+      const { error: emotionError } = await supabase.from("emotion_history").insert({
+        symbol: symbol.toUpperCase(),
+        period_type: bucket.periodType,
+        recorded_at: bucket.timestamp.toISOString(),
+        emotions: emotions,
+        dominant_emotion: dominantEmotion,
+        message_count: bucket.messages.length,
+      });
+
+      if (emotionError) {
+        console.error("Emotion insert error:", emotionError);
+        result.errors.push(`Emotion: ${emotionError.message}`);
+      } else {
+        result.emotionRecords++;
+      }
+    }
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    result.errors.push(errorMessage);
+  }
+  
+  return result;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { symbol, messages } = await req.json();
+    const { symbol, messages, startIndex = 0, batchSize = 10 } = await req.json();
 
     if (!symbol || !messages || !Array.isArray(messages)) {
       return new Response(
@@ -266,7 +331,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing ${messages.length} messages for ${symbol}`);
+    console.log(`Processing ${messages.length} messages for ${symbol}, batch starting at ${startIndex}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -284,83 +349,46 @@ serve(async (req) => {
     console.log(`Sorted ${sortedMessages.length} valid messages`);
 
     // Group into buckets
-    const buckets = groupMessagesIntoBuckets(sortedMessages);
-    console.log(`Created ${buckets.length} time buckets`);
+    const allBuckets = groupMessagesIntoBuckets(sortedMessages);
+    console.log(`Created ${allBuckets.length} total time buckets`);
+
+    // Get the batch to process
+    const endIndex = Math.min(startIndex + batchSize, allBuckets.length);
+    const bucketsToProcess = allBuckets.slice(startIndex, endIndex);
+    
+    console.log(`Processing buckets ${startIndex + 1} to ${endIndex} of ${allBuckets.length}`);
 
     const results = {
       symbol,
       totalMessages: sortedMessages.length,
+      totalBuckets: allBuckets.length,
+      batchStart: startIndex,
+      batchEnd: endIndex,
       bucketsProcessed: 0,
       narrativeRecords: 0,
       emotionRecords: 0,
+      hasMore: endIndex < allBuckets.length,
+      nextIndex: endIndex,
       errors: [] as string[],
     };
 
-    // Process each bucket
-    for (let i = 0; i < buckets.length; i++) {
-      const bucket = buckets[i];
-      console.log(`Processing bucket ${i + 1}/${buckets.length}: ${bucket.periodType} at ${bucket.timestamp.toISOString()}`);
+    // Process each bucket in this batch
+    for (let i = 0; i < bucketsToProcess.length; i++) {
+      const bucket = bucketsToProcess[i];
+      const globalIndex = startIndex + i;
+      console.log(`Processing bucket ${globalIndex + 1}/${allBuckets.length}: ${bucket.periodType} at ${bucket.timestamp.toISOString()}`);
 
-      try {
-        // Analyze narratives
-        const narratives = await analyzeNarratives(bucket.messages, lovableApiKey);
-        
-        if (narratives.length > 0) {
-          const dominantNarrative = narratives.sort((a, b) => b.count - a.count)[0]?.name || null;
-          
-          const { error: narrativeError } = await supabase.from("narrative_history").insert({
-            symbol: symbol.toUpperCase(),
-            period_type: bucket.periodType,
-            recorded_at: bucket.timestamp.toISOString(),
-            narratives: narratives,
-            dominant_narrative: dominantNarrative,
-            message_count: bucket.messages.length,
-          });
-
-          if (narrativeError) {
-            console.error("Narrative insert error:", narrativeError);
-            results.errors.push(`Narrative error at ${bucket.timestamp.toISOString()}: ${narrativeError.message}`);
-          } else {
-            results.narrativeRecords++;
-          }
-        }
-
-        await delay(300); // Rate limit between AI calls
-
-        // Analyze emotions
-        const emotions = await analyzeEmotions(bucket.messages, lovableApiKey);
-        
-        if (emotions.length > 0) {
-          const dominantEmotion = emotions.sort((a, b) => b.score - a.score)[0]?.name || null;
-          
-          const { error: emotionError } = await supabase.from("emotion_history").insert({
-            symbol: symbol.toUpperCase(),
-            period_type: bucket.periodType,
-            recorded_at: bucket.timestamp.toISOString(),
-            emotions: emotions,
-            dominant_emotion: dominantEmotion,
-            message_count: bucket.messages.length,
-          });
-
-          if (emotionError) {
-            console.error("Emotion insert error:", emotionError);
-            results.errors.push(`Emotion error at ${bucket.timestamp.toISOString()}: ${emotionError.message}`);
-          } else {
-            results.emotionRecords++;
-          }
-        }
-
-        results.bucketsProcessed++;
-        await delay(300); // Rate limit between buckets
-
-      } catch (bucketError: unknown) {
-        const errorMessage = bucketError instanceof Error ? bucketError.message : String(bucketError);
-        console.error(`Bucket error:`, bucketError);
-        results.errors.push(`Bucket ${bucket.timestamp.toISOString()}: ${errorMessage}`);
-      }
+      const bucketResult = await processBucket(bucket, symbol, lovableApiKey, supabase);
+      
+      results.narrativeRecords += bucketResult.narrativeRecords;
+      results.emotionRecords += bucketResult.emotionRecords;
+      results.errors.push(...bucketResult.errors);
+      results.bucketsProcessed++;
+      
+      await delay(200); // Rate limit between buckets
     }
 
-    console.log("Backfill complete:", results);
+    console.log("Batch complete:", results);
 
     return new Response(JSON.stringify(results), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
