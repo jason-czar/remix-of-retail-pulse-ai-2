@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchCommand } from "@/components/SearchCommand";
+import { WatchlistManager } from "@/components/WatchlistManager";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -30,6 +31,7 @@ const alerts = [
 
 export default function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [watchlistManagerOpen, setWatchlistManagerOpen] = useState(false);
   const { data: trending = [], isLoading: trendingLoading } = useTrending();
   const { data: watchlist, isLoading: watchlistLoading } = useDefaultWatchlist();
 
@@ -92,8 +94,9 @@ export default function Dashboard() {
                   <Star className="h-5 w-5 text-chart-5" />
                   Your Watchlist
                 </h2>
-                <Button variant="ghost" size="sm">Manage</Button>
+                <Button variant="ghost" size="sm" onClick={() => setWatchlistManagerOpen(true)}>Manage</Button>
               </div>
+              <WatchlistManager open={watchlistManagerOpen} onOpenChange={setWatchlistManagerOpen} />
               
               <div className="space-y-3">
                 {isLoading ? (
