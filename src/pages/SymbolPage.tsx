@@ -12,6 +12,7 @@ import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
 import { VolumeChart } from "@/components/charts/VolumeChart";
 import { SentimentHistoryChart } from "@/components/charts/SentimentHistoryChart";
+import { NarrativeTrendsChart } from "@/components/charts/NarrativeTrendsChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { useSymbolStats, useSymbolMessages, useSymbolSentiment } from "@/hooks/use-stocktwits";
@@ -184,6 +185,12 @@ export default function SymbolPage() {
                 <h3 className="text-lg font-semibold">Historical Sentiment</h3>
               </div>
               <SentimentHistoryChart symbol={symbol} days={30} showVolume />
+            </Card>
+            <Card className="p-6 mt-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold">Narrative Trends</h3>
+              </div>
+              <NarrativeTrendsChart symbol={symbol} days={7} />
             </Card>
           </TabsContent>
 
