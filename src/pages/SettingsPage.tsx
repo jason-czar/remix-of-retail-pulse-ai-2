@@ -24,6 +24,7 @@ import {
   Check,
   AlertTriangle
 } from "lucide-react";
+import AlertsManager from "@/components/AlertsManager";
 import { toast } from "sonner";
 
 interface ApiKey {
@@ -232,6 +233,10 @@ export default function SettingsPage() {
               <Key className="h-4 w-4" />
               API Keys
             </TabsTrigger>
+            <TabsTrigger value="alerts" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Alerts
+            </TabsTrigger>
             <TabsTrigger value="subscription" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Subscription
@@ -403,6 +408,11 @@ export default function SettingsPage() {
                 )}
               </div>
             </Card>
+          </TabsContent>
+
+          {/* Alerts Tab */}
+          <TabsContent value="alerts">
+            <AlertsManager />
           </TabsContent>
 
           {/* Subscription Tab */}
