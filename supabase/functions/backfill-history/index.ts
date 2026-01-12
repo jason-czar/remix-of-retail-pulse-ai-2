@@ -109,7 +109,7 @@ async function analyzeNarratives(messages: StocktwitsMessage[], apiKey: string):
     .map((m, i) => `${i + 1}. ${m.body}`)
     .join("\n");
 
-  const response = await fetch("https://api.lovable.dev/v1/chat/completions", {
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -184,7 +184,7 @@ async function analyzeEmotions(messages: StocktwitsMessage[], apiKey: string): P
     .map((m, i) => `${i + 1}. ${m.body}`)
     .join("\n");
 
-  const response = await fetch("https://api.lovable.dev/v1/chat/completions", {
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
