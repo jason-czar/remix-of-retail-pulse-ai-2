@@ -49,8 +49,13 @@ export default function HistoryBackfillUploader() {
         const text = await file.text();
         const data = JSON.parse(text);
         
-        // Extract symbol from filename or data
-        const symbol = file.name.replace(".json", "").toUpperCase();
+        // Extract symbol from filename (e.g., "stocktwits_JPM_messages.json" -> "JPM")
+        let symbol = file.name.replace(".json", "").toUpperCase();
+        // Try to extract ticker from patterns like "stocktwits_JPM_messages" or "AAPL_messages"
+        const symbolMatch = symbol.match(/(?:STOCKTWITS_)?([A-Z]{1,5})(?:_MESSAGES)?(?:_\d+)?$/i);
+        if (symbolMatch) {
+          symbol = symbolMatch[1].toUpperCase();
+        }
         
         // Handle different JSON structures
         let messages = [];
@@ -67,15 +72,22 @@ export default function HistoryBackfillUploader() {
           continue;
         }
 
+        // Normalize date format for all messages
+        const normalizedMessages = messages.map((msg: any) => ({
+          ...msg,
+          // Convert "2026-01-12 22:29:46" to ISO format "2026-01-12T22:29:46Z"
+          created_at: msg.created_at?.replace(" ", "T") + (msg.created_at?.includes("T") ? "" : "Z"),
+        }));
+
         newFiles.push({
           name: file.name,
           symbol,
-          messageCount: messages.length,
+          messageCount: normalizedMessages.length,
           status: "pending",
         });
 
-        // Store the parsed data for processing
-        (window as any)[`backfill_${symbol}`] = messages;
+        // Store the normalized data for processing
+        (window as any)[`backfill_${symbol}`] = normalizedMessages;
 
       } catch (err) {
         console.error("Parse error:", err);
@@ -338,20 +350,18 @@ export default function HistoryBackfillUploader() {
 
       {/* Instructions */}
       <div className="mt-6 p-4 rounded-lg bg-muted/50">
-        <h3 className="text-sm font-medium mb-2">JSON Format</h3>
+        <h3 className="text-sm font-medium mb-2">Supported Formats</h3>
         <pre className="text-xs text-muted-foreground overflow-x-auto">
-{`{
-  "messages": [
-    {
-      "id": 123456,
-      "body": "Message text here",
-      "created_at": "2025-01-01T14:30:00Z"
-    }
-  ]
-}`}
+{`[
+  {
+    "id": 123456,
+    "body": "Message text here",
+    "created_at": "2025-01-01 14:30:00"
+  }
+]`}
         </pre>
         <p className="text-xs text-muted-foreground mt-2">
-          Messages are grouped into hourly (market hours) and daily buckets for analysis.
+          Accepts StockTwits exports. Symbol extracted from filename (e.g., stocktwits_JPM_messages.json → JPM).
         </p>
       </div>
     </Card>
