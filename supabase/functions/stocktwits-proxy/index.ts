@@ -31,13 +31,31 @@ Deno.serve(async (req) => {
     let endpoint = ''
     let queryParams = new URLSearchParams()
 
+    // Helper to get date params with defaults
+    const getDateParams = (defaultDays: number) => {
+      const startParam = url.searchParams.get('start')
+      const endParam = url.searchParams.get('end')
+      const now = new Date()
+      const pastDate = new Date(now.getTime() - defaultDays * 24 * 60 * 60 * 1000)
+      return {
+        start: startParam || pastDate.toISOString().split('T')[0],
+        end: endParam || now.toISOString().split('T')[0]
+      }
+    }
+
     switch (action) {
-      case 'messages':
+      case 'messages': {
         endpoint = '/functions/v1/stocktwits-query'
         queryParams.set('action', 'messages')
+        queryParams.set('primaryOnly', 'true')
         if (symbol) queryParams.set('symbol', symbol)
         queryParams.set('limit', limit)
+        // Required date parameters - default to last 7 days
+        const { start, end } = getDateParams(7)
+        queryParams.set('start', start)
+        queryParams.set('end', end)
         break
+      }
       
       case 'symbols':
         endpoint = '/functions/v1/stocktwits-query'
@@ -50,12 +68,17 @@ Deno.serve(async (req) => {
         if (symbol) queryParams.set('symbol', symbol)
         break
       
-      case 'analytics':
+      case 'analytics': {
         endpoint = '/functions/v1/stocktwits-query'
         queryParams.set('action', 'analytics')
         if (type) queryParams.set('type', type)
         if (symbol) queryParams.set('symbol', symbol)
+        // Add date parameters - default to last 30 days
+        const { start: analyticsStart, end: analyticsEnd } = getDateParams(30)
+        queryParams.set('start', analyticsStart)
+        queryParams.set('end', analyticsEnd)
         break
+      }
       
       case 'sentiment':
         endpoint = '/functions/v1/stocktwits-sentiment'
