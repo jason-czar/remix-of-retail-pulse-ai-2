@@ -5,10 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SentimentChart } from "@/components/charts/SentimentChart";
 import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
 import { VolumeChart } from "@/components/charts/VolumeChart";
+import { useSymbolStats, useSymbolMessages, useSymbolSentiment } from "@/hooks/use-stocktwits";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -21,75 +23,28 @@ import {
   ExternalLink
 } from "lucide-react";
 
-// Mock data for demo
-const symbolData = {
-  AAPL: {
-    name: "Apple Inc",
-    exchange: "NASDAQ",
-    sentiment: 67,
-    sentimentChange: 5.2,
-    trend: "bullish" as const,
-    volume: "156K",
-    volumeChange: 23,
-    badges: ["trending", "high-volume"],
-    summary: "Strong bullish momentum driven by Vision Pro launch expectations and positive earnings sentiment. Retail traders expressing high conviction on long-term AI integration plays."
-  },
-  NVDA: {
-    name: "NVIDIA Corp",
-    exchange: "NASDAQ",
-    sentiment: 78,
-    sentimentChange: 12.5,
-    trend: "bullish" as const,
-    volume: "245K",
-    volumeChange: 45,
-    badges: ["trending", "surge"],
-    summary: "Exceptional bullish sentiment on AI infrastructure demand. Narratives centered around data center growth and competitive moat in GPU market."
-  },
-  TSLA: {
-    name: "Tesla Inc",
-    exchange: "NASDAQ",
-    sentiment: 45,
-    sentimentChange: -8.2,
-    trend: "bearish" as const,
-    volume: "189K",
-    volumeChange: 12,
-    badges: ["volatile"],
-    summary: "Mixed sentiment with bearish tilt due to margin concerns. Robotaxi and FSD narratives providing some support but overall cautious outlook."
-  }
-};
-
-const mockMessages = [
-  {
-    id: 1,
-    user: "TechTrader_Mike",
-    content: "$AAPL Vision Pro could be a game changer. Not just a product, it's a platform play. Loading up on calls 🚀",
-    sentiment: "bullish",
-    emotions: ["excitement", "conviction"],
-    time: "2 min ago"
-  },
-  {
-    id: 2,
-    user: "ValueHunter",
-    content: "PE ratio looking stretched here but the services revenue is compelling. Holding my shares.",
-    sentiment: "neutral",
-    emotions: ["certainty"],
-    time: "5 min ago"
-  },
-  {
-    id: 3,
-    user: "MacroMaven",
-    content: "China concerns overblown. iPhone market share actually growing in key segments. This dip is a gift.",
-    sentiment: "bullish",
-    emotions: ["conviction", "hopefulness"],
-    time: "8 min ago"
-  }
-];
-
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
-  const data = symbolData[symbol as keyof typeof symbolData] || symbolData.AAPL;
+  
+  const { data: stats, isLoading: statsLoading } = useSymbolStats(symbol);
+  const { data: messages = [], isLoading: messagesLoading } = useSymbolMessages(symbol, 10);
+  const { data: sentimentData } = useSymbolSentiment(symbol);
+  
+  const data = stats || {
+    symbol,
+    name: symbol,
+    sentiment: 50,
+    sentimentChange: 0,
+    trend: 'neutral' as const,
+    volume: '0',
+    volumeChange: 0,
+    badges: [] as string[],
+  };
+  
+  const summary = sentimentData?.summary || 
+    `Analyzing retail sentiment for ${symbol}. Real-time data from StockTwits community discussions.`;
+  
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
-  const ChangeIcon = data.sentimentChange >= 0 ? ArrowUpRight : ArrowDownRight;
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,24 +53,31 @@ export default function SymbolPage() {
       <main className="container mx-auto px-4 py-8">
         {/* Symbol Header */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-display">${symbol}</h1>
-              <Badge variant={data.trend}>{data.trend}</Badge>
-              {data.badges.includes("trending") && (
-                <Badge variant="trending">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  Trending
-                </Badge>
-              )}
-              {data.badges.includes("surge") && (
-                <Badge variant="glow">Volume Surge</Badge>
-              )}
+          {statsLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-48" />
+              <Skeleton className="h-6 w-32" />
             </div>
-            <p className="text-lg text-muted-foreground">
-              {data.name} • {data.exchange}
-            </p>
-          </div>
+          ) : (
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-4xl font-display">${symbol}</h1>
+                <Badge variant={data.trend}>{data.trend}</Badge>
+                {data.badges.includes("trending") && (
+                  <Badge variant="trending">
+                    <TrendingUp className="h-3 w-3 mr-1" />
+                    Trending
+                  </Badge>
+                )}
+                {data.badges.includes("surge") && (
+                  <Badge variant="glow">Volume Surge</Badge>
+                )}
+              </div>
+              <p className="text-lg text-muted-foreground">
+                {data.name} • NASDAQ
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <Button variant="outline">
@@ -131,29 +93,37 @@ export default function SymbolPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <MetricCard
-            label="Sentiment Score"
-            value={data.sentiment}
-            change={data.sentimentChange}
-            icon={TrendIcon}
-            trend={data.trend}
-          />
-          <MetricCard
-            label="Message Volume"
-            value={data.volume}
-            change={data.volumeChange}
-            suffix=" (24h)"
-          />
-          <MetricCard
-            label="1H Change"
-            value={`${data.sentimentChange > 0 ? "+" : ""}${data.sentimentChange}%`}
-            trend={data.sentimentChange >= 0 ? "bullish" : "bearish"}
-          />
-          <MetricCard
-            label="7D Trend"
-            value="Strengthening"
-            trend="bullish"
-          />
+          {statsLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))
+          ) : (
+            <>
+              <MetricCard
+                label="Sentiment Score"
+                value={data.sentiment}
+                change={data.sentimentChange}
+                icon={TrendIcon}
+                trend={data.trend}
+              />
+              <MetricCard
+                label="Message Volume"
+                value={data.volume}
+                change={data.volumeChange}
+                suffix=" (24h)"
+              />
+              <MetricCard
+                label="1H Change"
+                value={`${data.sentimentChange > 0 ? "+" : ""}${data.sentimentChange}%`}
+                trend={data.sentimentChange >= 0 ? "bullish" : "bearish"}
+              />
+              <MetricCard
+                label="7D Trend"
+                value={data.trend === 'bullish' ? 'Strengthening' : data.trend === 'bearish' ? 'Weakening' : 'Stable'}
+                trend={data.trend}
+              />
+            </>
+          )}
         </div>
 
         {/* AI Summary */}
@@ -165,7 +135,7 @@ export default function SymbolPage() {
             <div>
               <h3 className="font-semibold mb-2">AI Sentiment Summary</h3>
               <p className="text-muted-foreground leading-relaxed">
-                {data.summary}
+                {summary}
               </p>
             </div>
           </div>
@@ -234,9 +204,17 @@ export default function SymbolPage() {
           </div>
           
           <div className="space-y-4">
-            {mockMessages.map((msg) => (
-              <MessageCard key={msg.id} {...msg} />
-            ))}
+            {messagesLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))
+            ) : messages.length > 0 ? (
+              messages.slice(0, 5).map((msg) => (
+                <MessageCard key={msg.id} {...msg} />
+              ))
+            ) : (
+              <p className="text-muted-foreground text-sm">No messages available for this symbol.</p>
+            )}
           </div>
         </Card>
       </main>
