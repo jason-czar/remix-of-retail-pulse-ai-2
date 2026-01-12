@@ -2,3 +2,6 @@ project_id = "hteqootlqamsvkqgdtjw"
 
 [functions.stocktwits-proxy]
 verify_jwt = false
+
+[functions.analyze-narratives]
+verify_jwt = false
