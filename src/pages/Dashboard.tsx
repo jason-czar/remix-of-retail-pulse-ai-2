@@ -14,10 +14,12 @@ import {
   ArrowDownRight,
   BarChart3,
   Bell,
-  Star
+  Star,
+  Plus
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTrending } from "@/hooks/use-stocktwits";
+import { useDefaultWatchlist } from "@/hooks/use-watchlist";
 
 // Mock alerts data (will be replaced with real alerts later)
 const alerts = [
@@ -26,15 +28,16 @@ const alerts = [
   { symbol: "AAPL", type: "Volume Spike", message: "3x baseline message volume", time: "1 hour ago", severity: "low" },
 ];
 
-// Default watchlist (will be user-specific later)
-const defaultWatchlist = ["AAPL", "NVDA", "TSLA", "AMD", "META"];
-
 export default function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: trending = [], isLoading: trendingLoading } = useTrending();
+  const { data: watchlist, isLoading: watchlistLoading } = useDefaultWatchlist();
 
-  // Map trending data to watchlist format for display
-  const watchlistData = defaultWatchlist.map(symbol => {
+  // Get symbols from user's watchlist
+  const watchlistSymbols = watchlist?.symbols || [];
+
+  // Map watchlist symbols to display data using trending info
+  const watchlistData = watchlistSymbols.map(symbol => {
     const trendingItem = trending.find(t => t.symbol === symbol);
     return {
       symbol,
@@ -44,6 +47,8 @@ export default function Dashboard() {
       trend: (trendingItem?.trend || 'neutral') as 'bullish' | 'bearish' | 'neutral',
     };
   });
+
+  const isLoading = trendingLoading || watchlistLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,10 +96,23 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-3">
-                {trendingLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} className="h-16 w-full" />
                   ))
+                ) : watchlistData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Star className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground mb-4">Your watchlist is empty</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setSearchOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add symbols
+                    </Button>
+                  </div>
                 ) : (
                   watchlistData.map((item) => (
                     <WatchlistItem key={item.symbol} {...item} />
