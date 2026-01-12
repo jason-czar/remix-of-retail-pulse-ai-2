@@ -11,6 +11,7 @@ import { SentimentChart } from "@/components/charts/SentimentChart";
 import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
 import { VolumeChart } from "@/components/charts/VolumeChart";
+import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useSymbolStats, useSymbolMessages, useSymbolSentiment } from "@/hooks/use-stocktwits";
 import { 
   TrendingUp, 
@@ -18,7 +19,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Bell,
-  Star,
   MessageSquare,
   Clock,
   ExternalLink
@@ -101,10 +101,7 @@ export default function SymbolPage() {
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline">
-              <Star className="h-4 w-4 mr-2" />
-              Add to Watchlist
-            </Button>
+            <AddToWatchlistButton symbol={symbol} />
             <Button variant="outline">
               <Bell className="h-4 w-4 mr-2" />
               Set Alert
