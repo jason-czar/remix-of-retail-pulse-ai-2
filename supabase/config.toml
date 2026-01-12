@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.record-narrative-emotion-snapshot]
 verify_jwt = false
+
+[functions.backfill-history]
+verify_jwt = false

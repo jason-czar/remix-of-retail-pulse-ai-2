@@ -15,6 +15,7 @@ import {
   Key, 
   CreditCard, 
   Bell,
+  Database,
   Plus,
   Copy,
   Trash2,
@@ -25,6 +26,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import AlertsManager from "@/components/AlertsManager";
+import HistoryBackfillUploader from "@/components/HistoryBackfillUploader";
 import { toast } from "sonner";
 
 interface ApiKey {
@@ -237,6 +239,10 @@ export default function SettingsPage() {
               <Bell className="h-4 w-4" />
               Alerts
             </TabsTrigger>
+            <TabsTrigger value="data" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Data
+            </TabsTrigger>
             <TabsTrigger value="subscription" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Subscription
@@ -413,6 +419,11 @@ export default function SettingsPage() {
           {/* Alerts Tab */}
           <TabsContent value="alerts">
             <AlertsManager />
+          </TabsContent>
+
+          {/* Data Management Tab */}
+          <TabsContent value="data">
+            <HistoryBackfillUploader />
           </TabsContent>
 
           {/* Subscription Tab */}
