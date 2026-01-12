@@ -59,3 +59,23 @@ export function useSymbolSentiment(symbol: string) {
     staleTime: 30000,
   });
 }
+
+export function useNarrativesAnalytics(symbol: string, timeRange = '24H', start?: string, end?: string) {
+  return useQuery({
+    queryKey: ['stocktwits', 'narratives-analytics', symbol, timeRange, start, end],
+    queryFn: () => stocktwitsApi.getNarrativesAnalytics(symbol, timeRange, start, end),
+    enabled: !!symbol,
+    refetchInterval: 60000,
+    staleTime: 30000,
+  });
+}
+
+export function useEmotionsAnalytics(symbol: string, timeRange = '24H', start?: string, end?: string) {
+  return useQuery({
+    queryKey: ['stocktwits', 'emotions-analytics', symbol, timeRange, start, end],
+    queryFn: () => stocktwitsApi.getEmotionsAnalytics(symbol, timeRange, start, end),
+    enabled: !!symbol,
+    refetchInterval: 60000,
+    staleTime: 30000,
+  });
+}

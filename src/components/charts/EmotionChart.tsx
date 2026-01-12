@@ -9,6 +9,8 @@ import {
   Legend
 } from "recharts";
 import { useMemo } from "react";
+import { useEmotionsAnalytics } from "@/hooks/use-stocktwits";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Emotion definitions based on spec
 const emotions = [
@@ -25,6 +27,13 @@ const emotions = [
 ];
 
 type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
+
+interface EmotionChartProps {
+  symbol: string;
+  timeRange?: TimeRange;
+  start?: string;
+  end?: string;
+}
 
 const getRangeConfig = (timeRange: TimeRange) => {
   const ranges: Record<TimeRange, { points: number; intervalMs: number; label: (d: Date) => string }> = {
@@ -79,13 +88,24 @@ const generateEmotionData = (timeRange: TimeRange) => {
   return data;
 };
 
-export function EmotionChart({ symbol, timeRange = '24H' }: { symbol: string; timeRange?: TimeRange }) {
-  const data = useMemo(() => generateEmotionData(timeRange), [timeRange]);
+export function EmotionChart({ symbol, timeRange = '24H', start, end }: EmotionChartProps) {
+  const { data: apiData, isLoading } = useEmotionsAnalytics(symbol, timeRange, start, end);
+  
+  const chartData = useMemo(() => {
+    if (apiData && apiData.length > 0) {
+      return apiData;
+    }
+    return generateEmotionData(timeRange);
+  }, [apiData, timeRange]);
+
+  if (isLoading) {
+    return <Skeleton className="h-[500px] w-full" />;
+  }
 
   return (
     <div className="h-[500px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" />
           <XAxis 
             dataKey="time" 

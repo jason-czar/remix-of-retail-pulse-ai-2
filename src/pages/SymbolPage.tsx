@@ -187,7 +187,7 @@ export default function SymbolPage() {
                 <h3 className="text-lg font-semibold">Top 10 Narratives</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
-              <NarrativeChart symbol={symbol} timeRange={timeRange} />
+              <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </Card>
           </TabsContent>
 
@@ -197,7 +197,7 @@ export default function SymbolPage() {
                 <h3 className="text-lg font-semibold">Emotion Trends</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
-              <EmotionChart symbol={symbol} timeRange={timeRange} />
+              <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </Card>
           </TabsContent>
 
