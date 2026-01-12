@@ -211,7 +211,7 @@ export const stocktwitsApi = {
       
       let data: any[];
       if (useDailyData && response?.messageVolume) {
-        data = response.messageVolume;
+        data = filterDataByTimeRange(response.messageVolume, timeRange);
       } else if (response?.hourlyDistribution) {
         data = response.hourlyDistribution;
       } else if (response?.intervalDistribution) {
@@ -273,7 +273,7 @@ export const stocktwitsApi = {
       
       let data: any[];
       if (useDailyData && response?.messageVolume) {
-        data = response.messageVolume;
+        data = filterDataByTimeRange(response.messageVolume, timeRange);
       } else if (response?.hourlyDistribution) {
         data = response.hourlyDistribution;
       } else if (response?.intervalDistribution) {
@@ -346,7 +346,7 @@ export const stocktwitsApi = {
       
       let data: any[];
       if (useDailyData && response?.messageVolume) {
-        data = response.messageVolume;
+        data = filterDataByTimeRange(response.messageVolume, timeRange);
       } else if (response?.hourlyDistribution) {
         data = response.hourlyDistribution;
       } else if (response?.intervalDistribution) {
@@ -415,7 +415,7 @@ export const stocktwitsApi = {
       
       let data: any[];
       if (useDailyData && response?.messageVolume) {
-        data = response.messageVolume;
+        data = filterDataByTimeRange(response.messageVolume, timeRange);
       } else if (response?.hourlyDistribution) {
         data = response.hourlyDistribution;
       } else if (response?.intervalDistribution) {
@@ -572,4 +572,30 @@ function calculateBaseline(volumes: number[]): number {
   if (volumes.length === 0) return 0;
   const sum = volumes.reduce((a, b) => a + b, 0);
   return Math.floor(sum / volumes.length);
+}
+
+// Filter data array to only include the number of days specified by timeRange
+function filterDataByTimeRange(data: any[], timeRange: string): any[] {
+  if (!data || data.length === 0) return data;
+  
+  const daysMap: Record<string, number> = {
+    '7D': 7,
+    '30D': 30,
+  };
+  
+  const targetDays = daysMap[timeRange];
+  if (!targetDays) return data; // For hourly ranges, return all data
+  
+  // Sort data by date (newest first) and take only the required number of days
+  const sortedData = [...data].sort((a, b) => {
+    const dateA = a.date || a.time || a.timestamp || '';
+    const dateB = b.date || b.time || b.timestamp || '';
+    return dateB.localeCompare(dateA);
+  });
+  
+  // Take only the required number of days
+  const filtered = sortedData.slice(0, targetDays);
+  
+  // Reverse to get chronological order (oldest first)
+  return filtered.reverse();
 }
