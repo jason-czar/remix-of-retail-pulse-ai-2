@@ -14,6 +14,12 @@ interface EmotionScore {
   examples: string[];
 }
 
+interface EmotionTimePoint {
+  timestamp: string;
+  label: string;
+  emotions: Record<string, number>;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -84,11 +90,48 @@ serve(async (req) => {
       );
     }
 
+    // Group messages by time periods for historical analysis
+    const messagesWithTime = messages.slice(0, 300).map((m: any) => ({
+      text: m.body || m.content || "",
+      created_at: m.created_at || new Date().toISOString()
+    })).filter((m: any) => m.text.length > 10);
+
+    // Determine time bucket size based on timeRange
+    const bucketMinutes = timeRange === "1H" ? 10 : timeRange === "6H" ? 60 : timeRange === "24H" ? 240 : timeRange === "7D" ? 1440 : 2880;
+    
+    // Group messages into time buckets
+    const now = Date.now();
+    const buckets: Map<string, string[]> = new Map();
+    
+    messagesWithTime.forEach((m: any) => {
+      const msgTime = new Date(m.created_at).getTime();
+      const bucketIndex = Math.floor((now - msgTime) / (bucketMinutes * 60 * 1000));
+      const bucketKey = `bucket_${bucketIndex}`;
+      if (!buckets.has(bucketKey)) {
+        buckets.set(bucketKey, []);
+      }
+      buckets.get(bucketKey)!.push(m.text);
+    });
+
+    // Create time point labels
+    const sortedBuckets = Array.from(buckets.entries())
+      .sort((a, b) => parseInt(b[0].split('_')[1]) - parseInt(a[0].split('_')[1]))
+      .slice(0, 8); // Last 8 time points
+
+    const timePoints = sortedBuckets.map(([key, texts], index) => {
+      const bucketIndex = parseInt(key.split('_')[1]);
+      const minutesAgo = bucketIndex * bucketMinutes;
+      let label = "";
+      if (minutesAgo < 60) label = `${minutesAgo}m ago`;
+      else if (minutesAgo < 1440) label = `${Math.round(minutesAgo / 60)}h ago`;
+      else label = `${Math.round(minutesAgo / 1440)}d ago`;
+      
+      return { label, texts, timestamp: new Date(now - minutesAgo * 60 * 1000).toISOString() };
+    }).reverse();
+
     // Prepare message content for AI analysis
-    const messageTexts = messages
-      .slice(0, 200)
-      .map((m: any) => m.body || m.content || "")
-      .filter((text: string) => text.length > 10)
+    const messageTexts = messagesWithTime
+      .map((m: any) => m.text)
       .join("\n---\n");
 
     console.log(`Analyzing emotions in ${messages.length} messages for ${symbol}...`);
@@ -129,7 +172,12 @@ For each emotion, provide:
 - trend: Is this emotion "rising", "falling", or "stable" compared to what you'd expect
 - examples: 1-2 short example phrases from the messages that show this emotion
 
-Messages:
+ALSO analyze emotions over time. I've grouped messages into ${timePoints.length} time buckets:
+${timePoints.map((tp, i) => `\nPeriod ${i + 1} (${tp.label}): ${tp.texts.slice(0, 10).join(' | ')}`).join('')}
+
+For each time period, provide emotion scores to show the emotional journey over time.
+
+All Messages:
 ${messageTexts}`
           }
         ],
@@ -181,8 +229,29 @@ ${messageTexts}`
                     enum: ["low", "moderate", "high", "extreme"],
                     description: "Overall emotional intensity of the messages",
                   },
+                  historicalData: {
+                    type: "array",
+                    description: "Emotion scores over time for trend visualization",
+                    items: {
+                      type: "object",
+                      properties: {
+                        periodIndex: { type: "number", description: "Time period index (0 = oldest)" },
+                        Excitement: { type: "number" },
+                        Fear: { type: "number" },
+                        Hopefulness: { type: "number" },
+                        Frustration: { type: "number" },
+                        Conviction: { type: "number" },
+                        Disappointment: { type: "number" },
+                        Sarcasm: { type: "number" },
+                        Humor: { type: "number" },
+                        Grit: { type: "number" },
+                        Surprise: { type: "number" },
+                      },
+                      required: ["periodIndex"],
+                    },
+                  },
                 },
-                required: ["emotions", "dominantEmotion", "emotionalIntensity"],
+                required: ["emotions", "dominantEmotion", "emotionalIntensity", "historicalData"],
               },
             },
           },
@@ -214,7 +283,7 @@ ${messageTexts}`
     console.log("AI emotion response:", JSON.stringify(aiData, null, 2));
 
     // Extract emotions from tool call response
-    let result = { emotions: [] as EmotionScore[], dominantEmotion: "", emotionalIntensity: "moderate" };
+    let result = { emotions: [] as EmotionScore[], dominantEmotion: "", emotionalIntensity: "moderate", historicalData: [] as any[] };
     
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
@@ -224,6 +293,27 @@ ${messageTexts}`
         console.error("Failed to parse tool call arguments:", e);
       }
     }
+
+    // Map historical data with proper timestamps
+    const historicalWithTimestamps: EmotionTimePoint[] = (result.historicalData || []).map((point: any, index: number) => {
+      const tp = timePoints[point.periodIndex] || timePoints[index] || { label: `T${index}`, timestamp: new Date().toISOString() };
+      return {
+        timestamp: tp.timestamp,
+        label: tp.label,
+        emotions: {
+          Excitement: point.Excitement || 0,
+          Fear: point.Fear || 0,
+          Hopefulness: point.Hopefulness || 0,
+          Frustration: point.Frustration || 0,
+          Conviction: point.Conviction || 0,
+          Disappointment: point.Disappointment || 0,
+          Sarcasm: point.Sarcasm || 0,
+          Humor: point.Humor || 0,
+          Grit: point.Grit || 0,
+          Surprise: point.Surprise || 0,
+        }
+      };
+    });
 
     // Ensure all 10 emotions are present with at least 0 score
     const emotionNames = ["Excitement", "Fear", "Hopefulness", "Frustration", "Conviction", "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise"];
@@ -236,6 +326,7 @@ ${messageTexts}`
       emotions: completeEmotions,
       dominantEmotion: result.dominantEmotion,
       emotionalIntensity: result.emotionalIntensity,
+      historicalData: historicalWithTimestamps,
     };
 
     // Cache the results (1 hour expiry)
