@@ -20,10 +20,10 @@ export function useSymbolStats(symbol: string) {
   });
 }
 
-export function useSymbolMessages(symbol: string, limit = 50) {
+export function useSymbolMessages(symbol: string, limit = 50, start?: string, end?: string) {
   return useQuery({
-    queryKey: ['stocktwits', 'messages', symbol, limit],
-    queryFn: () => stocktwitsApi.getMessages(symbol, limit),
+    queryKey: ['stocktwits', 'messages', symbol, limit, start, end],
+    queryFn: () => stocktwitsApi.getMessages(symbol, limit, start, end),
     enabled: !!symbol,
     refetchInterval: 30000,
     staleTime: 15000,

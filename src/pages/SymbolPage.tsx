@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -25,9 +26,28 @@ import {
 
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
+  const [timeRange, setTimeRange] = useState('7D');
+  
+  // Calculate date range based on selection
+  const { start, end } = useMemo(() => {
+    const now = new Date();
+    const ranges: Record<string, number> = {
+      '1H': 1/24,
+      '6H': 0.25,
+      '24H': 1,
+      '7D': 7,
+      '30D': 30
+    };
+    const days = ranges[timeRange] || 7;
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: now.toISOString().split('T')[0]
+    };
+  }, [timeRange]);
   
   const { data: stats, isLoading: statsLoading } = useSymbolStats(symbol);
-  const { data: messages = [], isLoading: messagesLoading } = useSymbolMessages(symbol, 10);
+  const { data: messages = [], isLoading: messagesLoading } = useSymbolMessages(symbol, 10, start, end);
   const { data: sentimentData } = useSymbolSentiment(symbol);
   
   const data = stats || {
@@ -154,7 +174,7 @@ export default function SymbolPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Sentiment Over Time</h3>
-                <TimeRangeSelector />
+                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <SentimentChart symbol={symbol} />
             </Card>
@@ -164,7 +184,7 @@ export default function SymbolPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Top 10 Narratives</h3>
-                <TimeRangeSelector />
+                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <NarrativeChart symbol={symbol} />
             </Card>
@@ -174,7 +194,7 @@ export default function SymbolPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Emotion Trends</h3>
-                <TimeRangeSelector />
+                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <EmotionChart symbol={symbol} />
             </Card>
@@ -184,7 +204,7 @@ export default function SymbolPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Message Volume</h3>
-                <TimeRangeSelector />
+                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <VolumeChart symbol={symbol} />
             </Card>
@@ -266,15 +286,16 @@ function MetricCard({
   );
 }
 
-function TimeRangeSelector() {
+function TimeRangeSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div className="flex gap-1">
       {["1H", "6H", "24H", "7D", "30D"].map((range) => (
         <Button
           key={range}
-          variant={range === "24H" ? "default" : "ghost"}
+          variant={range === value ? "default" : "ghost"}
           size="sm"
           className="px-3"
+          onClick={() => onChange(range)}
         >
           {range}
         </Button>

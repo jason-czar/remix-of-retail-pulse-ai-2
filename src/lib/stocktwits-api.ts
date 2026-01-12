@@ -45,11 +45,14 @@ export interface SymbolStats {
 export interface Message {
   id: string;
   user: string;
+  userName?: string;
+  userAvatar?: string;
   content: string;
   sentiment: 'bullish' | 'bearish' | 'neutral';
   emotions: string[];
   time: string;
   created_at: string;
+  symbols?: string[];
 }
 
 export interface SentimentData {
@@ -147,10 +150,17 @@ export const stocktwitsApi = {
     }
   },
 
-  // Get messages for a symbol
-  async getMessages(symbol: string, limit = 50): Promise<Message[]> {
+  // Get messages for a symbol with optional date range
+  async getMessages(symbol: string, limit = 50, start?: string, end?: string): Promise<Message[]> {
     try {
-      const response = await callApi('messages', { symbol, limit: limit.toString() });
+      const params: Record<string, string> = { 
+        symbol, 
+        limit: limit.toString() 
+      };
+      if (start) params.start = start;
+      if (end) params.end = end;
+      
+      const response = await callApi('messages', params);
       
       // The API returns { messages: [...], total: number }
       const data = response?.messages || response?.data || response;
@@ -159,11 +169,14 @@ export const stocktwitsApi = {
         return data.map((msg: any) => ({
           id: msg.id?.toString() || msg.message_id?.toString() || Math.random().toString(),
           user: msg.user?.username || msg.username || 'anonymous',
+          userName: msg.user?.name,
+          userAvatar: msg.user?.avatar_url,
           content: msg.body || msg.content || msg.text || '',
           sentiment: mapSentiment(msg.entities?.sentiment?.basic || msg.sentiment),
           emotions: msg.emotions || [],
           time: formatTime(msg.created_at),
           created_at: msg.created_at,
+          symbols: msg.symbols?.map((s: any) => s.symbol) || [symbol],
         }));
       }
       
