@@ -28,6 +28,7 @@ export interface TrendingSymbol {
   volume: number;
   trend: 'bullish' | 'bearish' | 'neutral';
   change?: number;
+  summary?: string;
 }
 
 export interface SymbolStats {
@@ -69,17 +70,27 @@ export const stocktwitsApi = {
   // Get trending symbols
   async getTrending(): Promise<TrendingSymbol[]> {
     try {
-      const data = await callApi('trending');
+      const response = await callApi('trending');
+      
+      // The API returns { symbols: [...] }
+      const data = response?.symbols || response;
       
       if (Array.isArray(data)) {
-        return data.map((item: any) => ({
-          symbol: item.symbol || item.ticker,
-          name: item.name || item.title,
-          sentiment: item.sentiment_score || item.sentiment || 50,
-          volume: item.message_count || item.volume || 0,
-          trend: item.sentiment_score > 55 ? 'bullish' : item.sentiment_score < 45 ? 'bearish' : 'neutral',
-          change: item.change || 0,
-        }));
+        return data.map((item: any) => {
+          const trendingScore = item.trending_score || 0;
+          // Normalize trending score to a sentiment-like value (0-100)
+          const sentiment = Math.min(100, Math.max(0, 50 + trendingScore * 2));
+          
+          return {
+            symbol: item.symbol || item.ticker,
+            name: item.title || item.name,
+            sentiment: Math.round(sentiment),
+            volume: item.watchlist_count || item.message_count || item.volume || 0,
+            trend: sentiment > 55 ? 'bullish' : sentiment < 45 ? 'bearish' : 'neutral',
+            change: item.trending_score || 0,
+            summary: item.trends?.summary,
+          };
+        });
       }
       
       return [];
@@ -89,22 +100,43 @@ export const stocktwitsApi = {
     }
   },
 
-  // Get symbol stats
+  // Get symbol stats using the sentiment endpoint which has per-symbol data
   async getSymbolStats(symbol: string): Promise<SymbolStats | null> {
     try {
-      const data = await callApi('stats', { symbol });
+      const response = await callApi('sentiment', { symbol });
       
-      if (data) {
-        const sentiment = data.sentiment_score || data.sentiment || 50;
+      // The sentiment API returns: { data: { sentiment: { now: { valueNormalized: 88 } }, messageVolume: { ... } } }
+      const sentimentData = response?.data;
+      
+      if (sentimentData) {
+        const sentimentNow = sentimentData.sentiment?.now?.valueNormalized || 50;
+        const sentimentChange = sentimentData.sentiment?.['24h']?.change || 0;
+        const volumeNow = sentimentData.messageVolume?.now?.value || 0;
+        const volumeChange = sentimentData.messageVolume?.['24h']?.change || 0;
+        
+        const trend = sentimentNow > 55 ? 'bullish' : sentimentNow < 45 ? 'bearish' : 'neutral';
+        
+        // Determine badges based on data
+        const badges: string[] = [];
+        if (sentimentData.messageVolume?.now?.label === 'EXTREMELY_HIGH') {
+          badges.push('high-volume');
+        }
+        if (sentimentChange > 5) {
+          badges.push('surge');
+        }
+        if (sentimentNow > 75) {
+          badges.push('trending');
+        }
+        
         return {
-          symbol: data.symbol || symbol,
-          name: data.name || data.title || symbol,
-          sentiment,
-          sentimentChange: data.sentiment_change || data.change_24h || 0,
-          trend: sentiment > 55 ? 'bullish' : sentiment < 45 ? 'bearish' : 'neutral',
-          volume: formatVolume(data.message_count || data.volume || 0),
-          volumeChange: data.volume_change || 0,
-          badges: data.badges || [],
+          symbol,
+          name: symbol, // The sentiment API doesn't return name, we'll need to get it elsewhere
+          sentiment: sentimentNow,
+          sentimentChange: Math.round(sentimentChange * 10) / 10,
+          trend,
+          volume: formatVolume(volumeNow),
+          volumeChange: Math.round(volumeChange * 10) / 10,
+          badges,
         };
       }
       
@@ -118,14 +150,17 @@ export const stocktwitsApi = {
   // Get messages for a symbol
   async getMessages(symbol: string, limit = 50): Promise<Message[]> {
     try {
-      const data = await callApi('messages', { symbol, limit: limit.toString() });
+      const response = await callApi('messages', { symbol, limit: limit.toString() });
+      
+      // The API returns { messages: [...], total: number }
+      const data = response?.messages || response?.data || response;
       
       if (Array.isArray(data)) {
         return data.map((msg: any) => ({
-          id: msg.id || msg.message_id,
-          user: msg.username || msg.user?.username || 'anonymous',
-          content: msg.body || msg.content || msg.text,
-          sentiment: mapSentiment(msg.sentiment),
+          id: msg.id?.toString() || msg.message_id?.toString() || Math.random().toString(),
+          user: msg.user?.username || msg.username || 'anonymous',
+          content: msg.body || msg.content || msg.text || '',
+          sentiment: mapSentiment(msg.entities?.sentiment?.basic || msg.sentiment),
           emotions: msg.emotions || [],
           time: formatTime(msg.created_at),
           created_at: msg.created_at,
@@ -142,7 +177,9 @@ export const stocktwitsApi = {
   // Get sentiment analytics
   async getSentimentAnalytics(symbol: string, type = 'hourly'): Promise<SentimentData[]> {
     try {
-      const data = await callApi('analytics', { symbol, type });
+      const response = await callApi('analytics', { symbol, type });
+      
+      const data = response?.data || response;
       
       if (Array.isArray(data)) {
         return data.map((item: any) => ({
@@ -163,7 +200,9 @@ export const stocktwitsApi = {
   // Get volume analytics
   async getVolumeAnalytics(symbol: string): Promise<VolumeData[]> {
     try {
-      const data = await callApi('analytics', { symbol, type: 'volume' });
+      const response = await callApi('analytics', { symbol, type: 'volume' });
+      
+      const data = response?.data || response;
       
       if (Array.isArray(data)) {
         const baseline = calculateBaseline(data.map((item: any) => item.count || item.volume || 0));
@@ -186,16 +225,22 @@ export const stocktwitsApi = {
     }
   },
 
-  // Get sentiment for a symbol
-  async getSentiment(symbol: string): Promise<{ score: number; trend: string; summary?: string } | null> {
+  // Get sentiment for a symbol - returns full sentiment data
+  async getSentiment(symbol: string): Promise<{ score: number; trend: string; summary?: string; data?: any } | null> {
     try {
-      const data = await callApi('sentiment', { symbol });
+      const response = await callApi('sentiment', { symbol });
       
-      if (data) {
+      const sentimentData = response?.data;
+      
+      if (sentimentData) {
+        const score = sentimentData.sentiment?.now?.valueNormalized || 50;
+        const label = sentimentData.sentiment?.now?.label || '';
+        
         return {
-          score: data.sentiment_score || data.score || 50,
-          trend: data.trend || (data.sentiment_score > 55 ? 'bullish' : data.sentiment_score < 45 ? 'bearish' : 'neutral'),
-          summary: data.summary || data.ai_summary,
+          score,
+          trend: label.includes('BULLISH') ? 'bullish' : label.includes('BEARISH') ? 'bearish' : 'neutral',
+          summary: generateSummary(symbol, sentimentData),
+          data: sentimentData,
         };
       }
       
@@ -207,17 +252,44 @@ export const stocktwitsApi = {
   },
 };
 
+// Generate AI-like summary from sentiment data
+function generateSummary(symbol: string, data: any): string {
+  const sentiment = data.sentiment?.now;
+  const volume = data.messageVolume?.now;
+  const change24h = data.sentiment?.['24h']?.change || 0;
+  
+  if (!sentiment || !volume) {
+    return `Analyzing retail sentiment for ${symbol}. Real-time data from StockTwits community discussions.`;
+  }
+  
+  const sentimentLabel = sentiment.label?.replace(/_/g, ' ').toLowerCase() || 'mixed';
+  const volumeLabel = volume.label?.replace(/_/g, ' ').toLowerCase() || 'normal';
+  
+  let summary = `${symbol} is showing ${sentimentLabel} sentiment with ${volumeLabel} message volume. `;
+  
+  if (change24h > 0) {
+    summary += `Sentiment has improved by ${Math.abs(change24h).toFixed(1)}% over the last 24 hours. `;
+  } else if (change24h < 0) {
+    summary += `Sentiment has declined by ${Math.abs(change24h).toFixed(1)}% over the last 24 hours. `;
+  }
+  
+  summary += `Current sentiment score: ${sentiment.valueNormalized}/100.`;
+  
+  return summary;
+}
+
 // Helper functions
 function formatVolume(volume: number): string {
   if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;
-  if (volume >= 1000) return `${(volume / 1000).toFixed(0)}K`;
+  if (volume >= 1000) return `${(volume / 1000).toFixed(1)}K`;
   return volume.toString();
 }
 
 function mapSentiment(sentiment: any): 'bullish' | 'bearish' | 'neutral' {
   if (typeof sentiment === 'string') {
-    if (sentiment.toLowerCase() === 'bullish') return 'bullish';
-    if (sentiment.toLowerCase() === 'bearish') return 'bearish';
+    const lower = sentiment.toLowerCase();
+    if (lower === 'bullish' || lower.includes('bullish')) return 'bullish';
+    if (lower === 'bearish' || lower.includes('bearish')) return 'bearish';
     return 'neutral';
   }
   if (typeof sentiment === 'number') {
@@ -229,6 +301,8 @@ function mapSentiment(sentiment: any): 'bullish' | 'bearish' | 'neutral' {
 }
 
 function formatTime(timestamp: string): string {
+  if (!timestamp) return 'just now';
+  
   const date = new Date(timestamp);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -245,6 +319,7 @@ function formatTime(timestamp: string): string {
 }
 
 function formatChartTime(timestamp: string): string {
+  if (!timestamp) return '';
   const date = new Date(timestamp);
   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
