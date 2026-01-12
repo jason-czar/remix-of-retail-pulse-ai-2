@@ -56,7 +56,9 @@ const generateDataPoints = (timeRange: string) => {
 };
 
 export function SentimentChart({ symbol, start, end, timeRange = '24H' }: SentimentChartProps) {
-  const { data: apiData, isLoading } = useSentimentAnalytics(symbol, 'hourly');
+  // Use 'volume' type for daily buckets on 7D/30D, 'hourly' for shorter ranges
+  const analyticsType = timeRange === '7D' || timeRange === '30D' ? 'volume' : 'hourly';
+  const { data: apiData, isLoading } = useSentimentAnalytics(symbol, analyticsType, start, end);
   
   // Generate data based on time range - regenerates when timeRange changes
   const chartData = useMemo(() => {

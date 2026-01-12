@@ -187,16 +187,20 @@ export const stocktwitsApi = {
     }
   },
 
-  // Get sentiment analytics
-  async getSentimentAnalytics(symbol: string, type = 'hourly'): Promise<SentimentData[]> {
+  // Get sentiment analytics with optional date range
+  async getSentimentAnalytics(symbol: string, type = 'hourly', start?: string, end?: string): Promise<SentimentData[]> {
     try {
-      const response = await callApi('analytics', { symbol, type });
+      const params: Record<string, string> = { symbol, type };
+      if (start) params.start = start;
+      if (end) params.end = end;
+      
+      const response = await callApi('analytics', params);
       
       const data = response?.data || response;
       
       if (Array.isArray(data)) {
         return data.map((item: any) => ({
-          time: formatChartTime(item.timestamp || item.time || item.hour),
+          time: formatChartTime(item.timestamp || item.time || item.hour, type === 'volume' || !!start),
           sentiment: item.sentiment_score || item.sentiment || 50,
           bullish: item.bullish_count || item.bullish || 0,
           bearish: item.bearish_count || item.bearish || 0,
@@ -210,10 +214,14 @@ export const stocktwitsApi = {
     }
   },
 
-  // Get volume analytics
-  async getVolumeAnalytics(symbol: string): Promise<VolumeData[]> {
+  // Get volume analytics with optional date range
+  async getVolumeAnalytics(symbol: string, start?: string, end?: string): Promise<VolumeData[]> {
     try {
-      const response = await callApi('analytics', { symbol, type: 'volume' });
+      const params: Record<string, string> = { symbol, type: 'volume' };
+      if (start) params.start = start;
+      if (end) params.end = end;
+      
+      const response = await callApi('analytics', params);
       
       const data = response?.data || response;
       
@@ -223,7 +231,7 @@ export const stocktwitsApi = {
         return data.map((item: any) => {
           const volume = item.count || item.volume || 0;
           return {
-            time: formatChartTime(item.timestamp || item.time || item.hour),
+            time: formatChartTime(item.timestamp || item.time || item.hour, !!start),
             volume,
             baseline,
             isSpike: volume > baseline * 2,
@@ -331,9 +339,12 @@ function formatTime(timestamp: string): string {
   return `${diffDays}d ago`;
 }
 
-function formatChartTime(timestamp: string): string {
+function formatChartTime(timestamp: string, useDateFormat = false): string {
   if (!timestamp) return '';
   const date = new Date(timestamp);
+  if (useDateFormat) {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
