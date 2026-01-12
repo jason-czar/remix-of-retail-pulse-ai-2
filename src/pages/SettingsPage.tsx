@@ -52,6 +52,11 @@ export default function SettingsPage() {
   const [newKeyName, setNewKeyName] = useState("");
   const [creatingKey, setCreatingKey] = useState(false);
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
+  
+  // Profile form state
+  const [fullName, setFullName] = useState("");
+  const [company, setCompany] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -72,12 +77,54 @@ export default function SettingsPage() {
     ]);
 
     if (profileRes.data) {
-      setProfile(profileRes.data as Profile);
+      const profileData = profileRes.data as Profile;
+      setProfile(profileData);
+      setFullName(profileData.full_name || "");
+      setCompany(profileData.company || "");
     }
     if (keysRes.data) {
       setApiKeys(keysRes.data as ApiKey[]);
     }
     setLoading(false);
+  };
+
+  const saveProfile = async () => {
+    if (!user || !profile) return;
+
+    // Validate inputs
+    const trimmedName = fullName.trim();
+    const trimmedCompany = company.trim();
+    
+    if (trimmedName.length > 100) {
+      toast.error("Full name must be less than 100 characters");
+      return;
+    }
+    if (trimmedCompany.length > 100) {
+      toast.error("Company name must be less than 100 characters");
+      return;
+    }
+
+    setSavingProfile(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: trimmedName || null,
+        company: trimmedCompany || null,
+      })
+      .eq("user_id", user.id);
+
+    setSavingProfile(false);
+
+    if (error) {
+      toast.error("Failed to save profile");
+    } else {
+      setProfile({
+        ...profile,
+        full_name: trimmedName || null,
+        company: trimmedCompany || null,
+      });
+      toast.success("Profile saved successfully");
+    }
   };
 
   const generateApiKey = () => {
@@ -202,13 +249,38 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Full Name</Label>
-                  <Input defaultValue={profile?.full_name || ""} className="bg-secondary/50" />
+                  <Input 
+                    value={fullName} 
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your full name"
+                    maxLength={100}
+                    className="bg-secondary/50" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Company</Label>
-                  <Input defaultValue={profile?.company || ""} className="bg-secondary/50" />
+                  <Input 
+                    value={company} 
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Your company (optional)"
+                    maxLength={100}
+                    className="bg-secondary/50" 
+                  />
                 </div>
-                <Button variant="hero">Save Changes</Button>
+                <Button 
+                  variant="hero" 
+                  onClick={saveProfile}
+                  disabled={savingProfile}
+                >
+                  {savingProfile ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
               </div>
             </Card>
           </TabsContent>
