@@ -30,10 +30,10 @@ export function useSymbolMessages(symbol: string, limit = 50, start?: string, en
   });
 }
 
-export function useSentimentAnalytics(symbol: string, type = 'hourly', start?: string, end?: string) {
+export function useSentimentAnalytics(symbol: string, timeRange = '24H', start?: string, end?: string) {
   return useQuery({
-    queryKey: ['stocktwits', 'sentiment-analytics', symbol, type, start, end],
-    queryFn: () => stocktwitsApi.getSentimentAnalytics(symbol, type, start, end),
+    queryKey: ['stocktwits', 'sentiment-analytics', symbol, timeRange, start, end],
+    queryFn: () => stocktwitsApi.getSentimentAnalytics(symbol, timeRange, start, end),
     enabled: !!symbol,
     refetchInterval: 60000,
     staleTime: 30000,
