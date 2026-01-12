@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,8 @@ import {
   XCircle, 
   Loader2,
   AlertTriangle,
-  Database
+  Database,
+  StopCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ export default function HistoryBackfillUploader() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentFileIndex, setCurrentFileIndex] = useState(-1);
+  const cancelledRef = useRef(false);
 
   const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -99,8 +101,14 @@ export default function HistoryBackfillUploader() {
     e.target.value = "";
   }, []);
 
+  const cancelProcessing = useCallback(() => {
+    cancelledRef.current = true;
+    toast.info("Cancelling... will stop after current batch completes");
+  }, []);
+
   const processFiles = async () => {
     setIsProcessing(true);
+    cancelledRef.current = false;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -129,7 +137,7 @@ export default function HistoryBackfillUploader() {
         const batchSize = 8; // Process 8 buckets at a time to avoid timeout
 
         // Process in batches
-        while (hasMore) {
+        while (hasMore && !cancelledRef.current) {
           const { data, error } = await supabase.functions.invoke("backfill-history", {
             body: {
               symbol: file.symbol,
@@ -168,9 +176,31 @@ export default function HistoryBackfillUploader() {
           );
 
           // Small delay between batches
-          if (hasMore) {
+          if (hasMore && !cancelledRef.current) {
             await new Promise(resolve => setTimeout(resolve, 500));
           }
+        }
+
+        // Handle cancellation
+        if (cancelledRef.current) {
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === i
+                ? {
+                    ...f,
+                    status: "error",
+                    result: {
+                      bucketsProcessed: startIndex,
+                      narrativeRecords: totalNarratives,
+                      emotionRecords: totalEmotions,
+                      errors: ["Cancelled by user"],
+                    },
+                  }
+                : f
+            )
+          );
+          toast.warning(`${file.symbol}: Cancelled after ${totalNarratives + totalEmotions} records`);
+          break; // Exit the file loop
         }
 
         setFiles((prev) =>
@@ -300,11 +330,22 @@ export default function HistoryBackfillUploader() {
           {/* Progress Summary */}
           {isProcessing && (
             <div className="p-4 rounded-lg bg-secondary/30">
-              <div className="flex items-center gap-2 mb-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">
-                  Processing {currentFileIndex + 1} of {files.length}...
-                </span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">
+                    Processing {currentFileIndex + 1} of {files.length}...
+                  </span>
+                </div>
+                <Button 
+                  onClick={cancelProcessing} 
+                  variant="destructive" 
+                  size="sm"
+                  className="h-7"
+                >
+                  <StopCircle className="h-3 w-3 mr-1" />
+                  Cancel
+                </Button>
               </div>
               <Progress
                 value={((currentFileIndex + 1) / files.length) * 100}
