@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_cache: {
+        Row: {
+          created_at: string | null
+          emotions: Json
+          expires_at: string
+          id: string
+          symbol: string
+          time_range: string
+        }
+        Insert: {
+          created_at?: string | null
+          emotions: Json
+          expires_at: string
+          id?: string
+          symbol: string
+          time_range: string
+        }
+        Update: {
+          created_at?: string | null
+          emotions?: Json
+          expires_at?: string
+          id?: string
+          symbol?: string
+          time_range?: string
+        }
+        Relationships: []
+      }
       narrative_cache: {
         Row: {
           created_at: string | null

@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.analyze-narratives]
 verify_jwt = false
+
+[functions.analyze-emotions]
+verify_jwt = false
