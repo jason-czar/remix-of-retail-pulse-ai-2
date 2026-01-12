@@ -54,6 +54,11 @@ Deno.serve(async (req) => {
         const { start, end } = getDateParams(7)
         queryParams.set('start', start)
         queryParams.set('end', end)
+        // Cursor-based pagination support
+        const cursorCreatedAt = url.searchParams.get('cursor_created_at')
+        const cursorId = url.searchParams.get('cursor_id')
+        if (cursorCreatedAt) queryParams.set('cursor_created_at', cursorCreatedAt)
+        if (cursorId) queryParams.set('cursor_id', cursorId)
         break
       }
       
