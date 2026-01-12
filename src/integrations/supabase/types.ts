@@ -112,6 +112,7 @@ export type Database = {
           created_at: string | null
           expires_at: string
           id: string
+          message_count: number | null
           narratives: Json
           symbol: string
           time_range: string
@@ -120,6 +121,7 @@ export type Database = {
           created_at?: string | null
           expires_at: string
           id?: string
+          message_count?: number | null
           narratives: Json
           symbol: string
           time_range: string
@@ -128,6 +130,7 @@ export type Database = {
           created_at?: string | null
           expires_at?: string
           id?: string
+          message_count?: number | null
           narratives?: Json
           symbol?: string
           time_range?: string
