@@ -215,7 +215,7 @@ export const stocktwitsApi = {
   },
 
   // Get volume analytics with optional date range
-  async getVolumeAnalytics(symbol: string, start?: string, end?: string): Promise<VolumeData[]> {
+  async getVolumeAnalytics(symbol: string, timeRange = '24H', start?: string, end?: string): Promise<VolumeData[]> {
     try {
       const params: Record<string, string> = { symbol, type: 'volume' };
       if (start) params.start = start;
@@ -223,15 +223,31 @@ export const stocktwitsApi = {
       
       const response = await callApi('analytics', params);
       
-      const data = response?.data || response;
+      // For 7D/30D use messageVolume (daily data), for shorter ranges use hourlyDistribution
+      const useDailyData = timeRange === '7D' || timeRange === '30D';
+      
+      let data: any[];
+      if (useDailyData && response?.messageVolume) {
+        data = response.messageVolume;
+      } else if (response?.hourlyDistribution) {
+        data = response.hourlyDistribution;
+      } else if (response?.intervalDistribution) {
+        data = response.intervalDistribution;
+      } else {
+        data = response?.data || response || [];
+      }
       
       if (Array.isArray(data)) {
         const baseline = calculateBaseline(data.map((item: any) => item.count || item.volume || 0));
         
         return data.map((item: any) => {
           const volume = item.count || item.volume || 0;
+          // Use date for daily data, hour/time for hourly data
+          const timeValue = item.date || item.hour || item.time || item.timestamp;
           return {
-            time: formatChartTime(item.timestamp || item.time || item.hour, !!start),
+            time: useDailyData 
+              ? formatDateLabel(timeValue)
+              : formatHourLabel(timeValue),
             volume,
             baseline,
             isSpike: volume > baseline * 2,
@@ -346,6 +362,22 @@ function formatChartTime(timestamp: string, useDateFormat = false): string {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateLabel(dateStr: string): string {
+  if (!dateStr) return '';
+  // Handle YYYY-MM-DD format
+  const date = new Date(dateStr + 'T12:00:00');
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatHourLabel(hourStr: string): string {
+  if (!hourStr) return '';
+  // Handle "HH:MM" format or just hour number
+  if (hourStr.includes(':')) {
+    return hourStr;
+  }
+  return `${hourStr}:00`;
 }
 
 function calculateBaseline(volumes: number[]): number {

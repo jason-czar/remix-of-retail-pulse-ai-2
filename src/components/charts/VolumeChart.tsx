@@ -60,7 +60,7 @@ const generateVolumeData = (timeRange: string) => {
 };
 
 export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeChartProps) {
-  const { data: apiData, isLoading } = useVolumeAnalytics(symbol, start, end);
+  const { data: apiData, isLoading } = useVolumeAnalytics(symbol, timeRange, start, end);
   
   const chartData = useMemo(() => {
     if (apiData && apiData.length > 0) {
