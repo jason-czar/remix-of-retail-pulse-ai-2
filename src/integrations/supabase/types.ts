@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      narrative_cache: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          narratives: Json
+          symbol: string
+          time_range: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          narratives: Json
+          symbol: string
+          time_range: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          narratives?: Json
+          symbol?: string
+          time_range?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           api_calls_reset_at: string
