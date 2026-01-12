@@ -107,6 +107,39 @@ export type Database = {
         }
         Relationships: []
       }
+      emotion_history: {
+        Row: {
+          created_at: string
+          dominant_emotion: string | null
+          emotions: Json
+          id: string
+          message_count: number
+          period_type: string
+          recorded_at: string
+          symbol: string
+        }
+        Insert: {
+          created_at?: string
+          dominant_emotion?: string | null
+          emotions?: Json
+          id?: string
+          message_count?: number
+          period_type: string
+          recorded_at?: string
+          symbol: string
+        }
+        Update: {
+          created_at?: string
+          dominant_emotion?: string | null
+          emotions?: Json
+          id?: string
+          message_count?: number
+          period_type?: string
+          recorded_at?: string
+          symbol?: string
+        }
+        Relationships: []
+      }
       narrative_cache: {
         Row: {
           created_at: string | null
@@ -134,6 +167,39 @@ export type Database = {
           narratives?: Json
           symbol?: string
           time_range?: string
+        }
+        Relationships: []
+      }
+      narrative_history: {
+        Row: {
+          created_at: string
+          dominant_narrative: string | null
+          id: string
+          message_count: number
+          narratives: Json
+          period_type: string
+          recorded_at: string
+          symbol: string
+        }
+        Insert: {
+          created_at?: string
+          dominant_narrative?: string | null
+          id?: string
+          message_count?: number
+          narratives?: Json
+          period_type: string
+          recorded_at?: string
+          symbol: string
+        }
+        Update: {
+          created_at?: string
+          dominant_narrative?: string | null
+          id?: string
+          message_count?: number
+          narratives?: Json
+          period_type?: string
+          recorded_at?: string
+          symbol?: string
         }
         Relationships: []
       }
@@ -250,7 +316,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_old_history: { Args: never; Returns: undefined }
     }
     Enums: {
       subscription_plan: "free" | "professional" | "enterprise"
