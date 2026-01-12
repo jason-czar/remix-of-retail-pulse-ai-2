@@ -13,6 +13,7 @@ import { EmotionChart } from "@/components/charts/EmotionChart";
 import { VolumeChart } from "@/components/charts/VolumeChart";
 import { SentimentHistoryChart } from "@/components/charts/SentimentHistoryChart";
 import { NarrativeTrendsChart } from "@/components/charts/NarrativeTrendsChart";
+import { EmotionTrendsChart } from "@/components/charts/EmotionTrendsChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { useSymbolStats, useSymbolMessages, useSymbolSentiment } from "@/hooks/use-stocktwits";
@@ -180,18 +181,26 @@ export default function SymbolPage() {
           </TabsContent>
 
           <TabsContent value="history">
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Historical Sentiment</h3>
-              </div>
-              <SentimentHistoryChart symbol={symbol} days={30} showVolume />
-            </Card>
-            <Card className="p-6 mt-4">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Narrative Trends</h3>
-              </div>
-              <NarrativeTrendsChart symbol={symbol} days={7} />
-            </Card>
+            <div className="space-y-4">
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold">Historical Sentiment</h3>
+                </div>
+                <SentimentHistoryChart symbol={symbol} days={30} showVolume />
+              </Card>
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold">Narrative Trends</h3>
+                </div>
+                <NarrativeTrendsChart symbol={symbol} days={7} />
+              </Card>
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold">Emotion Trends</h3>
+                </div>
+                <EmotionTrendsChart symbol={symbol} days={7} />
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="narratives">
