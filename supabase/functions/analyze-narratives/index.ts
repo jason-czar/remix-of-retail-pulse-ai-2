@@ -262,6 +262,7 @@ ${messageTexts}`,
           symbol: symbol.toUpperCase(),
           time_range: timeRange,
           narratives,
+          message_count: totalMessages,
           expires_at: expiresAt,
         },
         { onConflict: "symbol,time_range" }
