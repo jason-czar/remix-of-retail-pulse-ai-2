@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -15,30 +16,33 @@ import {
   Star
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTrending } from "@/hooks/use-stocktwits";
 
-// Mock dashboard data
-const watchlist = [
-  { symbol: "AAPL", name: "Apple Inc", sentiment: 67, change: 5.2, trend: "bullish" as const },
-  { symbol: "NVDA", name: "NVIDIA Corp", sentiment: 78, change: 12.5, trend: "bullish" as const },
-  { symbol: "TSLA", name: "Tesla Inc", sentiment: 45, change: -8.2, trend: "bearish" as const },
-  { symbol: "AMD", name: "AMD Inc", sentiment: 71, change: 15.3, trend: "bullish" as const },
-  { symbol: "META", name: "Meta Platforms", sentiment: 68, change: 7.8, trend: "bullish" as const },
-];
-
+// Mock alerts data (will be replaced with real alerts later)
 const alerts = [
   { symbol: "NVDA", type: "Sentiment Surge", message: "Sentiment up 15% in last hour", time: "5 min ago", severity: "high" },
   { symbol: "TSLA", type: "Sentiment Flip", message: "Flipped from bullish to bearish", time: "23 min ago", severity: "medium" },
   { symbol: "AAPL", type: "Volume Spike", message: "3x baseline message volume", time: "1 hour ago", severity: "low" },
 ];
 
-const trending = [
-  { symbol: "SMCI", sentiment: 82, volume: "89K", trend: "bullish" as const },
-  { symbol: "ARM", sentiment: 75, volume: "67K", trend: "bullish" as const },
-  { symbol: "PLTR", sentiment: 69, volume: "124K", trend: "bullish" as const },
-  { symbol: "RIVN", sentiment: 38, volume: "45K", trend: "bearish" as const },
-];
+// Default watchlist (will be user-specific later)
+const defaultWatchlist = ["AAPL", "NVDA", "TSLA", "AMD", "META"];
 
 export default function Dashboard() {
+  const { data: trending = [], isLoading: trendingLoading } = useTrending();
+
+  // Map trending data to watchlist format for display
+  const watchlistData = defaultWatchlist.map(symbol => {
+    const trendingItem = trending.find(t => t.symbol === symbol);
+    return {
+      symbol,
+      name: trendingItem?.name || symbol,
+      sentiment: trendingItem?.sentiment || 50,
+      change: trendingItem?.change || 0,
+      trend: (trendingItem?.trend || 'neutral') as 'bullish' | 'bearish' | 'neutral',
+    };
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -80,9 +84,15 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-3">
-                {watchlist.map((item) => (
-                  <WatchlistItem key={item.symbol} {...item} />
-                ))}
+                {trendingLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))
+                ) : (
+                  watchlistData.map((item) => (
+                    <WatchlistItem key={item.symbol} {...item} />
+                  ))
+                )}
               </div>
             </Card>
 
@@ -157,9 +167,23 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-3">
-                {trending.map((item) => (
-                  <TrendingItem key={item.symbol} {...item} />
-                ))}
+                {trendingLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full" />
+                  ))
+                ) : trending.length > 0 ? (
+                  trending.slice(0, 4).map((item) => (
+                    <TrendingItem 
+                      key={item.symbol} 
+                      symbol={item.symbol}
+                      sentiment={item.sentiment}
+                      volume={formatVolume(item.volume)}
+                      trend={item.trend}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No trending data available</p>
+                )}
               </div>
             </Card>
           </div>
@@ -171,7 +195,13 @@ export default function Dashboard() {
   );
 }
 
-function WatchlistItem({ 
+function formatVolume(volume: number): string {
+  if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;
+  if (volume >= 1000) return `${(volume / 1000).toFixed(0)}K`;
+  return volume.toString();
+}
+
+function WatchlistItem({
   symbol, 
   name, 
   sentiment, 
