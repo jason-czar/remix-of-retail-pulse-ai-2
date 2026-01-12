@@ -63,15 +63,6 @@ async function fetchSentimentHistory(
     params.set("compare", compareSymbols.join(","));
   }
 
-  const { data, error } = await supabase.functions.invoke("get-sentiment-history", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: null,
-  });
-
-  // Workaround: use fetch directly since invoke doesn't support query params well
   const response = await fetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-sentiment-history?${params.toString()}`,
     {
@@ -83,7 +74,8 @@ async function fetchSentimentHistory(
   );
 
   if (!response.ok) {
-    throw new Error("Failed to fetch sentiment history");
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to fetch sentiment history");
   }
 
   return response.json();
