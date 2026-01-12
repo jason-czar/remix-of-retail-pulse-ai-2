@@ -11,6 +11,39 @@ interface Narrative {
   count: number;
   sentiment: "bullish" | "bearish" | "neutral";
 }
+// Helper to convert timeRange to date parameters
+function getDateRange(timeRange: string): { start: string; end: string; limit: number } {
+  const now = new Date();
+  let daysBack = 1;
+  let limit = 100;
+
+  switch (timeRange) {
+    case "1H":
+    case "6H":
+    case "24H":
+      daysBack = 1;
+      limit = 100;
+      break;
+    case "7D":
+      daysBack = 7;
+      limit = 200;
+      break;
+    case "30D":
+      daysBack = 30;
+      limit = 400;
+      break;
+    default:
+      daysBack = 1;
+      limit = 100;
+  }
+
+  const pastDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+  return {
+    start: pastDate.toISOString().split("T")[0],
+    end: now.toISOString().split("T")[0],
+    limit,
+  };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -60,8 +93,13 @@ serve(async (req) => {
 
     console.log(`Cache miss for ${symbol} ${timeRange}, fetching messages...`);
 
-    // Fetch messages from StockTwits proxy
-    const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=300`;
+    // Get date range based on timeRange
+    const { start, end, limit } = getDateRange(timeRange);
+
+    // Fetch messages from StockTwits proxy with date range
+    const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=${limit}&start=${start}&end=${end}`;
+    console.log(`Fetching from: ${stocktwitsUrl}`);
+    
     const messagesResponse = await fetch(stocktwitsUrl, {
       headers: {
         "x-api-key": STOCKTWITS_API_KEY || "",
