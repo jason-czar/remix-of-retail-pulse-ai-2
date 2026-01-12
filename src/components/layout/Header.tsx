@@ -7,7 +7,6 @@ import {
   Menu,
   Search,
   Zap,
-  User,
   LogOut,
   Settings,
   Key
@@ -22,9 +21,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SearchCommand } from "@/components/SearchCommand";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -86,9 +87,15 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hidden md:flex"
+              onClick={() => setSearchOpen(true)}
+            >
               <Search className="h-5 w-5" />
             </Button>
+            <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
             
             {!loading && (
               <>

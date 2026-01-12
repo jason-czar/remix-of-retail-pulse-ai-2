@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SearchCommand } from "@/components/SearchCommand";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -29,6 +30,7 @@ const alerts = [
 const defaultWatchlist = ["AAPL", "NVDA", "TSLA", "AMD", "META"];
 
 export default function Dashboard() {
+  const [searchOpen, setSearchOpen] = useState(false);
   const { data: trending = [], isLoading: trendingLoading } = useTrending();
 
   // Map trending data to watchlist format for display
@@ -56,13 +58,18 @@ export default function Dashboard() {
           </div>
           
           <div className="flex gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search symbols..." 
-                className="pl-9 w-64 bg-secondary/50"
-              />
-            </div>
+            <Button 
+              variant="outline" 
+              className="w-64 justify-start text-muted-foreground"
+              onClick={() => setSearchOpen(true)}
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Search symbols...
+              <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </Button>
+            <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
             <Button variant="outline">
               <BarChart3 className="h-4 w-4 mr-2" />
               Analytics
