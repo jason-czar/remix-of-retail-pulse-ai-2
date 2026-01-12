@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.analyze-emotions]
 verify_jwt = false
+
+[functions.record-sentiment-snapshot]
+verify_jwt = false
+
+[functions.get-sentiment-history]
+verify_jwt = false
