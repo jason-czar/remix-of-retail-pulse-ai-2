@@ -59,15 +59,32 @@ export function useEmotionHistory(
         throw new Error(`Failed to fetch emotion history: ${error.message}`);
       }
 
-      const points: EmotionHistoryPoint[] = (data || []).map((row) => ({
-        id: row.id,
-        symbol: row.symbol,
-        recorded_at: row.recorded_at,
-        period_type: row.period_type as "hourly" | "daily",
-        emotions: (row.emotions as Record<string, number>) || {},
-        dominant_emotion: row.dominant_emotion,
-        message_count: row.message_count || 0,
-      }));
+      const points: EmotionHistoryPoint[] = (data || []).map((row) => {
+        // Parse emotions - handle both array format and object format
+        let emotionsObj: Record<string, number> = {};
+        
+        if (Array.isArray(row.emotions)) {
+          // Array format: [{name: "Excitement", score: 50}, ...]
+          row.emotions.forEach((e: any) => {
+            if (e.name && typeof e.score === 'number') {
+              emotionsObj[e.name] = e.score;
+            }
+          });
+        } else if (row.emotions && typeof row.emotions === 'object') {
+          // Object format: {Excitement: 50, Fear: 35, ...}
+          emotionsObj = row.emotions as Record<string, number>;
+        }
+
+        return {
+          id: row.id,
+          symbol: row.symbol,
+          recorded_at: row.recorded_at,
+          period_type: row.period_type as "hourly" | "daily",
+          emotions: emotionsObj,
+          dominant_emotion: row.dominant_emotion,
+          message_count: row.message_count || 0,
+        };
+      });
 
       // Build emotion trends map
       const emotionTrends = new Map<string, { time: string; score: number }[]>();
