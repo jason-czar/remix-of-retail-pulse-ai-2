@@ -9,10 +9,17 @@ export interface EmotionScore {
   examples?: string[];
 }
 
+export interface EmotionTimePoint {
+  timestamp: string;
+  label: string;
+  emotions: Record<string, number>;
+}
+
 export interface EmotionAnalysisResult {
   emotions: EmotionScore[];
   dominantEmotion: string;
   emotionalIntensity: "low" | "moderate" | "high" | "extreme";
+  historicalData: EmotionTimePoint[];
   cached: boolean;
 }
 

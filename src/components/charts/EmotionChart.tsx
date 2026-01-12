@@ -11,12 +11,15 @@ import {
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  Radar
+  Radar,
+  LineChart,
+  Line,
+  Legend
 } from "recharts";
 import { useMemo, useState } from "react";
-import { useEmotionAnalysis, EmotionScore } from "@/hooks/use-emotion-analysis";
+import { useEmotionAnalysis, EmotionScore, EmotionTimePoint } from "@/hooks/use-emotion-analysis";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target } from "lucide-react";
+import { Sparkles, AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -68,7 +71,8 @@ const getIntensityColor = (intensity: string) => {
 };
 
 export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
-  const [viewMode, setViewMode] = useState<"bar" | "radar">("bar");
+  const [viewMode, setViewMode] = useState<"bar" | "radar" | "timeline">("bar");
+  const [selectedEmotions, setSelectedEmotions] = useState<string[]>(["Excitement", "Fear", "Conviction"]);
   const { data, isLoading, error } = useEmotionAnalysis(symbol, timeRange);
   
   const chartData = useMemo(() => {
@@ -83,6 +87,26 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       }))
       .sort((a, b) => b.score - a.score);
   }, [data]);
+
+  const timelineData = useMemo(() => {
+    if (!data?.historicalData || data.historicalData.length === 0) {
+      return [];
+    }
+    
+    return data.historicalData.map((point: EmotionTimePoint) => ({
+      label: point.label,
+      timestamp: point.timestamp,
+      ...point.emotions,
+    }));
+  }, [data]);
+
+  const toggleEmotion = (emotion: string) => {
+    setSelectedEmotions(prev => 
+      prev.includes(emotion) 
+        ? prev.filter(e => e !== emotion)
+        : [...prev, emotion].slice(-5) // Max 5 emotions at once
+    );
+  };
 
   if (isLoading) {
     return (
@@ -144,6 +168,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
               size="icon"
               className="h-7 w-7"
               onClick={() => setViewMode("bar")}
+              title="Bar Chart"
             >
               <BarChart3 className="h-4 w-4" />
             </Button>
@@ -152,8 +177,18 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
               size="icon"
               className="h-7 w-7"
               onClick={() => setViewMode("radar")}
+              title="Radar Chart"
             >
               <Target className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "timeline" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setViewMode("timeline")}
+              title="Timeline View"
+            >
+              <Activity className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -237,7 +272,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      ) : (
+      ) : viewMode === "radar" ? (
         <ResponsiveContainer width="100%" height="75%">
           <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
             <PolarGrid stroke="hsl(217 33% 17%)" />
@@ -260,25 +295,95 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
             />
           </RadarChart>
         </ResponsiveContainer>
+      ) : (
+        // Timeline view
+        <div className="h-[75%] flex flex-col">
+          {/* Emotion selector pills */}
+          <div className="flex flex-wrap gap-2 mb-4 px-2">
+            {Object.entries(emotionColors).map(([emotion, color]) => (
+              <button
+                key={emotion}
+                onClick={() => toggleEmotion(emotion)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all border ${
+                  selectedEmotions.includes(emotion)
+                    ? "border-primary/50 bg-primary/10"
+                    : "border-border bg-card/30 opacity-60 hover:opacity-100"
+                }`}
+              >
+                <div 
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: color }}
+                />
+                <span className="text-foreground">{emotion}</span>
+              </button>
+            ))}
+          </div>
+          
+          {timelineData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={timelineData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" />
+                <XAxis 
+                  dataKey="label" 
+                  stroke="hsl(215 20% 55%)" 
+                  fontSize={11}
+                  tickLine={false}
+                />
+                <YAxis 
+                  domain={[0, 100]} 
+                  stroke="hsl(215 20% 55%)" 
+                  fontSize={11}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(222 47% 8%)",
+                    border: "1px solid hsl(217 33% 17%)",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
+                  }}
+                  labelStyle={{ color: "hsl(210 40% 98%)" }}
+                />
+                {selectedEmotions.map((emotion) => (
+                  <Line
+                    key={emotion}
+                    type="monotone"
+                    dataKey={emotion}
+                    stroke={emotionColors[emotion]}
+                    strokeWidth={2}
+                    dot={{ fill: emotionColors[emotion], strokeWidth: 0, r: 4 }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground">
+              <p className="text-sm">No historical data available yet</p>
+            </div>
+          )}
+        </div>
       )}
       
       {/* Legend with trends */}
-      <div className="flex flex-wrap gap-3 mt-4 justify-center">
-        {chartData.slice(0, 5).map((emotion: any) => (
-          <div 
-            key={emotion.name}
-            className="flex items-center gap-2 text-xs bg-card/50 px-3 py-1.5 rounded-full border border-border"
-          >
+      {viewMode !== "timeline" && (
+        <div className="flex flex-wrap gap-3 mt-4 justify-center">
+          {chartData.slice(0, 5).map((emotion: any) => (
             <div 
-              className="w-2.5 h-2.5 rounded-full" 
-              style={{ backgroundColor: emotion.fill }}
-            />
-            <span className="text-foreground font-medium">{emotion.name}</span>
-            <span className="text-muted-foreground">{emotion.score}</span>
-            {getTrendIcon(emotion.trend)}
-          </div>
-        ))}
-      </div>
+              key={emotion.name}
+              className="flex items-center gap-2 text-xs bg-card/50 px-3 py-1.5 rounded-full border border-border"
+            >
+              <div 
+                className="w-2.5 h-2.5 rounded-full" 
+                style={{ backgroundColor: emotion.fill }}
+              />
+              <span className="text-foreground font-medium">{emotion.name}</span>
+              <span className="text-muted-foreground">{emotion.score}</span>
+              {getTrendIcon(emotion.trend)}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
