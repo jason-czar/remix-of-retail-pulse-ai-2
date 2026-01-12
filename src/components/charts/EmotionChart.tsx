@@ -14,14 +14,14 @@ import {
   Radar,
   LineChart,
   Line,
-  Legend
 } from "recharts";
 import { useMemo, useState } from "react";
 import { useEmotionAnalysis, EmotionScore, EmotionTimePoint } from "@/hooks/use-emotion-analysis";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target, Activity } from "lucide-react";
+import { AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
+import { Sparkles } from "lucide-react";
 
 type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
 
@@ -109,15 +109,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Sparkles className="h-5 w-5 animate-pulse text-primary" />
-          <span className="text-sm">AI is analyzing emotions in {symbol} messages...</span>
-        </div>
-        <Skeleton className="h-[400px] w-full" />
-      </div>
-    );
+    return <AIAnalysisLoader symbol={symbol} analysisType="emotions" />;
   }
 
   if (error) {

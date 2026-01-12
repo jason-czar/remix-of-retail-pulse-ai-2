@@ -10,8 +10,9 @@ import {
 } from "recharts";
 import { useMemo } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
+import { Sparkles } from "lucide-react";
 
 type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
 
@@ -73,15 +74,7 @@ export function NarrativeChart({ symbol, timeRange = '24H' }: NarrativeChartProp
   }, [data]);
 
   if (isLoading) {
-    return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Sparkles className="h-5 w-5 animate-pulse text-primary" />
-          <span className="text-sm">AI is analyzing {symbol} messages...</span>
-        </div>
-        <Skeleton className="h-[400px] w-full" />
-      </div>
-    );
+    return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
   }
 
   if (error) {
