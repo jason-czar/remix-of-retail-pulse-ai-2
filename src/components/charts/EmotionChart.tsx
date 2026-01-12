@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Legend
 } from "recharts";
+import { useMemo } from "react";
 
 // Emotion definitions based on spec
 const emotions = [
@@ -23,27 +24,64 @@ const emotions = [
   { name: "Surprise", color: "hsl(173 80% 40%)" }
 ];
 
-const generateEmotionData = () => {
-  const data = [];
+type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
+
+const getRangeConfig = (timeRange: TimeRange) => {
+  const ranges: Record<TimeRange, { points: number; intervalMs: number; label: (d: Date) => string }> = {
+    '1H': {
+      points: 12,
+      intervalMs: 5 * 60 * 1000,
+      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    },
+    '6H': {
+      points: 24,
+      intervalMs: 15 * 60 * 1000,
+      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    },
+    '24H': {
+      points: 24,
+      intervalMs: 60 * 60 * 1000,
+      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    },
+    '7D': {
+      points: 28,
+      intervalMs: 6 * 60 * 60 * 1000,
+      label: (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    },
+    '30D': {
+      points: 30,
+      intervalMs: 24 * 60 * 60 * 1000,
+      label: (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    },
+  };
+
+  return ranges[timeRange];
+};
+
+const generateEmotionData = (timeRange: TimeRange) => {
+  const data: Record<string, any>[] = [];
   const now = new Date();
-  for (let i = 24; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-    const entry: Record<string, any> = {
-      time: time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-    };
+  const { points, intervalMs, label } = getRangeConfig(timeRange);
+
+  for (let i = points - 1; i >= 0; i--) {
+    const time = new Date(now.getTime() - i * intervalMs);
+    const entry: Record<string, any> = { time: label(time) };
+
     emotions.forEach((emotion, idx) => {
-      const phase = (i + idx * 1.5) / 5;
+      const phase = (i + idx * 1.5) / Math.max(4, points / 6);
       const baseValue = 10 + Math.sin(phase) * 8;
       entry[emotion.name] = Math.round(Math.max(0, Math.min(30, baseValue + (Math.random() - 0.5) * 6)));
     });
+
     data.push(entry);
   }
+
   return data;
 };
 
-const data = generateEmotionData();
+export function EmotionChart({ symbol, timeRange = '24H' }: { symbol: string; timeRange?: TimeRange }) {
+  const data = useMemo(() => generateEmotionData(timeRange), [timeRange]);
 
-export function EmotionChart({ symbol }: { symbol: string }) {
   return (
     <div className="h-[500px] w-full">
       <ResponsiveContainer width="100%" height="100%">

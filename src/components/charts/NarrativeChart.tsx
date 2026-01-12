@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Legend
 } from "recharts";
+import { useMemo } from "react";
 
 // Mock narrative data
 const narratives = [
@@ -23,27 +24,65 @@ const narratives = [
   { name: "Valuation Debate", color: "hsl(173 80% 40%)" }
 ];
 
-const generateNarrativeData = () => {
-  const data = [];
+type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
+
+const getRangeConfig = (timeRange: TimeRange) => {
+  const ranges: Record<TimeRange, { points: number; intervalMs: number; label: (d: Date) => string }> = {
+    '1H': {
+      points: 12,
+      intervalMs: 5 * 60 * 1000,
+      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    },
+    '6H': {
+      points: 24,
+      intervalMs: 15 * 60 * 1000,
+      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    },
+    '24H': {
+      points: 24,
+      intervalMs: 60 * 60 * 1000,
+      label: (d) => d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    },
+    '7D': {
+      points: 28,
+      intervalMs: 6 * 60 * 60 * 1000,
+      label: (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    },
+    '30D': {
+      points: 30,
+      intervalMs: 24 * 60 * 60 * 1000,
+      label: (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    },
+  };
+
+  return ranges[timeRange];
+};
+
+const generateNarrativeData = (timeRange: TimeRange) => {
+  const data: Record<string, any>[] = [];
   const now = new Date();
-  for (let i = 24; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-    const entry: Record<string, any> = {
-      time: time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-    };
+  const { points, intervalMs, label } = getRangeConfig(timeRange);
+
+  for (let i = points - 1; i >= 0; i--) {
+    const time = new Date(now.getTime() - i * intervalMs);
+    const entry: Record<string, any> = { time: label(time) };
+
     narratives.forEach((narrative, idx) => {
-      const phase = (i + idx * 2) / 6;
-      const baseValue = 15 + Math.sin(phase) * 10;
+      // Keep curves plausible across long periods by scaling the phase by point count
+      const phase = (i + idx * 2) / Math.max(4, points / 5);
+      const baseValue = 12 + Math.sin(phase) * 10;
       entry[narrative.name] = Math.round(Math.max(0, baseValue + (Math.random() - 0.5) * 8));
     });
+
     data.push(entry);
   }
+
   return data;
 };
 
-const data = generateNarrativeData();
+export function NarrativeChart({ symbol, timeRange = '24H' }: { symbol: string; timeRange?: TimeRange }) {
+  const data = useMemo(() => generateNarrativeData(timeRange), [timeRange]);
 
-export function NarrativeChart({ symbol }: { symbol: string }) {
   return (
     <div className="h-[500px] w-full">
       <ResponsiveContainer width="100%" height="100%">

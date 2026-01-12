@@ -23,15 +23,16 @@ import {
   Clock,
   ExternalLink
 } from "lucide-react";
+type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
 
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
-  const [timeRange, setTimeRange] = useState('24H');
+  const [timeRange, setTimeRange] = useState<TimeRange>('24H');
   
   // Calculate date range based on selection
   const { start, end } = useMemo(() => {
     const now = new Date();
-    const ranges: Record<string, number> = {
+    const ranges: Record<TimeRange, number> = {
       '1H': 1/24,
       '6H': 0.25,
       '24H': 1,
@@ -186,7 +187,7 @@ export default function SymbolPage() {
                 <h3 className="text-lg font-semibold">Top 10 Narratives</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
-              <NarrativeChart symbol={symbol} />
+              <NarrativeChart symbol={symbol} timeRange={timeRange} />
             </Card>
           </TabsContent>
 
@@ -196,7 +197,7 @@ export default function SymbolPage() {
                 <h3 className="text-lg font-semibold">Emotion Trends</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
-              <EmotionChart symbol={symbol} />
+              <EmotionChart symbol={symbol} timeRange={timeRange} />
             </Card>
           </TabsContent>
 
@@ -286,10 +287,10 @@ function MetricCard({
   );
 }
 
-function TimeRangeSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function TimeRangeSelector({ value, onChange }: { value: TimeRange; onChange: (v: TimeRange) => void }) {
   return (
     <div className="flex gap-1">
-      {["1H", "6H", "24H", "7D", "30D"].map((range) => (
+      {(["1H", "6H", "24H", "7D", "30D"] as const).map((range) => (
         <Button
           key={range}
           variant={range === value ? "default" : "ghost"}
