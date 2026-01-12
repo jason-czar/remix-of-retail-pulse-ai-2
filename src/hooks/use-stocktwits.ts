@@ -40,10 +40,10 @@ export function useSentimentAnalytics(symbol: string, type = 'hourly', start?: s
   });
 }
 
-export function useVolumeAnalytics(symbol: string, start?: string, end?: string) {
+export function useVolumeAnalytics(symbol: string, timeRange = '24H', start?: string, end?: string) {
   return useQuery({
-    queryKey: ['stocktwits', 'volume-analytics', symbol, start, end],
-    queryFn: () => stocktwitsApi.getVolumeAnalytics(symbol, start, end),
+    queryKey: ['stocktwits', 'volume-analytics', symbol, timeRange, start, end],
+    queryFn: () => stocktwitsApi.getVolumeAnalytics(symbol, timeRange, start, end),
     enabled: !!symbol,
     refetchInterval: 60000,
     staleTime: 30000,
