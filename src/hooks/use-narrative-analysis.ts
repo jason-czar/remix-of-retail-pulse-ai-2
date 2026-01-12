@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useState } from "react";
 
 export interface Narrative {
   name: string;
@@ -14,12 +15,20 @@ export interface NarrativeAnalysisResult {
 }
 
 export function useNarrativeAnalysis(symbol: string, timeRange: string = "24H") {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const [skipCache, setSkipCache] = useState(false);
+
+  const query = useQuery({
     queryKey: ["narrative-analysis", symbol, timeRange],
     queryFn: async (): Promise<NarrativeAnalysisResult> => {
       const { data, error } = await supabase.functions.invoke("analyze-narratives", {
-        body: { symbol, timeRange },
+        body: { symbol, timeRange, skipCache },
       });
+
+      // Reset skipCache after fetch
+      if (skipCache) {
+        setSkipCache(false);
+      }
 
       if (error) {
         console.error("Narrative analysis error:", error);
@@ -34,4 +43,14 @@ export function useNarrativeAnalysis(symbol: string, timeRange: string = "24H") 
     refetchInterval: false, // Don't auto-refetch, rely on cache
     retry: 1,
   });
+
+  const forceRefresh = useCallback(() => {
+    setSkipCache(true);
+    queryClient.invalidateQueries({ queryKey: ["narrative-analysis", symbol, timeRange] });
+  }, [queryClient, symbol, timeRange]);
+
+  return {
+    ...query,
+    forceRefresh,
+  };
 }

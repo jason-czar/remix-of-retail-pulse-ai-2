@@ -51,7 +51,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, timeRange = "24H" } = await req.json();
+    const { symbol, timeRange = "24H", skipCache = false } = await req.json();
 
     if (!symbol) {
       return new Response(
@@ -72,26 +72,28 @@ serve(async (req) => {
     // Initialize Supabase client with service role for cache operations
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Check cache first
-    const { data: cached } = await supabase
-      .from("narrative_cache")
-      .select("*")
-      .eq("symbol", symbol.toUpperCase())
-      .eq("time_range", timeRange)
-      .gt("expires_at", new Date().toISOString())
-      .single();
+    // Check cache first (unless skipCache is true)
+    if (!skipCache) {
+      const { data: cached } = await supabase
+        .from("narrative_cache")
+        .select("*")
+        .eq("symbol", symbol.toUpperCase())
+        .eq("time_range", timeRange)
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
 
-    if (cached) {
-      console.log(`Cache hit for ${symbol} ${timeRange}`);
-      const cachedNarratives = cached.narratives;
-      const messageCount = cached.message_count || 0;
-      return new Response(
-        JSON.stringify({ narratives: cachedNarratives, messageCount, cached: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (cached) {
+        console.log(`Cache hit for ${symbol} ${timeRange}`);
+        const cachedNarratives = cached.narratives;
+        const messageCount = cached.message_count || 0;
+        return new Response(
+          JSON.stringify({ narratives: cachedNarratives, messageCount, cached: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    console.log(`Cache miss for ${symbol} ${timeRange}, fetching messages...`);
+    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${timeRange}, fetching messages...`);
 
     // Get date range based on timeRange
     const { start, end, limit } = getDateRange(timeRange);
