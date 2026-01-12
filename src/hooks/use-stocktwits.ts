@@ -30,20 +30,20 @@ export function useSymbolMessages(symbol: string, limit = 50, start?: string, en
   });
 }
 
-export function useSentimentAnalytics(symbol: string, type = 'hourly') {
+export function useSentimentAnalytics(symbol: string, type = 'hourly', start?: string, end?: string) {
   return useQuery({
-    queryKey: ['stocktwits', 'sentiment-analytics', symbol, type],
-    queryFn: () => stocktwitsApi.getSentimentAnalytics(symbol, type),
+    queryKey: ['stocktwits', 'sentiment-analytics', symbol, type, start, end],
+    queryFn: () => stocktwitsApi.getSentimentAnalytics(symbol, type, start, end),
     enabled: !!symbol,
     refetchInterval: 60000,
     staleTime: 30000,
   });
 }
 
-export function useVolumeAnalytics(symbol: string) {
+export function useVolumeAnalytics(symbol: string, start?: string, end?: string) {
   return useQuery({
-    queryKey: ['stocktwits', 'volume-analytics', symbol],
-    queryFn: () => stocktwitsApi.getVolumeAnalytics(symbol),
+    queryKey: ['stocktwits', 'volume-analytics', symbol, start, end],
+    queryFn: () => stocktwitsApi.getVolumeAnalytics(symbol, start, end),
     enabled: !!symbol,
     refetchInterval: 60000,
     staleTime: 30000,
