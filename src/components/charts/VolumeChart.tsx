@@ -548,7 +548,9 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             stroke="hsl(215 20% 55%)" 
             fontSize={12}
             tickLine={false}
-            tickFormatter={(value) => `${(value / 1000).toFixed(1)}K`}
+            axisLine={false}
+            width={10}
+            tick={false}
           />
           {showPriceOverlay && showPriceToggle && (
             <YAxis 
@@ -558,9 +560,9 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              width={55}
+              width={10}
+              tick={false}
               domain={priceDomain as [number, number]}
-              tickFormatter={(value) => `$${value}`}
             />
           )}
           <Tooltip
