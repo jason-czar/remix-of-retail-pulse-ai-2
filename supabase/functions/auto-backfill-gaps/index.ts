@@ -262,7 +262,8 @@ serve(async (req) => {
           message: "No missing dates found",
           expectedDates: expectedDates.length,
           existingDates: existingDates.size,
-          backfilledDates: 0 
+          backfilledDates: [],
+          skippedDates: expectedDates,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -271,10 +272,9 @@ serve(async (req) => {
     const results = {
       symbol,
       missingDates: missingDates.length,
-      backfilledDates: 0,
-      skippedDates: 0,
+      backfilledDates: [] as string[],
+      skippedDates: [] as string[],
       errors: [] as string[],
-      processedDates: [] as string[],
     };
 
     // Process each missing date (limit to 3 per request to avoid timeouts)
@@ -308,7 +308,7 @@ serve(async (req) => {
           const errorText = await messagesResponse.text();
           console.error(`StockTwits API error for ${dateStr}:`, errorText);
           results.errors.push(`${dateStr}: StockTwits API error`);
-          results.skippedDates++;
+          results.skippedDates.push(dateStr);
           continue;
         }
 
@@ -319,7 +319,7 @@ serve(async (req) => {
 
         if (messages.length < 10) {
           console.log(`Skipping ${dateStr}: only ${messages.length} messages (minimum 10 required)`);
-          results.skippedDates++;
+          results.skippedDates.push(dateStr);
           continue;
         }
 
@@ -372,8 +372,7 @@ serve(async (req) => {
           }
         }
 
-        results.backfilledDates++;
-        results.processedDates.push(dateStr);
+        results.backfilledDates.push(dateStr);
         
         await delay(500); // Rate limit between dates
         
