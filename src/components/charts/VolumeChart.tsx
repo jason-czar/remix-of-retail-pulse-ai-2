@@ -49,6 +49,7 @@ function WideBarShape(props: any) {
         width={expandedWidth}
         height={height}
         fill={fill}
+        fillOpacity={0.6}
         radius={radius}
       />
     );
@@ -61,6 +62,7 @@ function WideBarShape(props: any) {
       width={width}
       height={height}
       fill={fill}
+      fillOpacity={0.6}
       radius={radius}
     />
   );
