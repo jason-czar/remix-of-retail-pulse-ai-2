@@ -113,6 +113,18 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
       </div>
     );
   }
+  
+  // Handle empty hours (no data yet - e.g., future hours in "Today" view)
+  if (dataPoint?.isEmpty) {
+    return (
+      <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl min-w-[180px]">
+        <span className="font-semibold text-[hsl(210_40%_98%)]">{label}</span>
+        <p className="text-sm text-muted-foreground mt-1">
+          No data available yet
+        </p>
+      </div>
+    );
+  }
 
   // Extract all segments from payload
   const segments: { name: string; count: number; sentiment: string }[] = [];
@@ -535,22 +547,111 @@ function HourlyStackedNarrativeChart({
     "hourly"
   );
 
-  const { stackedChartData, totalMessages } = useMemo(() => {
+  const { stackedChartData, totalMessages, hasAnyData } = useMemo(() => {
+    // For "Today" view, always generate 24-hour skeleton
+    if (timeRange === '1D') {
+      // Create 24-hour slots from 12 AM to 11 PM
+      const hourSlots: Map<number, { 
+        hour: string; 
+        hourIndex: number;
+        narratives: { name: string; count: number; sentiment: string }[];
+        totalMessages: number;
+      }> = new Map();
+      
+      // Initialize all 24 hours
+      for (let h = 0; h < 24; h++) {
+        const hourLabel = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
+        hourSlots.set(h, {
+          hour: hourLabel,
+          hourIndex: h,
+          narratives: [],
+          totalMessages: 0,
+        });
+      }
+      
+      // Fill in actual data if available
+      if (historyData?.data && historyData.data.length > 0) {
+        const filteredData = historyData.data.filter(point => {
+          const pointDate = new Date(point.recorded_at);
+          return pointDate.getTime() >= todayStart.getTime() && pointDate.getTime() <= todayEnd.getTime();
+        });
+        
+        filteredData.forEach(point => {
+          const date = new Date(point.recorded_at);
+          const hourIndex = date.getHours();
+          
+          const slot = hourSlots.get(hourIndex);
+          if (slot) {
+            slot.totalMessages += point.message_count;
+            
+            if (point.narratives && Array.isArray(point.narratives)) {
+              point.narratives.forEach((n: any) => {
+                const existing = slot.narratives.find(x => x.name === n.name);
+                if (existing) {
+                  existing.count += n.count || 0;
+                } else {
+                  slot.narratives.push({
+                    name: n.name,
+                    count: n.count || 0,
+                    sentiment: n.sentiment || 'neutral'
+                  });
+                }
+              });
+            }
+          }
+        });
+      }
+      
+      // Find max messages for relative volume
+      const slots = Array.from(hourSlots.values());
+      const maxMessages = Math.max(...slots.map(s => s.totalMessages), 1);
+      
+      // Build chart data for all 24 hours
+      const stackedChartData = slots
+        .sort((a, b) => a.hourIndex - b.hourIndex)
+        .map(hourData => {
+          const topNarratives = hourData.narratives
+            .sort((a, b) => b.count - a.count)
+            .slice(0, MAX_SEGMENTS);
+          
+          const flatData: Record<string, any> = {
+            hour: hourData.hour,
+            hourIndex: hourData.hourIndex,
+            totalMessages: hourData.totalMessages,
+            volumePercent: (hourData.totalMessages / maxMessages) * 100,
+            isEmpty: hourData.totalMessages === 0,
+          };
+          
+          topNarratives.forEach((n, idx) => {
+            flatData[`segment${idx}`] = n.count;
+            flatData[`segment${idx}Name`] = n.name;
+            flatData[`segment${idx}Sentiment`] = n.sentiment;
+          });
+          
+          for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = '';
+            flatData[`segment${i}Sentiment`] = 'neutral';
+          }
+          
+          return flatData;
+        });
+      
+      const totalMessages = slots.reduce((sum, slot) => sum + slot.totalMessages, 0);
+      const hasAnyData = slots.some(s => s.totalMessages > 0);
+      
+      return { stackedChartData, totalMessages, hasAnyData };
+    }
+    
+    // Original logic for 24H view
     if (!historyData?.data || historyData.data.length === 0) {
-      return { stackedChartData: [], totalMessages: 0 };
+      return { stackedChartData: [], totalMessages: 0, hasAnyData: false };
     }
 
-    // Filter based on time range using local timezone boundaries
-    const filteredData = timeRange === '1D' 
-      ? historyData.data.filter(point => {
-          const pointDate = new Date(point.recorded_at);
-          // Check if the point falls within today's local timezone boundaries
-          return pointDate.getTime() >= todayStart.getTime() && pointDate.getTime() <= todayEnd.getTime();
-        })
-      : historyData.data.filter(point => {
-          const pointDate = new Date(point.recorded_at);
-          return pointDate.getTime() >= twentyFourHoursAgo.getTime() && pointDate.getTime() <= now.getTime();
-        });
+    const filteredData = historyData.data.filter(point => {
+      const pointDate = new Date(point.recorded_at);
+      return pointDate.getTime() >= twentyFourHoursAgo.getTime() && pointDate.getTime() <= now.getTime();
+    });
 
     // Group data by hour
     const byHour = new Map<string, { 
@@ -613,6 +714,7 @@ function HourlyStackedNarrativeChart({
           sortKey: hourData.sortKey,
           totalMessages: hourData.totalMessages,
           volumePercent: (hourData.totalMessages / maxMessages) * 100,
+          isEmpty: false,
         };
         
         topNarratives.forEach((n, idx) => {
@@ -633,13 +735,15 @@ function HourlyStackedNarrativeChart({
 
     const totalMessages = filteredData.reduce((sum, point) => sum + point.message_count, 0);
 
-    return { stackedChartData, totalMessages };
-  }, [historyData, timeRange]);
+    return { stackedChartData, totalMessages, hasAnyData: stackedChartData.length > 0 };
+  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now]);
 
   // Determine if we should fall back to live AI analysis
-  const shouldFallbackToLive = !historyLoading && stackedChartData.length === 0;
+  // For "Today" view, always show the 24-hour skeleton even with no data
+  // For "24H" view, fall back to live AI if no data
+  const shouldFallbackToLive = !historyLoading && timeRange === '24H' && !hasAnyData;
 
-  // If no hourly data exists, fall back to live AI analysis (same as 1H/6H views)
+  // If no hourly data exists for 24H view, fall back to live AI analysis (same as 1H/6H views)
   if (shouldFallbackToLive) {
     return <HorizontalNarrativeChart symbol={symbol} timeRange={timeRange} />;
   }
