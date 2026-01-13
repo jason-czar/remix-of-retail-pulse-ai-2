@@ -2,35 +2,36 @@ import {
   ComposedChart,
   BarChart,
   Bar,
-  Line,
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
   Cell,
-  Legend,
   Rectangle
 } from "recharts";
 import { useMemo, useEffect, useState } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
-import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToHourSlots, alignPricesToDateSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle, DollarSign } from "lucide-react";
+import { usePriceOverlay } from "@/hooks/use-price-overlay";
+import { 
+  PriceLine, 
+  PriceYAxis, 
+  PriceToggle, 
+  PriceLegendItem,
+  PriceTooltipContent,
+  PRICE_LINE_COLOR 
+} from "@/components/charts/PriceOverlayElements";
+import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, AlertTriangle, DollarSign } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
-import { detectMissingDates, createGapPlaceholders, mergeDataWithGaps, isGapPlaceholder } from "@/lib/chart-gap-utils";
+import { detectMissingDates } from "@/lib/chart-gap-utils";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
-
-// Stock price line color
-const PRICE_LINE_COLOR = "hsl(38 92% 50%)";
 
 interface NarrativeChartProps {
   symbol: string;
@@ -608,9 +609,7 @@ function HourlyStackedNarrativeChart({
     3, 
     "hourly"
   );
-  
-  // Fetch stock price data
-  const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
+  // Price overlay will be handled after chart data is built
 
   const { stackedChartData, totalMessages, hasAnyData, is5MinView } = useMemo(() => {
     // For "Today" view (1D), use 288 5-minute slots for granular price line
@@ -825,50 +824,25 @@ function HourlyStackedNarrativeChart({
     return { stackedChartData, totalMessages, hasAnyData: stackedChartData.length > 0, is5MinView: false };
   }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now]);
 
-  // Merge price data into chart data
-  const chartDataWithPrice = useMemo(() => {
-    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
-      return stackedChartData;
+  // Use reusable price overlay hook
+  const { 
+    dataWithPrice: chartDataWithPrice, 
+    priceDomain, 
+    currentPrice,
+    changePercent 
+  } = usePriceOverlay(
+    {
+      symbol,
+      timeRange,
+      enabled: showPriceOverlay,
+      use5MinSlots: is5MinView,
+    },
+    stackedChartData,
+    {
+      getSlotIndex: (item) => item.slotIndex,
+      getHourIndex: (item) => item.hourIndex,
     }
-
-    // For 5-minute view (Today), use 5-minute slot alignment for granular price line
-    if (is5MinView) {
-      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices);
-      
-      return stackedChartData.map(item => {
-        const slotIndex = item.slotIndex;
-        const pricePoint = priceBySlot.get(slotIndex);
-        return {
-          ...item,
-          price: pricePoint?.price ?? null,
-        };
-      });
-    }
-
-    // Build hour-to-price map for other views
-    const priceByHour = alignPricesToHourSlots(priceData.prices, timeRange);
-
-    return stackedChartData.map(item => {
-      const hourIndex = item.hourIndex;
-      const pricePoint = priceByHour.get(hourIndex);
-      return {
-        ...item,
-        price: pricePoint?.price ?? null,
-      };
-    });
-  }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
-
-  // Calculate price domain for right Y-axis
-  const priceDomain = useMemo(() => {
-    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
-      return ['auto', 'auto'];
-    }
-    const prices = priceData.prices.map(p => p.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const padding = (maxPrice - minPrice) * 0.1 || 1;
-    return [Math.floor(minPrice - padding), Math.ceil(maxPrice + padding)];
-  }, [priceData, showPriceOverlay]);
+  );
 
   // Determine if we should fall back to live AI analysis
   // For "Today" view, always show the 24-hour skeleton even with no data
@@ -925,15 +899,13 @@ function HourlyStackedNarrativeChart({
         </div>
         <div className="flex items-center gap-3">
           {/* Price Toggle */}
-          <div className="flex items-center gap-2">
-            <DollarSign className={`h-4 w-4 ${showPriceOverlay ? 'text-amber-400' : 'text-muted-foreground'}`} />
-            <span className="text-xs text-muted-foreground">Price</span>
-            <Switch
-              checked={showPriceOverlay}
-              onCheckedChange={setShowPriceOverlay}
-              className="data-[state=checked]:bg-amber-500"
-            />
-          </div>
+          <PriceToggle
+            enabled={showPriceOverlay}
+            onToggle={setShowPriceOverlay}
+            currentPrice={currentPrice}
+            changePercent={changePercent}
+            compact
+          />
           <Button 
             variant="ghost" 
             size="sm" 
@@ -969,13 +941,7 @@ function HourlyStackedNarrativeChart({
           <span className="text-muted-foreground">Bar width = relative volume</span>
         </div>
         {showPriceOverlay && (
-          <div className="flex items-center gap-2 border-l border-border pl-4">
-            <div className="w-4 h-0.5 rounded" style={{ backgroundColor: PRICE_LINE_COLOR }} />
-            <span className="text-amber-400">Stock Price</span>
-            {priceData?.currentPrice && (
-              <span className="text-amber-400 font-semibold">${priceData.currentPrice.toFixed(2)}</span>
-            )}
-          </div>
+          <PriceLegendItem currentPrice={currentPrice} />
         )}
       </div>
 
@@ -1015,19 +981,7 @@ function HourlyStackedNarrativeChart({
             axisLine={false}
             width={45}
           />
-          {showPriceOverlay && (
-            <YAxis 
-              yAxisId="right"
-              orientation="right"
-              stroke="hsl(38 92% 50%)"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              width={55}
-              domain={priceDomain as [number, number]}
-              tickFormatter={(value) => `$${value}`}
-            />
-          )}
+          {showPriceOverlay && <PriceYAxis domain={priceDomain} yAxisId="right" />}
           <Tooltip content={<NarrativeStackedTooltip />} />
           {/* Render segment bars - each segment uses its own sentiment color */}
           {/* For 5-min view, custom shape expands bars to span the full hour */}
@@ -1054,18 +1008,7 @@ function HourlyStackedNarrativeChart({
             </Bar>
           ))}
           {/* Price Line Overlay */}
-          {showPriceOverlay && (
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="price"
-              stroke={PRICE_LINE_COLOR}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ fill: PRICE_LINE_COLOR, strokeWidth: 2, stroke: "#fff", r: 5 }}
-              connectNulls
-            />
-          )}
+          {showPriceOverlay && <PriceLine yAxisId="right" />}
         </ComposedChart>
       </ResponsiveContainer>
     </div>
