@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SearchCommand } from "@/components/SearchCommand";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -86,7 +87,7 @@ export function Header() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -96,6 +97,8 @@ export function Header() {
               <Search className="h-5 w-5" />
             </Button>
             <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
+            
+            <ThemeToggle />
             
             {!loading && (
               <>
