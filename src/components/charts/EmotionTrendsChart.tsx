@@ -16,8 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChartErrorState } from "@/components/ChartErrorState";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
+import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { format } from "date-fns";
-import { Brain, TrendingUp, TrendingDown, Minus, RefreshCw } from "lucide-react";
+import { Brain, TrendingUp, TrendingDown, Minus, RefreshCw, Download } from "lucide-react";
 
 interface EmotionTrendsChartProps {
   symbol: string;
@@ -190,6 +191,7 @@ export function EmotionTrendsChart({
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
           <Button 
             variant="ghost" 
             size="sm" 

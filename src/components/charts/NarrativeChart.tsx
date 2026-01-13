@@ -15,9 +15,10 @@ import { useMemo, useEffect } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
+import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
@@ -345,16 +346,19 @@ function TimeSeriesNarrativeChart({
             </div>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => refetch()}
-          disabled={isFetching || isBackfilling}
-          className="h-8 px-3 text-xs"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-          {isFetching ? 'Refreshing...' : 'Refresh'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => refetch()}
+            disabled={isFetching || isBackfilling}
+            className="h-8 px-3 text-xs"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
       </div>
 
       {/* Legend */}
