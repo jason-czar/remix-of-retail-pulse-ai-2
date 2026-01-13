@@ -32,7 +32,7 @@ export function useEmotionHistory(
   days: number = 7,
   periodType: "hourly" | "daily" | "all" = "all"
 ) {
-  return useQuery({
+  const query = useQuery({
     queryKey: ["emotion-history", symbol, days, periodType],
     queryFn: async (): Promise<EmotionHistoryResult> => {
       const startDate = new Date();
@@ -127,4 +127,12 @@ export function useEmotionHistory(
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!symbol,
   });
+  
+  return {
+    data: query.data,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+    isFetching: query.isFetching,
+  };
 }

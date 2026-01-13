@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -10,12 +10,14 @@ import {
   Legend,
 } from "recharts";
 import { useEmotionHistory } from "@/hooks/use-emotion-history";
+import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChartErrorState } from "@/components/ChartErrorState";
+import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { format } from "date-fns";
-import { Brain, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Brain, TrendingUp, TrendingDown, Minus, RefreshCw } from "lucide-react";
 
 interface EmotionTrendsChartProps {
   symbol: string;
@@ -56,8 +58,25 @@ export function EmotionTrendsChart({
   days = 7,
   periodType = "all",
 }: EmotionTrendsChartProps) {
-  const { data, isLoading, error, refetch } = useEmotionHistory(symbol, days, periodType);
+  const { data, isLoading, error, refetch, isFetching } = useEmotionHistory(symbol, days, periodType);
   const [selectedEmotions, setSelectedEmotions] = useState<Set<string>>(new Set());
+  
+  // Auto-backfill hook for emotion data
+  const { 
+    isBackfilling, 
+    status: backfillStatus, 
+    progress: backfillProgress,
+    checkAndFillGaps 
+  } = useAutoBackfill(symbol, days);
+  
+  // Check for gaps when data loads
+  useEffect(() => {
+    if (data?.data && !isLoading && !isFetching) {
+      checkAndFillGaps(data.data, () => {
+        refetch();
+      });
+    }
+  }, [data?.data, isLoading, isFetching, checkAndFillGaps, refetch]);
 
   // Transform data for the chart
   const chartData = useMemo(() => {
@@ -149,6 +168,11 @@ export function EmotionTrendsChart({
 
   return (
     <div className="space-y-4">
+      {/* Backfill indicator */}
+      {isBackfilling && (
+        <BackfillIndicator status={backfillStatus} progress={backfillProgress} />
+      )}
+      
       {/* Header with sentiment balance */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -156,13 +180,26 @@ export function EmotionTrendsChart({
             <Brain className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h4 className="font-semibold">Emotional Journey</h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold">Emotional Journey</h4>
+              <BackfillBadge isBackfilling={isBackfilling} />
+            </div>
             <p className="text-sm text-muted-foreground">
               {data.data.length} snapshots over {days} days
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => refetch()}
+            disabled={isFetching || isBackfilling}
+            className="h-8 px-3 text-xs"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
           <div className="text-right">
             <div className="text-xs text-muted-foreground">Sentiment Balance</div>
             <div className="flex items-center gap-2">
