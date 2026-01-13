@@ -201,13 +201,74 @@ async function analyzeEmotions(messages: StocktwitsMessage[], apiKey: string): P
   return EMOTIONS.map((name) => ({ name, score: 50, percentage: 10 }));
 }
 
+// Extended trading hours for hourly backfill (5 AM - 6 PM ET)
+const START_HOUR_ET = 5;
+const END_HOUR_ET = 18;
+
+// Get missing hours for today
+async function getMissingHoursForToday(
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  symbol: string,
+  dateStr: string
+): Promise<number[]> {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const now = new Date();
+  
+  // Convert current time to ET (simplified - assumes EST/UTC-5)
+  const etOffset = -5;
+  const utcHour = now.getUTCHours();
+  const etHour = (utcHour + 24 + etOffset) % 24;
+  
+  // Determine which hours should have data
+  const expectedHours: number[] = [];
+  const endCheckHour = Math.min(etHour, END_HOUR_ET);
+  
+  for (let hour = START_HOUR_ET; hour <= endCheckHour; hour++) {
+    expectedHours.push(hour);
+  }
+  
+  if (expectedHours.length === 0) {
+    return [];
+  }
+  
+  // Query existing hourly records for today
+  const todayStart = `${dateStr}T00:00:00Z`;
+  const todayEnd = `${dateStr}T23:59:59Z`;
+  
+  const { data: existingData, error } = await supabase
+    .from("narrative_history")
+    .select("recorded_at")
+    .eq("symbol", symbol.toUpperCase())
+    .eq("period_type", "hourly")
+    .gte("recorded_at", todayStart)
+    .lte("recorded_at", todayEnd);
+  
+  if (error) {
+    console.error("Error querying existing hourly data:", error);
+    return expectedHours; // Assume all hours are missing on error
+  }
+  
+  // Extract hours that have data (convert to ET)
+  const hoursWithData = new Set<number>();
+  for (const record of (existingData || []) as { recorded_at: string }[]) {
+    const recordDate = new Date(record.recorded_at);
+    const recordUtcHour = recordDate.getUTCHours();
+    const recordEtHour = (recordUtcHour + 24 + etOffset) % 24;
+    hoursWithData.add(recordEtHour);
+  }
+  
+  // Find missing hours
+  return expectedHours.filter(hour => !hoursWithData.has(hour));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { symbol, startDate, endDate } = await req.json();
+    const { symbol, startDate, endDate, forceHourly } = await req.json();
 
     if (!symbol || !startDate || !endDate) {
       return new Response(
@@ -216,15 +277,161 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Auto-backfill gaps for ${symbol} from ${startDate} to ${endDate}`);
+    console.log(`Auto-backfill gaps for ${symbol} from ${startDate} to ${endDate}${forceHourly ? " (hourly mode)" : ""}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
-    const stocktwitsApiKey = Deno.env.get("STOCKTWITS_API_KEY")!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // HOURLY MODE: Fill missing hourly snapshots for today
+    if (forceHourly && startDate === endDate) {
+      console.log("Running in hourly backfill mode for today");
+      
+      const missingHours = await getMissingHoursForToday(supabaseUrl, supabaseServiceKey, symbol, startDate);
+      console.log(`Missing hours for ${symbol} on ${startDate}:`, missingHours);
+      
+      if (missingHours.length === 0) {
+        return new Response(
+          JSON.stringify({
+            symbol,
+            mode: "hourly",
+            message: "No missing hourly snapshots for today",
+            missingHours: [],
+            narrativeRecords: 0,
+            emotionRecords: 0,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      const results = {
+        symbol,
+        mode: "hourly",
+        processedHours: [] as number[],
+        narrativeRecords: 0,
+        emotionRecords: 0,
+        errors: [] as string[],
+      };
+      
+      // Process each missing hour (limit to 5 per request)
+      const hoursToProcess = missingHours.slice(0, 5);
+      
+      for (const hour of hoursToProcess) {
+        console.log(`Processing missing hour: ${hour}:00`);
+        
+        try {
+          // Calculate UTC hour from ET hour (simplified)
+          const etOffset = -5;
+          const utcHour = (hour - etOffset) % 24;
+          
+          // Fetch messages for this hour window
+          const hourStart = `${startDate}T${String(utcHour).padStart(2, '0')}:00:00Z`;
+          const hourEnd = `${startDate}T${String(utcHour).padStart(2, '0')}:59:59Z`;
+          
+          const stocktwitsUrl = new URL(`${supabaseUrl}/functions/v1/stocktwits-proxy`);
+          stocktwitsUrl.searchParams.set('action', 'messages');
+          stocktwitsUrl.searchParams.set('symbol', symbol.toUpperCase());
+          stocktwitsUrl.searchParams.set('limit', '200');
+          stocktwitsUrl.searchParams.set('start', hourStart);
+          stocktwitsUrl.searchParams.set('end', hourEnd);
+          
+          const messagesResponse = await fetch(stocktwitsUrl.toString(), {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          });
+          
+          if (!messagesResponse.ok) {
+            const errorText = await messagesResponse.text();
+            console.error(`StockTwits API error for hour ${hour}:`, errorText);
+            results.errors.push(`Hour ${hour}: StockTwits API error`);
+            continue;
+          }
+          
+          const messagesData = await messagesResponse.json();
+          const messages: StocktwitsMessage[] = messagesData.messages || [];
+          
+          console.log(`Fetched ${messages.length} messages for hour ${hour}`);
+          
+          if (messages.length < 5) {
+            console.log(`Skipping hour ${hour}: only ${messages.length} messages (minimum 5 required)`);
+            continue;
+          }
+          
+          // Analyze narratives
+          const narratives = await analyzeNarratives(messages, lovableApiKey);
+          
+          if (narratives.length > 0) {
+            const dominantNarrative = narratives.sort((a, b) => b.count - a.count)[0]?.name || null;
+            const recordedAt = `${startDate}T${String(utcHour).padStart(2, '0')}:30:00Z`;
+            
+            const { error: narrativeError } = await supabase.from("narrative_history").insert({
+              symbol: symbol.toUpperCase(),
+              period_type: "hourly",
+              recorded_at: recordedAt,
+              narratives: narratives,
+              dominant_narrative: dominantNarrative,
+              message_count: messages.length,
+            });
+            
+            if (narrativeError) {
+              console.error(`Narrative insert error for hour ${hour}:`, narrativeError);
+              results.errors.push(`Hour ${hour}: ${narrativeError.message}`);
+            } else {
+              results.narrativeRecords++;
+            }
+          }
+          
+          await delay(300);
+          
+          // Analyze emotions
+          const emotions = await analyzeEmotions(messages, lovableApiKey);
+          
+          if (emotions.length > 0) {
+            const dominantEmotion = emotions.sort((a, b) => b.score - a.score)[0]?.name || null;
+            const recordedAt = `${startDate}T${String(utcHour).padStart(2, '0')}:30:00Z`;
+            
+            const { error: emotionError } = await supabase.from("emotion_history").insert({
+              symbol: symbol.toUpperCase(),
+              period_type: "hourly",
+              recorded_at: recordedAt,
+              emotions: emotions,
+              dominant_emotion: dominantEmotion,
+              message_count: messages.length,
+            });
+            
+            if (emotionError) {
+              console.error(`Emotion insert error for hour ${hour}:`, emotionError);
+              results.errors.push(`Hour ${hour}: ${emotionError.message}`);
+            } else {
+              results.emotionRecords++;
+            }
+          }
+          
+          results.processedHours.push(hour);
+          await delay(500);
+          
+        } catch (hourError: unknown) {
+          const errorMessage = hourError instanceof Error ? hourError.message : String(hourError);
+          console.error(`Error processing hour ${hour}:`, errorMessage);
+          results.errors.push(`Hour ${hour}: ${errorMessage}`);
+        }
+      }
+      
+      console.log("Hourly backfill complete:", results);
+      
+      return new Response(
+        JSON.stringify({
+          ...results,
+          hasMore: missingHours.length > hoursToProcess.length,
+          remainingHours: missingHours.length - hoursToProcess.length,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // DAILY MODE: Original daily backfill logic
     // Get expected weekdays in range
     const expectedDates = getWeekdaysInRange(new Date(startDate), new Date(endDate));
     console.log(`Expected ${expectedDates.length} weekdays in range`);
@@ -288,7 +495,6 @@ serve(async (req) => {
         const dayStart = `${dateStr}T00:00:00Z`;
         const dayEnd = `${dateStr}T23:59:59Z`;
         
-        const supabaseUrl = Deno.env.get('SUPABASE_URL');
         const stocktwitsUrl = new URL(`${supabaseUrl}/functions/v1/stocktwits-proxy`);
         stocktwitsUrl.searchParams.set('action', 'messages');
         stocktwitsUrl.searchParams.set('symbol', symbol.toUpperCase());

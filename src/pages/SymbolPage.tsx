@@ -17,7 +17,9 @@ import { EmotionTrendsChart } from "@/components/charts/EmotionTrendsChart";
 import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
+import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { useSymbolStats, useSymbolMessages, useSymbolSentiment } from "@/hooks/use-stocktwits";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -36,6 +38,7 @@ export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
   const [timeRange, setTimeRange] = useState<TimeRange>('1D'); // Default to Today
   const [historyTimeRange, setHistoryTimeRange] = useState<HistoryTimeRange>('1W');
+  const queryClient = useQueryClient();
   
   // Calculate history range parameters
   const historyParams = useMemo(() => {
@@ -139,7 +142,14 @@ export default function SymbolPage() {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            <FillTodayGapsButton 
+              symbol={symbol} 
+              onComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ['narrative-history', symbol] });
+                queryClient.invalidateQueries({ queryKey: ['emotion-history', symbol] });
+              }}
+            />
             <AddToWatchlistButton symbol={symbol} />
             <SymbolAlertDialog symbol={symbol} />
           </div>
