@@ -43,31 +43,36 @@ export function NarrativeTrendsChart({
   const { data, isLoading, error, refetch } = useNarrativeHistory(symbol, days, periodType);
   const [selectedThemes, setSelectedThemes] = useState<Set<string>>(new Set());
 
-  // Transform data for the chart
+  // Transform data for the chart using normalized theme evolution
   const chartData = useMemo(() => {
-    if (!data?.data || data.data.length === 0) return [];
+    if (!data?.themeEvolution || data.themeEvolution.size === 0) return [];
 
-    // Group by timestamp and create data points
-    const timePoints = new Map<string, Record<string, number>>();
+    // Collect all unique timestamps
+    const allTimestamps = new Set<string>();
+    data.themeEvolution.forEach((points) => {
+      points.forEach((p) => allTimestamps.add(p.time));
+    });
+
+    // Create data points with all themes for each timestamp
+    const timePoints = new Map<string, Record<string, number | undefined>>();
     
-    data.data.forEach((point) => {
-      const timeKey = point.recorded_at;
-      if (!timePoints.has(timeKey)) {
-        timePoints.set(timeKey, { timestamp: new Date(timeKey).getTime() });
-      }
-      const entry = timePoints.get(timeKey)!;
-      
-      // Include all narratives - don't filter by dominantThemes here
-      // The Line components will only render for displayThemes
-      point.narratives.forEach((narrative) => {
-        const theme = narrative.name;
-        entry[theme] = (entry[theme] || 0) + narrative.count;
+    allTimestamps.forEach((time) => {
+      timePoints.set(time, { timestamp: new Date(time).getTime() });
+    });
+
+    // Fill in theme values for each time point
+    data.themeEvolution.forEach((points, theme) => {
+      points.forEach((point) => {
+        const entry = timePoints.get(point.time);
+        if (entry) {
+          entry[theme] = (entry[theme] || 0) + point.count;
+        }
       });
     });
 
     return Array.from(timePoints.values())
       .sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
-  }, [data]);
+  }, [data?.themeEvolution]);
 
   // Themes to display (either selected or all dominant)
   const displayThemes = useMemo(() => {
