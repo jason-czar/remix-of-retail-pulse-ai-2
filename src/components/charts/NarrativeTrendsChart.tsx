@@ -57,11 +57,11 @@ export function NarrativeTrendsChart({
       }
       const entry = timePoints.get(timeKey)!;
       
+      // Include all narratives - don't filter by dominantThemes here
+      // The Line components will only render for displayThemes
       point.narratives.forEach((narrative) => {
         const theme = narrative.name;
-        if (data.dominantThemes.includes(theme)) {
-          entry[theme] = (entry[theme] || 0) + narrative.count;
-        }
+        entry[theme] = (entry[theme] || 0) + narrative.count;
       });
     });
 
@@ -227,8 +227,8 @@ export function NarrativeTrendsChart({
                 dataKey={theme}
                 stroke={THEME_COLORS[data.dominantThemes.indexOf(theme) % THEME_COLORS.length]}
                 strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 2 }}
+                dot={{ r: 3, strokeWidth: 1 }}
+                activeDot={{ r: 5, strokeWidth: 2 }}
                 connectNulls
               />
             ))}
