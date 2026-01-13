@@ -104,8 +104,8 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
     --ring: 168 84% 45%;
 
     /* Custom sentiment colors */
