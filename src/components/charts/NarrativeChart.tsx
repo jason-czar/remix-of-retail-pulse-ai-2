@@ -101,25 +101,37 @@ export function NarrativeChart({ symbol, timeRange = '24H' }: NarrativeChartProp
 
   return (
     <div className="h-[500px] w-full">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span>AI-powered narrative analysis</span>
-          {data?.messageCount && data.messageCount > 0 && (
-            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-medium">
-              {data.messageCount.toLocaleString()} messages analyzed
-            </span>
-          )}
-          {data?.cached && (
-            <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground">cached</span>
-          )}
+      {/* Prominent metadata header */}
+      <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">AI Narrative Analysis</span>
+              {data?.cached && (
+                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs">cached</span>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+              {data?.messageCount && data.messageCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="font-semibold text-primary">{data.messageCount.toLocaleString()}</span> messages analyzed
+                </span>
+              )}
+              {data?.timestamp && (
+                <span className="flex items-center gap-1">
+                  Updated: {new Date(data.timestamp).toLocaleTimeString()}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={forceRefresh}
           disabled={isFetching}
-          className="h-8 px-2 text-xs"
+          className="h-8 px-3 text-xs"
         >
           <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
           {isFetching ? 'Refreshing...' : 'Refresh'}

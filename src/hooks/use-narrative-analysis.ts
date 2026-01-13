@@ -12,6 +12,7 @@ export interface NarrativeAnalysisResult {
   narratives: Narrative[];
   messageCount: number;
   cached: boolean;
+  timestamp?: string;
 }
 
 export function useNarrativeAnalysis(symbol: string, timeRange: string = "24H") {
@@ -35,7 +36,10 @@ export function useNarrativeAnalysis(symbol: string, timeRange: string = "24H") 
         throw error;
       }
 
-      return data as NarrativeAnalysisResult;
+      return {
+        ...data,
+        timestamp: new Date().toISOString(),
+      } as NarrativeAnalysisResult;
     },
     enabled: !!symbol,
     staleTime: 30 * 60 * 1000, // 30 minutes
