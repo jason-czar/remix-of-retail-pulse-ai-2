@@ -94,6 +94,29 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
   // Get session-specific hour range
   const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
   
+  // Helper to parse API time format to hour index
+  const parseTimeToHourIndex = (timeStr: string): number | null => {
+    if (!timeStr) return null;
+    
+    // Handle "HH:MM" format (e.g., "7:00", "14:00")
+    if (timeStr.includes(':')) {
+      const hour = parseInt(timeStr.split(':')[0], 10);
+      return isNaN(hour) ? null : hour;
+    }
+    
+    // Handle "X AM/PM" format
+    const match = timeStr.match(/^(\d{1,2})\s*(AM|PM)?$/i);
+    if (match) {
+      let hour = parseInt(match[1], 10);
+      const period = match[2]?.toUpperCase();
+      if (period === 'PM' && hour !== 12) hour += 12;
+      if (period === 'AM' && hour === 12) hour = 0;
+      return hour;
+    }
+    
+    return null;
+  };
+
   // Generate data based on time range - regenerates when timeRange changes
   const chartData = useMemo(() => {
     // For Today view, generate skeleton for selected session hours only
@@ -101,7 +124,7 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
       const now = new Date();
       const currentHour = now.getHours();
 
-      // Create skeleton for hours 5 AM to 6 PM
+      // Create skeleton for session hours
       const hourSlots: { time: string; hourIndex: number; sentiment: number | null; bullish: number | null; bearish: number | null; isEmpty: boolean }[] = [];
       
       for (let h = START_HOUR; h <= END_HOUR; h++) {
@@ -118,32 +141,35 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
         });
       }
       
-      // Merge API data if available
+      // Merge API data if available - match by hour index, not time string
       if (apiData && apiData.length > 0) {
         apiData.forEach(item => {
-          // Try to match by parsing the time string to hour index
-          const slot = hourSlots.find(s => s.time === item.time);
-          if (slot) {
-            slot.sentiment = item.sentiment;
-            slot.bullish = item.bullish;
-            slot.bearish = item.bearish;
-            slot.isEmpty = false;
-          }
-        });
-      } else {
-        // Fall back to generated data for past hours only (within our visible range)
-        hourSlots.forEach((slot, idx) => {
-          const h = slot.hourIndex;
-          if (h <= currentHour) {
-            const baseValue = 55 + Math.sin(h / 4) * 15;
-            const noise = (Math.random() - 0.5) * 10;
-            slot.sentiment = Math.round(Math.max(0, Math.min(100, baseValue + noise)));
-            slot.bullish = Math.round(Math.max(0, Math.min(100, baseValue + noise + 5)));
-            slot.bearish = Math.round(Math.max(0, Math.min(100, 100 - baseValue - noise)));
-            slot.isEmpty = false;
+          const itemHourIndex = parseTimeToHourIndex(item.time);
+          if (itemHourIndex !== null) {
+            const slot = hourSlots.find(s => s.hourIndex === itemHourIndex);
+            if (slot) {
+              slot.sentiment = item.sentiment;
+              slot.bullish = item.bullish;
+              slot.bearish = item.bearish;
+              slot.isEmpty = false;
+            }
           }
         });
       }
+      
+      // For hours without data (past hours), generate placeholder values
+      hourSlots.forEach((slot) => {
+        const h = slot.hourIndex;
+        if (h <= currentHour && slot.isEmpty) {
+          // Use deterministic values based on hour to avoid re-render flicker
+          const baseValue = 55 + Math.sin(h / 4) * 15;
+          const noise = ((h * 7) % 10 - 5); // Deterministic "noise" based on hour
+          slot.sentiment = Math.round(Math.max(0, Math.min(100, baseValue + noise)));
+          slot.bullish = Math.round(Math.max(0, Math.min(100, baseValue + noise + 5)));
+          slot.bearish = Math.round(Math.max(0, Math.min(100, 100 - baseValue - noise)));
+          slot.isEmpty = false;
+        }
+      });
       
       return hourSlots;
     }
