@@ -342,6 +342,45 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   const isLoading = historyLoading || liveLoading;
   const hasData = chartDataWithPrice.some(d => !d.isEmpty) || (liveData?.emotions?.length ?? 0) > 0;
 
+  // Calculate dominant emotion from current data
+  const dominantEmotionData = useMemo(() => {
+    if (!chartDataWithPrice.length) return null;
+    
+    const emotionTotals: Record<string, number> = {};
+    let totalScore = 0;
+    
+    chartDataWithPrice.forEach(slot => {
+      DEFAULT_SIGNAL_EMOTIONS.forEach(emotion => {
+        const score = slot[emotion] || 0;
+        emotionTotals[emotion] = (emotionTotals[emotion] || 0) + score;
+        totalScore += score;
+      });
+    });
+    
+    if (totalScore === 0) return null;
+    
+    const sorted = Object.entries(emotionTotals)
+      .filter(([_, score]) => score > 0)
+      .sort((a, b) => b[1] - a[1]);
+    
+    if (sorted.length === 0) return null;
+    
+    const [dominantEmotion, dominantScore] = sorted[0];
+    const intensity = Math.round((dominantScore / totalScore) * 100);
+    
+    return {
+      emotion: dominantEmotion,
+      score: Math.round(dominantScore),
+      intensity,
+      color: EMOTION_COLORS[dominantEmotion],
+      topEmotions: sorted.slice(0, 3).map(([name, score]) => ({
+        name,
+        score: Math.round(score),
+        color: EMOTION_COLORS[name]
+      }))
+    };
+  }, [chartDataWithPrice]);
+
   if (isLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="emotions" />;
   }
@@ -372,6 +411,34 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
               Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
             </p>
           </div>
+          
+          {/* Mini emotion breakdown */}
+          {dominantEmotionData && (
+            <div className="ml-4 pl-4 border-l border-border/50 flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full animate-pulse" 
+                  style={{ backgroundColor: dominantEmotionData.color }}
+                />
+                <span className="text-sm font-medium" style={{ color: dominantEmotionData.color }}>
+                  {dominantEmotionData.emotion}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {dominantEmotionData.intensity}% dominant
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {dominantEmotionData.topEmotions.slice(1).map((e, i) => (
+                  <div 
+                    key={e.name}
+                    className="w-2 h-2 rounded-full opacity-60" 
+                    style={{ backgroundColor: e.color }}
+                    title={`${e.name}: ${e.score}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         
         <div className="flex items-center gap-3">
