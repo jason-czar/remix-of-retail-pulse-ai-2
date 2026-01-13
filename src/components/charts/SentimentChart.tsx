@@ -91,16 +91,17 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
   
   // Generate data based on time range - regenerates when timeRange changes
   const chartData = useMemo(() => {
-    // For Today view, generate static 24-hour skeleton and merge with API data
+    // For Today view, generate skeleton for 5 AM to 6 PM only
     if (timeRange === '1D') {
       const now = new Date();
       const currentHour = now.getHours();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const START_HOUR = 5;  // 5 AM
+      const END_HOUR = 18;   // 6 PM (inclusive)
       
-      // Create 24-hour skeleton
+      // Create skeleton for hours 5 AM to 6 PM
       const hourSlots: { time: string; hourIndex: number; sentiment: number | null; bullish: number | null; bearish: number | null; isEmpty: boolean }[] = [];
       
-      for (let h = 0; h < 24; h++) {
+      for (let h = START_HOUR; h <= END_HOUR; h++) {
         const hourLabel = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
         const isFutureHour = h > currentHour;
         
@@ -127,15 +128,18 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
           }
         });
       } else {
-        // Fall back to generated data for past hours only
-        for (let h = 0; h <= currentHour; h++) {
-          const baseValue = 55 + Math.sin(h / 4) * 15;
-          const noise = (Math.random() - 0.5) * 10;
-          hourSlots[h].sentiment = Math.round(Math.max(0, Math.min(100, baseValue + noise)));
-          hourSlots[h].bullish = Math.round(Math.max(0, Math.min(100, baseValue + noise + 5)));
-          hourSlots[h].bearish = Math.round(Math.max(0, Math.min(100, 100 - baseValue - noise)));
-          hourSlots[h].isEmpty = false;
-        }
+        // Fall back to generated data for past hours only (within our visible range)
+        hourSlots.forEach((slot, idx) => {
+          const h = slot.hourIndex;
+          if (h <= currentHour) {
+            const baseValue = 55 + Math.sin(h / 4) * 15;
+            const noise = (Math.random() - 0.5) * 10;
+            slot.sentiment = Math.round(Math.max(0, Math.min(100, baseValue + noise)));
+            slot.bullish = Math.round(Math.max(0, Math.min(100, baseValue + noise + 5)));
+            slot.bearish = Math.round(Math.max(0, Math.min(100, 100 - baseValue - noise)));
+            slot.isEmpty = false;
+          }
+        });
       }
       
       return hourSlots;

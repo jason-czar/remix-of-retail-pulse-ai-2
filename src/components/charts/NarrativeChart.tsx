@@ -613,11 +613,15 @@ function HourlyStackedNarrativeChart({
   const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
 
   const { stackedChartData, totalMessages, hasAnyData, is5MinView } = useMemo(() => {
-    // For "Today" view (1D), use 288 5-minute slots for granular price line
+    // For "Today" view (1D), use 5-minute slots for granular price line
     // but only put bar data at hour boundaries
+    // Show only 5 AM to 6 PM (hours 5-18, 14 hours total)
     if (timeRange === '1D') {
       const SLOTS_PER_HOUR = 12;
-      const TOTAL_SLOTS = 24 * SLOTS_PER_HOUR; // 288 slots
+      const START_HOUR = 5;  // 5 AM
+      const END_HOUR = 18;   // 6 PM (inclusive, so hours 5-18 = 14 hours)
+      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 14 hours
+      const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR; // 168 slots
       
       // First, collect hourly narrative data
       const hourlyNarratives: Map<number, { 
@@ -625,8 +629,8 @@ function HourlyStackedNarrativeChart({
         totalMessages: number;
       }> = new Map();
       
-      // Initialize all 24 hours
-      for (let h = 0; h < 24; h++) {
+      // Initialize hours 5 AM to 6 PM
+      for (let h = START_HOUR; h <= END_HOUR; h++) {
         hourlyNarratives.set(h, { narratives: [], totalMessages: 0 });
       }
       
@@ -667,11 +671,11 @@ function HourlyStackedNarrativeChart({
       const hourData = Array.from(hourlyNarratives.values());
       const maxMessages = Math.max(...hourData.map(h => h.totalMessages), 1);
       
-      // Build 288-slot chart data
+      // Build chart data slots
       const stackedChartData: Record<string, any>[] = [];
       
       for (let slotIdx = 0; slotIdx < TOTAL_SLOTS; slotIdx++) {
-        const hour = Math.floor(slotIdx / SLOTS_PER_HOUR);
+        const hour = START_HOUR + Math.floor(slotIdx / SLOTS_PER_HOUR);
         const isHourStart = slotIdx % SLOTS_PER_HOUR === 0;
         
         // Time label: show hour label at hour boundaries

@@ -171,15 +171,19 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     const currentHour = now.getHours();
     const isTodayView = timeRange === '1D';
     
-    // For '1D' (Today), use 288 5-minute slots for granular price line
+    // For '1D' (Today), use 5-minute slots for granular price line
+    // Show only 5 AM to 6 PM (hours 5-18, 14 hours total)
     if (isTodayView) {
-      const TOTAL_SLOTS = 24 * SLOTS_PER_HOUR; // 288 slots
+      const START_HOUR = 5;  // 5 AM
+      const END_HOUR = 18;   // 6 PM (inclusive)
+      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 14 hours
+      const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR; // 168 slots
       
       // First, collect hourly volume data
       const hourlyVolumes: Map<number, { volume: number; isEmpty: boolean }> = new Map();
       
-      // Initialize all 24 hours
-      for (let h = 0; h < 24; h++) {
+      // Initialize hours 5 AM to 6 PM
+      for (let h = START_HOUR; h <= END_HOUR; h++) {
         hourlyVolumes.set(h, { volume: 0, isEmpty: h > currentHour });
       }
       
@@ -226,11 +230,11 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         }
       }
       
-      // Build 288-slot chart data
+      // Build chart data slots
       const slots: any[] = [];
       
       for (let slotIdx = 0; slotIdx < TOTAL_SLOTS; slotIdx++) {
-        const hour = Math.floor(slotIdx / SLOTS_PER_HOUR);
+        const hour = START_HOUR + Math.floor(slotIdx / SLOTS_PER_HOUR);
         const isHourStart = slotIdx % SLOTS_PER_HOUR === 0;
         const hourLabel = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
         
