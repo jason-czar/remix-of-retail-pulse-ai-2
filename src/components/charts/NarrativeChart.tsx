@@ -100,7 +100,10 @@ const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view
 function WideBarShape(props: any) {
-  const { x, y, width, height, fill, radius, payload, is5MinView } = props;
+  const { x, y, width, height, fill, radius, payload, is5MinView, isActive } = props;
+  
+  // Determine opacity: 70% when hovered, 60% otherwise
+  const opacity = isActive ? 0.7 : 0.6;
   
   // In 5-min view, expand bar width to cover 12 slots (full hour)
   // Only render for hour-start slots
@@ -117,7 +120,7 @@ function WideBarShape(props: any) {
         width={expandedWidth}
         height={height}
         fill={fill}
-        fillOpacity={0.6}
+        fillOpacity={opacity}
         radius={radius}
       />
     );
@@ -131,7 +134,7 @@ function WideBarShape(props: any) {
       width={width}
       height={height}
       fill={fill}
-      fillOpacity={0.6}
+      fillOpacity={opacity}
       radius={radius}
     />
   );
@@ -1040,6 +1043,14 @@ function HourlyStackedNarrativeChart({
                 <WideBarShape 
                   {...props} 
                   is5MinView={is5MinView}
+                  radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                />
+              )}
+              activeBar={(props: any) => (
+                <WideBarShape 
+                  {...props} 
+                  is5MinView={is5MinView}
+                  isActive={true}
                   radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
                 />
               )}

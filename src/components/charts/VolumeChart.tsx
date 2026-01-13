@@ -35,7 +35,10 @@ const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view
 function WideBarShape(props: any) {
-  const { x, y, width, height, fill, radius, payload, is5MinView } = props;
+  const { x, y, width, height, fill, radius, payload, is5MinView, isActive } = props;
+  
+  // Determine opacity: 70% when hovered, 60% otherwise
+  const opacity = isActive ? 0.7 : 0.6;
   
   if (is5MinView) {
     if (!payload?.isHourStart || height === 0) {
@@ -49,7 +52,7 @@ function WideBarShape(props: any) {
         width={expandedWidth}
         height={height}
         fill={fill}
-        fillOpacity={0.6}
+        fillOpacity={opacity}
         radius={radius}
       />
     );
@@ -62,7 +65,7 @@ function WideBarShape(props: any) {
       width={width}
       height={height}
       fill={fill}
-      fillOpacity={0.6}
+      fillOpacity={opacity}
       radius={radius}
     />
   );
@@ -578,6 +581,14 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
                 radius={[4, 4, 0, 0]}
               />
             ) : undefined}
+            activeBar={is5MinView ? (props: any) => (
+              <WideBarShape 
+                {...props} 
+                is5MinView={is5MinView}
+                isActive={true}
+                radius={[4, 4, 0, 0]}
+              />
+            ) : { fillOpacity: 0.7 }}
             radius={!is5MinView ? [4, 4, 0, 0] : undefined}
           />
           {/* Price Line Overlay */}
