@@ -82,9 +82,86 @@ export function EmotionTrendsChart({
     }
   }, [data?.data, isLoading, isFetching, checkAndFillGaps, refetch]);
 
+  // Calculate day boundaries for "Today" view
+  const { todayStart, todayEnd } = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return { todayStart, todayEnd };
+  }, []);
+
   // Transform data for the chart and detect gaps
-  const { chartData, gapCount } = useMemo(() => {
-    if (!data?.data || data.data.length === 0) return { chartData: [], gapCount: 0 };
+  const { chartData, gapCount, hasAnyData } = useMemo(() => {
+    const isHourlyToday = periodType === "hourly" && days <= 1;
+    
+    // For "Today" hourly view, generate static 24-hour skeleton
+    if (isHourlyToday) {
+      // Create 24-hour slots from 12 AM to 11 PM
+      const hourSlots: Map<number, {
+        hour: string;
+        hourIndex: number;
+        timestamp: number;
+        isEmpty: boolean;
+        emotions: Record<string, number>;
+      }> = new Map();
+      
+      // Initialize all 24 hours
+      for (let h = 0; h < 24; h++) {
+        const hourLabel = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
+        const hourTimestamp = new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate(), h, 0, 0, 0).getTime();
+        hourSlots.set(h, {
+          hour: hourLabel,
+          hourIndex: h,
+          timestamp: hourTimestamp,
+          isEmpty: true,
+          emotions: {},
+        });
+      }
+      
+      // Fill in actual data if available
+      if (data?.data && data.data.length > 0) {
+        const filteredData = data.data.filter(point => {
+          const pointDate = new Date(point.recorded_at);
+          return pointDate.getTime() >= todayStart.getTime() && pointDate.getTime() <= todayEnd.getTime();
+        });
+        
+        filteredData.forEach(point => {
+          const date = new Date(point.recorded_at);
+          const hourIndex = date.getHours();
+          
+          const slot = hourSlots.get(hourIndex);
+          if (slot) {
+            slot.isEmpty = false;
+            // Merge emotions
+            if (point.emotions && typeof point.emotions === 'object') {
+              Object.entries(point.emotions).forEach(([emotion, score]) => {
+                if (typeof score === 'number') {
+                  slot.emotions[emotion] = score;
+                }
+              });
+            }
+          }
+        });
+      }
+      
+      // Build chart data for all 24 hours
+      const chartData = Array.from(hourSlots.values())
+        .sort((a, b) => a.hourIndex - b.hourIndex)
+        .map(slot => ({
+          timestamp: slot.timestamp,
+          date: slot.hour,
+          isGap: false,
+          isEmpty: slot.isEmpty,
+          ...slot.emotions,
+        }));
+      
+      const hasAnyData = chartData.some(d => !d.isEmpty);
+      
+      return { chartData, gapCount: 0, hasAnyData };
+    }
+    
+    // Original logic for non-Today views
+    if (!data?.data || data.data.length === 0) return { chartData: [], gapCount: 0, hasAnyData: false };
 
     // Get existing dates from data
     const existingDates = data.data.map(point => 
@@ -106,6 +183,7 @@ export function EmotionTrendsChart({
         timestamp: new Date(point.recorded_at).getTime(),
         date: format(utcDate, 'MMM d'),
         isGap: false,
+        isEmpty: false,
         ...point.emotions,
       };
     });
@@ -118,14 +196,15 @@ export function EmotionTrendsChart({
         timestamp: utcDate.getTime(),
         date: format(utcDate, 'MMM d'),
         isGap: true,
+        isEmpty: true,
       };
     });
 
     // Merge and sort by timestamp
     const combined = [...actualPoints, ...gapPoints].sort((a, b) => a.timestamp - b.timestamp);
 
-    return { chartData: combined, gapCount: missingDates.length };
-  }, [data, days, periodType]);
+    return { chartData: combined, gapCount: missingDates.length, hasAnyData: actualPoints.length > 0 };
+  }, [data, days, periodType, todayStart, todayEnd]);
 
   // Emotions to display - default to trading signal emotions
   const displayEmotions = useMemo(() => {
@@ -191,13 +270,17 @@ export function EmotionTrendsChart({
     );
   }
 
-  // For hourly views (Today/24H), fall back to live AI analysis if no historical data
+  // For hourly views, determine if we should fall back to live AI
   const isHourlyView = periodType === "hourly" || days <= 1;
-  const shouldFallbackToLive = !isLoading && (!data || chartData.length === 0);
+  const isTodayView = isHourlyView && days <= 0.5;
+  
+  // For "Today" view, always show the 24-hour skeleton even with no data
+  // For "24H" rolling view, fall back to live AI if no data
+  const shouldFallbackToLive = !isLoading && !hasAnyData && !isTodayView;
   
   if (shouldFallbackToLive && isHourlyView) {
     // Map days to time range for EmotionChart
-    const timeRange = days <= 0.5 ? '1D' : '24H';
+    const timeRange = '24H';
     return <EmotionChart symbol={symbol} timeRange={timeRange} />;
   }
   
@@ -333,13 +416,17 @@ export function EmotionTrendsChart({
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
             <XAxis
-              dataKey="timestamp"
+              dataKey={isTodayView ? "date" : "timestamp"}
               stroke="hsl(var(--muted-foreground))"
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => format(new Date(value), periodType === "hourly" || days <= 1 ? "HH:mm" : "MMM d")}
-              minTickGap={50}
+              tickFormatter={(value) => {
+                // For Today view, the date field already contains formatted hour labels
+                if (isTodayView) return value;
+                return format(new Date(value), periodType === "hourly" || days <= 1 ? "HH:mm" : "MMM d");
+              }}
+              minTickGap={isTodayView ? 30 : 50}
             />
             <YAxis
               stroke="hsl(var(--muted-foreground))"
@@ -357,11 +444,15 @@ export function EmotionTrendsChart({
                 boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)",
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
-              labelFormatter={(value) => format(new Date(value), "MMM d, yyyy HH:mm")}
+              labelFormatter={(value) => {
+                if (isTodayView) return value; // Already formatted hour label
+                return format(new Date(value), "MMM d, yyyy HH:mm");
+              }}
               content={({ active, payload, label }) => {
                 if (!active || !payload || !payload.length) return null;
                 const dataPoint = payload[0]?.payload;
                 
+                // Handle gap placeholders
                 if (dataPoint?.isGap) {
                   return (
                     <div className="bg-card border border-dashed border-amber-500/50 rounded-lg p-3 shadow-xl">
@@ -375,9 +466,23 @@ export function EmotionTrendsChart({
                   );
                 }
                 
+                // Handle empty hours (no data yet - e.g., future hours in "Today" view)
+                if (dataPoint?.isEmpty) {
+                  return (
+                    <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
+                      <span className="font-semibold">{dataPoint.date}</span>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        No data available yet
+                      </p>
+                    </div>
+                  );
+                }
+                
                 return (
                   <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
-                    <div className="font-semibold mb-2">{format(new Date(label), "MMM d, yyyy HH:mm")}</div>
+                    <div className="font-semibold mb-2">
+                      {isTodayView ? dataPoint.date : format(new Date(label), "MMM d, yyyy HH:mm")}
+                    </div>
                     <div className="space-y-1">
                       {payload.map((entry: any, index: number) => (
                         <div key={index} className="flex items-center gap-2 text-sm">
