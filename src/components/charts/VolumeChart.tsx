@@ -228,13 +228,22 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               itemHour = recordedDate.getHours();
             }
           } else if (item.time && typeof item.time === 'string') {
-            const match = item.time.match(/^(\d{1,2})\s*(AM|PM)$/i);
-            if (match) {
-              let h = parseInt(match[1]);
-              const period = match[2].toUpperCase();
-              if (period === 'AM' && h === 12) h = 0;
-              else if (period === 'PM' && h !== 12) h += 12;
-              itemHour = h;
+            // Handle "HH:MM" format (e.g., "7:00", "14:00")
+            if (item.time.includes(':')) {
+              const hour = parseInt(item.time.split(':')[0], 10);
+              if (!isNaN(hour)) {
+                itemHour = hour;
+              }
+            } else {
+              // Handle "X AM/PM" format
+              const match = item.time.match(/^(\d{1,2})\s*(AM|PM)?$/i);
+              if (match) {
+                let h = parseInt(match[1]);
+                const period = match[2]?.toUpperCase();
+                if (period === 'AM' && h === 12) h = 0;
+                else if (period === 'PM' && h !== 12) h += 12;
+                itemHour = h;
+              }
             }
           }
           
@@ -244,10 +253,11 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           }
         });
       } else {
-        // Generate mock data for past hours
+        // Generate mock data for past hours (deterministic based on hour)
         for (let h = 0; h <= currentHour; h++) {
+          const noise = ((h * 7) % 10 - 5) / 10; // Deterministic "noise" based on hour
           hourlyVolumes.set(h, { 
-            volume: Math.round(baseline * (0.7 + Math.random() * 0.6)), 
+            volume: Math.round(baseline * (0.7 + 0.3 + noise)), 
             isEmpty: false 
           });
         }
@@ -309,13 +319,22 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           if (item.recorded_at) {
             itemHour = new Date(item.recorded_at).getHours();
           } else if (item.time && typeof item.time === 'string') {
-            const match = item.time.match(/^(\d{1,2})\s*(AM|PM)$/i);
-            if (match) {
-              let h = parseInt(match[1]);
-              const period = match[2].toUpperCase();
-              if (period === 'AM' && h === 12) h = 0;
-              else if (period === 'PM' && h !== 12) h += 12;
-              itemHour = h;
+            // Handle "HH:MM" format (e.g., "7:00", "14:00")
+            if (item.time.includes(':')) {
+              const hour = parseInt(item.time.split(':')[0], 10);
+              if (!isNaN(hour)) {
+                itemHour = hour;
+              }
+            } else {
+              // Handle "X AM/PM" format
+              const match = item.time.match(/^(\d{1,2})\s*(AM|PM)?$/i);
+              if (match) {
+                let h = parseInt(match[1]);
+                const period = match[2]?.toUpperCase();
+                if (period === 'AM' && h === 12) h = 0;
+                else if (period === 'PM' && h !== 12) h += 12;
+                itemHour = h;
+              }
             }
           }
           
@@ -330,9 +349,10 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           }
         });
       } else {
-        // Generate mock data
+        // Generate mock data (deterministic based on hour)
         for (let h = 0; h < 24; h++) {
-          hourSlots[h].volume = Math.round(baseline * (0.7 + Math.random() * 0.6));
+          const noise = ((h * 7) % 10 - 5) / 10; // Deterministic "noise"
+          hourSlots[h].volume = Math.round(baseline * (0.7 + 0.3 + noise));
           hourSlots[h].isEmpty = false;
         }
       }
