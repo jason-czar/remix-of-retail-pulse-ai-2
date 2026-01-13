@@ -954,12 +954,15 @@ function HourlyStackedNarrativeChart({
           )}
           {/* Price Toggle */}
           <div className="flex items-center gap-2">
-            <DollarSign className={`h-4 w-4 ${showPriceOverlay ? 'text-amber-400' : 'text-muted-foreground'}`} />
+            <DollarSign 
+              className="h-4 w-4" 
+              style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
+            />
             <span className="text-xs text-muted-foreground">Price</span>
             <Switch
               checked={showPriceOverlay}
               onCheckedChange={setShowPriceOverlay}
-              className="data-[state=checked]:bg-amber-500"
+              style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
             />
           </div>
           <Button 
