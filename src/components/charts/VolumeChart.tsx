@@ -29,6 +29,7 @@ const generateVolumeData = (timeRange: string) => {
   const ranges: Record<string, { points: number; intervalMs: number }> = {
     '1H': { points: 12, intervalMs: 5 * 60 * 1000 },
     '6H': { points: 24, intervalMs: 15 * 60 * 1000 },
+    '1D': { points: now.getHours() + 1, intervalMs: 60 * 60 * 1000 }, // Today: hours since midnight
     '24H': { points: 24, intervalMs: 60 * 60 * 1000 },
     '7D': { points: 7, intervalMs: 24 * 60 * 60 * 1000 },
     '30D': { points: 30, intervalMs: 24 * 60 * 60 * 1000 },
@@ -46,9 +47,10 @@ const generateVolumeData = (timeRange: string) => {
     
     let timeLabel: string;
     if (timeRange === '7D' || timeRange === '30D') {
-      timeLabel = time.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      timeLabel = time.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     } else {
-      timeLabel = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      // Use user's timezone for time display
+      timeLabel = time.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
     }
     
     data.push({
