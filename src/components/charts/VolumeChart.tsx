@@ -30,7 +30,7 @@ interface VolumeChartProps {
 }
 
 // Stock price line color
-const PRICE_LINE_COLOR = "hsl(38 92% 50%)";
+const PRICE_LINE_COLOR = "#00C805";
 const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view

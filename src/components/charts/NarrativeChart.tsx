@@ -30,7 +30,7 @@ import { detectMissingDates, createGapPlaceholders, mergeDataWithGaps, isGapPlac
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
 // Stock price line color
-const PRICE_LINE_COLOR = "hsl(38 92% 50%)";
+const PRICE_LINE_COLOR = "#00C805";
 
 interface NarrativeChartProps {
   symbol: string;
