@@ -35,10 +35,11 @@ const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view
 function WideBarShape(props: any) {
-  const { x, y, width, height, fill, radius, payload, is5MinView, isActive } = props;
+  const { x, y, width, height, fill, radius, payload, is5MinView, activeHour } = props;
   
-  // Determine opacity: 70% when hovered, 60% otherwise
-  const opacity = isActive ? 0.7 : 0.6;
+  // Determine opacity: 70% when this hour is hovered, 60% otherwise
+  const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
+  const opacity = isHourActive ? 0.7 : 0.6;
   
   if (is5MinView) {
     if (!payload?.isHourStart || height === 0) {
@@ -145,6 +146,7 @@ const generateVolumeData = (timeRange: string) => {
 
 export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeChartProps) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
+  const [activeHour, setActiveHour] = useState<number | null>(null);
   
   // Try cache first
   const { data: cacheResult, isLoading: cacheLoading } = useCachedVolumeAnalytics(symbol, timeRange);
@@ -452,6 +454,12 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           margin={{ top: 20, right: showPriceOverlay && showPriceToggle ? 60 : 30, left: 0, bottom: 0 }}
           barCategoryGap={is5MinView ? 0 : undefined}
           barGap={is5MinView ? 0 : undefined}
+          onMouseMove={(state: any) => {
+            if (state?.activePayload?.[0]?.payload?.hourIndex !== undefined) {
+              setActiveHour(state.activePayload[0].payload.hourIndex);
+            }
+          }}
+          onMouseLeave={() => setActiveHour(null)}
         >
           <defs>
             <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -578,17 +586,11 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               <WideBarShape 
                 {...props} 
                 is5MinView={is5MinView}
+                activeHour={activeHour}
                 radius={[4, 4, 0, 0]}
               />
             ) : undefined}
-            activeBar={is5MinView ? (props: any) => (
-              <WideBarShape 
-                {...props} 
-                is5MinView={is5MinView}
-                isActive={true}
-                radius={[4, 4, 0, 0]}
-              />
-            ) : { fillOpacity: 0.7 }}
+            activeBar={!is5MinView ? { fillOpacity: 0.7 } : false}
             radius={!is5MinView ? [4, 4, 0, 0] : undefined}
           />
           {/* Price Line Overlay */}

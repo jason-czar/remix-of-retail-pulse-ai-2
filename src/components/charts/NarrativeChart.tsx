@@ -100,10 +100,11 @@ const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view
 function WideBarShape(props: any) {
-  const { x, y, width, height, fill, radius, payload, is5MinView, isActive } = props;
+  const { x, y, width, height, fill, radius, payload, is5MinView, activeHour } = props;
   
-  // Determine opacity: 70% when hovered, 60% otherwise
-  const opacity = isActive ? 0.7 : 0.6;
+  // Determine opacity: 70% when this hour is hovered, 60% otherwise
+  const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
+  const opacity = isHourActive ? 0.7 : 0.6;
   
   // In 5-min view, expand bar width to cover 12 slots (full hour)
   // Only render for hour-start slots
@@ -595,6 +596,7 @@ function HourlyStackedNarrativeChart({
   timeRange: '1D' | '24H';
 }) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
+  const [activeHour, setActiveHour] = useState<number | null>(null);
   
   // Calculate proper day boundaries in user's local timezone
   const { todayStart, todayEnd, twentyFourHoursAgo, now } = useMemo(() => {
@@ -987,6 +989,12 @@ function HourlyStackedNarrativeChart({
           margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
           barCategoryGap={0}
           barGap={0}
+          onMouseMove={(state: any) => {
+            if (state?.activePayload?.[0]?.payload?.hourIndex !== undefined) {
+              setActiveHour(state.activePayload[0].payload.hourIndex);
+            }
+          }}
+          onMouseLeave={() => setActiveHour(null)}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
           <XAxis 
@@ -1043,17 +1051,11 @@ function HourlyStackedNarrativeChart({
                 <WideBarShape 
                   {...props} 
                   is5MinView={is5MinView}
+                  activeHour={activeHour}
                   radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
                 />
               )}
-              activeBar={(props: any) => (
-                <WideBarShape 
-                  {...props} 
-                  is5MinView={is5MinView}
-                  isActive={true}
-                  radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-                />
-              )}
+              activeBar={false}
             >
               {chartDataWithPrice.map((entry, entryIdx) => (
                 <Cell 
