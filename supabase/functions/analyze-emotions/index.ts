@@ -24,26 +24,32 @@ interface EmotionTimePoint {
 function getDateRange(timeRange: string): { start: string; end: string; limit: number } {
   const now = new Date();
   let daysBack = 1;
-  let limit = 100;
+  let limit = 500;
 
   switch (timeRange) {
     case "1H":
+      daysBack = 1;
+      limit = 500;
+      break;
     case "6H":
+      daysBack = 1;
+      limit = 750;
+      break;
     case "24H":
       daysBack = 1;
-      limit = 100;
+      limit = 1000;
       break;
     case "7D":
       daysBack = 7;
-      limit = 200;
+      limit = 1500;
       break;
     case "30D":
       daysBack = 30;
-      limit = 400;
+      limit = 2500;
       break;
     default:
       daysBack = 1;
-      limit = 100;
+      limit = 500;
   }
 
   const pastDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
@@ -141,7 +147,7 @@ serve(async (req) => {
     const totalMessages = messages.length;
 
     // Group messages by time periods for historical analysis
-    const messagesWithTime = messages.slice(0, 300).map((m: any) => ({
+    const messagesWithTime = messages.slice(0, 1000).map((m: any) => ({
       text: m.body || m.content || "",
       created_at: m.created_at || new Date().toISOString()
     })).filter((m: any) => m.text.length > 10);
