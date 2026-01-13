@@ -105,9 +105,9 @@ const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 function WideBarShape(props: any) {
   const { x, y, width, height, fill, radius, payload, is5MinView, activeHour } = props;
   
-  // Determine opacity: 70% when this hour is hovered, 40% otherwise
+  // Determine opacity: 50% when this hour is hovered, 25% otherwise
   const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
-  const opacity = isHourActive ? 0.7 : 0.4;
+  const opacity = isHourActive ? 0.5 : 0.25;
   
   // Smooth transition style for opacity changes
   const transitionStyle = { transition: 'fill-opacity 0.2s ease-out' };
