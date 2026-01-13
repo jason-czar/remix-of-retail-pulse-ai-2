@@ -11,9 +11,6 @@ import { SentimentChart } from "@/components/charts/SentimentChart";
 import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
 import { VolumeChart } from "@/components/charts/VolumeChart";
-import { SentimentHistoryChart } from "@/components/charts/SentimentHistoryChart";
-import { NarrativeTrendsChart } from "@/components/charts/NarrativeTrendsChart";
-import { EmotionTrendsChart } from "@/components/charts/EmotionTrendsChart";
 import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
@@ -32,33 +29,11 @@ import {
 } from "lucide-react";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
-type HistoryTimeRange = '24H' | 'TODAY' | '1W' | '30D';
 
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
   const [timeRange, setTimeRange] = useState<TimeRange>('1D'); // Default to Today
-  const [historyTimeRange, setHistoryTimeRange] = useState<HistoryTimeRange>('1W');
   const queryClient = useQueryClient();
-  
-  // Calculate history range parameters
-  const historyParams = useMemo(() => {
-    const now = new Date();
-    switch (historyTimeRange) {
-      case '24H':
-        return { days: 1, periodType: 'hourly' as const, label: '24 hours' };
-      case 'TODAY': {
-        // Hours since midnight
-        const hoursSinceMidnight = now.getHours() + (now.getMinutes() / 60);
-        return { days: hoursSinceMidnight / 24, periodType: 'hourly' as const, label: 'today' };
-      }
-      case '1W':
-        return { days: 7, periodType: 'daily' as const, label: '7 days' };
-      case '30D':
-        return { days: 30, periodType: 'daily' as const, label: '30 days' };
-      default:
-        return { days: 7, periodType: 'daily' as const, label: '7 days' };
-    }
-  }, [historyTimeRange]);
   
   // Calculate date range based on selection (timezone-aware)
   const { start, end } = useMemo(() => {
@@ -209,7 +184,6 @@ export default function SymbolPage() {
         <Tabs defaultValue="narratives" className="mb-8">
           <TabsList className="mb-6">
             <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="narratives">Narratives</TabsTrigger>
             <TabsTrigger value="emotions">Emotions</TabsTrigger>
             <TabsTrigger value="momentum">Momentum</TabsTrigger>
@@ -224,42 +198,6 @@ export default function SymbolPage() {
               </div>
               <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </Card>
-          </TabsContent>
-
-          <TabsContent value="history">
-            <div className="space-y-4">
-              {/* Unified time range selector for all history charts */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Historical Analysis ({historyParams.label})</h3>
-                <HistoryTimeRangeSelector value={historyTimeRange} onChange={setHistoryTimeRange} />
-              </div>
-              
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-6">Historical Sentiment</h3>
-                <SentimentHistoryChart 
-                  symbol={symbol} 
-                  days={Math.ceil(historyParams.days)} 
-                  periodType={historyParams.periodType}
-                  showVolume 
-                />
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-6">Narrative Trends</h3>
-                <NarrativeTrendsChart 
-                  symbol={symbol} 
-                  days={Math.ceil(historyParams.days)} 
-                  periodType={historyParams.periodType}
-                />
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-6">Emotion Trends</h3>
-                <EmotionTrendsChart 
-                  symbol={symbol} 
-                  days={Math.ceil(historyParams.days)} 
-                  periodType={historyParams.periodType}
-                />
-              </Card>
-            </div>
           </TabsContent>
 
           <TabsContent value="narratives">
@@ -387,31 +325,6 @@ function TimeRangeSelector({ value, onChange }: { value: TimeRange; onChange: (v
   return (
     <div className="flex gap-1">
       {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map((range) => (
-        <Button
-          key={range}
-          variant={range === value ? "default" : "ghost"}
-          size="sm"
-          className="px-3"
-          onClick={() => onChange(range)}
-        >
-          {labels[range]}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-function HistoryTimeRangeSelector({ value, onChange }: { value: HistoryTimeRange; onChange: (v: HistoryTimeRange) => void }) {
-  const labels: Record<HistoryTimeRange, string> = {
-    '24H': '24H',
-    'TODAY': 'Today',
-    '1W': '1 Week',
-    '30D': '30 Days',
-  };
-  
-  return (
-    <div className="flex gap-1">
-      {(["24H", "TODAY", "1W", "30D"] as const).map((range) => (
         <Button
           key={range}
           variant={range === value ? "default" : "ghost"}
