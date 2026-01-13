@@ -22,6 +22,54 @@ interface NarrativeHistoryResult {
   dominantThemes: string[];
 }
 
+// Normalize narrative names to consistent categories for better trend tracking
+const NARRATIVE_CATEGORIES: { pattern: RegExp; category: string }[] = [
+  // Price & Trading
+  { pattern: /price\s*(movement|action|target|drop|surge|change)/i, category: "Price Movement" },
+  { pattern: /stock\s*(price|movement)/i, category: "Price Movement" },
+  { pattern: /technicals?|chart/i, category: "Technical Analysis" },
+  
+  // Earnings & Revenue
+  { pattern: /revenue|earnings|miss|beat|prelim/i, category: "Earnings & Revenue" },
+  { pattern: /financial\s*(performance|results)/i, category: "Earnings & Revenue" },
+  
+  // Valuation
+  { pattern: /undervalua?t|overvalua?t|valuation|takeover|buyout|acquisition|merger/i, category: "Valuation & M&A" },
+  { pattern: /roche|buyout|takeover/i, category: "Valuation & M&A" },
+  
+  // Regulatory & FDA
+  { pattern: /fda|regulatory|approval|pmo|screening/i, category: "FDA & Regulatory" },
+  { pattern: /newborn\s*screening/i, category: "FDA & Regulatory" },
+  
+  // Conferences & Events
+  { pattern: /jpm|jp\s*morgan|conference|presentation|investor\s*day/i, category: "Conferences & Events" },
+  
+  // Product & Pipeline
+  { pattern: /pipeline|drug|therapy|trial|clinical|sirna|rnai/i, category: "Pipeline & Products" },
+  { pattern: /elevidys|safety|efficacy/i, category: "Pipeline & Products" },
+  { pattern: /arrowhead/i, category: "Pipeline & Products" },
+  
+  // Financials
+  { pattern: /cash|balance|reserve|capital/i, category: "Cash & Financials" },
+  
+  // Market Sentiment
+  { pattern: /sentiment|bullish|bearish/i, category: "Market Sentiment" },
+  { pattern: /manipulation|short|squeeze|scare/i, category: "Market Manipulation" },
+  
+  // Investment
+  { pattern: /investment|strategy|position/i, category: "Investment Strategy" },
+];
+
+function normalizeNarrativeName(name: string): string {
+  for (const { pattern, category } of NARRATIVE_CATEGORIES) {
+    if (pattern.test(name)) {
+      return category;
+    }
+  }
+  // If no match, return a cleaned version of the original name
+  return name.split(/[\/\-]/)[0].trim();
+}
+
 export function useNarrativeHistory(
   symbol: string, 
   days: number = 7,
@@ -67,23 +115,55 @@ export function useNarrativeHistory(
         message_count: row.message_count || 0,
       }));
 
-      // Build theme evolution map
+      // Build theme evolution map with NORMALIZED theme names
       const themeEvolution = new Map<string, { time: string; count: number; sentiment: string }[]>();
       const themeCounts = new Map<string, number>();
+      const themeSentiments = new Map<string, Map<string, number>>(); // Track sentiment counts per theme
 
       points.forEach((point) => {
         const time = point.recorded_at;
+        
+        // Group narratives by normalized category
+        const normalizedNarratives = new Map<string, { count: number; sentiments: string[] }>();
+        
         point.narratives.forEach((narrative) => {
-          const theme = narrative.name;
+          const normalizedName = normalizeNarrativeName(narrative.name);
+          
+          if (!normalizedNarratives.has(normalizedName)) {
+            normalizedNarratives.set(normalizedName, { count: 0, sentiments: [] });
+          }
+          
+          const entry = normalizedNarratives.get(normalizedName)!;
+          entry.count += narrative.count;
+          entry.sentiments.push(narrative.sentiment);
+        });
+        
+        // Add normalized narratives to evolution
+        normalizedNarratives.forEach(({ count, sentiments }, theme) => {
           if (!themeEvolution.has(theme)) {
             themeEvolution.set(theme, []);
           }
+          
+          // Determine dominant sentiment for this time point
+          const sentimentCounts: Record<string, number> = {};
+          sentiments.forEach(s => { sentimentCounts[s] = (sentimentCounts[s] || 0) + 1; });
+          const dominantSentiment = Object.entries(sentimentCounts)
+            .sort((a, b) => b[1] - a[1])[0]?.[0] || "neutral";
+          
           themeEvolution.get(theme)!.push({
             time,
-            count: narrative.count,
-            sentiment: narrative.sentiment,
+            count,
+            sentiment: dominantSentiment,
           });
-          themeCounts.set(theme, (themeCounts.get(theme) || 0) + narrative.count);
+          
+          themeCounts.set(theme, (themeCounts.get(theme) || 0) + count);
+          
+          // Track overall sentiments for theme
+          if (!themeSentiments.has(theme)) {
+            themeSentiments.set(theme, new Map());
+          }
+          const sentMap = themeSentiments.get(theme)!;
+          sentiments.forEach(s => sentMap.set(s, (sentMap.get(s) || 0) + 1));
         });
       });
 
