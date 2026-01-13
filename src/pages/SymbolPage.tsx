@@ -403,10 +403,45 @@ function MessageCard({
   );
 }
 
-// Simple markdown-style bold text formatter
+// Markdown-style text formatter supporting bold, italics, and bullet points
 function FormattedSummary({ text }: { text: string }) {
-  // Split text by **bold** patterns
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  // Check if text contains bullet points (lines starting with - or •)
+  const lines = text.split('\n');
+  const hasBullets = lines.some(line => /^[\s]*[-•]\s/.test(line));
+  
+  if (hasBullets) {
+    return (
+      <div className="space-y-1">
+        {lines.map((line, lineIndex) => {
+          const trimmedLine = line.trim();
+          // Check if this is a bullet point
+          if (/^[-•]\s/.test(trimmedLine)) {
+            const bulletContent = trimmedLine.replace(/^[-•]\s/, '');
+            return (
+              <div key={lineIndex} className="flex items-start gap-2">
+                <span className="text-primary mt-1">•</span>
+                <span><FormatInlineText text={bulletContent} /></span>
+              </div>
+            );
+          }
+          // Regular line
+          if (trimmedLine) {
+            return <span key={lineIndex}><FormatInlineText text={trimmedLine} /></span>;
+          }
+          return null;
+        })}
+      </div>
+    );
+  }
+  
+  return <FormatInlineText text={text} />;
+}
+
+// Handle inline formatting: **bold** and *italics*
+function FormatInlineText({ text }: { text: string }) {
+  // Combined regex to match **bold** or *italic* patterns
+  // Match **bold** first, then *italic* (single asterisk not followed/preceded by another)
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
   
   return (
     <>
@@ -414,7 +449,12 @@ function FormattedSummary({ text }: { text: string }) {
         // Check if this part is bold (wrapped in **)
         if (part.startsWith('**') && part.endsWith('**')) {
           const boldText = part.slice(2, -2);
-          return <strong key={index} className="text-foreground font-semibold">{boldText}</strong>;
+          return <strong key={index} className="font-semibold">{boldText}</strong>;
+        }
+        // Check if this part is italic (wrapped in single *)
+        if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
+          const italicText = part.slice(1, -1);
+          return <em key={index} className="italic">{italicText}</em>;
         }
         return <span key={index}>{part}</span>;
       })}
