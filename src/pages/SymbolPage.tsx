@@ -15,24 +15,27 @@ import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
-import { useSymbolStats, useSymbolMessages, useSymbolSentiment } from "@/hooks/use-stocktwits";
+import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
+import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
+import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
 import { 
   TrendingUp, 
   TrendingDown,
   ArrowUpRight,
   ArrowDownRight,
-  Bell,
   MessageSquare,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
-  const [timeRange, setTimeRange] = useState<TimeRange>('1D'); // Default to Today
+  const [timeRange, setTimeRange] = useState<TimeRange>('1D');
+  const [decisionLens, setDecisionLens] = useState<DecisionLens>('corporate-strategy');
   const queryClient = useQueryClient();
   
   // Calculate date range based on selection (timezone-aware)
@@ -66,7 +69,7 @@ export default function SymbolPage() {
   
   const { data: stats, isLoading: statsLoading } = useSymbolStats(symbol);
   const { data: messages = [], isLoading: messagesLoading } = useSymbolMessages(symbol, 10, start, end);
-  const { data: sentimentData } = useSymbolSentiment(symbol);
+  const { data: lensSummaryData, isLoading: lensSummaryLoading } = useDecisionLensSummary(symbol, decisionLens);
   
   const data = stats || {
     symbol,
@@ -79,8 +82,8 @@ export default function SymbolPage() {
     badges: [] as string[],
   };
   
-  const summary = sentimentData?.summary || 
-    `Analyzing retail sentiment for ${symbol}. Real-time data from StockTwits community discussions.`;
+  const summary = lensSummaryData?.summary || 
+    `Analyzing ${getLensDisplayName(decisionLens)} for ${symbol}...`;
   
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
 
@@ -165,17 +168,39 @@ export default function SymbolPage() {
           )}
         </div>
 
+        {/* Decision Lens Selector */}
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Decision Context</h3>
+          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
+        </div>
+
         {/* AI Summary */}
         <Card className="p-6 mb-8 bg-gradient-card">
           <div className="flex items-start gap-4">
             <div className="p-2 rounded-lg bg-primary/10">
-              <MessageSquare className="h-5 w-5 text-primary" />
+              {lensSummaryLoading ? (
+                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+              ) : (
+                <MessageSquare className="h-5 w-5 text-primary" />
+              )}
             </div>
-            <div>
-              <h3 className="font-semibold mb-2">AI Sentiment Summary</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {summary}
-              </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="font-semibold">AI Sentiment Summary</h3>
+                <Badge variant="outline" className="text-xs">
+                  {getLensDisplayName(decisionLens)}
+                </Badge>
+              </div>
+              {lensSummaryLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ) : (
+                <p className="text-muted-foreground leading-relaxed">
+                  {summary}
+                </p>
+              )}
             </div>
           </div>
         </Card>
