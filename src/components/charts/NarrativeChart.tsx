@@ -1107,13 +1107,13 @@ function HourlyStackedNarrativeChart({
             <ReferenceLine
               yAxisId="right"
               y={priceData.previousClose}
-              stroke="hsl(215 20% 65% / 0.6)"
-              strokeDasharray="4 4"
-              strokeWidth={1.5}
+              stroke="hsl(215 20% 65% / 0.5)"
+              strokeDasharray="2 3"
+              strokeWidth={1}
               label={{
                 value: `Prev Close $${priceData.previousClose.toFixed(2)}`,
                 position: "right",
-                fill: "hsl(215 20% 65% / 0.6)",
+                fill: "hsl(215 20% 65% / 0.5)",
                 fontSize: 10,
               }}
             />
