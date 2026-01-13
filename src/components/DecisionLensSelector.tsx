@@ -29,14 +29,14 @@ const lensOptions: { value: DecisionLens; label: string }[] = [
 
 export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap scrollbar-hide">
       {lensOptions.map((option) => (
         <Button
           key={option.value}
           variant={value === option.value ? "default" : "outline"}
           size="sm"
           className={cn(
-            "text-xs transition-all",
+            "text-xs transition-all shrink-0 whitespace-nowrap",
             value === option.value && "shadow-sm"
           )}
           onClick={() => onChange(option.value)}

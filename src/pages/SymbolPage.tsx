@@ -91,18 +91,18 @@ export default function SymbolPage() {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
-        {/* Symbol Header */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        {/* Symbol Header - Mobile Optimized */}
+        <div className="flex flex-col gap-4 mb-6 md:mb-8">
           {statsLoading ? (
             <div className="space-y-2">
-              <Skeleton className="h-10 w-48" />
-              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-8 md:h-10 w-32 md:w-48" />
+              <Skeleton className="h-5 md:h-6 w-24 md:w-32" />
             </div>
           ) : (
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-display">${symbol}</h1>
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap mb-2">
+                <h1 className="text-2xl md:text-4xl font-display">${symbol}</h1>
                 <Badge variant={data.trend}>{data.trend}</Badge>
                 {data.badges.includes("trending") && (
                   <Badge variant="trending">
@@ -114,13 +114,14 @@ export default function SymbolPage() {
                   <Badge variant="glow">Volume Surge</Badge>
                 )}
               </div>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-base md:text-lg text-muted-foreground">
                 {data.name} • NASDAQ
               </p>
             </div>
           )}
 
-          <div className="flex gap-3 flex-wrap">
+          {/* Action buttons - horizontal scroll on mobile */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap scrollbar-hide">
             <FillTodayGapsButton 
               symbol={symbol} 
               onComplete={() => {
@@ -133,26 +134,26 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Decision Lens Selector */}
-        <div className="mt-8 mb-4">
+        {/* Decision Lens Selector - Horizontal scroll on mobile */}
+        <div className="mt-6 md:mt-8 mb-4">
           <h3 className="text-sm font-medium text-muted-foreground mb-3">Decision Context</h3>
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
-        {/* AI Summary */}
-        <Card className="p-6 mb-12 bg-gradient-card">
-          <div className="flex items-start gap-4">
-            <div className="p-2 rounded-lg bg-primary/10">
+        {/* AI Summary - Reduced padding on mobile */}
+        <Card className="p-4 md:p-6 mb-8 md:mb-12 bg-gradient-card">
+          <div className="flex items-start gap-3 md:gap-4">
+            <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
               {lensSummaryLoading ? (
-                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                <Loader2 className="h-4 w-4 md:h-5 md:w-5 text-primary animate-spin" />
               ) : (
-                <MessageSquare className="h-5 w-5 text-primary" />
+                <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               )}
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="font-semibold">AI Sentiment Summary</h3>
-                <Badge variant="outline" className="text-xs">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
+                <Badge variant="outline" className="text-[10px] md:text-xs">
                   {getLensDisplayName(decisionLens)}
                 </Badge>
               </div>
@@ -162,7 +163,7 @@ export default function SymbolPage() {
                   <Skeleton className="h-4 w-3/4" />
                 </div>
               ) : (
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                   <FormattedSummary text={summary} />
                 </p>
               )}
@@ -170,20 +171,22 @@ export default function SymbolPage() {
           </div>
         </Card>
 
-        {/* Charts Section */}
-        <Tabs defaultValue="narratives" className="mb-8">
-          <TabsList className="mb-6">
-            <TabsTrigger value="narratives">Narratives</TabsTrigger>
-            <TabsTrigger value="emotions">Emotions</TabsTrigger>
-            <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
-            <TabsTrigger value="momentum">Momentum</TabsTrigger>
-            <TabsTrigger value="volume">Volume</TabsTrigger>
-          </TabsList>
+        {/* Charts Section - Scrollable tabs on mobile */}
+        <Tabs defaultValue="narratives" className="mb-6 md:mb-8">
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+            <TabsList className="mb-4 md:mb-6 w-max md:w-auto">
+              <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
+              <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
+              <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
+              <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
+              <TabsTrigger value="volume" className="text-xs md:text-sm px-2.5 md:px-3">Volume</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="narratives">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Top 10 Narratives</h3>
+            <div className="p-3 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-semibold">Top 10 Narratives</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
@@ -191,9 +194,9 @@ export default function SymbolPage() {
           </TabsContent>
 
           <TabsContent value="emotions">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Emotion Trends</h3>
+            <div className="p-3 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-semibold">Emotion Trends</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
@@ -201,9 +204,9 @@ export default function SymbolPage() {
           </TabsContent>
 
           <TabsContent value="sentiment">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Sentiment Over Time</h3>
+            <div className="p-3 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-semibold">Sentiment Over Time</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
@@ -211,15 +214,15 @@ export default function SymbolPage() {
           </TabsContent>
 
           <TabsContent value="momentum">
-            <div className="p-6">
+            <div className="p-3 md:p-6">
               <EmotionMomentumChart symbol={symbol} days={7} />
             </div>
           </TabsContent>
 
           <TabsContent value="volume">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold">Message Volume</h3>
+            <div className="p-3 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
+                <h3 className="text-base md:text-lg font-semibold">Message Volume</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
@@ -313,12 +316,12 @@ function MetricCard({
   const ChangeIcon = change && change >= 0 ? ArrowUpRight : ArrowDownRight;
   
   return (
-    <Card className="p-4 bg-gradient-card">
-      <div className="text-sm text-muted-foreground mb-1">{label}</div>
-      <div className="flex items-center gap-2">
-        <span className="text-2xl font-display">{value}</span>
+    <Card className="p-3 md:p-4 bg-gradient-card">
+      <div className="text-xs md:text-sm text-muted-foreground mb-1">{label}</div>
+      <div className="flex items-center gap-1.5 md:gap-2">
+        <span className="text-lg md:text-2xl font-display">{value}</span>
         {Icon && (
-          <Icon className={`h-5 w-5 ${
+          <Icon className={`h-4 w-4 md:h-5 md:w-5 ${
             trend === "bullish" ? "text-bullish" :
             trend === "bearish" ? "text-bearish" :
             "text-neutral"
@@ -326,10 +329,10 @@ function MetricCard({
         )}
       </div>
       {change !== undefined && (
-        <div className={`flex items-center gap-1 text-sm mt-1 ${
+        <div className={`flex items-center gap-1 text-xs md:text-sm mt-1 ${
           change >= 0 ? "text-bullish" : "text-bearish"
         }`}>
-          <ChangeIcon className="h-4 w-4" />
+          <ChangeIcon className="h-3 w-3 md:h-4 md:w-4" />
           {Math.abs(change)}%{suffix}
         </div>
       )}
@@ -348,13 +351,13 @@ function TimeRangeSelector({ value, onChange }: { value: TimeRange; onChange: (v
   };
   
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
       {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map((range) => (
         <Button
           key={range}
           variant={range === value ? "default" : "ghost"}
           size="sm"
-          className="px-3"
+          className="px-2 md:px-3 text-xs md:text-sm shrink-0"
           onClick={() => onChange(range)}
         >
           {labels[range]}

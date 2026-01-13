@@ -451,25 +451,25 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
   const showPriceToggle = timeRange === '1D' || timeRange === '24H';
 
   if (isLoading) {
-    return <Skeleton className="h-[400px] w-full" />;
+    return <Skeleton className="h-[300px] md:h-[400px] w-full" />;
   }
 
   if (chartData.length === 0) {
     return (
-      <div className="h-[400px] w-full flex items-center justify-center text-muted-foreground">
+      <div className="h-[300px] md:h-[400px] w-full flex items-center justify-center text-muted-foreground">
         No volume data available for this time range
       </div>
     );
   }
 
   return (
-    <div className="h-[400px] w-full">
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center gap-2">
+    <div className="h-[300px] md:h-[400px] w-full">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide w-full md:w-auto">
           {(isFromCache || isFromHistory) && (
-            <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
-              <Database className="w-3 h-3 mr-1" />
-              {isFromHistory ? `aggregated (${snapshotCount} snapshots)` : 'cached'}
+            <Badge variant="outline" className="text-[10px] md:text-xs bg-purple-500/10 text-purple-400 border-purple-500/30 shrink-0">
+              <Database className="w-2.5 h-2.5 md:w-3 md:h-3 mr-1" />
+              {isFromHistory ? `${snapshotCount} snapshots` : 'cached'}
             </Badge>
           )}
           {/* Market Session Selector - only for Today view */}
@@ -482,12 +482,12 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         </div>
         
         {showPriceToggle && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
             <DollarSign 
-              className="h-4 w-4" 
+              className="h-3.5 w-3.5 md:h-4 md:w-4" 
               style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
             />
-            <span className="text-xs text-muted-foreground">Price</span>
+            <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:inline">Price</span>
             <Switch
               checked={showPriceOverlay}
               onCheckedChange={setShowPriceOverlay}
