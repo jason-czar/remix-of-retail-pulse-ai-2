@@ -11,11 +11,13 @@ import {
   Cell,
   Legend
 } from "recharts";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
+import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
+import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
@@ -177,6 +179,23 @@ function TimeSeriesNarrativeChart({
     days, 
     "daily"
   );
+  
+  // Auto-backfill hook
+  const { 
+    isBackfilling, 
+    status: backfillStatus, 
+    progress: backfillProgress,
+    checkAndFillGaps 
+  } = useAutoBackfill(symbol, days);
+  
+  // Check for gaps when data loads
+  useEffect(() => {
+    if (historyData?.data && !isLoading && !isFetching) {
+      checkAndFillGaps(historyData.data, () => {
+        refetch();
+      });
+    }
+  }, [historyData?.data, isLoading, isFetching, checkAndFillGaps, refetch]);
 
   const { stackedChartData, totalMessages } = useMemo(() => {
     if (!historyData?.data || historyData.data.length === 0) {
@@ -294,6 +313,13 @@ function TimeSeriesNarrativeChart({
 
   return (
     <div className="h-[500px] w-full">
+      {/* Backfill indicator */}
+      {isBackfilling && (
+        <div className="mb-3">
+          <BackfillIndicator status={backfillStatus} progress={backfillProgress} />
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
         <div className="flex items-center gap-3">
@@ -307,6 +333,7 @@ function TimeSeriesNarrativeChart({
               <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
                 {historyData?.data.length || 0} snapshots
               </span>
+              <BackfillBadge isBackfilling={isBackfilling} />
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
               {totalMessages > 0 && (
@@ -322,7 +349,7 @@ function TimeSeriesNarrativeChart({
           variant="ghost" 
           size="sm" 
           onClick={() => refetch()}
-          disabled={isFetching}
+          disabled={isFetching || isBackfilling}
           className="h-8 px-3 text-xs"
         >
           <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
