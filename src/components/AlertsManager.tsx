@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { Bell, BellOff, Plus, Trash2, Loader2, TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { Bell, BellOff, Plus, Trash2, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -28,25 +31,14 @@ import {
   useDeleteAlert,
   Alert,
 } from "@/hooks/use-alerts";
-
-const ALERT_TYPES = [
-  { value: "sentiment_spike", label: "Sentiment Spike", icon: TrendingUp, description: "Alert when sentiment rises sharply" },
-  { value: "sentiment_drop", label: "Sentiment Drop", icon: TrendingDown, description: "Alert when sentiment falls sharply" },
-  { value: "volume_surge", label: "Volume Surge", icon: Activity, description: "Alert when message volume spikes" },
-  { value: "bullish_threshold", label: "Bullish Threshold", icon: TrendingUp, description: "Alert when bullish % exceeds threshold" },
-  { value: "bearish_threshold", label: "Bearish Threshold", icon: TrendingDown, description: "Alert when bearish % exceeds threshold" },
-];
-
-function AlertTypeIcon({ type }: { type: string }) {
-  const alertType = ALERT_TYPES.find((t) => t.value === type);
-  if (!alertType) return <Bell className="h-4 w-4" />;
-  const Icon = alertType.icon;
-  return <Icon className="h-4 w-4" />;
-}
-
-function getAlertTypeLabel(type: string) {
-  return ALERT_TYPES.find((t) => t.value === type)?.label || type;
-}
+import {
+  ALERT_CATEGORIES,
+  getAlertTypeConfig,
+  getAlertTypeLabel,
+  getAlertTypeIcon,
+  getDefaultThreshold,
+  isEmotionAlert,
+} from "@/lib/alert-types";
 
 function CreateAlertDialog({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -56,7 +48,18 @@ function CreateAlertDialog({ onCreated }: { onCreated?: () => void }) {
   
   const createAlert = useCreateAlert();
 
-  const needsThreshold = alertType === "bullish_threshold" || alertType === "bearish_threshold";
+  const selectedConfig = getAlertTypeConfig(alertType);
+  const needsThreshold = selectedConfig?.needsThreshold || false;
+
+  const handleAlertTypeChange = (value: string) => {
+    setAlertType(value);
+    const config = getAlertTypeConfig(value);
+    if (config?.needsThreshold && config.defaultThreshold) {
+      setThreshold(config.defaultThreshold.toString());
+    } else {
+      setThreshold("");
+    }
+  };
 
   const handleSubmit = async () => {
     if (!symbol.trim()) {
@@ -101,7 +104,7 @@ function CreateAlertDialog({ onCreated }: { onCreated?: () => void }) {
         <DialogHeader>
           <DialogTitle>Create Alert</DialogTitle>
           <DialogDescription>
-            Set up a new alert to monitor stock sentiment.
+            Set up a new alert to monitor stock sentiment or emotion signals.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -117,36 +120,48 @@ function CreateAlertDialog({ onCreated }: { onCreated?: () => void }) {
           </div>
           <div className="space-y-2">
             <Label>Alert Type</Label>
-            <Select value={alertType} onValueChange={setAlertType}>
+            <Select value={alertType} onValueChange={handleAlertTypeChange}>
               <SelectTrigger className="bg-secondary/50">
                 <SelectValue placeholder="Select alert type" />
               </SelectTrigger>
               <SelectContent>
-                {ALERT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    <div className="flex items-center gap-2">
-                      <type.icon className="h-4 w-4" />
-                      {type.label}
-                    </div>
-                  </SelectItem>
+                {ALERT_CATEGORIES.map((category) => (
+                  <SelectGroup key={category.id}>
+                    <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                      {category.label}
+                    </SelectLabel>
+                    {category.types.map((type) => {
+                      const Icon = type.icon;
+                      return (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center gap-2">
+                            <Icon className={`h-4 w-4 ${category.id === "emotion" ? "text-accent" : ""}`} />
+                            {type.label}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
-            {alertType && (
+            {selectedConfig && (
               <p className="text-xs text-muted-foreground">
-                {ALERT_TYPES.find((t) => t.value === alertType)?.description}
+                {selectedConfig.description}
               </p>
             )}
           </div>
-          {needsThreshold && (
+          {needsThreshold && selectedConfig && (
             <div className="space-y-2">
-              <Label htmlFor="threshold">Threshold (%)</Label>
+              <Label htmlFor="threshold">
+                {selectedConfig.thresholdLabel || "Threshold"} (%)
+              </Label>
               <Input
                 id="threshold"
                 type="number"
                 min="0"
-                max="100"
-                placeholder="e.g., 70"
+                max={selectedConfig.thresholdMax || 100}
+                placeholder={`e.g., ${getDefaultThreshold(alertType)}`}
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
                 className="bg-secondary/50"
@@ -182,6 +197,9 @@ function AlertRow({ alert }: { alert: Alert }) {
   const toggleAlert = useToggleAlert();
   const deleteAlert = useDeleteAlert();
 
+  const isEmotion = isEmotionAlert(alert.alert_type);
+  const Icon = getAlertTypeIcon(alert.alert_type);
+
   const handleToggle = async (checked: boolean) => {
     try {
       await toggleAlert.mutateAsync({ alertId: alert.id, isActive: checked });
@@ -203,15 +221,24 @@ function AlertRow({ alert }: { alert: Alert }) {
   return (
     <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${alert.is_active ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
-          <AlertTypeIcon type={alert.alert_type} />
+        <div className={`p-2 rounded-lg ${
+          alert.is_active 
+            ? isEmotion 
+              ? "bg-accent/20 text-accent" 
+              : "bg-primary/20 text-primary" 
+            : "bg-muted text-muted-foreground"
+        }`}>
+          <Icon className="h-4 w-4" />
         </div>
         <div>
           <div className="flex items-center gap-2">
             <span className="font-semibold">{alert.symbol}</span>
-            <span className="text-sm text-muted-foreground">
+            <Badge 
+              variant={isEmotion ? "outline" : "secondary"} 
+              className={isEmotion ? "border-accent text-accent text-xs" : "text-xs"}
+            >
               {getAlertTypeLabel(alert.alert_type)}
-            </span>
+            </Badge>
           </div>
           {alert.threshold && (
             <p className="text-xs text-muted-foreground">
@@ -254,6 +281,10 @@ function AlertRow({ alert }: { alert: Alert }) {
 export default function AlertsManager() {
   const { data: alerts, isLoading } = useAlerts();
 
+  // Group alerts by category
+  const emotionAlerts = alerts?.filter((a) => isEmotionAlert(a.alert_type)) || [];
+  const otherAlerts = alerts?.filter((a) => !isEmotionAlert(a.alert_type)) || [];
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -270,17 +301,42 @@ export default function AlertsManager() {
         <div>
           <h3 className="text-lg font-semibold">Alerts</h3>
           <p className="text-sm text-muted-foreground">
-            Get notified when sentiment changes
+            Get notified on sentiment changes and emotion signals
           </p>
         </div>
         <CreateAlertDialog />
       </div>
 
       {alerts && alerts.length > 0 ? (
-        <div className="space-y-2">
-          {alerts.map((alert) => (
-            <AlertRow key={alert.id} alert={alert} />
-          ))}
+        <div className="space-y-4">
+          {emotionAlerts.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-accent flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                Emotion Signals
+              </h4>
+              <div className="space-y-2">
+                {emotionAlerts.map((alert) => (
+                  <AlertRow key={alert.id} alert={alert} />
+                ))}
+              </div>
+            </div>
+          )}
+          {otherAlerts.length > 0 && (
+            <div className="space-y-2">
+              {emotionAlerts.length > 0 && (
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+                  Sentiment & Volume
+                </h4>
+              )}
+              <div className="space-y-2">
+                {otherAlerts.map((alert) => (
+                  <AlertRow key={alert.id} alert={alert} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-8">

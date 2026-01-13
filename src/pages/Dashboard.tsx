@@ -25,14 +25,7 @@ import { useDefaultWatchlist } from "@/hooks/use-watchlist";
 import { useAlerts, Alert } from "@/hooks/use-alerts";
 import { useMarketOverview } from "@/hooks/use-market-overview";
 import { formatDistanceToNow } from "date-fns";
-
-const ALERT_TYPE_LABELS: Record<string, string> = {
-  sentiment_spike: "Sentiment Surge",
-  sentiment_drop: "Sentiment Drop", 
-  volume_surge: "Volume Spike",
-  bullish_threshold: "Bullish Alert",
-  bearish_threshold: "Bearish Alert",
-};
+import { getAlertTypeLabel, getAlertTypeIcon, isEmotionAlert } from "@/lib/alert-types";
 
 export default function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -348,24 +341,16 @@ function OverviewCard({
 }
 
 function RealAlertItem({ alert }: { alert: Alert }) {
-  const typeLabel = ALERT_TYPE_LABELS[alert.alert_type] || alert.alert_type;
+  const typeLabel = getAlertTypeLabel(alert.alert_type);
+  const isEmotion = isEmotionAlert(alert.alert_type);
+  const Icon = getAlertTypeIcon(alert.alert_type);
   const timeAgo = formatDistanceToNow(new Date(alert.created_at), { addSuffix: true });
   
   const getMessage = () => {
-    switch (alert.alert_type) {
-      case "sentiment_spike":
-        return `Alert when sentiment rises by ${alert.threshold || 15}%`;
-      case "sentiment_drop":
-        return `Alert when sentiment drops by ${alert.threshold || 15}%`;
-      case "volume_surge":
-        return `Alert when volume exceeds ${alert.threshold || 2}x baseline`;
-      case "bullish_threshold":
-        return `Alert when bullish sentiment exceeds ${alert.threshold || 70}%`;
-      case "bearish_threshold":
-        return `Alert when bearish sentiment exceeds ${alert.threshold || 70}%`;
-      default:
-        return `Threshold: ${alert.threshold || "N/A"}`;
+    if (alert.threshold) {
+      return `Threshold: ${alert.threshold}%`;
     }
+    return "No threshold set";
   };
 
   return (
@@ -374,7 +359,12 @@ function RealAlertItem({ alert }: { alert: Alert }) {
       className="block p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
     >
       <div className="flex items-center justify-between mb-1">
-        <span className="font-mono font-semibold">${alert.symbol}</span>
+        <div className="flex items-center gap-2">
+          <div className={`p-1.5 rounded ${isEmotion ? "bg-accent/20 text-accent" : "bg-primary/20 text-primary"}`}>
+            <Icon className="h-3 w-3" />
+          </div>
+          <span className="font-mono font-semibold">${alert.symbol}</span>
+        </div>
         <div className="flex items-center gap-2">
           {!alert.is_active && (
             <Badge variant="secondary" className="text-xs">Paused</Badge>
@@ -382,7 +372,9 @@ function RealAlertItem({ alert }: { alert: Alert }) {
           <span className="text-xs text-muted-foreground">{timeAgo}</span>
         </div>
       </div>
-      <div className="text-sm font-medium text-primary mb-1">{typeLabel}</div>
+      <div className={`text-sm font-medium mb-1 ${isEmotion ? "text-accent" : "text-primary"}`}>
+        {typeLabel}
+      </div>
       <div className="text-sm text-muted-foreground">{getMessage()}</div>
     </Link>
   );
