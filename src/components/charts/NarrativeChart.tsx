@@ -1048,7 +1048,8 @@ function HourlyStackedNarrativeChart({
             fontSize={11}
             tickLine={false}
             axisLine={false}
-            width={45}
+            width={10}
+            tick={false}
             domain={barDomain as [number, number | string]}
           />
           {showPriceOverlay && (
@@ -1059,9 +1060,9 @@ function HourlyStackedNarrativeChart({
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              width={55}
+              width={10}
+              tick={false}
               domain={priceDomain as [number, number]}
-              tickFormatter={(value) => `$${value}`}
             />
           )}
           <Tooltip content={<NarrativeStackedTooltip />} />
