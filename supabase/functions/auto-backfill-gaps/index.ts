@@ -284,24 +284,23 @@ serve(async (req) => {
       console.log(`Processing missing date: ${dateStr}`);
       
       try {
-        // Fetch messages from StockTwits API for this date
+        // Fetch messages from our local StockTwits proxy for this date
         const dayStart = `${dateStr}T00:00:00Z`;
         const dayEnd = `${dateStr}T23:59:59Z`;
         
-        const stocktwitsUrl = `https://srwjqgmqqsuazsczmywh.supabase.co/functions/v1/stocktwits-proxy`;
-        const messagesResponse = await fetch(stocktwitsUrl, {
-          method: "POST",
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const stocktwitsUrl = new URL(`${supabaseUrl}/functions/v1/stocktwits-proxy`);
+        stocktwitsUrl.searchParams.set('action', 'messages');
+        stocktwitsUrl.searchParams.set('symbol', symbol.toUpperCase());
+        stocktwitsUrl.searchParams.set('limit', '500');
+        stocktwitsUrl.searchParams.set('start', dayStart);
+        stocktwitsUrl.searchParams.set('end', dayEnd);
+
+        const messagesResponse = await fetch(stocktwitsUrl.toString(), {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": stocktwitsApiKey,
           },
-          body: JSON.stringify({
-            action: "messages",
-            symbol: symbol.toUpperCase(),
-            limit: 500,
-            start: dayStart,
-            end: dayEnd,
-          }),
         });
 
         if (!messagesResponse.ok) {
