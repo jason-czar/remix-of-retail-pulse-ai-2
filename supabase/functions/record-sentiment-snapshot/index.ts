@@ -16,6 +16,107 @@ interface SentimentSnapshot {
   dominant_narrative?: string
 }
 
+interface EmotionScore {
+  name: string
+  score: number
+}
+
+// Signal emotions for market psychology
+const FEAR_EMOTIONS = ['Fear', 'Capitulation', 'Regret']
+const GREED_EMOTIONS = ['FOMO', 'Greed', 'Euphoria', 'Excitement']
+
+function calculateFearGreedIndex(emotions: EmotionScore[]): number {
+  let fearScore = 0
+  let greedScore = 0
+
+  emotions.forEach((e) => {
+    if (FEAR_EMOTIONS.includes(e.name)) {
+      fearScore += e.score
+    } else if (GREED_EMOTIONS.includes(e.name)) {
+      greedScore += e.score
+    }
+  })
+
+  const total = fearScore + greedScore
+  if (total === 0) return 50
+
+  return Math.round((greedScore / total) * 100)
+}
+
+function getFearGreedLabel(index: number): string {
+  if (index <= 20) return 'Extreme Fear'
+  if (index <= 40) return 'Fear'
+  if (index <= 60) return 'Neutral'
+  if (index <= 80) return 'Greed'
+  return 'Extreme Greed'
+}
+
+function getSignalStrength(emotions: EmotionScore[]): string {
+  const signalEmotions = ['FOMO', 'Greed', 'Fear', 'Capitulation', 'Euphoria', 'Regret']
+  const maxScore = Math.max(...emotions.filter(e => signalEmotions.includes(e.name)).map(e => e.score), 0)
+  if (maxScore >= 30) return 'extreme'
+  if (maxScore >= 20) return 'strong'
+  if (maxScore >= 10) return 'moderate'
+  return 'weak'
+}
+
+function generateSignals(emotions: EmotionScore[], fearGreedIndex: number): any[] {
+  const signals: any[] = []
+
+  const fomo = emotions.find((e) => e.name === 'FOMO')
+  const fear = emotions.find((e) => e.name === 'Fear')
+  const capitulation = emotions.find((e) => e.name === 'Capitulation')
+  const euphoria = emotions.find((e) => e.name === 'Euphoria')
+  const greed = emotions.find((e) => e.name === 'Greed')
+
+  if (capitulation && capitulation.score >= 15) {
+    signals.push({
+      type: 'bullish',
+      label: 'Capitulation Detected',
+      description: 'High capitulation suggests potential market bottom',
+      confidence: Math.min(90, 50 + capitulation.score * 2),
+    })
+  }
+
+  if (euphoria && euphoria.score >= 20) {
+    signals.push({
+      type: 'bearish',
+      label: 'Euphoria Warning',
+      description: 'Extreme optimism may signal a market top',
+      confidence: Math.min(85, 45 + euphoria.score * 2),
+    })
+  }
+
+  if (fomo && fomo.score >= 25) {
+    signals.push({
+      type: 'bearish',
+      label: 'FOMO Surge',
+      description: 'Fear of missing out at elevated levels',
+      confidence: Math.min(80, 40 + fomo.score * 1.5),
+    })
+  }
+
+  if (fear && fear.score >= 25 && fearGreedIndex < 30) {
+    signals.push({
+      type: 'bullish',
+      label: 'Extreme Fear',
+      description: 'Be greedy when others are fearful',
+      confidence: Math.min(85, 45 + fear.score * 1.5),
+    })
+  }
+
+  if (greed && greed.score >= 20 && fearGreedIndex > 70) {
+    signals.push({
+      type: 'bearish',
+      label: 'Greed Alert',
+      description: 'Elevated greed levels suggest caution',
+      confidence: Math.min(75, 40 + greed.score * 1.5),
+    })
+  }
+
+  return signals.sort((a, b) => b.confidence - a.confidence).slice(0, 3)
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -24,7 +125,6 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const stocktwitsApiKey = Deno.env.get('STOCKTWITS_API_KEY')
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -55,11 +155,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Also get symbols from watchlists
+    // Get all watchlists with user info for psychology snapshots
     const { data: watchlists } = await supabase
       .from('watchlists')
-      .select('symbols')
+      .select('user_id, symbols')
     
+    // Collect unique symbols from watchlists
     if (watchlists) {
       const watchlistSymbols = watchlists.flatMap(w => w.symbols || [])
       symbols = [...new Set([...symbols, ...watchlistSymbols])]
@@ -159,7 +260,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Insert all snapshots
+    // Insert sentiment snapshots
     if (snapshots.length > 0) {
       const { error: insertError } = await supabase
         .from('sentiment_history')
@@ -176,18 +277,147 @@ Deno.serve(async (req) => {
         })))
 
       if (insertError) {
-        console.error('Insert error:', insertError)
-        return new Response(
-          JSON.stringify({ error: 'Failed to insert snapshots', details: insertError }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
+        console.error('Sentiment insert error:', insertError)
       }
     }
+
+    // ============================================
+    // MARKET PSYCHOLOGY SNAPSHOTS FOR EACH USER
+    // ============================================
+    
+    let psychologyRecorded = 0
+    
+    if (watchlists && watchlists.length > 0) {
+      console.log(`Recording psychology snapshots for ${watchlists.length} user watchlists...`)
+      
+      // Group watchlists by user_id (in case of multiple watchlists per user)
+      const userWatchlists = new Map<string, string[]>()
+      for (const watchlist of watchlists) {
+        if (!watchlist.user_id || !watchlist.symbols?.length) continue
+        const existing = userWatchlists.get(watchlist.user_id) || []
+        userWatchlists.set(watchlist.user_id, [...new Set([...existing, ...watchlist.symbols])])
+      }
+      
+      for (const [userId, userSymbols] of userWatchlists) {
+        try {
+          // Check if we already have a snapshot for today
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const tomorrow = new Date(today)
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          
+          const { data: existingSnapshot } = await supabase
+            .from('market_psychology_history')
+            .select('id')
+            .eq('user_id', userId)
+            .gte('recorded_at', today.toISOString())
+            .lt('recorded_at', tomorrow.toISOString())
+            .limit(1)
+          
+          // Collect emotion data for user's symbols
+          const emotionScores: Map<string, { total: number; count: number }> = new Map()
+          
+          for (const symbol of userSymbols) {
+            const { data: emotionCache } = await supabase
+              .from('emotion_cache')
+              .select('emotions')
+              .eq('symbol', symbol)
+              .eq('time_range', '24H')
+              .gt('expires_at', new Date().toISOString())
+              .maybeSingle()
+            
+            if (emotionCache?.emotions) {
+              const emotions = emotionCache.emotions as any
+              const emotionList = emotions.current || emotions.emotions || []
+              
+              if (Array.isArray(emotionList)) {
+                for (const e of emotionList) {
+                  const name = e.emotion || e.name
+                  const score = e.score || e.percentage || 0
+                  if (name && typeof score === 'number') {
+                    const existing = emotionScores.get(name) || { total: 0, count: 0 }
+                    emotionScores.set(name, { 
+                      total: existing.total + score, 
+                      count: existing.count + 1 
+                    })
+                  }
+                }
+              }
+            }
+          }
+          
+          // Calculate aggregated emotions
+          const aggregatedEmotions: EmotionScore[] = []
+          for (const [name, { total, count }] of emotionScores) {
+            aggregatedEmotions.push({
+              name,
+              score: Math.round(total / count),
+            })
+          }
+          aggregatedEmotions.sort((a, b) => b.score - a.score)
+          
+          // Skip if no emotion data
+          if (aggregatedEmotions.length === 0) continue
+          
+          // Calculate psychology metrics
+          const fearGreedIndex = calculateFearGreedIndex(aggregatedEmotions)
+          const fearGreedLabel = getFearGreedLabel(fearGreedIndex)
+          const signalStrength = getSignalStrength(aggregatedEmotions)
+          const signals = generateSignals(aggregatedEmotions, fearGreedIndex)
+          
+          // Find dominant signal emotion
+          const signalEmotionNames = ['FOMO', 'Greed', 'Fear', 'Capitulation', 'Euphoria', 'Regret']
+          const signalEmotions = aggregatedEmotions.filter(e => signalEmotionNames.includes(e.name))
+          const dominantSignal = signalEmotions.length > 0 ? signalEmotions[0].name : null
+          
+          // Convert to emotion breakdown object
+          const emotionBreakdown: Record<string, number> = {}
+          for (const e of aggregatedEmotions) {
+            emotionBreakdown[e.name] = e.score
+          }
+          
+          const psychologyData = {
+            user_id: userId,
+            fear_greed_index: fearGreedIndex,
+            fear_greed_label: fearGreedLabel,
+            dominant_signal: dominantSignal,
+            signal_strength: signalStrength,
+            symbols: userSymbols,
+            symbol_count: userSymbols.length,
+            emotion_breakdown: emotionBreakdown,
+            signals: signals,
+            recorded_at: new Date().toISOString(),
+          }
+          
+          if (existingSnapshot && existingSnapshot.length > 0) {
+            // Update existing snapshot
+            const { error } = await supabase
+              .from('market_psychology_history')
+              .update(psychologyData)
+              .eq('id', existingSnapshot[0].id)
+            
+            if (!error) psychologyRecorded++
+          } else {
+            // Insert new snapshot
+            const { error } = await supabase
+              .from('market_psychology_history')
+              .insert(psychologyData)
+            
+            if (!error) psychologyRecorded++
+          }
+        } catch (error) {
+          console.error(`Error recording psychology for user ${userId}:`, error)
+        }
+      }
+    }
+
+    console.log(`Recorded ${psychologyRecorded} psychology snapshots`)
 
     return new Response(
       JSON.stringify({
         success: true,
-        recorded: snapshots.length,
+        sentiment_recorded: snapshots.length,
+        psychology_recorded: psychologyRecorded,
         symbols: snapshots.map(s => s.symbol),
         errors: errors.length > 0 ? errors : undefined,
       }),
