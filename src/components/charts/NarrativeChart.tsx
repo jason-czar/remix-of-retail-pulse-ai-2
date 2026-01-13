@@ -74,7 +74,60 @@ const getSentimentBadge = (sentiment: string) => {
   return styles[sentiment as keyof typeof styles] || styles.neutral;
 };
 
-// Time series stacked bar chart for 7D/30D
+// Sentiment colors
+const SENTIMENT_COLORS = {
+  bullish: "hsl(142 71% 45%)",   // Green
+  bearish: "hsl(0 72% 51%)",     // Red
+  neutral: "hsl(199 89% 48%)",   // Blue
+};
+
+// Max segments per day
+const MAX_SEGMENTS = 6;
+
+// Custom tooltip for independent daily view
+function DailyNarrativeTooltip({ active, payload, label }: any) {
+  if (!active || !payload || !payload.length) return null;
+
+  // Extract all segments from payload
+  const segments: { name: string; count: number; sentiment: string }[] = [];
+  const dataPoint = payload[0]?.payload;
+  
+  if (dataPoint) {
+    for (let i = 0; i < MAX_SEGMENTS; i++) {
+      const name = dataPoint[`segment${i}Name`];
+      const count = dataPoint[`segment${i}`];
+      const sentiment = dataPoint[`segment${i}Sentiment`];
+      if (name && count > 0) {
+        segments.push({ name, count, sentiment });
+      }
+    }
+  }
+
+  if (segments.length === 0) return null;
+
+  return (
+    <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl">
+      <div className="font-semibold text-[hsl(210_40%_98%)] mb-2">{label}</div>
+      <div className="space-y-1.5">
+        {segments.map((segment, idx) => (
+          <div key={idx} className="flex items-center gap-2 text-sm">
+            <div 
+              className="w-3 h-3 rounded-sm" 
+              style={{ backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral }}
+            />
+            <span className="text-[hsl(210_40%_98%)] flex-1 truncate max-w-[180px]">{segment.name}</span>
+            <span className="text-muted-foreground">{segment.count}</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded border ${getSentimentBadge(segment.sentiment)}`}>
+              {segment.sentiment}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Time series stacked bar chart for 7D/30D - Independent daily view
 function TimeSeriesNarrativeChart({ 
   symbol, 
   timeRange 
@@ -89,40 +142,87 @@ function TimeSeriesNarrativeChart({
     "daily"
   );
 
-  const { stackedChartData, topThemes, totalMessages } = useMemo(() => {
-    if (!historyData?.themeEvolution || historyData.themeEvolution.size === 0) {
-      return { stackedChartData: [], topThemes: [], totalMessages: 0 };
+  const { stackedChartData, totalMessages } = useMemo(() => {
+    if (!historyData?.data || historyData.data.length === 0) {
+      return { stackedChartData: [], totalMessages: 0 };
     }
 
-    // Get top themes for the legend
-    const topThemes = historyData.dominantThemes.slice(0, 8);
+    // Group data by date
+    const byDate = new Map<string, { 
+      date: string; 
+      sortKey: string;
+      narratives: { name: string; count: number; sentiment: string }[];
+      totalMessages: number;
+    }>();
     
-    // Build date-based data structure
-    const byDate = new Map<string, Record<string, number | string>>();
-    
-    historyData.themeEvolution.forEach((points, theme) => {
-      if (!topThemes.includes(theme)) return;
+    historyData.data.forEach(point => {
+      const dateKey = format(new Date(point.recorded_at), 'MMM d');
+      const sortKey = new Date(point.recorded_at).toISOString().split('T')[0];
       
-      points.forEach(point => {
-        const dateKey = format(new Date(point.time), 'MMM d');
-        const sortKey = new Date(point.time).toISOString().split('T')[0];
-        
-        if (!byDate.has(sortKey)) {
-          byDate.set(sortKey, { date: dateKey, sortKey });
-        }
-        const entry = byDate.get(sortKey)!;
-        entry[theme] = ((entry[theme] as number) || 0) + point.count;
-      });
+      if (!byDate.has(sortKey)) {
+        byDate.set(sortKey, { 
+          date: dateKey, 
+          sortKey, 
+          narratives: [],
+          totalMessages: 0
+        });
+      }
+      
+      const entry = byDate.get(sortKey)!;
+      entry.totalMessages += point.message_count;
+      
+      // Accumulate narratives for this date
+      if (point.narratives && Array.isArray(point.narratives)) {
+        point.narratives.forEach((n: any) => {
+          const existing = entry.narratives.find(x => x.name === n.name);
+          if (existing) {
+            existing.count += n.count || 0;
+          } else {
+            entry.narratives.push({
+              name: n.name,
+              count: n.count || 0,
+              sentiment: n.sentiment || 'neutral'
+            });
+          }
+        });
+      }
     });
 
-    // Sort by date and return
+    // Process each date: sort by count and take top segments
     const stackedChartData = Array.from(byDate.values())
-      .sort((a, b) => (a.sortKey as string).localeCompare(b.sortKey as string));
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .map(dayData => {
+        // Sort narratives by count descending and take top MAX_SEGMENTS
+        const topNarratives = dayData.narratives
+          .sort((a, b) => b.count - a.count)
+          .slice(0, MAX_SEGMENTS);
+        
+        // Build flattened data structure for Recharts
+        const flatData: Record<string, any> = {
+          date: dayData.date,
+          sortKey: dayData.sortKey,
+          totalMessages: dayData.totalMessages,
+        };
+        
+        topNarratives.forEach((n, idx) => {
+          flatData[`segment${idx}`] = n.count;
+          flatData[`segment${idx}Name`] = n.name;
+          flatData[`segment${idx}Sentiment`] = n.sentiment;
+        });
+        
+        // Fill remaining segments with zeros
+        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+          flatData[`segment${i}`] = 0;
+          flatData[`segment${i}Name`] = '';
+          flatData[`segment${i}Sentiment`] = 'neutral';
+        }
+        
+        return flatData;
+      });
 
-    // Calculate total messages
     const totalMessages = historyData.data.reduce((sum, point) => sum + point.message_count, 0);
 
-    return { stackedChartData, topThemes, totalMessages };
+    return { stackedChartData, totalMessages };
   }, [historyData]);
 
   if (isLoading) {
@@ -159,9 +259,9 @@ function TimeSeriesNarrativeChart({
           <TrendingUp className="h-5 w-5 text-primary" />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Narrative Trends</span>
+              <span className="text-sm font-medium">Daily Narrative Breakdown</span>
               <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
-                time series
+                independent
               </span>
               <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
                 {historyData?.data.length || 0} snapshots
@@ -173,7 +273,7 @@ function TimeSeriesNarrativeChart({
                   <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
                 </span>
               )}
-              <span>{days} days of data</span>
+              <span>{days} days • each bar shows that day's top narratives</span>
             </div>
           </div>
         </div>
@@ -189,7 +289,24 @@ function TimeSeriesNarrativeChart({
         </Button>
       </div>
 
-      <ResponsiveContainer width="100%" height="85%">
+      {/* Sentiment Legend */}
+      <div className="flex items-center gap-4 mb-3 text-xs">
+        <span className="text-muted-foreground">Sentiment:</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
+          <span>Bullish</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
+          <span>Bearish</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
+          <span>Neutral</span>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height="80%">
         <BarChart 
           data={stackedChartData}
           margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
@@ -209,34 +326,22 @@ function TimeSeriesNarrativeChart({
             axisLine={false}
             width={45}
           />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(222 47% 8%)",
-              border: "1px solid hsl(217 33% 17%)",
-              borderRadius: "8px",
-              boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-            }}
-            labelStyle={{ color: "hsl(210 40% 98%)", fontWeight: 600, marginBottom: 4 }}
-            formatter={(value: number, name: string) => [
-              `${value} mentions`,
-              name
-            ]}
-          />
-          <Legend 
-            wrapperStyle={{ 
-              paddingTop: "12px",
-              fontSize: "11px"
-            }}
-            iconSize={10}
-          />
-          {topThemes.map((theme, index) => (
+          <Tooltip content={<DailyNarrativeTooltip />} />
+          {/* Render segment bars - each segment uses its own sentiment color */}
+          {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
             <Bar 
-              key={theme}
-              dataKey={theme}
+              key={`segment${idx}`}
+              dataKey={`segment${idx}`}
               stackId="narratives"
-              fill={THEME_COLORS[index % THEME_COLORS.length]}
-              radius={index === topThemes.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-            />
+              radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+            >
+              {stackedChartData.map((entry, entryIdx) => (
+                <Cell 
+                  key={`cell-${entryIdx}`} 
+                  fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral}
+                />
+              ))}
+            </Bar>
           ))}
         </BarChart>
       </ResponsiveContainer>
