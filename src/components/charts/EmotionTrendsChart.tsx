@@ -96,20 +96,26 @@ export function EmotionTrendsChart({
       ? detectMissingDates(uniqueDates, days) 
       : [];
 
-    // Create chart data from actual data points
-    const actualPoints = data.data.map((point) => ({
-      timestamp: new Date(point.recorded_at).getTime(),
-      date: format(new Date(point.recorded_at), 'MMM d'),
-      isGap: false,
-      ...point.emotions,
-    }));
-
-    // Create gap placeholder points
-    const gapPoints = missingDates.map(dateStr => {
-      const date = new Date(dateStr);
+    // Create chart data from actual data points - use UTC date to avoid timezone issues
+    const actualPoints = data.data.map((point) => {
+      const sortKey = new Date(point.recorded_at).toISOString().split('T')[0];
+      const [year, month, day] = sortKey.split('-').map(Number);
+      const utcDate = new Date(Date.UTC(year, month - 1, day));
       return {
-        timestamp: date.getTime(),
-        date: format(date, 'MMM d'),
+        timestamp: new Date(point.recorded_at).getTime(),
+        date: format(utcDate, 'MMM d'),
+        isGap: false,
+        ...point.emotions,
+      };
+    });
+
+    // Create gap placeholder points - use UTC date to avoid timezone issues
+    const gapPoints = missingDates.map(dateStr => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const utcDate = new Date(Date.UTC(year, month - 1, day));
+      return {
+        timestamp: utcDate.getTime(),
+        date: format(utcDate, 'MMM d'),
         isGap: true,
       };
     });
