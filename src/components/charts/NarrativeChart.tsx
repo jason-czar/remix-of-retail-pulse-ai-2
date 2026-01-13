@@ -19,12 +19,13 @@ import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
 import { alignPricesToHourSlots, alignPricesToDateSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle, DollarSign } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle, DollarSign, ChevronDown, ChevronRight } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format } from "date-fns";
 import { detectMissingDates, createGapPlaceholders, mergeDataWithGaps, isGapPlaceholder } from "@/lib/chart-gap-utils";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
@@ -471,51 +472,58 @@ function TimeSeriesNarrativeChart({
         </div>
       )}
       
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
-        <div className="flex items-center gap-3">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Daily Narrative Breakdown</span>
-              <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
-                independent
-              </span>
-              <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
-                {historyData?.data.length || 0} snapshots
-              </span>
-              {gapCount > 0 && !isBackfilling && (
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  {gapCount} gap{gapCount > 1 ? 's' : ''}
-                </span>
-              )}
-              <BackfillBadge isBackfilling={isBackfilling} />
+      {/* Header - Collapsible */}
+      <Collapsible defaultOpen={false} className="mb-4">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border cursor-pointer hover:bg-card/70 transition-colors">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Daily Narrative Breakdown</span>
+                  <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
+                    independent
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
+                    {historyData?.data.length || 0} snapshots
+                  </span>
+                  {gapCount > 0 && !isBackfilling && (
+                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      {gapCount} gap{gapCount > 1 ? 's' : ''}
+                    </span>
+                  )}
+                  <BackfillBadge isBackfilling={isBackfilling} />
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                  {totalMessages > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
+                    </span>
+                  )}
+                  <span>{days} days • each bar shows that day's top narratives</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-              {totalMessages > 0 && (
-                <span className="flex items-center gap-1">
-                  <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
-                </span>
-              )}
-              <span>{days} days • each bar shows that day's top narratives</span>
-            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => refetch()}
-            disabled={isFetching || isBackfilling}
-            className="h-8 px-3 text-xs"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-            {isFetching ? 'Refreshing...' : 'Refresh'}
-          </Button>
-        </div>
-      </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-3">
+          <div className="flex items-center justify-end gap-2">
+            <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => refetch()}
+              disabled={isFetching || isBackfilling}
+              className="h-8 px-3 text-xs"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+              {isFetching ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Legend - Hidden for now */}
 
@@ -921,63 +929,70 @@ function HourlyStackedNarrativeChart({
 
   return (
     <div className="h-[500px] w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
-        <div className="flex items-center gap-3">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <div>
+      {/* Header - Collapsible */}
+      <Collapsible defaultOpen={false} className="mb-4">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border cursor-pointer hover:bg-card/70 transition-colors">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Hourly Narrative Breakdown</span>
+                  <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
+                    independent
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
+                    {historyData?.data.length || 0} snapshots
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                  {totalMessages > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
+                    </span>
+                  )}
+                  <span>{timeRange === '1D' ? 'Today' : 'Last 24h'} • each bar shows that hour's top narratives</span>
+                </div>
+              </div>
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-3">
+          <div className="flex items-center justify-end gap-3">
+            {/* Market Session Selector - only for Today view */}
+            {timeRange === '1D' && (
+              <MarketSessionSelector 
+                session={marketSession} 
+                onSessionChange={setMarketSession}
+              />
+            )}
+            {/* Price Toggle */}
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Hourly Narrative Breakdown</span>
-              <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
-                independent
-              </span>
-              <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
-                {historyData?.data.length || 0} snapshots
-              </span>
+              <DollarSign 
+                className="h-4 w-4" 
+                style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
+              />
+              <span className="text-xs text-muted-foreground">Price</span>
+              <Switch
+                checked={showPriceOverlay}
+                onCheckedChange={setShowPriceOverlay}
+                style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
+              />
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-              {totalMessages > 0 && (
-                <span className="flex items-center gap-1">
-                  <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
-                </span>
-              )}
-              <span>{timeRange === '1D' ? 'Today' : 'Last 24h'} • each bar shows that hour's top narratives</span>
-            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="h-8 px-3 text-xs"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+              {isFetching ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Market Session Selector - only for Today view */}
-          {timeRange === '1D' && (
-            <MarketSessionSelector 
-              session={marketSession} 
-              onSessionChange={setMarketSession}
-            />
-          )}
-          {/* Price Toggle */}
-          <div className="flex items-center gap-2">
-            <DollarSign 
-              className="h-4 w-4" 
-              style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
-            />
-            <span className="text-xs text-muted-foreground">Price</span>
-            <Switch
-              checked={showPriceOverlay}
-              onCheckedChange={setShowPriceOverlay}
-              style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
-            />
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="h-8 px-3 text-xs"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-            {isFetching ? 'Refreshing...' : 'Refresh'}
-          </Button>
-        </div>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Legend */}
       {/* Legend - Hidden for now */}
