@@ -138,12 +138,13 @@ serve(async (req) => {
 function getYahooParams(timeRange: string): { range: string; interval: string } {
   switch (timeRange) {
     case "1H":
-      return { range: "1d", interval: "5m" };
+      return { range: "1d", interval: "1m" };
     case "6H":
-      return { range: "1d", interval: "15m" };
+      return { range: "1d", interval: "5m" };
     case "1D":
+      return { range: "1d", interval: "5m" }; // 5-minute intervals for Today
     case "24H":
-      return { range: "1d", interval: "1h" };
+      return { range: "1d", interval: "15m" };
     case "7D":
       return { range: "5d", interval: "1h" };
     case "30D":
