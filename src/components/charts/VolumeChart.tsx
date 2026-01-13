@@ -525,7 +525,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               <stop offset="95%" stopColor="hsl(38 92% 50%)" stopOpacity={0.4}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
+          {/* CartesianGrid hidden for cleaner look */}
           <XAxis 
             dataKey="time" 
             stroke="hsl(215 20% 55%)" 

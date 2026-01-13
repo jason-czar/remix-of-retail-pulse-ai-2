@@ -151,7 +151,7 @@ function WideBarShape(props: any) {
 }
 
 // Custom tooltip for independent daily/hourly view with volume indicator
-function NarrativeStackedTooltip({ active, payload, label }: any) {
+function NarrativeStackedTooltip({ active, payload, label, priceColor }: any) {
   if (!active || !payload || !payload.length) return null;
 
   const dataPoint = payload[0]?.payload;
@@ -184,8 +184,8 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
         </p>
         {dataPoint.price != null && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
-            <DollarSign className="h-3 w-3 text-amber-400" />
-            <span className="text-amber-400 font-semibold">${dataPoint.price.toFixed(2)}</span>
+            <DollarSign className="h-3 w-3" style={{ color: priceColor || '#00C805' }} />
+            <span className="font-semibold" style={{ color: priceColor || '#00C805' }}>${dataPoint.price.toFixed(2)}</span>
           </div>
         )}
       </div>
@@ -227,8 +227,8 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
       {/* Stock Price */}
       {price != null && (
         <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
-          <DollarSign className="h-4 w-4 text-amber-400" />
-          <span className="text-amber-400 font-bold text-lg">${price.toFixed(2)}</span>
+          <DollarSign className="h-4 w-4" style={{ color: priceColor || '#00C805' }} />
+          <span className="font-bold text-lg" style={{ color: priceColor || '#00C805' }}>${price.toFixed(2)}</span>
         </div>
       )}
       
@@ -1021,7 +1021,7 @@ function HourlyStackedNarrativeChart({
           }}
           onMouseLeave={() => setActiveHour(null)}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
+          {/* CartesianGrid hidden for cleaner look */}
           <XAxis 
             dataKey="time"
             stroke="hsl(215 20% 55%)" 
@@ -1065,7 +1065,7 @@ function HourlyStackedNarrativeChart({
               domain={priceDomain as [number, number]}
             />
           )}
-          <Tooltip content={<NarrativeStackedTooltip />} />
+          <Tooltip content={<NarrativeStackedTooltip priceColor={priceLineColor} />} />
           {/* Render segment bars - each segment uses its own sentiment color */}
           {/* For 5-min view, custom shape expands bars to span the full hour */}
           {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
