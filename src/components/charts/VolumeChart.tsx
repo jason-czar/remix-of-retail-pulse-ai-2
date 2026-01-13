@@ -538,33 +538,25 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           )}
           <Tooltip
             contentStyle={{
-              backgroundColor: "hsl(222 47% 8%)",
-              border: "1px solid hsl(217 33% 17%)",
+              backgroundColor: "hsl(var(--card))",
+              border: "1px solid hsl(var(--border))",
               borderRadius: "8px",
               boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
             }}
-            labelStyle={{ color: "hsl(210 40% 98%)" }}
+            labelStyle={{ color: "hsl(var(--card-foreground))" }}
             content={({ active, payload, label }) => {
               if (!active || !payload || payload.length === 0) return null;
               const dataPoint = payload[0]?.payload;
               
               if (dataPoint?.isEmpty) {
                 return (
-                  <div 
-                    style={{
-                      backgroundColor: "hsl(222 47% 8%)",
-                      border: "1px solid hsl(217 33% 17%)",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-                    }}
-                  >
-                    <div style={{ color: "hsl(210 40% 98%)", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
-                    <p style={{ color: "hsl(215 20% 55%)", fontSize: "14px" }}>No data available yet</p>
+                  <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+                    <div className="font-semibold mb-1 text-card-foreground">{label}</div>
+                    <p className="text-sm text-muted-foreground">No data available yet</p>
                     {dataPoint.price != null && (
-                      <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid hsl(217 33% 25%)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ color: priceLineColor, fontWeight: 600 }}>${dataPoint.price.toFixed(2)}</span>
+                      <div className="mt-2 pt-2 border-t border-border">
+                        <div className="flex items-center gap-1.5">
+                          <span style={{ color: priceLineColor }} className="font-semibold">${dataPoint.price.toFixed(2)}</span>
                         </div>
                       </div>
                     )}
@@ -573,25 +565,17 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               }
               
               return (
-                <div 
-                  style={{
-                    backgroundColor: "hsl(222 47% 8%)",
-                    border: "1px solid hsl(217 33% 17%)",
-                    borderRadius: "8px",
-                    padding: "12px",
-                    boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-                  }}
-                >
-                  <div style={{ color: "hsl(210 40% 98%)", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
+                <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+                  <div className="font-semibold mb-1 text-card-foreground">{label}</div>
                   {dataPoint.price != null && (
-                    <div style={{ marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid hsl(217 33% 25%)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div className="mb-2 pb-2 border-b border-border">
+                      <div className="flex items-center gap-1.5">
                         <DollarSign style={{ width: 14, height: 14, color: priceLineColor }} />
-                        <span style={{ color: priceLineColor, fontWeight: 700, fontSize: "16px" }}>${dataPoint.price.toFixed(2)}</span>
+                        <span style={{ color: priceLineColor }} className="font-bold text-base">${dataPoint.price.toFixed(2)}</span>
                       </div>
                     </div>
                   )}
-                  <p style={{ color: "hsl(168 84% 45%)", fontSize: "14px" }}>
+                  <p className="text-sm text-primary">
                     {dataPoint?.volume?.toLocaleString() || 0} messages
                   </p>
                 </div>
