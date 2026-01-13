@@ -472,10 +472,15 @@ function TimeSeriesNarrativeChart({
         </div>
       )}
       
-      {/* Header - Collapsible */}
-      <Collapsible defaultOpen={false} className="mb-4">
+      {/* Header - Collapsible (collapsed by default, showing only arrow) */}
+      <Collapsible defaultOpen={false} className="mb-2">
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border cursor-pointer hover:bg-card/70 transition-colors">
+          <div className="flex items-center justify-end p-1 cursor-pointer hover:bg-card/30 rounded transition-colors">
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
             <div className="flex items-center gap-3">
               <TrendingUp className="h-5 w-5 text-primary" />
               <div>
@@ -505,22 +510,19 @@ function TimeSeriesNarrativeChart({
                 </div>
               </div>
             </div>
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-3">
-          <div className="flex items-center justify-end gap-2">
-            <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => refetch()}
-              disabled={isFetching || isBackfilling}
-              className="h-8 px-3 text-xs"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-              {isFetching ? 'Refreshing...' : 'Refresh'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => refetch()}
+                disabled={isFetching || isBackfilling}
+                className="h-8 px-3 text-xs"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+                {isFetching ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            </div>
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -930,9 +932,14 @@ function HourlyStackedNarrativeChart({
   return (
     <div className="h-[500px] w-full">
       {/* Header - Collapsible */}
-      <Collapsible defaultOpen={false} className="mb-4">
+      <Collapsible defaultOpen={false} className="mb-2">
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border cursor-pointer hover:bg-card/70 transition-colors">
+          <div className="flex items-center justify-end p-1 cursor-pointer hover:bg-card/30 rounded transition-colors">
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
             <div className="flex items-center gap-3">
               <TrendingUp className="h-5 w-5 text-primary" />
               <div>
@@ -955,41 +962,38 @@ function HourlyStackedNarrativeChart({
                 </div>
               </div>
             </div>
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-          </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-3">
-          <div className="flex items-center justify-end gap-3">
-            {/* Market Session Selector - only for Today view */}
-            {timeRange === '1D' && (
-              <MarketSessionSelector 
-                session={marketSession} 
-                onSessionChange={setMarketSession}
-              />
-            )}
-            {/* Price Toggle */}
-            <div className="flex items-center gap-2">
-              <DollarSign 
-                className="h-4 w-4" 
-                style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
-              />
-              <span className="text-xs text-muted-foreground">Price</span>
-              <Switch
-                checked={showPriceOverlay}
-                onCheckedChange={setShowPriceOverlay}
-                style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
-              />
+            <div className="flex items-center gap-3">
+              {/* Market Session Selector - only for Today view */}
+              {timeRange === '1D' && (
+                <MarketSessionSelector 
+                  session={marketSession} 
+                  onSessionChange={setMarketSession}
+                />
+              )}
+              {/* Price Toggle */}
+              <div className="flex items-center gap-2">
+                <DollarSign 
+                  className="h-4 w-4" 
+                  style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
+                />
+                <span className="text-xs text-muted-foreground">Price</span>
+                <Switch
+                  checked={showPriceOverlay}
+                  onCheckedChange={setShowPriceOverlay}
+                  style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
+                />
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="h-8 px-3 text-xs"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+                {isFetching ? 'Refreshing...' : 'Refresh'}
+              </Button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="h-8 px-3 text-xs"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-              {isFetching ? 'Refreshing...' : 'Refresh'}
-            </Button>
           </div>
         </CollapsibleContent>
       </Collapsible>
