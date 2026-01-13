@@ -190,7 +190,7 @@ export function NarrativeTrendsChart({
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => format(new Date(value), days <= 2 ? "HH:mm" : "MMM d")}
+              tickFormatter={(value) => format(new Date(value), periodType === "hourly" || days <= 1 ? "HH:mm" : "MMM d")}
               minTickGap={50}
             />
             <YAxis

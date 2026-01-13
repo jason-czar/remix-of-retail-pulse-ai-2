@@ -25,6 +25,7 @@ interface SentimentHistoryChartProps {
   days?: number;
   compareSymbols?: string[];
   showVolume?: boolean;
+  periodType?: "hourly" | "daily"; // Used for display formatting only
 }
 
 export function SentimentHistoryChart({
@@ -32,6 +33,7 @@ export function SentimentHistoryChart({
   days = 30,
   compareSymbols = [],
   showVolume = true,
+  periodType = "daily",
 }: SentimentHistoryChartProps) {
   const { data, isLoading, error, refetch } = useSentimentHistory(symbol, days, compareSymbols);
 
@@ -39,8 +41,8 @@ export function SentimentHistoryChart({
     if (!data?.history || data.history.length === 0) return [];
 
     return data.history.map((point: SentimentHistoryPoint) => ({
-      date: format(new Date(point.recorded_at), "MMM d"),
-      fullDate: format(new Date(point.recorded_at), "MMM d, yyyy"),
+      date: format(new Date(point.recorded_at), periodType === "hourly" ? "HH:mm" : "MMM d"),
+      fullDate: format(new Date(point.recorded_at), periodType === "hourly" ? "MMM d, HH:mm" : "MMM d, yyyy"),
       sentiment: point.sentiment_score,
       bullish: point.bullish_count,
       bearish: point.bearish_count,
@@ -49,7 +51,7 @@ export function SentimentHistoryChart({
       emotion: point.dominant_emotion,
       narrative: point.dominant_narrative,
     }));
-  }, [data]);
+  }, [data, periodType]);
 
   if (isLoading) {
     return <Skeleton className="h-[400px] w-full" />;
