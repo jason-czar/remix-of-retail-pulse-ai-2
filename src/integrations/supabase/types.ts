@@ -140,6 +140,36 @@ export type Database = {
         }
         Relationships: []
       }
+      lens_summary_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          lens: string
+          message_count: number | null
+          summary: string
+          symbol: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          lens: string
+          message_count?: number | null
+          summary: string
+          symbol: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          lens?: string
+          message_count?: number | null
+          summary?: string
+          symbol?: string
+        }
+        Relationships: []
+      }
       market_psychology_history: {
         Row: {
           created_at: string
@@ -460,6 +490,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_lens_cache: { Args: never; Returns: undefined }
       cleanup_old_history: { Args: never; Returns: undefined }
       cleanup_psychology_history: { Args: never; Returns: undefined }
       cleanup_volume_history: { Args: never; Returns: undefined }
