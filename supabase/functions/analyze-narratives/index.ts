@@ -15,26 +15,32 @@ interface Narrative {
 function getDateRange(timeRange: string): { start: string; end: string; limit: number } {
   const now = new Date();
   let daysBack = 1;
-  let limit = 100;
+  let limit = 500;
 
   switch (timeRange) {
     case "1H":
+      daysBack = 1;
+      limit = 500;
+      break;
     case "6H":
+      daysBack = 1;
+      limit = 750;
+      break;
     case "24H":
       daysBack = 1;
-      limit = 100;
+      limit = 1000;
       break;
     case "7D":
       daysBack = 7;
-      limit = 200;
+      limit = 1500;
       break;
     case "30D":
       daysBack = 30;
-      limit = 400;
+      limit = 2500;
       break;
     default:
       daysBack = 1;
-      limit = 100;
+      limit = 500;
   }
 
   const pastDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
@@ -128,7 +134,7 @@ serve(async (req) => {
 
     // Prepare message content for AI analysis
     const messageTexts = messages
-      .slice(0, 200)
+      .slice(0, 1000)
       .map((m: any) => m.body || m.content || "")
       .filter((text: string) => text.length > 10)
       .join("\n---\n");
