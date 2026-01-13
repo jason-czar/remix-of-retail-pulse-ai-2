@@ -169,6 +169,7 @@ Deno.serve(async (req) => {
     console.log(`Recording snapshots for ${symbols.length} symbols:`, symbols)
 
     const snapshots: SentimentSnapshot[] = []
+    const volumeSnapshots: any[] = []
     const errors: string[] = []
 
     // Process symbols in batches of 5 to avoid rate limiting
@@ -194,6 +195,25 @@ Deno.serve(async (req) => {
           }
 
           const stats = await statsResponse.json()
+          
+          // Also fetch volume analytics for volume history
+          let volumeData: any = null
+          try {
+            const volumeResponse = await fetch(
+              `${supabaseUrl}/functions/v1/stocktwits-proxy?action=analytics&symbol=${symbol}&type=volume`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            )
+            if (volumeResponse.ok) {
+              volumeData = await volumeResponse.json()
+            }
+          } catch (e) {
+            console.error(`Volume fetch failed for ${symbol}:`, e)
+          }
           
           // Get emotion analysis from cache
           const { data: emotionCache } = await supabase
@@ -232,18 +252,29 @@ Deno.serve(async (req) => {
             }
           }
 
+          const messageVolume = parseInt(stats.volume?.replace(/[^\d]/g, '') || '0') || 0
+
           const snapshot: SentimentSnapshot = {
             symbol,
             sentiment_score: stats.sentiment || 50,
             bullish_count: stats.bullishCount || 0,
             bearish_count: stats.bearishCount || 0,
             neutral_count: stats.neutralCount || 0,
-            message_volume: parseInt(stats.volume?.replace(/[^\d]/g, '') || '0') || 0,
+            message_volume: messageVolume,
             dominant_emotion: dominantEmotion,
             dominant_narrative: dominantNarrative,
           }
 
-          return snapshot
+          // Create volume snapshot
+          const volumeSnapshot = {
+            symbol,
+            period_type: 'daily',
+            message_count: messageVolume,
+            daily_volume: messageVolume,
+            hourly_distribution: volumeData?.hourlyDistribution || [],
+          }
+
+          return { sentiment: snapshot, volume: volumeSnapshot }
         } catch (error) {
           console.error(`Error processing ${symbol}:`, error)
           errors.push(`${symbol}: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -252,7 +283,12 @@ Deno.serve(async (req) => {
       })
 
       const batchResults = await Promise.all(batchPromises)
-      snapshots.push(...batchResults.filter((s): s is SentimentSnapshot => s !== null))
+      for (const result of batchResults) {
+        if (result) {
+          snapshots.push(result.sentiment)
+          volumeSnapshots.push(result.volume)
+        }
+      }
       
       // Small delay between batches
       if (i + batchSize < symbols.length) {
@@ -280,6 +316,58 @@ Deno.serve(async (req) => {
         console.error('Sentiment insert error:', insertError)
       }
     }
+
+    // Insert volume history snapshots
+    let volumeRecorded = 0
+    if (volumeSnapshots.length > 0) {
+      const { error: volumeError } = await supabase
+        .from('volume_history')
+        .insert(volumeSnapshots.map(v => ({
+          symbol: v.symbol,
+          period_type: v.period_type,
+          message_count: v.message_count,
+          daily_volume: v.daily_volume,
+          hourly_distribution: v.hourly_distribution,
+          recorded_at: new Date().toISOString(),
+        })))
+
+      if (volumeError) {
+        console.error('Volume history insert error:', volumeError)
+      } else {
+        volumeRecorded = volumeSnapshots.length
+      }
+
+      // Update volume cache with 2-hour TTL
+      const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()
+      for (const v of volumeSnapshots) {
+        await supabase
+          .from('volume_cache')
+          .upsert({
+            symbol: v.symbol,
+            time_range: '24H',
+            hourly_data: v.hourly_distribution,
+            daily_data: [],
+            message_count: v.message_count,
+            expires_at: expiresAt,
+          }, { onConflict: 'symbol,time_range' })
+      }
+
+      // Update sentiment cache
+      for (const s of snapshots) {
+        await supabase
+          .from('sentiment_cache')
+          .upsert({
+            symbol: s.symbol,
+            time_range: '24H',
+            hourly_data: [],
+            daily_data: [],
+            current_score: s.sentiment_score,
+            expires_at: expiresAt,
+          }, { onConflict: 'symbol,time_range' })
+      }
+    }
+
+    console.log(`Recorded ${volumeRecorded} volume snapshots`)
 
     // ============================================
     // MARKET PSYCHOLOGY SNAPSHOTS FOR EACH USER
@@ -417,6 +505,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         sentiment_recorded: snapshots.length,
+        volume_recorded: volumeRecorded,
         psychology_recorded: psychologyRecorded,
         symbols: snapshots.map(s => s.symbol),
         errors: errors.length > 0 ? errors : undefined,

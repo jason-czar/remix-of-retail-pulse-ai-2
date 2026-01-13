@@ -287,6 +287,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sentiment_cache: {
+        Row: {
+          created_at: string | null
+          current_score: number | null
+          daily_data: Json | null
+          expires_at: string
+          hourly_data: Json | null
+          id: string
+          symbol: string
+          time_range: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_score?: number | null
+          daily_data?: Json | null
+          expires_at: string
+          hourly_data?: Json | null
+          id?: string
+          symbol: string
+          time_range: string
+        }
+        Update: {
+          created_at?: string | null
+          current_score?: number | null
+          daily_data?: Json | null
+          expires_at?: string
+          hourly_data?: Json | null
+          id?: string
+          symbol?: string
+          time_range?: string
+        }
+        Relationships: []
+      }
       sentiment_history: {
         Row: {
           bearish_count: number
@@ -329,6 +362,72 @@ export type Database = {
         }
         Relationships: []
       }
+      volume_cache: {
+        Row: {
+          created_at: string | null
+          daily_data: Json | null
+          expires_at: string
+          hourly_data: Json | null
+          id: string
+          message_count: number | null
+          symbol: string
+          time_range: string
+        }
+        Insert: {
+          created_at?: string | null
+          daily_data?: Json | null
+          expires_at: string
+          hourly_data?: Json | null
+          id?: string
+          message_count?: number | null
+          symbol: string
+          time_range: string
+        }
+        Update: {
+          created_at?: string | null
+          daily_data?: Json | null
+          expires_at?: string
+          hourly_data?: Json | null
+          id?: string
+          message_count?: number | null
+          symbol?: string
+          time_range?: string
+        }
+        Relationships: []
+      }
+      volume_history: {
+        Row: {
+          created_at: string
+          daily_volume: number | null
+          hourly_distribution: Json | null
+          id: string
+          message_count: number
+          period_type: string
+          recorded_at: string
+          symbol: string
+        }
+        Insert: {
+          created_at?: string
+          daily_volume?: number | null
+          hourly_distribution?: Json | null
+          id?: string
+          message_count?: number
+          period_type?: string
+          recorded_at?: string
+          symbol: string
+        }
+        Update: {
+          created_at?: string
+          daily_volume?: number | null
+          hourly_distribution?: Json | null
+          id?: string
+          message_count?: number
+          period_type?: string
+          recorded_at?: string
+          symbol?: string
+        }
+        Relationships: []
+      }
       watchlists: {
         Row: {
           created_at: string
@@ -363,6 +462,7 @@ export type Database = {
     Functions: {
       cleanup_old_history: { Args: never; Returns: undefined }
       cleanup_psychology_history: { Args: never; Returns: undefined }
+      cleanup_volume_history: { Args: never; Returns: undefined }
     }
     Enums: {
       subscription_plan: "free" | "professional" | "enterprise"
