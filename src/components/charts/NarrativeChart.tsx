@@ -890,7 +890,7 @@ function HourlyStackedNarrativeChart({
     return [0, maxStackedValue * 2];
   }, [chartDataWithPrice]);
 
-  // Calculate price domain for right Y-axis
+  // Calculate price domain for right Y-axis - tight padding to fill vertical space
   const priceDomain = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
       return ['auto', 'auto'];
@@ -898,8 +898,15 @@ function HourlyStackedNarrativeChart({
     const prices = priceData.prices.map(p => p.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
-    const padding = (maxPrice - minPrice) * 0.1 || 1;
-    return [Math.floor(minPrice - padding), Math.ceil(maxPrice + padding)];
+    const range = maxPrice - minPrice;
+    // Use 3% padding for tight fit, minimum $0.25 to handle flat prices
+    const padding = Math.max(range * 0.03, 0.25);
+    // Round to nearest $0.25 for cleaner axis labels
+    const roundTo = 0.25;
+    return [
+      Math.floor((minPrice - padding) / roundTo) * roundTo,
+      Math.ceil((maxPrice + padding) / roundTo) * roundTo
+    ];
   }, [priceData, showPriceOverlay]);
 
   // Determine if we should fall back to live AI analysis
