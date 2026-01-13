@@ -268,6 +268,8 @@ export function EmotionTrendsChart({
                 stroke={EMOTION_COLORS[emotion]}
                 strokeWidth={2}
                 fill={`url(#gradient-${emotion})`}
+                dot={{ r: 2, strokeWidth: 1 }}
+                activeDot={{ r: 4, strokeWidth: 2 }}
                 connectNulls
               />
             ))}
