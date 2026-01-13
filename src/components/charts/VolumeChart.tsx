@@ -386,18 +386,19 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
           <XAxis 
-            dataKey="time" 
+            dataKey={is5MinView ? "slotIndex" : "time"}
             stroke="hsl(215 20% 55%)" 
             fontSize={12}
             tickLine={false}
             interval={is5MinView ? 11 : undefined}
             minTickGap={timeRange === '1D' ? 30 : undefined}
-            tick={is5MinView ? ({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
+            tick={is5MinView ? ({ x, y, payload }: { x: number; y: number; payload: { index: number; value: any } }) => {
+              // In 5-min view, use slotIndex for unique categories; render labels only at hour boundaries.
               const item = chartDataWithPrice[payload.index] as any;
               if (!item?.isHourStart) return null;
               return (
                 <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={12}>
-                  {payload.value}
+                  {item.time}
                 </text>
               );
             } : undefined}

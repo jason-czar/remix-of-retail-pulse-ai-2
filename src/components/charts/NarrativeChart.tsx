@@ -954,18 +954,25 @@ function HourlyStackedNarrativeChart({
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
           <XAxis 
-            dataKey="time"
+            dataKey={is5MinView ? "slotIndex" : "time"}
             stroke="hsl(215 20% 55%)" 
             fontSize={11}
             tickLine={false}
             axisLine={false}
             interval={is5MinView ? 11 : 0}
-            tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
-              // Only show tick labels at hour boundaries for 5-min view
+            tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: any } }) => {
+              // In 5-min view we plot 288 slots; "time" labels repeat, so use slotIndex for unique categories
+              // and only render labels at hour boundaries.
               if (is5MinView) {
                 const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
                 if (!item?.isHourStart) return null;
+                return (
+                  <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                    {item.time}
+                  </text>
+                );
               }
+
               return (
                 <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
                   {payload.value}
