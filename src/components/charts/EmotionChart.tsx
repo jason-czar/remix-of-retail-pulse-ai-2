@@ -123,7 +123,7 @@ const WideBarShape = (props: any) => {
   const { x, y, width, height, fill, is5MinView, activeHour, radius } = props;
   
   if (!is5MinView || height <= 0) {
-    return <Rectangle {...props} />;
+    return <Rectangle {...props} fillOpacity={0.3} />;
   }
   
   const hourWidth = width * 12; // 12 5-minute slots per hour
@@ -132,7 +132,7 @@ const WideBarShape = (props: any) => {
   
   const hourIndex = Math.floor(props.index / 12);
   const isHovered = activeHour === hourIndex;
-  const opacity = isHovered ? 0.7 : 0.35;
+  const opacity = isHovered ? 0.5 : 0.3;
   
   return (
     <Rectangle
