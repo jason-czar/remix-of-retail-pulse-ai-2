@@ -635,13 +635,13 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             <ReferenceLine
               yAxisId="right"
               y={priceData.previousClose}
-              stroke="hsl(215 20% 65%)"
+              stroke="hsl(215 20% 65% / 0.6)"
               strokeDasharray="4 4"
               strokeWidth={1.5}
               label={{
                 value: `Prev Close $${priceData.previousClose.toFixed(2)}`,
                 position: "right",
-                fill: "hsl(215 20% 65%)",
+                fill: "hsl(215 20% 65% / 0.6)",
                 fontSize: 10,
               }}
             />
