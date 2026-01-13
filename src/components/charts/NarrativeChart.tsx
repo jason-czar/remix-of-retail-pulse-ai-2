@@ -233,8 +233,11 @@ function TimeSeriesNarrativeChart({
     }>();
     
     historyData.data.forEach(point => {
-      const dateKey = format(new Date(point.recorded_at), 'MMM d');
+      // Use UTC date to avoid timezone issues causing duplicate labels
       const sortKey = new Date(point.recorded_at).toISOString().split('T')[0];
+      const [year, month, day] = sortKey.split('-').map(Number);
+      const utcDate = new Date(Date.UTC(year, month - 1, day));
+      const dateKey = format(utcDate, 'MMM d');
       
       if (!byDate.has(sortKey)) {
         byDate.set(sortKey, { 
@@ -271,8 +274,10 @@ function TimeSeriesNarrativeChart({
     
     // Add gap placeholders to the map
     missingDates.forEach(sortKey => {
+      const [year, month, day] = sortKey.split('-').map(Number);
+      const utcDate = new Date(Date.UTC(year, month - 1, day));
       byDate.set(sortKey, {
-        date: format(new Date(sortKey), 'MMM d'),
+        date: format(utcDate, 'MMM d'),
         sortKey,
         narratives: [],
         totalMessages: 0,
