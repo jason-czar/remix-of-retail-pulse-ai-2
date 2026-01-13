@@ -31,7 +31,7 @@ interface VolumeChartProps {
 
 // Stock price line colors based on price vs previous close
 const PRICE_UP_COLOR = "#00C805";   // Green when above previous close
-const PRICE_DOWN_COLOR = "#FF0000"; // Red when below previous close
+const PRICE_DOWN_COLOR = "#FF6A26"; // Orange-red when below previous close
 const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view

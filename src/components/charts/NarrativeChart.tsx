@@ -32,7 +32,7 @@ type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
 // Stock price line colors based on price vs previous close
 const PRICE_UP_COLOR = "#00C805";   // Green when above previous close
-const PRICE_DOWN_COLOR = "#FF0000"; // Red when below previous close
+const PRICE_DOWN_COLOR = "#FF6A26"; // Orange-red when below previous close
 
 interface NarrativeChartProps {
   symbol: string;
