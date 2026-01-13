@@ -18,17 +18,13 @@ interface EmotionHistoryResult {
   averageScores: Record<string, number>;
 }
 
+// All tracked emotions including trading-specific psychology
 const EMOTION_NAMES = [
-  "Excitement",
-  "Fear",
-  "Hopefulness",
-  "Frustration",
-  "Conviction",
-  "Disappointment",
-  "Sarcasm",
-  "Humor",
-  "Grit",
-  "Surprise",
+  // Core retail trader emotions
+  "Excitement", "Fear", "Hopefulness", "Frustration", "Conviction",
+  "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise",
+  // Trading-specific psychology
+  "FOMO", "Greed", "Capitulation", "Euphoria", "Regret"
 ];
 
 export function useEmotionHistory(

@@ -14,6 +14,7 @@ import { VolumeChart } from "@/components/charts/VolumeChart";
 import { SentimentHistoryChart } from "@/components/charts/SentimentHistoryChart";
 import { NarrativeTrendsChart } from "@/components/charts/NarrativeTrendsChart";
 import { EmotionTrendsChart } from "@/components/charts/EmotionTrendsChart";
+import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { useSymbolStats, useSymbolMessages, useSymbolSentiment } from "@/hooks/use-stocktwits";
@@ -190,6 +191,7 @@ export default function SymbolPage() {
             <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="narratives">Narratives</TabsTrigger>
             <TabsTrigger value="emotions">Emotions</TabsTrigger>
+            <TabsTrigger value="momentum">Momentum</TabsTrigger>
             <TabsTrigger value="volume">Volume</TabsTrigger>
           </TabsList>
 
@@ -256,6 +258,12 @@ export default function SymbolPage() {
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="momentum">
+            <Card className="p-6">
+              <EmotionMomentumChart symbol={symbol} days={7} />
             </Card>
           </TabsContent>
 
