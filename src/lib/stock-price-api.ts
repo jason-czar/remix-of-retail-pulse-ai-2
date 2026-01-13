@@ -25,11 +25,6 @@ export async function fetchStockPrice(
   symbol: string,
   timeRange: TimeRange
 ): Promise<StockPriceData> {
-  const { data, error } = await supabase.functions.invoke("stock-price-proxy", {
-    body: null,
-    headers: {},
-  });
-
   // Build query params manually since invoke doesn't support them directly
   const url = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stock-price-proxy`);
   url.searchParams.set("symbol", symbol.toUpperCase());
