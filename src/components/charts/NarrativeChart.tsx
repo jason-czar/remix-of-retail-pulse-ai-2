@@ -1113,12 +1113,6 @@ function HourlyStackedNarrativeChart({
               stroke="hsl(215 20% 65% / 0.5)"
               strokeDasharray="2 3"
               strokeWidth={1}
-              label={{
-                value: `Prev Close $${priceData.previousClose.toFixed(2)}`,
-                position: "right",
-                fill: "hsl(215 20% 65% / 0.5)",
-                fontSize: 10,
-              }}
             />
           )}
         </ComposedChart>
