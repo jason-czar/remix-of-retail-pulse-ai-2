@@ -177,13 +177,14 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
     );
   }
 
-  // Extract all segments from payload
+  // Extract all segments from payload - use segment${i}Count for actual values (works on any slot)
   const segments: { name: string; count: number; sentiment: string }[] = [];
   
   if (dataPoint) {
     for (let i = 0; i < MAX_SEGMENTS; i++) {
       const name = dataPoint[`segment${i}Name`];
-      const count = dataPoint[`segment${i}`];
+      // Use segment${i}Count if available (for 5-min view), fallback to segment${i} for other views
+      const count = dataPoint[`segment${i}Count`] ?? dataPoint[`segment${i}`];
       const sentiment = dataPoint[`segment${i}Sentiment`];
       if (name && count > 0) {
         segments.push({ name, count, sentiment });
@@ -681,45 +682,37 @@ function HourlyStackedNarrativeChart({
         // Time label: show hour label at hour boundaries
         const hourLabel = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
         
+        // Get the hour's narrative data (for tooltip on any slot within the hour)
+        const hourNarr = hourlyNarratives.get(hour)!;
+        const topNarratives = hourNarr.narratives
+          .sort((a, b) => b.count - a.count)
+          .slice(0, MAX_SEGMENTS);
+        
         const flatData: Record<string, any> = {
           time: hourLabel,
           slotIndex: slotIdx,
           hourIndex: hour,
           isHourStart,
-          totalMessages: 0,
-          volumePercent: 0,
-          isEmpty: true,
+          // Include hour data on ALL slots for tooltip display
+          totalMessages: hourNarr.totalMessages,
+          volumePercent: (hourNarr.totalMessages / maxMessages) * 100,
+          isEmpty: hourNarr.totalMessages === 0,
         };
         
-        // Only add narrative bar data at hour boundaries
-        if (isHourStart) {
-          const hourNarr = hourlyNarratives.get(hour)!;
-          const topNarratives = hourNarr.narratives
-            .sort((a, b) => b.count - a.count)
-            .slice(0, MAX_SEGMENTS);
-          
-          flatData.totalMessages = hourNarr.totalMessages;
-          flatData.volumePercent = (hourNarr.totalMessages / maxMessages) * 100;
-          flatData.isEmpty = hourNarr.totalMessages === 0;
-          
-          topNarratives.forEach((n, idx) => {
-            flatData[`segment${idx}`] = n.count;
-            flatData[`segment${idx}Name`] = n.name;
-            flatData[`segment${idx}Sentiment`] = n.sentiment;
-          });
-          
-          for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
-            flatData[`segment${i}`] = 0;
-            flatData[`segment${i}Name`] = '';
-            flatData[`segment${i}Sentiment`] = 'neutral';
-          }
-        } else {
-          // Non-hour slots have no bar data (price line only)
-          for (let i = 0; i < MAX_SEGMENTS; i++) {
-            flatData[`segment${i}`] = 0;
-            flatData[`segment${i}Name`] = '';
-            flatData[`segment${i}Sentiment`] = 'neutral';
-          }
+        // Add narrative segment data to ALL slots (for tooltip)
+        topNarratives.forEach((n, idx) => {
+          flatData[`segment${idx}Name`] = n.name;
+          flatData[`segment${idx}Sentiment`] = n.sentiment;
+          // Only set segment VALUE at hour start for bar rendering
+          flatData[`segment${idx}`] = isHourStart ? n.count : 0;
+          flatData[`segment${idx}Count`] = n.count; // Store actual count for tooltip
+        });
+        
+        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+          flatData[`segment${i}`] = 0;
+          flatData[`segment${i}Name`] = '';
+          flatData[`segment${i}Sentiment`] = 'neutral';
+          flatData[`segment${i}Count`] = 0;
         }
         
         stackedChartData.push(flatData);
