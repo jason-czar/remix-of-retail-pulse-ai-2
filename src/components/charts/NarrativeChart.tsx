@@ -29,8 +29,9 @@ import { detectMissingDates, createGapPlaceholders, mergeDataWithGaps, isGapPlac
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
-// Stock price line color
-const PRICE_LINE_COLOR = "#00C805";
+// Stock price line colors based on price vs previous close
+const PRICE_UP_COLOR = "#00C805";   // Green when above previous close
+const PRICE_DOWN_COLOR = "#FF0000"; // Red when below previous close
 
 interface NarrativeChartProps {
   symbol: string;
@@ -625,6 +626,14 @@ function HourlyStackedNarrativeChart({
   // Fetch stock price data
   const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
 
+  // Determine price line color based on current price vs previous close
+  const priceLineColor = useMemo(() => {
+    if (!priceData?.currentPrice || !priceData?.previousClose) {
+      return PRICE_UP_COLOR; // Default to green
+    }
+    return priceData.currentPrice >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
+  }, [priceData?.currentPrice, priceData?.previousClose]);
+
   const { stackedChartData, totalMessages, hasAnyData, is5MinView } = useMemo(() => {
     // For "Today" view (1D), use 5-minute slots for granular price line
     // but only put bar data at hour boundaries
@@ -979,10 +988,10 @@ function HourlyStackedNarrativeChart({
         </div>
         {showPriceOverlay && (
           <div className="flex items-center gap-2 border-l border-border pl-4">
-            <div className="w-4 h-0.5 rounded" style={{ backgroundColor: PRICE_LINE_COLOR }} />
-            <span className="text-amber-400">Stock Price</span>
+            <div className="w-4 h-0.5 rounded" style={{ backgroundColor: priceLineColor }} />
+            <span style={{ color: priceLineColor }}>Stock Price</span>
             {priceData?.currentPrice && (
-              <span className="text-amber-400 font-semibold">${priceData.currentPrice.toFixed(2)}</span>
+              <span style={{ color: priceLineColor }} className="font-semibold">${priceData.currentPrice.toFixed(2)}</span>
             )}
           </div>
         )}
@@ -1076,10 +1085,10 @@ function HourlyStackedNarrativeChart({
               yAxisId="right"
               type="monotone"
               dataKey="price"
-              stroke={PRICE_LINE_COLOR}
+              stroke={priceLineColor}
               strokeWidth={2}
               dot={false}
-              activeDot={{ fill: PRICE_LINE_COLOR, strokeWidth: 2, stroke: "#fff", r: 5 }}
+              activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
               connectNulls
             />
           )}

@@ -29,8 +29,9 @@ interface VolumeChartProps {
   timeRange?: string;
 }
 
-// Stock price line color
-const PRICE_LINE_COLOR = "#00C805";
+// Stock price line colors based on price vs previous close
+const PRICE_UP_COLOR = "#00C805";   // Green when above previous close
+const PRICE_DOWN_COLOR = "#FF0000"; // Red when below previous close
 const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view
@@ -170,6 +171,14 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     timeRange as TimeRange, 
     showPriceOverlay && (timeRange === '1D' || timeRange === '24H')
   );
+
+  // Determine price line color based on current price vs previous close
+  const priceLineColor = useMemo(() => {
+    if (!priceData?.currentPrice || !priceData?.previousClose) {
+      return PRICE_UP_COLOR; // Default to green
+    }
+    return priceData.currentPrice >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
+  }, [priceData?.currentPrice, priceData?.previousClose]);
 
   const isLoading = cacheLoading || (cacheResult?.source === 'api' && apiLoading);
   const isFromCache = cacheResult?.source === 'cache';
@@ -542,7 +551,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
                     {dataPoint.price != null && (
                       <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid hsl(217 33% 25%)" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ color: PRICE_LINE_COLOR, fontWeight: 600 }}>${dataPoint.price.toFixed(2)}</span>
+                          <span style={{ color: priceLineColor, fontWeight: 600 }}>${dataPoint.price.toFixed(2)}</span>
                         </div>
                       </div>
                     )}
@@ -564,8 +573,8 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
                   {dataPoint.price != null && (
                     <div style={{ marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid hsl(217 33% 25%)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <DollarSign style={{ width: 14, height: 14, color: PRICE_LINE_COLOR }} />
-                        <span style={{ color: PRICE_LINE_COLOR, fontWeight: 700, fontSize: "16px" }}>${dataPoint.price.toFixed(2)}</span>
+                        <DollarSign style={{ width: 14, height: 14, color: priceLineColor }} />
+                        <span style={{ color: priceLineColor, fontWeight: 700, fontSize: "16px" }}>${dataPoint.price.toFixed(2)}</span>
                       </div>
                     </div>
                   )}
@@ -604,10 +613,10 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               yAxisId="right"
               type="monotone"
               dataKey="price"
-              stroke={PRICE_LINE_COLOR}
+              stroke={priceLineColor}
               strokeWidth={2}
               dot={false}
-              activeDot={{ fill: PRICE_LINE_COLOR, strokeWidth: 2, stroke: "#fff", r: 5 }}
+              activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
               connectNulls
             />
           )}
