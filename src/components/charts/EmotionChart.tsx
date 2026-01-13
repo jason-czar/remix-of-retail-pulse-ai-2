@@ -269,12 +269,12 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(222 47% 8%)",
-                border: "1px solid hsl(217 33% 17%)",
+                backgroundColor: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
                 boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
               }}
-              labelStyle={{ color: "hsl(210 40% 98%)" }}
+              labelStyle={{ color: "hsl(var(--card-foreground))" }}
               formatter={(value: number, name: string, props: any) => [
                 <div key="tooltip" className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
@@ -371,12 +371,12 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(222 47% 8%)",
-                    border: "1px solid hsl(217 33% 17%)",
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
                     boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
                   }}
-                  labelStyle={{ color: "hsl(210 40% 98%)" }}
+                  labelStyle={{ color: "hsl(var(--card-foreground))" }}
                 />
                 {selectedEmotions.map((emotion) => (
                   <Line

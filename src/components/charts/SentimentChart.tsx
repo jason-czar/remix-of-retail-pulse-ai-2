@@ -198,12 +198,12 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "hsl(222 47% 8%)",
-              border: "1px solid hsl(217 33% 17%)",
+              backgroundColor: "hsl(var(--card))",
+              border: "1px solid hsl(var(--border))",
               borderRadius: "8px",
               boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
             }}
-            labelStyle={{ color: "hsl(210 40% 98%)" }}
+            labelStyle={{ color: "hsl(var(--card-foreground))" }}
             itemStyle={{ color: "hsl(168 84% 45%)" }}
             content={({ active, payload, label }) => {
               if (!active || !payload) return null;
@@ -213,42 +213,28 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
               // Handle empty hours (no data yet)
               if (dataPoint?.isEmpty) {
                 return (
-                  <div 
-                    className="p-3 rounded-lg min-w-[150px]"
-                    style={{
-                      backgroundColor: "hsl(222 47% 8%)",
-                      border: "1px solid hsl(217 33% 17%)",
-                      boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-                    }}
-                  >
-                    <div className="font-semibold mb-1" style={{ color: "hsl(210 40% 98%)" }}>{label}</div>
-                    <p className="text-sm" style={{ color: "hsl(215 20% 55%)" }}>No data available yet</p>
+                  <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[150px]">
+                    <div className="font-semibold mb-1 text-card-foreground">{label}</div>
+                    <p className="text-sm text-muted-foreground">No data available yet</p>
                   </div>
                 );
               }
               
               return (
-                <div 
-                  className="p-3 rounded-lg"
-                  style={{
-                    backgroundColor: "hsl(222 47% 8%)",
-                    border: "1px solid hsl(217 33% 17%)",
-                    boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-                  }}
-                >
-                  <div className="font-semibold mb-2" style={{ color: "hsl(210 40% 98%)" }}>{label}</div>
+                <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+                  <div className="font-semibold mb-2 text-card-foreground">{label}</div>
                   <div className="space-y-1 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(168 84% 45%)" }} />
-                      <span style={{ color: "hsl(210 40% 98%)" }}>Sentiment: {dataPoint?.sentiment}</span>
+                      <span className="text-card-foreground">Sentiment: {dataPoint?.sentiment}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(142 71% 45%)" }} />
-                      <span style={{ color: "hsl(210 40% 98%)" }}>Bullish: {dataPoint?.bullish}</span>
+                      <span className="text-card-foreground">Bullish: {dataPoint?.bullish}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(0 72% 51%)" }} />
-                      <span style={{ color: "hsl(210 40% 98%)" }}>Bearish: {dataPoint?.bearish}</span>
+                      <span className="text-card-foreground">Bearish: {dataPoint?.bearish}</span>
                     </div>
                   </div>
                 </div>
