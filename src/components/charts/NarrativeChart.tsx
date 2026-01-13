@@ -508,7 +508,7 @@ function TimeSeriesNarrativeChart({
   );
 }
 
-// Hourly stacked bar chart for 1D/24H - Independent hourly view
+// Hourly stacked bar chart for 1D/24H - Independent hourly view with live AI fallback
 function HourlyStackedNarrativeChart({ 
   symbol, 
   timeRange 
@@ -529,7 +529,7 @@ function HourlyStackedNarrativeChart({
 
   // Fetch 3 days of data to ensure we capture the full local day regardless of timezone
   // (e.g., UTC-12 to UTC+14 covers ~26 hour spread from UTC midnight)
-  const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(
+  const { data: historyData, isLoading: historyLoading, error, refetch, isFetching } = useNarrativeHistory(
     symbol, 
     3, 
     "hourly"
@@ -636,7 +636,15 @@ function HourlyStackedNarrativeChart({
     return { stackedChartData, totalMessages };
   }, [historyData, timeRange]);
 
-  if (isLoading) {
+  // Determine if we should fall back to live AI analysis
+  const shouldFallbackToLive = !historyLoading && stackedChartData.length === 0;
+
+  // If no hourly data exists, fall back to live AI analysis (same as 1H/6H views)
+  if (shouldFallbackToLive) {
+    return <HorizontalNarrativeChart symbol={symbol} timeRange={timeRange} />;
+  }
+
+  if (historyLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
   }
 
@@ -649,15 +657,6 @@ function HourlyStackedNarrativeChart({
           <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
-      </div>
-    );
-  }
-
-  if (stackedChartData.length === 0) {
-    return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
-        <Sparkles className="h-8 w-8" />
-        <p className="text-sm">No hourly narrative data found for {symbol}. Data accumulates during market hours.</p>
       </div>
     );
   }
