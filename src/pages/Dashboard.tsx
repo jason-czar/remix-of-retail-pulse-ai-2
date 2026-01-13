@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchCommand } from "@/components/SearchCommand";
 import { WatchlistManager } from "@/components/WatchlistManager";
+import { MarketPsychologyCard } from "@/components/MarketPsychologyCard";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -164,6 +165,9 @@ export default function Dashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Market Psychology */}
+            <MarketPsychologyCard symbols={watchlistSymbols} />
+
             {/* Alerts */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-6">
