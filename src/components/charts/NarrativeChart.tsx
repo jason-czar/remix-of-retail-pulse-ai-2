@@ -1015,7 +1015,7 @@ function HourlyStackedNarrativeChart({
               dataKey="price"
               stroke={PRICE_LINE_COLOR}
               strokeWidth={2}
-              dot={{ fill: PRICE_LINE_COLOR, strokeWidth: 0, r: 3 }}
+              dot={false}
               activeDot={{ fill: PRICE_LINE_COLOR, strokeWidth: 2, stroke: "#fff", r: 5 }}
               connectNulls
             />
