@@ -150,25 +150,43 @@ function aggregateEmotions(historyData: any[]): {
   historicalData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   
   // For aggregated data, group by date to get one point per day
-  const dailyAggregated = new Map<string, EmotionTimePoint>();
+  const dailyAggregated = new Map<string, { timestamp: string; emotions: Record<string, { total: number; count: number }> }>();
   historicalData.forEach(point => {
     const dateKey = new Date(point.timestamp).toISOString().split('T')[0];
     if (!dailyAggregated.has(dateKey)) {
-      dailyAggregated.set(dateKey, point);
+      const emotionData: Record<string, { total: number; count: number }> = {};
+      Object.entries(point.emotions).forEach(([name, score]) => {
+        emotionData[name] = { total: score, count: 1 };
+      });
+      dailyAggregated.set(dateKey, { timestamp: point.timestamp, emotions: emotionData });
     } else {
-      // Average the emotions for this day
+      // Accumulate emotions for averaging
       const existing = dailyAggregated.get(dateKey)!;
-      const emotionNames = new Set([...Object.keys(existing.emotions), ...Object.keys(point.emotions)]);
-      emotionNames.forEach(name => {
-        const existingVal = existing.emotions[name] || 0;
-        const newVal = point.emotions[name] || 0;
-        existing.emotions[name] = Math.round((existingVal + newVal) / 2);
+      Object.entries(point.emotions).forEach(([name, score]) => {
+        if (existing.emotions[name]) {
+          existing.emotions[name].total += score;
+          existing.emotions[name].count += 1;
+        } else {
+          existing.emotions[name] = { total: score, count: 1 };
+        }
       });
     }
   });
   
-  // Convert back to array and sort chronologically
-  const timelineData = Array.from(dailyAggregated.values())
+  // Convert back to array with proper date labels and averaged emotions
+  const timelineData: EmotionTimePoint[] = Array.from(dailyAggregated.entries())
+    .map(([dateKey, data]) => {
+      const date = new Date(dateKey);
+      const averagedEmotions: Record<string, number> = {};
+      Object.entries(data.emotions).forEach(([name, { total, count }]) => {
+        averagedEmotions[name] = Math.round(total / count);
+      });
+      return {
+        timestamp: data.timestamp,
+        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        emotions: averagedEmotions
+      };
+    })
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   // Calculate average scores and determine trends
