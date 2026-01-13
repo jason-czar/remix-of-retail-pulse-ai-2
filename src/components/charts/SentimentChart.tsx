@@ -189,11 +189,11 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
   }, [apiData, timeRange, START_HOUR, END_HOUR]);
 
   if (isLoading) {
-    return <Skeleton className="h-[400px] w-full" />;
+    return <Skeleton className="h-[300px] md:h-[400px] w-full" />;
   }
 
   return (
-    <div className="h-[400px] w-full">
+    <div className="h-[300px] md:h-[400px] w-full">
       {/* Session selector for Today view */}
       {timeRange === '1D' && (
         <div className="flex justify-end mb-2">

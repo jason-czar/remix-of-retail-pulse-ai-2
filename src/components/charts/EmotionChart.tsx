@@ -391,30 +391,30 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   }
 
   return (
-    <div className="h-[600px] w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Brain className="h-5 w-5 text-primary" />
+    <div className="h-[400px] md:h-[600px] w-full">
+      {/* Header - Stacked on mobile */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
+            <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-semibold">Market Psychology</h4>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
               {historyData?.data && historyData.data.length > 0 && (
-                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs">
+                <span className="px-1.5 md:px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] md:text-xs">
                   {historyData.data.length} snapshots
                 </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground hidden md:block">
               Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
             </p>
           </div>
           
-          {/* Mini emotion breakdown */}
+          {/* Mini emotion breakdown - hidden on mobile */}
           {dominantEmotionData && (
-            <div className="ml-4 pl-4 border-l border-border/50 flex items-center gap-3">
+            <div className="hidden lg:flex ml-4 pl-4 border-l border-border/50 items-center gap-3">
               <div className="flex items-center gap-2">
                 <div 
                   className="w-3 h-3 rounded-full animate-pulse" 
@@ -441,14 +441,14 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
           )}
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
           {is1DView && (
             <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
           )}
           
           {showPriceToggle && (
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+              <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
               <Switch
                 checked={showPriceOverlay}
                 onCheckedChange={setShowPriceOverlay}
@@ -463,26 +463,26 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
             size="sm" 
             onClick={() => refetch()}
             disabled={isFetching}
-            className="h-8 px-3 text-xs"
+            className="h-7 md:h-8 px-2 md:px-3 text-[10px] md:text-xs shrink-0"
           >
-            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`h-3 w-3 md:h-3.5 md:w-3.5 mr-1 md:mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      {/* Legend - More compact on mobile */}
+      <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
         {DEFAULT_SIGNAL_EMOTIONS.map(emotion => (
-          <div key={emotion} className="flex items-center gap-1.5 px-2 py-1 rounded bg-card/50 border border-border text-xs">
-            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: EMOTION_COLORS[emotion] }} />
+          <div key={emotion} className="flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded bg-card/50 border border-border text-[10px] md:text-xs">
+            <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-sm" style={{ backgroundColor: EMOTION_COLORS[emotion] }} />
             <span>{emotion}</span>
           </div>
         ))}
       </div>
 
-      {/* Chart */}
-      <div className="h-[480px]">
+      {/* Chart - Responsive height */}
+      <div className="h-[300px] md:h-[480px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartDataWithPrice}
