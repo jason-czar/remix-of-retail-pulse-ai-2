@@ -138,11 +138,11 @@ export function NarrativeChart({ symbol, timeRange = '24H' }: NarrativeChartProp
         </Button>
       </div>
       
-      <ResponsiveContainer width="100%" height="85%">
+      <ResponsiveContainer width="100%" height="90%">
         <BarChart 
           data={chartData} 
           layout="vertical"
-          margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+          margin={{ top: 10, right: 30, left: 20, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" horizontal={false} />
           <XAxis 
@@ -156,10 +156,10 @@ export function NarrativeChart({ symbol, timeRange = '24H' }: NarrativeChartProp
             type="category"
             dataKey="name"
             stroke="hsl(215 20% 55%)" 
-            fontSize={12}
+            fontSize={11}
             tickLine={false}
             axisLine={false}
-            width={150}
+            width={220}
             tick={({ x, y, payload }) => (
               <g transform={`translate(${x},${y})`}>
                 <text
@@ -168,7 +168,7 @@ export function NarrativeChart({ symbol, timeRange = '24H' }: NarrativeChartProp
                   dy={4}
                   textAnchor="end"
                   fill="hsl(210 40% 98%)"
-                  fontSize={12}
+                  fontSize={11}
                 >
                   {payload.value}
                 </text>
@@ -204,25 +204,6 @@ export function NarrativeChart({ symbol, timeRange = '24H' }: NarrativeChartProp
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      
-      {/* Legend with sentiment indicators */}
-      <div className="flex flex-wrap gap-3 mt-2 justify-center">
-        {chartData.map((narrative: any, index: number) => (
-          <div 
-            key={narrative.name}
-            className="flex items-center gap-2 text-xs"
-          >
-            <div 
-              className="w-3 h-3 rounded-sm" 
-              style={{ backgroundColor: narrative.fill }}
-            />
-            <span className="text-muted-foreground">{narrative.name}</span>
-            <span className={`px-1.5 py-0.5 rounded text-[10px] border ${getSentimentBadge(narrative.sentiment)}`}>
-              {narrative.sentiment}
-            </span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
