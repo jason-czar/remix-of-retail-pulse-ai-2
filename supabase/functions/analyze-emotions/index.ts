@@ -125,11 +125,19 @@ function aggregateEmotions(historyData: any[]): {
       }
     }
 
-    // Add to historical timeline
+    // Add to historical timeline with appropriate label based on period type
     const recordedAt = new Date(snapshot.recorded_at);
-    const now = Date.now();
-    const hoursAgo = Math.round((now - recordedAt.getTime()) / (1000 * 60 * 60));
-    const label = hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.round(hoursAgo / 24)}d ago`;
+    
+    // Format label based on data - use date format for daily data
+    let label: string;
+    const periodType = snapshot.period_type;
+    if (periodType === 'daily' || periodType === 'eod') {
+      // Date format for daily/eod snapshots
+      label = recordedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } else {
+      // Time format for hourly snapshots
+      label = recordedAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
     
     historicalData.push({
       timestamp: snapshot.recorded_at,
@@ -384,12 +392,20 @@ serve(async (req) => {
     const timePoints = sortedBuckets.map(([key, texts], index) => {
       const bucketIndex = parseInt(key.split('_')[1]);
       const minutesAgo = bucketIndex * bucketMinutes;
-      let label = "";
-      if (minutesAgo < 60) label = `${minutesAgo}m ago`;
-      else if (minutesAgo < 1440) label = `${Math.round(minutesAgo / 60)}h ago`;
-      else label = `${Math.round(minutesAgo / 1440)}d ago`;
+      const timestamp = new Date(now - minutesAgo * 60 * 1000);
       
-      return { label, texts, timestamp: new Date(now - minutesAgo * 60 * 1000).toISOString() };
+      // Use appropriate label format based on time range
+      let label = "";
+      if (timeRange === "7D" || timeRange === "30D") {
+        // For 7D/30D, use date format like "Jan 6"
+        label = timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } else if (minutesAgo < 60) {
+        label = `${minutesAgo}m ago`;
+      } else {
+        label = `${Math.round(minutesAgo / 60)}h ago`;
+      }
+      
+      return { label, texts, timestamp: timestamp.toISOString() };
     }).reverse();
 
     // Prepare message content for AI analysis
