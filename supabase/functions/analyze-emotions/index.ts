@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Cache version - increment this when making breaking changes to cache format
+const CACHE_VERSION = 2;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -275,35 +278,44 @@ serve(async (req) => {
         .maybeSingle();
 
       if (cached) {
-        console.log(`Cache hit for emotions ${symbol} ${timeRange}`);
-        // Handle both old format (raw array) and new format (full object with emotions property)
+        // Check cache version - invalidate if outdated
         const rawEmotions = cached.emotions;
-        let cachedData: any;
+        const cacheVersion = typeof rawEmotions === 'object' && rawEmotions !== null 
+          ? rawEmotions.cacheVersion 
+          : undefined;
         
-        if (Array.isArray(rawEmotions)) {
-          // Old format: emotions column contains the array directly
-          cachedData = {
-            emotions: rawEmotions,
-            dominantEmotion: rawEmotions[0]?.name || "Neutral",
-            emotionalIntensity: "moderate",
-            historicalData: [],
-            messageCount: 0,
-          };
-        } else if (typeof rawEmotions === 'object' && rawEmotions !== null) {
-          // New format: emotions column contains full response object
-          cachedData = rawEmotions;
+        if (cacheVersion !== CACHE_VERSION) {
+          console.log(`Cache version mismatch for emotions ${symbol} ${timeRange} (have: ${cacheVersion}, need: ${CACHE_VERSION})`);
+          // Continue to regenerate cache
         } else {
-          cachedData = { emotions: [], messageCount: 0 };
+          console.log(`Cache hit for emotions ${symbol} ${timeRange} (v${CACHE_VERSION})`);
+          let cachedData: any;
+          
+          if (Array.isArray(rawEmotions)) {
+            // Old format: emotions column contains the array directly
+            cachedData = {
+              emotions: rawEmotions,
+              dominantEmotion: rawEmotions[0]?.name || "Neutral",
+              emotionalIntensity: "moderate",
+              historicalData: [],
+              messageCount: 0,
+            };
+          } else if (typeof rawEmotions === 'object' && rawEmotions !== null) {
+            // New format: emotions column contains full response object
+            cachedData = rawEmotions;
+          } else {
+            cachedData = { emotions: [], messageCount: 0 };
+          }
+          
+          return new Response(
+            JSON.stringify({ 
+              ...cachedData,
+              messageCount: cachedData.messageCount || 0,
+              cached: true 
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
-        
-        return new Response(
-          JSON.stringify({ 
-            ...cachedData,
-            messageCount: cachedData.messageCount || 0,
-            cached: true 
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
       }
     }
 
@@ -335,6 +347,7 @@ serve(async (req) => {
             ...aggregated,
             messageCount: totalMessages,
             snapshotCount: historyData.length,
+            cacheVersion: CACHE_VERSION,
           };
 
           // Cache the aggregated result (2 hour expiry)
@@ -668,6 +681,7 @@ ${messageTexts}`
       emotionalIntensity: result.emotionalIntensity,
       historicalData: historicalWithTimestamps,
       messageCount: totalMessages,
+      cacheVersion: CACHE_VERSION,
     };
 
     // Cache the results (1 hour expiry)
