@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Cache version - increment this when making breaking changes to cache format
+const CACHE_VERSION = 2;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -147,13 +150,25 @@ serve(async (req) => {
         .maybeSingle();
 
       if (cached) {
-        console.log(`Cache hit for ${symbol} ${timeRange}`);
         const cachedNarratives = cached.narratives;
-        const messageCount = cached.message_count || 0;
-        return new Response(
-          JSON.stringify({ narratives: cachedNarratives, messageCount, cached: true }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const cacheVersion = typeof cachedNarratives === 'object' && cachedNarratives !== null && !Array.isArray(cachedNarratives)
+          ? cachedNarratives.cacheVersion
+          : undefined;
+        
+        // Check if it's the new format with version embedded, or old array format
+        const narrativesData = Array.isArray(cachedNarratives) ? cachedNarratives : cachedNarratives?.narratives || cachedNarratives;
+        
+        if (cacheVersion !== CACHE_VERSION) {
+          console.log(`Cache version mismatch for ${symbol} ${timeRange} (have: ${cacheVersion}, need: ${CACHE_VERSION})`);
+          // Continue to regenerate cache
+        } else {
+          console.log(`Cache hit for ${symbol} ${timeRange} (v${CACHE_VERSION})`);
+          const messageCount = cached.message_count || 0;
+          return new Response(
+            JSON.stringify({ narratives: narrativesData, messageCount, cached: true }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
       }
     }
 
@@ -185,13 +200,17 @@ serve(async (req) => {
           
           // Cache the aggregated result (2 hour expiry for aggregated data)
           const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+          const cachePayload = {
+            narratives: aggregatedNarratives,
+            cacheVersion: CACHE_VERSION,
+          };
           await supabase
             .from("narrative_cache")
             .upsert(
               {
                 symbol: symbol.toUpperCase(),
                 time_range: timeRange,
-                narratives: aggregatedNarratives,
+                narratives: cachePayload,
                 message_count: totalMessages,
                 expires_at: expiresAt,
               },
@@ -377,6 +396,10 @@ ${messageTexts}`,
 
     // Cache the results (1 hour expiry)
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const cachePayload = {
+      narratives,
+      cacheVersion: CACHE_VERSION,
+    };
     
     await supabase
       .from("narrative_cache")
@@ -384,7 +407,7 @@ ${messageTexts}`,
         {
           symbol: symbol.toUpperCase(),
           time_range: timeRange,
-          narratives,
+          narratives: cachePayload,
           message_count: totalMessages,
           expires_at: expiresAt,
         },
