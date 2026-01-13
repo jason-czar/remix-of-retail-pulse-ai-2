@@ -98,21 +98,63 @@ const SENTIMENT_COLORS = {
 const MAX_SEGMENTS = 6;
 const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
+// Market hours: 9:30 AM - 4:00 PM ET (hours 9-15 in local time approximation)
+// For simplicity, we'll consider hours 9, 10, 11, 12, 13, 14, 15 as market hours
+const MARKET_HOURS = new Set([9, 10, 11, 12, 13, 14, 15]);
+const isMarketHour = (hour: number) => MARKET_HOURS.has(hour);
+
+// Calculate the effective width multiplier for each hour
+// Market hours get 2x width, non-market hours get 1x
+// Total slots: 7 market hours * 2 + 17 non-market hours * 1 = 31 units
+const MARKET_HOUR_MULTIPLIER = 2;
+const NON_MARKET_HOUR_MULTIPLIER = 1;
+const TOTAL_WIDTH_UNITS = 7 * MARKET_HOUR_MULTIPLIER + 17 * NON_MARKET_HOUR_MULTIPLIER; // 31
+
 // Custom bar shape that expands width to cover full hour in 5-min view
+// Market hours are rendered 2x wider than non-market hours
 function WideBarShape(props: any) {
-  const { x, y, width, height, fill, radius, payload, is5MinView } = props;
+  const { x, y, width, height, fill, radius, payload, is5MinView, chartWidth, allData } = props;
   
-  // In 5-min view, expand bar width to cover 12 slots (full hour)
-  // Only render for hour-start slots
+  // In 5-min view, expand bar width to cover appropriate slots
+  // Market hours get 2x width compared to non-market hours
   if (is5MinView) {
     if (!payload?.isHourStart || height === 0) {
       return null;
     }
-    // Expand width to cover 12 slots
-    const expandedWidth = width * SLOTS_PER_HOUR;
+    
+    // Calculate cumulative x position based on variable-width hours
+    const hourIndex = payload.hourIndex;
+    const isMarket = isMarketHour(hourIndex);
+    
+    // Calculate the width for this bar based on whether it's market hour
+    const widthMultiplier = isMarket ? MARKET_HOUR_MULTIPLIER : NON_MARKET_HOUR_MULTIPLIER;
+    
+    // Each unit of width is (chartWidth / TOTAL_WIDTH_UNITS)
+    // But we need to work with the base slot width provided
+    // Since we have 288 slots total, each slot has width = chartWidth / 288
+    // For a full hour, base is 12 slots
+    // Market hour should be: 12 * 2 slots worth = 24 slots worth
+    // Non-market hour should be: 12 * 1 slots worth = 12 slots worth
+    const baseSlotWidth = width; // width of one 5-min slot
+    const expandedWidth = baseSlotWidth * SLOTS_PER_HOUR * widthMultiplier;
+    
+    // Calculate the correct x position based on accumulated widths of previous hours
+    let accumulatedSlots = 0;
+    for (let h = 0; h < hourIndex; h++) {
+      const mult = isMarketHour(h) ? MARKET_HOUR_MULTIPLIER : NON_MARKET_HOUR_MULTIPLIER;
+      accumulatedSlots += SLOTS_PER_HOUR * mult;
+    }
+    
+    // The chart's left margin - we need to offset from the original x
+    // Original x is based on uniform slot widths, so we need to recalculate
+    // Offset from the expected position (hourIndex * 12 slots) to actual position
+    const uniformSlotX = hourIndex * SLOTS_PER_HOUR; // expected slot index
+    const xOffset = (accumulatedSlots - uniformSlotX) * baseSlotWidth;
+    const adjustedX = x + xOffset;
+    
     return (
       <Rectangle
-        x={x}
+        x={adjustedX}
         y={y}
         width={expandedWidth}
         height={height}
@@ -131,6 +173,98 @@ function WideBarShape(props: any) {
       height={height}
       fill={fill}
       radius={radius}
+    />
+  );
+}
+
+// Helper to calculate the adjusted x position for a slot index based on variable-width hours
+function getAdjustedXPosition(slotIndex: number, baseSlotWidth: number): number {
+  const hour = Math.floor(slotIndex / SLOTS_PER_HOUR);
+  const slotWithinHour = slotIndex % SLOTS_PER_HOUR;
+  
+  // Calculate cumulative width up to this hour
+  let accumulatedSlots = 0;
+  for (let h = 0; h < hour; h++) {
+    const mult = isMarketHour(h) ? MARKET_HOUR_MULTIPLIER : NON_MARKET_HOUR_MULTIPLIER;
+    accumulatedSlots += SLOTS_PER_HOUR * mult;
+  }
+  
+  // Add position within the current hour
+  const currentHourMultiplier = isMarketHour(hour) ? MARKET_HOUR_MULTIPLIER : NON_MARKET_HOUR_MULTIPLIER;
+  accumulatedSlots += slotWithinHour * currentHourMultiplier;
+  
+  return accumulatedSlots * baseSlotWidth;
+}
+
+// Custom Line shape that adjusts x-coordinates for variable-width hours
+function AdjustedPriceLine(props: any) {
+  const { points, stroke, strokeWidth } = props;
+  
+  if (!points || points.length === 0) return null;
+  
+  // Calculate the base slot width from the first two points if available
+  // We need to reverse-engineer the slot width from the chart
+  let baseSlotWidth = 0;
+  if (points.length >= 2) {
+    // Original points are evenly spaced for 288 slots
+    // The x difference between consecutive points = slot width
+    baseSlotWidth = Math.abs(points[1].x - points[0].x);
+  } else if (points.length === 1) {
+    // Fallback: estimate from single point
+    baseSlotWidth = 3;
+  }
+  
+  // Adjust each point's x position based on variable-width hours
+  const adjustedPoints = points.map((point: any, idx: number) => {
+    const slotIndex = point.payload?.slotIndex ?? idx;
+    
+    // Calculate what the uniform x would be
+    const uniformX = slotIndex * baseSlotWidth + (points[0]?.x ?? 0) - 0 * baseSlotWidth;
+    
+    // Calculate the adjusted x based on variable widths
+    const hour = Math.floor(slotIndex / SLOTS_PER_HOUR);
+    const slotWithinHour = slotIndex % SLOTS_PER_HOUR;
+    
+    let accumulatedSlots = 0;
+    for (let h = 0; h < hour; h++) {
+      const mult = isMarketHour(h) ? MARKET_HOUR_MULTIPLIER : NON_MARKET_HOUR_MULTIPLIER;
+      accumulatedSlots += SLOTS_PER_HOUR * mult;
+    }
+    const currentHourMultiplier = isMarketHour(hour) ? MARKET_HOUR_MULTIPLIER : NON_MARKET_HOUR_MULTIPLIER;
+    accumulatedSlots += slotWithinHour * currentHourMultiplier;
+    
+    // Calculate offset from uniform position
+    const uniformSlotPosition = slotIndex;
+    const offsetSlots = accumulatedSlots - uniformSlotPosition;
+    const adjustedX = point.x + offsetSlots * baseSlotWidth;
+    
+    return {
+      ...point,
+      x: adjustedX,
+    };
+  });
+  
+  // Filter out points without valid y (null prices)
+  const validPoints = adjustedPoints.filter((p: any) => p.y != null && !isNaN(p.y));
+  
+  if (validPoints.length === 0) return null;
+  
+  // Build path
+  const pathD = validPoints
+    .map((point: any, idx: number) => {
+      const command = idx === 0 ? 'M' : 'L';
+      return `${command} ${point.x} ${point.y}`;
+    })
+    .join(' ');
+  
+  return (
+    <path
+      d={pathD}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   );
 }
@@ -682,6 +816,7 @@ function HourlyStackedNarrativeChart({
           slotIndex: slotIdx,
           hourIndex: hour,
           isHourStart,
+          isMarketHour: isMarketHour(hour),
           totalMessages: 0,
           volumePercent: 0,
           isEmpty: true,
@@ -964,10 +1099,15 @@ function HourlyStackedNarrativeChart({
             <span>Neutral</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 border-l border-border pl-4">
-          <MessageSquare className="h-3 w-3 text-amber-400" />
-          <span className="text-muted-foreground">Bar width = relative volume</span>
-        </div>
+        {timeRange === '1D' && (
+          <div className="flex items-center gap-2 border-l border-border pl-4">
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-3 rounded-sm bg-primary/40" />
+              <div className="w-2 h-3 rounded-sm bg-muted-foreground/30" />
+            </div>
+            <span className="text-muted-foreground">Market hours 2x wider</span>
+          </div>
+        )}
         {showPriceOverlay && (
           <div className="flex items-center gap-2 border-l border-border pl-4">
             <div className="w-4 h-0.5 rounded" style={{ backgroundColor: PRICE_LINE_COLOR }} />
@@ -1053,8 +1193,22 @@ function HourlyStackedNarrativeChart({
               ))}
             </Bar>
           ))}
-          {/* Price Line Overlay */}
-          {showPriceOverlay && (
+          {/* Price Line Overlay - use custom shape for variable-width hours in 1D view */}
+          {showPriceOverlay && is5MinView && (
+            <Line
+              yAxisId="right"
+              type="linear"
+              dataKey="price"
+              stroke={PRICE_LINE_COLOR}
+              strokeWidth={2}
+              dot={false}
+              activeDot={false}
+              connectNulls
+              // @ts-ignore - custom shape for adjusted x positions
+              shape={<AdjustedPriceLine stroke={PRICE_LINE_COLOR} strokeWidth={2} />}
+            />
+          )}
+          {showPriceOverlay && !is5MinView && (
             <Line
               yAxisId="right"
               type="monotone"
