@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.backfill-history]
 verify_jwt = false
+
+[functions.auto-backfill-gaps]
+verify_jwt = false
