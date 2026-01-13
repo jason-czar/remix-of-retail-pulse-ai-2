@@ -140,6 +140,51 @@ export type Database = {
         }
         Relationships: []
       }
+      market_psychology_history: {
+        Row: {
+          created_at: string
+          dominant_signal: string | null
+          emotion_breakdown: Json
+          fear_greed_index: number
+          fear_greed_label: string
+          id: string
+          recorded_at: string
+          signal_strength: string | null
+          signals: Json
+          symbol_count: number
+          symbols: string[]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dominant_signal?: string | null
+          emotion_breakdown?: Json
+          fear_greed_index: number
+          fear_greed_label: string
+          id?: string
+          recorded_at?: string
+          signal_strength?: string | null
+          signals?: Json
+          symbol_count?: number
+          symbols?: string[]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dominant_signal?: string | null
+          emotion_breakdown?: Json
+          fear_greed_index?: number
+          fear_greed_label?: string
+          id?: string
+          recorded_at?: string
+          signal_strength?: string | null
+          signals?: Json
+          symbol_count?: number
+          symbols?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       narrative_cache: {
         Row: {
           created_at: string | null
@@ -317,6 +362,7 @@ export type Database = {
     }
     Functions: {
       cleanup_old_history: { Args: never; Returns: undefined }
+      cleanup_psychology_history: { Args: never; Returns: undefined }
     }
     Enums: {
       subscription_plan: "free" | "professional" | "enterprise"

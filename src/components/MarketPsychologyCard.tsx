@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import {
   Brain,
   TrendingUp,
@@ -13,12 +14,19 @@ import {
   Zap,
   Target,
   Sparkles,
+  Save,
+  CheckCircle,
+  Loader2,
 } from "lucide-react";
 import { useMarketPsychology, MarketPsychologyData } from "@/hooks/use-market-psychology";
+import { useSavePsychologySnapshot, useLatestPsychologySnapshot } from "@/hooks/use-psychology-history";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatDistanceToNow } from "date-fns";
 
 interface MarketPsychologyCardProps {
   symbols: string[];
+  showSaveButton?: boolean;
 }
 
 const EMOTION_ICONS: Record<string, React.ElementType> = {
@@ -169,8 +177,20 @@ function SymbolMini({
   );
 }
 
-export function MarketPsychologyCard({ symbols }: MarketPsychologyCardProps) {
+export function MarketPsychologyCard({ symbols, showSaveButton = true }: MarketPsychologyCardProps) {
+  const { user } = useAuth();
   const psychology = useMarketPsychology(symbols);
+  const saveSnapshot = useSavePsychologySnapshot();
+  const { data: latestSnapshot } = useLatestPsychologySnapshot();
+
+  // Check if we have a recent snapshot (within last hour)
+  const hasRecentSnapshot = latestSnapshot && 
+    new Date().getTime() - new Date(latestSnapshot.recorded_at).getTime() < 60 * 60 * 1000;
+
+  const handleSaveSnapshot = async () => {
+    if (!psychology.hasData) return;
+    await saveSnapshot.mutateAsync({ ...psychology, symbols });
+  };
 
   if (psychology.isLoading) {
     return (
@@ -212,10 +232,36 @@ export function MarketPsychologyCard({ symbols }: MarketPsychologyCardProps) {
           <Brain className="h-5 w-5 text-accent" />
           <h3 className="text-lg font-semibold">Market Psychology</h3>
         </div>
-        <Badge variant="secondary" className="text-xs">
-          {symbols.length} symbol{symbols.length !== 1 ? "s" : ""}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {showSaveButton && user && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSaveSnapshot}
+              disabled={saveSnapshot.isPending || hasRecentSnapshot}
+              className="h-7 px-2"
+            >
+              {saveSnapshot.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : hasRecentSnapshot ? (
+                <CheckCircle className="h-3.5 w-3.5 text-bullish" />
+              ) : (
+                <Save className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          )}
+          <Badge variant="secondary" className="text-xs">
+            {symbols.length} symbol{symbols.length !== 1 ? "s" : ""}
+          </Badge>
+        </div>
       </div>
+
+      {/* Last saved indicator */}
+      {latestSnapshot && (
+        <p className="text-xs text-muted-foreground text-center mb-4">
+          Last saved {formatDistanceToNow(new Date(latestSnapshot.recorded_at), { addSuffix: true })}
+        </p>
+      )}
 
       {/* Fear/Greed Gauge */}
       <FearGreedGauge 
