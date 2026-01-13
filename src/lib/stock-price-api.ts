@@ -74,17 +74,24 @@ export function alignPricesToHourSlots(
 }
 
 // Helper to align price data to 5-minute slots for granular price line
+// For the "Today" view that shows 5 AM - 6 PM (hours 5-18)
 export function alignPricesToFiveMinSlots(
-  prices: PricePoint[]
+  prices: PricePoint[],
+  startHour: number = 5 // Default to 5 AM
 ): Map<number, PricePoint> {
   const priceBySlot = new Map<number, PricePoint>();
+  const SLOTS_PER_HOUR = 12;
 
   prices.forEach(point => {
     const date = new Date(point.timestamp);
     const hour = date.getHours();
     const minute = date.getMinutes();
-    // Calculate 5-minute slot index (0-287 for 24 hours)
-    const slotIndex = hour * 12 + Math.floor(minute / 5);
+    
+    // Only include prices within the visible hour range (5 AM - 6 PM)
+    if (hour < startHour || hour > 18) return;
+    
+    // Calculate 5-minute slot index relative to start hour
+    const slotIndex = (hour - startHour) * SLOTS_PER_HOUR + Math.floor(minute / 5);
     
     // Keep the latest price for each 5-minute slot
     if (!priceBySlot.has(slotIndex) || new Date(priceBySlot.get(slotIndex)!.timestamp) < date) {
