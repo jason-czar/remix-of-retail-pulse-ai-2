@@ -404,10 +404,22 @@ function HourlyStackedNarrativeChart({
   symbol: string; 
   timeRange: '1D' | '24H';
 }) {
-  // Fetch 2 days of data to ensure we have today's full data in any timezone
+  // Calculate proper day boundaries in user's local timezone
+  const { todayStart, todayEnd, twentyFourHoursAgo, now } = useMemo(() => {
+    const now = new Date();
+    // Today: midnight to 11:59:59 PM in user's local timezone
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    // 24H: rolling 24 hours
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return { todayStart, todayEnd, twentyFourHoursAgo, now };
+  }, []);
+
+  // Fetch 3 days of data to ensure we capture the full local day regardless of timezone
+  // (e.g., UTC-12 to UTC+14 covers ~26 hour spread from UTC midnight)
   const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(
     symbol, 
-    2, 
+    3, 
     "hourly"
   );
 
@@ -416,22 +428,16 @@ function HourlyStackedNarrativeChart({
       return { stackedChartData: [], totalMessages: 0 };
     }
 
-    // Get today's date boundaries in user's local timezone (12:00 AM to 11:59 PM)
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    
-    // For 24H, get last 24 hours from now
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+    // Filter based on time range using local timezone boundaries
     const filteredData = timeRange === '1D' 
       ? historyData.data.filter(point => {
           const pointDate = new Date(point.recorded_at);
-          return pointDate >= todayStart && pointDate <= todayEnd;
+          // Check if the point falls within today's local timezone boundaries
+          return pointDate.getTime() >= todayStart.getTime() && pointDate.getTime() <= todayEnd.getTime();
         })
       : historyData.data.filter(point => {
           const pointDate = new Date(point.recorded_at);
-          return pointDate >= twentyFourHoursAgo && pointDate <= now;
+          return pointDate.getTime() >= twentyFourHoursAgo.getTime() && pointDate.getTime() <= now.getTime();
         });
 
     // Group data by hour
