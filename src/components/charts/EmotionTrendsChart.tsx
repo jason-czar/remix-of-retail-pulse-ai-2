@@ -25,21 +25,31 @@ interface EmotionTrendsChartProps {
 
 // Emotion color palette - warm/cool based on emotion type
 const EMOTION_COLORS: Record<string, string> = {
-  Excitement: "hsl(45 93% 47%)",    // Gold - high energy positive
-  Fear: "hsl(0 72% 51%)",           // Red - negative
-  Hopefulness: "hsl(142 71% 45%)",  // Green - positive outlook
-  Frustration: "hsl(25 95% 53%)",   // Orange - negative energy
-  Conviction: "hsl(199 89% 48%)",   // Blue - confident
+  // Core emotions
+  Excitement: "hsl(168 84% 45%)",    // Teal - high energy positive
+  Fear: "hsl(0 72% 51%)",            // Red - negative
+  Hopefulness: "hsl(142 71% 45%)",   // Green - positive outlook
+  Frustration: "hsl(38 92% 50%)",    // Orange - negative energy
+  Conviction: "hsl(199 89% 48%)",    // Blue - confident
   Disappointment: "hsl(280 65% 60%)", // Purple - sad
-  Sarcasm: "hsl(320 70% 50%)",      // Pink - mixed
-  Humor: "hsl(180 60% 45%)",        // Teal - light
-  Grit: "hsl(215 80% 55%)",         // Deep blue - steady
-  Surprise: "hsl(50 100% 50%)",     // Bright yellow
+  Sarcasm: "hsl(330 81% 60%)",       // Pink - mixed
+  Humor: "hsl(45 93% 47%)",          // Gold - light
+  Grit: "hsl(262 83% 58%)",          // Violet - steady
+  Surprise: "hsl(173 80% 40%)",      // Cyan - unexpected
+  // Trading-specific psychology
+  FOMO: "hsl(25 95% 55%)",           // Orange - urgency/anxiety
+  Greed: "hsl(50 100% 45%)",         // Gold - money/excess
+  Capitulation: "hsl(0 50% 35%)",    // Dark red - surrender
+  Euphoria: "hsl(300 80% 60%)",      // Magenta - peak excitement
+  Regret: "hsl(220 60% 50%)",        // Muted blue - sadness
 };
 
-// Categorize emotions
-const POSITIVE_EMOTIONS = ["Excitement", "Hopefulness", "Conviction", "Humor", "Grit"];
-const NEGATIVE_EMOTIONS = ["Fear", "Frustration", "Disappointment"];
+// Categorize emotions for sentiment analysis
+const POSITIVE_EMOTIONS = ["Excitement", "Hopefulness", "Conviction", "Humor", "Grit", "Euphoria"];
+const NEGATIVE_EMOTIONS = ["Fear", "Frustration", "Disappointment", "FOMO", "Greed", "Capitulation", "Regret"];
+
+// Trading signal emotions - key for market psychology
+const SIGNAL_EMOTIONS = ["FOMO", "Greed", "Capitulation", "Euphoria", "Regret"];
 
 export function EmotionTrendsChart({
   symbol,

@@ -20,8 +20,19 @@ interface EmotionTimePoint {
   emotions: Record<string, number>;
 }
 
-// Standard emotion names
-const EMOTION_NAMES = ["Excitement", "Fear", "Hopefulness", "Frustration", "Conviction", "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise"];
+// Standard emotion names - includes trading-specific psychology emotions
+const EMOTION_NAMES = [
+  // Core retail trader emotions
+  "Excitement", "Fear", "Hopefulness", "Frustration", "Conviction", 
+  "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise",
+  // Trading-specific psychology
+  "FOMO", "Greed", "Capitulation", "Euphoria", "Regret"
+];
+
+// Emotion categories for analysis
+const POSITIVE_EMOTIONS = ["Excitement", "Hopefulness", "Conviction", "Humor", "Grit", "Euphoria"];
+const NEGATIVE_EMOTIONS = ["Fear", "Frustration", "Disappointment", "FOMO", "Greed", "Capitulation", "Regret"];
+const NEUTRAL_EMOTIONS = ["Sarcasm", "Surprise"];
 
 // Helper to convert timeRange to date parameters
 function getDateRange(timeRange: string): { start: string; end: string; limit: number } {
@@ -402,17 +413,32 @@ serve(async (req) => {
             role: "system",
             content: `You are an expert sentiment analyst specializing in retail trader psychology and social media analysis for stocks. You detect and quantify emotional signals in StockTwits messages, understanding modern slang, emoji usage, and trader jargon.
 
-The 10 emotions you detect (adapted for retail trading):
-1. Excitement - Hype, FOMO, pump energy ("🚀", "LFG", "moon", enthusiasm)
-2. Fear/Anxiety - Panic, worry about losses ("scared", "worried", crash fears)
-3. Hopefulness - Optimistic but uncertain ("fingers crossed", "hopefully", prayer hands)
+The 15 emotions you detect (adapted for retail trading):
+
+**Core Trading Emotions:**
+1. Excitement - Hype, pump energy ("🚀", "LFG", "moon", enthusiasm)
+2. Fear/Anxiety - Panic, worry about losses ("scared", "worried", crash fears)  
+3. Hopefulness - Optimistic but uncertain ("fingers crossed", "hopefully", 🙏)
 4. Frustration - Annoyance with stock/market ("why won't it move", complaints)
-5. Certainty/Conviction - Diamond hands, strong belief ("HODL", "loading up", "easy money")
+5. Conviction - Diamond hands, strong belief ("HODL", "loading up", "easy money")
 6. Disappointment - Let down by performance ("expected more", "another red day")
-7. Sarcasm/Irony - Mocking, dark humor about losses ("doing great 🙃", inverse indicators)
+7. Sarcasm/Irony - Mocking, dark humor about losses ("doing great 🙃")
 8. Humor - Genuine jokes and memes (not sarcastic)
-9. Grit/Steadfastness - Holding through pain ("not selling", "long term hold", patience)
-10. Surprise/Shock - Unexpected moves ("WTF", "didn't see that coming")`
+9. Grit/Steadfastness - Holding through pain ("not selling", "long term hold")
+10. Surprise/Shock - Unexpected moves ("WTF", "didn't see that coming")
+
+**Trading-Specific Psychology:**
+11. FOMO (Fear of Missing Out) - Anxiety about missing gains, chasing entries ("getting in before it moons", "can't miss this", late entries, regret not buying earlier)
+12. Greed - Excessive desire for gains, overleveraging ("going all in", "100x", "lambo", unrealistic profit targets)
+13. Capitulation - Giving up, panic selling, exhaustion ("I'm done", "selling everything", "can't take it anymore", surrender)
+14. Euphoria - Extreme elation, irrational exuberance ("we're all gonna make it", "infinite money", peak optimism, victory lap)
+15. Regret - Wishing for different actions ("should have sold", "why didn't I buy", hindsight pain, missed opportunities)
+
+These emotions help identify key market psychology signals:
+- High FOMO + Euphoria = potential top signal
+- High Capitulation + Fear = potential bottom signal  
+- High Greed = overbought conditions
+- Rising Regret = trend exhaustion`
           },
           {
             role: "user",
@@ -449,7 +475,7 @@ ${messageTexts}`
                       properties: {
                         name: {
                           type: "string",
-                          enum: ["Excitement", "Fear", "Hopefulness", "Frustration", "Conviction", "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise"],
+                          enum: ["Excitement", "Fear", "Hopefulness", "Frustration", "Conviction", "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise", "FOMO", "Greed", "Capitulation", "Euphoria", "Regret"],
                         },
                         score: {
                           type: "number",
@@ -498,6 +524,11 @@ ${messageTexts}`
                         Humor: { type: "number" },
                         Grit: { type: "number" },
                         Surprise: { type: "number" },
+                        FOMO: { type: "number" },
+                        Greed: { type: "number" },
+                        Capitulation: { type: "number" },
+                        Euphoria: { type: "number" },
+                        Regret: { type: "number" },
                       },
                       required: ["periodIndex"],
                     },
@@ -563,6 +594,11 @@ ${messageTexts}`
           Humor: point.Humor || 0,
           Grit: point.Grit || 0,
           Surprise: point.Surprise || 0,
+          FOMO: point.FOMO || 0,
+          Greed: point.Greed || 0,
+          Capitulation: point.Capitulation || 0,
+          Euphoria: point.Euphoria || 0,
+          Regret: point.Regret || 0,
         }
       };
     });
