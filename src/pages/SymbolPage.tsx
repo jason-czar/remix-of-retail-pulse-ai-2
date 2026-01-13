@@ -34,7 +34,7 @@ type HistoryTimeRange = '24H' | 'TODAY' | '1W' | '30D';
 
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
-  const [timeRange, setTimeRange] = useState<TimeRange>('24H');
+  const [timeRange, setTimeRange] = useState<TimeRange>('1D'); // Default to Today
   const [historyTimeRange, setHistoryTimeRange] = useState<HistoryTimeRange>('1W');
   
   // Calculate history range parameters
@@ -196,7 +196,7 @@ export default function SymbolPage() {
         </Card>
 
         {/* Charts Section */}
-        <Tabs defaultValue="sentiment" className="mb-8">
+        <Tabs defaultValue="narratives" className="mb-8">
           <TabsList className="mb-6">
             <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
