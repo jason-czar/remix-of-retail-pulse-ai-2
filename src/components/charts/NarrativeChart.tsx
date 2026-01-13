@@ -15,12 +15,13 @@ import { useMemo, useEffect } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { detectMissingDates, createGapPlaceholders, mergeDataWithGaps, isGapPlaceholder } from "@/lib/chart-gap-utils";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
@@ -93,9 +94,28 @@ const MAX_SEGMENTS = 6;
 function NarrativeStackedTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
 
+  const dataPoint = payload[0]?.payload;
+  
+  // Handle gap placeholders
+  if (dataPoint?.isGap) {
+    return (
+      <div className="bg-[hsl(222_47%_8%)] border border-dashed border-amber-500/50 rounded-lg p-3 shadow-xl min-w-[200px]">
+        <div className="flex items-center gap-2 mb-2">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <span className="font-semibold text-amber-500">{label}</span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          No data available for this date.
+        </p>
+        <p className="text-xs text-amber-500/80 mt-2">
+          Click "Fill Gaps" to fetch historical data.
+        </p>
+      </div>
+    );
+  }
+
   // Extract all segments from payload
   const segments: { name: string; count: number; sentiment: string }[] = [];
-  const dataPoint = payload[0]?.payload;
   
   if (dataPoint) {
     for (let i = 0; i < MAX_SEGMENTS; i++) {
@@ -198,9 +218,9 @@ function TimeSeriesNarrativeChart({
     }
   }, [historyData?.data, isLoading, isFetching, checkAndFillGaps, refetch]);
 
-  const { stackedChartData, totalMessages } = useMemo(() => {
+  const { stackedChartData, totalMessages, gapCount } = useMemo(() => {
     if (!historyData?.data || historyData.data.length === 0) {
-      return { stackedChartData: [], totalMessages: 0 };
+      return { stackedChartData: [], totalMessages: 0, gapCount: 0 };
     }
 
     // Group data by date
@@ -209,6 +229,7 @@ function TimeSeriesNarrativeChart({
       sortKey: string;
       narratives: { name: string; count: number; sentiment: string }[];
       totalMessages: number;
+      isGap?: boolean;
     }>();
     
     historyData.data.forEach(point => {
@@ -244,9 +265,24 @@ function TimeSeriesNarrativeChart({
       }
     });
 
-    // Find max message count for relative volume calculation
+    // Detect missing dates and create gap placeholders
+    const existingDates = Array.from(byDate.keys());
+    const missingDates = detectMissingDates(existingDates, days);
+    
+    // Add gap placeholders to the map
+    missingDates.forEach(sortKey => {
+      byDate.set(sortKey, {
+        date: format(new Date(sortKey), 'MMM d'),
+        sortKey,
+        narratives: [],
+        totalMessages: 0,
+        isGap: true
+      });
+    });
+
+    // Find max message count for relative volume calculation (excluding gaps)
     const dateEntries = Array.from(byDate.values());
-    const maxMessages = Math.max(...dateEntries.map(d => d.totalMessages), 1);
+    const maxMessages = Math.max(...dateEntries.filter(d => !d.isGap).map(d => d.totalMessages), 1);
 
     // Process each date: sort by count and take top segments
     const stackedChartData = dateEntries
@@ -263,19 +299,31 @@ function TimeSeriesNarrativeChart({
           sortKey: dayData.sortKey,
           totalMessages: dayData.totalMessages,
           volumePercent: (dayData.totalMessages / maxMessages) * 100,
+          isGap: dayData.isGap || false,
         };
         
-        topNarratives.forEach((n, idx) => {
-          flatData[`segment${idx}`] = n.count;
-          flatData[`segment${idx}Name`] = n.name;
-          flatData[`segment${idx}Sentiment`] = n.sentiment;
-        });
-        
-        // Fill remaining segments with zeros
-        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
-          flatData[`segment${i}`] = 0;
-          flatData[`segment${i}Name`] = '';
-          flatData[`segment${i}Sentiment`] = 'neutral';
+        // For gaps, add a placeholder segment
+        if (dayData.isGap) {
+          flatData['gapPlaceholder'] = 1; // Small value for visual indicator
+          for (let i = 0; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = '';
+            flatData[`segment${i}Sentiment`] = 'neutral';
+          }
+        } else {
+          flatData['gapPlaceholder'] = 0;
+          topNarratives.forEach((n, idx) => {
+            flatData[`segment${idx}`] = n.count;
+            flatData[`segment${idx}Name`] = n.name;
+            flatData[`segment${idx}Sentiment`] = n.sentiment;
+          });
+          
+          // Fill remaining segments with zeros
+          for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = '';
+            flatData[`segment${i}Sentiment`] = 'neutral';
+          }
         }
         
         return flatData;
@@ -283,7 +331,7 @@ function TimeSeriesNarrativeChart({
 
     const totalMessages = historyData.data.reduce((sum, point) => sum + point.message_count, 0);
 
-    return { stackedChartData, totalMessages };
+    return { stackedChartData, totalMessages, gapCount: missingDates.length };
   }, [historyData]);
 
   if (isLoading) {
@@ -334,6 +382,12 @@ function TimeSeriesNarrativeChart({
               <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
                 {historyData?.data.length || 0} snapshots
               </span>
+              {gapCount > 0 && !isBackfilling && (
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {gapCount} gap{gapCount > 1 ? 's' : ''}
+                </span>
+              )}
               <BackfillBadge isBackfilling={isBackfilling} />
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
@@ -382,6 +436,12 @@ function TimeSeriesNarrativeChart({
           <MessageSquare className="h-3 w-3 text-amber-400" />
           <span className="text-muted-foreground">Bar width = relative volume</span>
         </div>
+        {gapCount > 0 && (
+          <div className="flex items-center gap-2 border-l border-border pl-4">
+            <div className="w-3 h-3 rounded-sm border border-dashed border-amber-500 bg-amber-500/20" />
+            <span className="text-amber-400">Missing data</span>
+          </div>
+        )}
       </div>
 
       <ResponsiveContainer width="100%" height="80%">
@@ -405,6 +465,22 @@ function TimeSeriesNarrativeChart({
             width={45}
           />
           <Tooltip content={<NarrativeStackedTooltip />} />
+          {/* Gap placeholder bars - shown with dashed pattern */}
+          <Bar 
+            dataKey="gapPlaceholder"
+            stackId="narratives"
+            radius={[4, 4, 0, 0]}
+          >
+            {stackedChartData.map((entry, entryIdx) => (
+              <Cell 
+                key={`gap-${entryIdx}`} 
+                fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"}
+                stroke={entry.isGap ? "hsl(38 92% 50%)" : "transparent"}
+                strokeWidth={entry.isGap ? 1 : 0}
+                strokeDasharray={entry.isGap ? "4 2" : "0"}
+              />
+            ))}
+          </Bar>
           {/* Render segment bars - each segment uses its own sentiment color */}
           {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
             <Bar 
@@ -416,7 +492,7 @@ function TimeSeriesNarrativeChart({
               {stackedChartData.map((entry, entryIdx) => (
                 <Cell 
                   key={`cell-${entryIdx}`} 
-                  fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral}
+                  fill={entry.isGap ? "transparent" : (SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral)}
                 />
               ))}
             </Bar>

@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceLine,
 } from "recharts";
 import { useEmotionHistory } from "@/hooks/use-emotion-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
@@ -18,7 +19,8 @@ import { ChartErrorState } from "@/components/ChartErrorState";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { format } from "date-fns";
-import { Brain, TrendingUp, TrendingDown, Minus, RefreshCw, Download } from "lucide-react";
+import { Brain, TrendingUp, TrendingDown, Minus, RefreshCw, Download, AlertTriangle } from "lucide-react";
+import { detectMissingDates } from "@/lib/chart-gap-utils";
 
 interface EmotionTrendsChartProps {
   symbol: string;
@@ -79,15 +81,44 @@ export function EmotionTrendsChart({
     }
   }, [data?.data, isLoading, isFetching, checkAndFillGaps, refetch]);
 
-  // Transform data for the chart
-  const chartData = useMemo(() => {
-    if (!data?.data || data.data.length === 0) return [];
+  // Transform data for the chart and detect gaps
+  const { chartData, gapCount } = useMemo(() => {
+    if (!data?.data || data.data.length === 0) return { chartData: [], gapCount: 0 };
 
-    return data.data.map((point) => ({
+    // Get existing dates from data
+    const existingDates = data.data.map(point => 
+      format(new Date(point.recorded_at), 'yyyy-MM-dd')
+    );
+    const uniqueDates = [...new Set(existingDates)];
+    
+    // Detect missing dates (only for daily/weekly views)
+    const missingDates = periodType === 'daily' || days >= 7 
+      ? detectMissingDates(uniqueDates, days) 
+      : [];
+
+    // Create chart data from actual data points
+    const actualPoints = data.data.map((point) => ({
       timestamp: new Date(point.recorded_at).getTime(),
+      date: format(new Date(point.recorded_at), 'MMM d'),
+      isGap: false,
       ...point.emotions,
     }));
-  }, [data]);
+
+    // Create gap placeholder points
+    const gapPoints = missingDates.map(dateStr => {
+      const date = new Date(dateStr);
+      return {
+        timestamp: date.getTime(),
+        date: format(date, 'MMM d'),
+        isGap: true,
+      };
+    });
+
+    // Merge and sort by timestamp
+    const combined = [...actualPoints, ...gapPoints].sort((a, b) => a.timestamp - b.timestamp);
+
+    return { chartData: combined, gapCount: missingDates.length };
+  }, [data, days, periodType]);
 
   // Emotions to display
   const displayEmotions = useMemo(() => {
@@ -183,6 +214,12 @@ export function EmotionTrendsChart({
           <div>
             <div className="flex items-center gap-2">
               <h4 className="font-semibold">Emotional Journey</h4>
+              {gapCount > 0 && !isBackfilling && (
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  {gapCount} gap{gapCount > 1 ? 's' : ''}
+                </span>
+              )}
               <BackfillBadge isBackfilling={isBackfilling} />
             </div>
             <p className="text-sm text-muted-foreground">
@@ -298,10 +335,41 @@ export function EmotionTrendsChart({
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
               labelFormatter={(value) => format(new Date(value), "MMM d, yyyy HH:mm")}
-              formatter={(value: number, name: string) => [
-                `${value} score`,
-                name,
-              ]}
+              content={({ active, payload, label }) => {
+                if (!active || !payload || !payload.length) return null;
+                const dataPoint = payload[0]?.payload;
+                
+                if (dataPoint?.isGap) {
+                  return (
+                    <div className="bg-card border border-dashed border-amber-500/50 rounded-lg p-3 shadow-xl">
+                      <div className="flex items-center gap-2 mb-1">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                        <span className="font-semibold text-amber-500">{dataPoint.date}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">No data available</p>
+                      <p className="text-xs text-amber-500/80 mt-1">Click "Fill Gaps" to fetch</p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
+                    <div className="font-semibold mb-2">{format(new Date(label), "MMM d, yyyy HH:mm")}</div>
+                    <div className="space-y-1">
+                      {payload.map((entry: any, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: entry.color }} 
+                          />
+                          <span>{entry.name}:</span>
+                          <span className="font-medium">{entry.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }}
             />
             <Legend
               wrapperStyle={{ paddingTop: "10px" }}
@@ -309,6 +377,16 @@ export function EmotionTrendsChart({
                 <span className="text-xs text-muted-foreground">{value}</span>
               )}
             />
+            {/* Reference lines for gap dates */}
+            {chartData.filter(d => d.isGap).map((gap, idx) => (
+              <ReferenceLine
+                key={`gap-${idx}`}
+                x={gap.timestamp}
+                stroke="hsl(38 92% 50% / 0.5)"
+                strokeDasharray="4 4"
+                label={{ value: "?", position: "top", fill: "hsl(38 92% 50%)", fontSize: 10 }}
+              />
+            ))}
             {displayEmotions.map((emotion) => (
               <Area
                 key={emotion}
