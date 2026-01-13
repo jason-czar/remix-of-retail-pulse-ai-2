@@ -32,8 +32,9 @@ interface EmotionChartProps {
   end?: string;
 }
 
-// Emotion colors
+// Emotion colors - includes trading-specific psychology
 const emotionColors: Record<string, string> = {
+  // Core emotions
   "Excitement": "hsl(168 84% 45%)",
   "Fear": "hsl(0 72% 51%)",
   "Hopefulness": "hsl(142 71% 45%)",
@@ -43,8 +44,17 @@ const emotionColors: Record<string, string> = {
   "Sarcasm": "hsl(330 81% 60%)",
   "Humor": "hsl(45 93% 47%)",
   "Grit": "hsl(262 83% 58%)",
-  "Surprise": "hsl(173 80% 40%)"
+  "Surprise": "hsl(173 80% 40%)",
+  // Trading-specific psychology
+  "FOMO": "hsl(25 95% 55%)",        // Orange - urgency/anxiety
+  "Greed": "hsl(50 100% 45%)",      // Gold - money/excess
+  "Capitulation": "hsl(0 50% 35%)", // Dark red - surrender
+  "Euphoria": "hsl(300 80% 60%)",   // Magenta - peak excitement
+  "Regret": "hsl(220 60% 50%)",     // Muted blue - sadness
 };
+
+// Emotion categories for signal detection
+const SIGNAL_EMOTIONS = ["FOMO", "Greed", "Capitulation", "Euphoria", "Regret"];
 
 const getTrendIcon = (trend: string) => {
   switch (trend) {
@@ -72,7 +82,7 @@ const getIntensityColor = (intensity: string) => {
 
 export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   const [viewMode, setViewMode] = useState<"bar" | "radar" | "timeline">("bar");
-  const [selectedEmotions, setSelectedEmotions] = useState<string[]>(["Excitement", "Fear", "Conviction"]);
+  const [selectedEmotions, setSelectedEmotions] = useState<string[]>(["Excitement", "Fear", "FOMO", "Greed"]);
   const { data, isLoading, error, forceRefresh, isFetching } = useEmotionAnalysis(symbol, timeRange);
   
   const chartData = useMemo(() => {
