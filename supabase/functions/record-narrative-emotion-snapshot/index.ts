@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Insert narrative snapshots
+    // Insert narrative snapshots and update cache
     if (narrativeSnapshots.length > 0) {
       const { error: narrativeInsertError } = await supabase
         .from("narrative_history")
@@ -211,9 +211,30 @@ Deno.serve(async (req) => {
       if (narrativeInsertError) {
         errors.push(`Failed to insert narrative snapshots: ${narrativeInsertError.message}`);
       }
+
+      // Also populate narrative_cache for instant access (2-hour TTL)
+      const cacheExpiry = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+      for (const snapshot of narrativeSnapshots) {
+        const { error: cacheError } = await supabase
+          .from("narrative_cache")
+          .upsert(
+            {
+              symbol: snapshot.symbol,
+              time_range: "24H", // Default time range for cache
+              narratives: snapshot.narratives,
+              message_count: snapshot.message_count,
+              expires_at: cacheExpiry,
+            },
+            { onConflict: "symbol,time_range" }
+          );
+
+        if (cacheError) {
+          console.log(`Cache update warning for ${snapshot.symbol}: ${cacheError.message}`);
+        }
+      }
     }
 
-    // Insert emotion snapshots
+    // Insert emotion snapshots and update cache
     if (emotionSnapshots.length > 0) {
       const { error: emotionInsertError } = await supabase
         .from("emotion_history")
@@ -221,6 +242,26 @@ Deno.serve(async (req) => {
 
       if (emotionInsertError) {
         errors.push(`Failed to insert emotion snapshots: ${emotionInsertError.message}`);
+      }
+
+      // Also populate emotion_cache for instant access (2-hour TTL)
+      const cacheExpiry = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+      for (const snapshot of emotionSnapshots) {
+        const { error: cacheError } = await supabase
+          .from("emotion_cache")
+          .upsert(
+            {
+              symbol: snapshot.symbol,
+              time_range: "24H", // Default time range for cache
+              emotions: snapshot.emotions,
+              expires_at: cacheExpiry,
+            },
+            { onConflict: "symbol,time_range" }
+          );
+
+        if (cacheError) {
+          console.log(`Cache update warning for ${snapshot.symbol}: ${cacheError.message}`);
+        }
       }
     }
 
