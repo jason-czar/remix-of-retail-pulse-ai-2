@@ -1044,7 +1044,7 @@ function HourlyStackedNarrativeChart({
             <YAxis 
               yAxisId="right"
               orientation="right"
-              stroke="hsl(38 92% 50%)"
+              stroke={priceLineColor}
               fontSize={11}
               tickLine={false}
               axisLine={false}

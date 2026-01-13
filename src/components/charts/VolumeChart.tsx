@@ -514,7 +514,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             <YAxis 
               yAxisId="right"
               orientation="right"
-              stroke="hsl(38 92% 50%)"
+              stroke={priceLineColor}
               fontSize={11}
               tickLine={false}
               axisLine={false}
