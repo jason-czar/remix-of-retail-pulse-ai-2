@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SearchCommand } from "@/components/SearchCommand";
 import { WatchlistManager } from "@/components/WatchlistManager";
 import { MarketPsychologyCard } from "@/components/MarketPsychologyCard";
+import { PsychologyHistoryChart } from "@/components/charts/PsychologyHistoryChart";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -167,6 +168,9 @@ export default function Dashboard() {
           <div className="space-y-6">
             {/* Market Psychology */}
             <MarketPsychologyCard symbols={watchlistSymbols} />
+
+            {/* Psychology History Chart */}
+            <PsychologyHistoryChart days={30} />
 
             {/* Alerts */}
             <Card className="p-6">
