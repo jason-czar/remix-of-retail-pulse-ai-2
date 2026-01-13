@@ -50,7 +50,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, lens = 'corporate-strategy' } = await req.json();
+    const { symbol, lens = 'corporate-strategy', skipCache = false } = await req.json();
 
     if (!symbol) {
       return new Response(
@@ -69,6 +69,27 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    
+    // Check cache first (unless skipCache is true)
+    if (!skipCache) {
+      const { data: cached } = await supabase
+        .from("lens_summary_cache")
+        .select("summary, message_count")
+        .eq("symbol", symbol.toUpperCase())
+        .eq("lens", lens)
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+
+      if (cached) {
+        console.log(`Cache hit for ${symbol} ${lens}`);
+        return new Response(
+          JSON.stringify({ summary: cached.summary, cached: true, messageCount: cached.message_count }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${lens}, fetching messages...`);
     
     // Fetch recent messages from StockTwits (last 24 hours, limit 500)
     const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=500`;
@@ -89,11 +110,9 @@ serve(async (req) => {
     const messages = messagesData.data?.messages || messagesData.messages || [];
 
     if (messages.length === 0) {
+      const noDataSummary = `No recent messages found for ${symbol.toUpperCase()} to analyze through the ${getLensDisplayName(lens)} lens.`;
       return new Response(
-        JSON.stringify({ 
-          summary: `No recent messages found for ${symbol.toUpperCase()} to analyze through the ${getLensDisplayName(lens)} lens.`,
-          cached: false 
-        }),
+        JSON.stringify({ summary: noDataSummary, cached: false, messageCount: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -160,13 +179,28 @@ ${messageTexts}`,
     }
 
     const aiData = await aiResponse.json();
-    const summary = aiData.choices?.[0]?.message?.content || 
-      `Unable to generate ${lensName} insights for ${symbol.toUpperCase()} at this time.`;
+    const summary = (aiData.choices?.[0]?.message?.content || 
+      `Unable to generate ${lensName} insights for ${symbol.toUpperCase()} at this time.`).trim();
 
-    console.log(`Generated ${lensName} summary for ${symbol}`);
+    // Cache the result (30 minute expiry)
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    await supabase
+      .from("lens_summary_cache")
+      .upsert(
+        {
+          symbol: symbol.toUpperCase(),
+          lens,
+          summary,
+          message_count: messages.length,
+          expires_at: expiresAt,
+        },
+        { onConflict: "symbol,lens" }
+      );
+
+    console.log(`Cached ${lensName} summary for ${symbol}`);
 
     return new Response(
-      JSON.stringify({ summary: summary.trim(), cached: false }),
+      JSON.stringify({ summary, cached: false, messageCount: messages.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
