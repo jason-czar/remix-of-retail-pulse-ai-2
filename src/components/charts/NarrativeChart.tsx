@@ -1,6 +1,8 @@
 import { 
+  ComposedChart,
   BarChart,
   Bar,
+  Line,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -12,7 +14,7 @@ import {
 import { useMemo } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -84,8 +86,8 @@ const SENTIMENT_COLORS = {
 // Max segments per day
 const MAX_SEGMENTS = 6;
 
-// Custom tooltip for independent daily view
-function DailyNarrativeTooltip({ active, payload, label }: any) {
+// Custom tooltip for independent daily/hourly view with volume indicator
+function NarrativeStackedTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
 
   // Extract all segments from payload
@@ -103,26 +105,60 @@ function DailyNarrativeTooltip({ active, payload, label }: any) {
     }
   }
 
-  if (segments.length === 0) return null;
+  const totalMessages = dataPoint?.totalMessages || 0;
+  const volumePercent = dataPoint?.volumePercent || 0;
 
   return (
-    <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl">
-      <div className="font-semibold text-[hsl(210_40%_98%)] mb-2">{label}</div>
-      <div className="space-y-1.5">
-        {segments.map((segment, idx) => (
-          <div key={idx} className="flex items-center gap-2 text-sm">
-            <div 
-              className="w-3 h-3 rounded-sm" 
-              style={{ backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral }}
-            />
-            <span className="text-[hsl(210_40%_98%)] flex-1 truncate max-w-[180px]">{segment.name}</span>
-            <span className="text-muted-foreground">{segment.count}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded border ${getSentimentBadge(segment.sentiment)}`}>
-              {segment.sentiment}
+    <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl min-w-[280px]">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-semibold text-[hsl(210_40%_98%)]">{label}</span>
+        {totalMessages > 0 && (
+          <div className="flex items-center gap-1.5 text-xs">
+            <MessageSquare className="h-3 w-3 text-amber-400" />
+            <span className="text-amber-400 font-medium">{totalMessages.toLocaleString()}</span>
+            <span className="text-muted-foreground">msgs</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Volume indicator bar */}
+      {volumePercent > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="text-muted-foreground">Relative Activity</span>
+            <span className={`font-medium ${volumePercent >= 80 ? 'text-amber-400' : volumePercent >= 50 ? 'text-primary' : 'text-muted-foreground'}`}>
+              {volumePercent.toFixed(0)}%
             </span>
           </div>
-        ))}
-      </div>
+          <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
+            <div 
+              className={`h-full rounded-full transition-all ${
+                volumePercent >= 80 ? 'bg-amber-400' : volumePercent >= 50 ? 'bg-primary' : 'bg-muted-foreground/50'
+              }`}
+              style={{ width: `${Math.min(volumePercent, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+      
+      {segments.length > 0 && (
+        <div className="space-y-1.5 pt-2 border-t border-border/50">
+          <div className="text-xs text-muted-foreground mb-1">Top Narratives:</div>
+          {segments.map((segment, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-sm">
+              <div 
+                className="w-3 h-3 rounded-sm flex-shrink-0" 
+                style={{ backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral }}
+              />
+              <span className="text-[hsl(210_40%_98%)] flex-1 truncate max-w-[160px]">{segment.name}</span>
+              <span className="text-muted-foreground">{segment.count}</span>
+              <span className={`text-xs px-1.5 py-0.5 rounded border ${getSentimentBadge(segment.sentiment)}`}>
+                {segment.sentiment}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -188,8 +224,12 @@ function TimeSeriesNarrativeChart({
       }
     });
 
+    // Find max message count for relative volume calculation
+    const dateEntries = Array.from(byDate.values());
+    const maxMessages = Math.max(...dateEntries.map(d => d.totalMessages), 1);
+
     // Process each date: sort by count and take top segments
-    const stackedChartData = Array.from(byDate.values())
+    const stackedChartData = dateEntries
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       .map(dayData => {
         // Sort narratives by count descending and take top MAX_SEGMENTS
@@ -202,6 +242,7 @@ function TimeSeriesNarrativeChart({
           date: dayData.date,
           sortKey: dayData.sortKey,
           totalMessages: dayData.totalMessages,
+          volumePercent: (dayData.totalMessages / maxMessages) * 100,
         };
         
         topNarratives.forEach((n, idx) => {
@@ -289,20 +330,26 @@ function TimeSeriesNarrativeChart({
         </Button>
       </div>
 
-      {/* Sentiment Legend */}
-      <div className="flex items-center gap-4 mb-3 text-xs">
-        <span className="text-muted-foreground">Sentiment:</span>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
-          <span>Bullish</span>
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-4 mb-3 text-xs">
+        <div className="flex items-center gap-4">
+          <span className="text-muted-foreground">Sentiment:</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
+            <span>Bullish</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
+            <span>Bearish</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
+            <span>Neutral</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
-          <span>Bearish</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
-          <span>Neutral</span>
+        <div className="flex items-center gap-2 border-l border-border pl-4">
+          <MessageSquare className="h-3 w-3 text-amber-400" />
+          <span className="text-muted-foreground">Bar width = relative volume</span>
         </div>
       </div>
 
@@ -326,7 +373,7 @@ function TimeSeriesNarrativeChart({
             axisLine={false}
             width={45}
           />
-          <Tooltip content={<DailyNarrativeTooltip />} />
+          <Tooltip content={<NarrativeStackedTooltip />} />
           {/* Render segment bars - each segment uses its own sentiment color */}
           {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
             <Bar 
@@ -419,8 +466,12 @@ function HourlyStackedNarrativeChart({
       }
     });
 
+    // Find max message count for relative volume calculation
+    const hourEntries = Array.from(byHour.values());
+    const maxMessages = Math.max(...hourEntries.map(h => h.totalMessages), 1);
+
     // Process each hour: sort by count and take top segments
-    const stackedChartData = Array.from(byHour.values())
+    const stackedChartData = hourEntries
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       .map(hourData => {
         // Sort narratives by count descending and take top MAX_SEGMENTS
@@ -433,6 +484,7 @@ function HourlyStackedNarrativeChart({
           hour: hourData.hour,
           sortKey: hourData.sortKey,
           totalMessages: hourData.totalMessages,
+          volumePercent: (hourData.totalMessages / maxMessages) * 100,
         };
         
         topNarratives.forEach((n, idx) => {
@@ -520,20 +572,26 @@ function HourlyStackedNarrativeChart({
         </Button>
       </div>
 
-      {/* Sentiment Legend */}
-      <div className="flex items-center gap-4 mb-3 text-xs">
-        <span className="text-muted-foreground">Sentiment:</span>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
-          <span>Bullish</span>
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-4 mb-3 text-xs">
+        <div className="flex items-center gap-4">
+          <span className="text-muted-foreground">Sentiment:</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
+            <span>Bullish</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
+            <span>Bearish</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
+            <span>Neutral</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
-          <span>Bearish</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
-          <span>Neutral</span>
+        <div className="flex items-center gap-2 border-l border-border pl-4">
+          <MessageSquare className="h-3 w-3 text-amber-400" />
+          <span className="text-muted-foreground">Bar width = relative volume</span>
         </div>
       </div>
 
@@ -557,7 +615,7 @@ function HourlyStackedNarrativeChart({
             axisLine={false}
             width={45}
           />
-          <Tooltip content={<DailyNarrativeTooltip />} />
+          <Tooltip content={<NarrativeStackedTooltip />} />
           {/* Render segment bars - each segment uses its own sentiment color */}
           {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
             <Bar 
