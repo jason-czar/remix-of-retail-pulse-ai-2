@@ -517,34 +517,7 @@ function TimeSeriesNarrativeChart({
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 mb-3 text-xs">
-        <div className="flex items-center gap-4">
-          <span className="text-muted-foreground">Sentiment:</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
-            <span>Bullish</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
-            <span>Bearish</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
-            <span>Neutral</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 border-l border-border pl-4">
-          <MessageSquare className="h-3 w-3 text-amber-400" />
-          <span className="text-muted-foreground">Bar width = relative volume</span>
-        </div>
-        {gapCount > 0 && (
-          <div className="flex items-center gap-2 border-l border-border pl-4">
-            <div className="w-3 h-3 rounded-sm border border-dashed border-amber-500 bg-amber-500/20" />
-            <span className="text-amber-400">Missing data</span>
-          </div>
-        )}
-      </div>
+      {/* Legend - Hidden for now */}
 
       <ResponsiveContainer width="100%" height="80%">
         <BarChart 
@@ -1007,36 +980,7 @@ function HourlyStackedNarrativeChart({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 mb-3 text-xs">
-        <div className="flex items-center gap-4">
-          <span className="text-muted-foreground">Sentiment:</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
-            <span>Bullish</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
-            <span>Bearish</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
-            <span>Neutral</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 border-l border-border pl-4">
-          <MessageSquare className="h-3 w-3 text-amber-400" />
-          <span className="text-muted-foreground">Bar width = relative volume</span>
-        </div>
-        {showPriceOverlay && (
-          <div className="flex items-center gap-2 border-l border-border pl-4">
-            <div className="w-4 h-0.5 rounded" style={{ backgroundColor: priceLineColor }} />
-            <span style={{ color: priceLineColor }}>Stock Price</span>
-            {priceData?.currentPrice && (
-              <span style={{ color: priceLineColor }} className="font-semibold">${priceData.currentPrice.toFixed(2)}</span>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Legend - Hidden for now */}
 
       <ResponsiveContainer width="100%" height="80%">
         <ComposedChart 
