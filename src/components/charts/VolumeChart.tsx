@@ -41,6 +41,9 @@ function WideBarShape(props: any) {
   const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
   const opacity = isHourActive ? 0.7 : 0.6;
   
+  // Smooth transition style for opacity changes
+  const transitionStyle = { transition: 'fill-opacity 0.2s ease-out' };
+  
   if (is5MinView) {
     if (!payload?.isHourStart || height === 0) {
       return null;
@@ -55,6 +58,7 @@ function WideBarShape(props: any) {
         fill={fill}
         fillOpacity={opacity}
         radius={radius}
+        style={transitionStyle}
       />
     );
   }
@@ -68,6 +72,7 @@ function WideBarShape(props: any) {
       fill={fill}
       fillOpacity={opacity}
       radius={radius}
+      style={transitionStyle}
     />
   );
 }

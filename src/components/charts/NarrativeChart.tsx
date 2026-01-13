@@ -106,6 +106,9 @@ function WideBarShape(props: any) {
   const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
   const opacity = isHourActive ? 0.7 : 0.6;
   
+  // Smooth transition style for opacity changes
+  const transitionStyle = { transition: 'fill-opacity 0.2s ease-out' };
+  
   // In 5-min view, expand bar width to cover 12 slots (full hour)
   // Only render for hour-start slots
   if (is5MinView) {
@@ -123,6 +126,7 @@ function WideBarShape(props: any) {
         fill={fill}
         fillOpacity={opacity}
         radius={radius}
+        style={transitionStyle}
       />
     );
   }
@@ -137,6 +141,7 @@ function WideBarShape(props: any) {
       fill={fill}
       fillOpacity={opacity}
       radius={radius}
+      style={transitionStyle}
     />
   );
 }
