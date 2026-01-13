@@ -946,6 +946,8 @@ function HourlyStackedNarrativeChart({
         <ComposedChart 
           data={chartDataWithPrice}
           margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
+          barCategoryGap={0}
+          barGap={0}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
           <XAxis 
