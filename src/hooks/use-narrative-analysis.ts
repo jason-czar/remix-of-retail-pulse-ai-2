@@ -17,7 +17,11 @@ export interface NarrativeAnalysisResult {
   timestamp?: string;
 }
 
-export function useNarrativeAnalysis(symbol: string, timeRange: string = "24H") {
+export function useNarrativeAnalysis(
+  symbol: string, 
+  timeRange: string = "24H",
+  options?: { enabled?: boolean }
+) {
   const queryClient = useQueryClient();
   const [skipCache, setSkipCache] = useState(false);
 
@@ -43,7 +47,7 @@ export function useNarrativeAnalysis(symbol: string, timeRange: string = "24H") 
         timestamp: new Date().toISOString(),
       } as NarrativeAnalysisResult;
     },
-    enabled: !!symbol,
+    enabled: options?.enabled !== false && !!symbol,
     staleTime: 30 * 60 * 1000, // 30 minutes
     gcTime: 60 * 60 * 1000, // 1 hour (formerly cacheTime)
     refetchInterval: false, // Don't auto-refetch, rely on cache
