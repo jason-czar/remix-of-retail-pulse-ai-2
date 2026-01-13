@@ -220,7 +220,26 @@ serve(async (req) => {
 
       if (cached) {
         console.log(`Cache hit for emotions ${symbol} ${timeRange}`);
-        const cachedData = typeof cached.emotions === 'object' ? cached.emotions : {};
+        // Handle both old format (raw array) and new format (full object with emotions property)
+        const rawEmotions = cached.emotions;
+        let cachedData: any;
+        
+        if (Array.isArray(rawEmotions)) {
+          // Old format: emotions column contains the array directly
+          cachedData = {
+            emotions: rawEmotions,
+            dominantEmotion: rawEmotions[0]?.name || "Neutral",
+            emotionalIntensity: "moderate",
+            historicalData: [],
+            messageCount: 0,
+          };
+        } else if (typeof rawEmotions === 'object' && rawEmotions !== null) {
+          // New format: emotions column contains full response object
+          cachedData = rawEmotions;
+        } else {
+          cachedData = { emotions: [], messageCount: 0 };
+        }
+        
         return new Response(
           JSON.stringify({ 
             ...cachedData,
