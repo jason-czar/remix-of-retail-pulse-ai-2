@@ -305,9 +305,9 @@ function TimeSeriesNarrativeChart({
     }
   }, [historyData?.data, isLoading, isFetching, checkAndFillGaps, refetch]);
 
-  const { stackedChartData, totalMessages, gapCount } = useMemo(() => {
+  const { stackedChartData, totalMessages, gapCount, barDomain } = useMemo(() => {
     if (!historyData?.data || historyData.data.length === 0) {
-      return { stackedChartData: [], totalMessages: 0, gapCount: 0 };
+      return { stackedChartData: [], totalMessages: 0, gapCount: 0, barDomain: [0, 100] as [number, number] };
     }
 
     // Group data by date
@@ -422,8 +422,18 @@ function TimeSeriesNarrativeChart({
       });
 
     const totalMessages = historyData.data.reduce((sum, point) => sum + point.message_count, 0);
+    
+    // Calculate max stacked value for bar domain (double to make bars half height)
+    const maxStackedValue = Math.max(...stackedChartData.filter(d => !d.isGap).map(item => {
+      let sum = 0;
+      for (let i = 0; i < MAX_SEGMENTS; i++) {
+        sum += (item[`segment${i}`] as number) || 0;
+      }
+      return sum;
+    }), 1);
+    const barDomain: [number, number] = [0, maxStackedValue * 2];
 
-    return { stackedChartData, totalMessages, gapCount: missingDates.length };
+    return { stackedChartData, totalMessages, gapCount: missingDates.length, barDomain };
   }, [historyData]);
 
   if (isLoading) {
@@ -555,6 +565,7 @@ function TimeSeriesNarrativeChart({
             tickLine={false}
             axisLine={false}
             width={45}
+            domain={barDomain}
           />
           <Tooltip content={<NarrativeStackedTooltip />} />
           {/* Gap placeholder bars - shown with dashed pattern */}
@@ -879,6 +890,23 @@ function HourlyStackedNarrativeChart({
     });
   }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
 
+  // Calculate bar domain for left Y-axis (double max to make bars half height)
+  const barDomain = useMemo(() => {
+    if (!chartDataWithPrice || chartDataWithPrice.length === 0) {
+      return [0, 'auto'];
+    }
+    // Calculate max stacked value for each data point
+    const maxStackedValue = Math.max(...chartDataWithPrice.map(item => {
+      let sum = 0;
+      for (let i = 0; i < MAX_SEGMENTS; i++) {
+        sum += (item[`segment${i}`] as number) || 0;
+      }
+      return sum;
+    }), 1);
+    // Double the max to make bars appear at half height
+    return [0, maxStackedValue * 2];
+  }, [chartDataWithPrice]);
+
   // Calculate price domain for right Y-axis
   const priceDomain = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
@@ -1051,6 +1079,7 @@ function HourlyStackedNarrativeChart({
             tickLine={false}
             axisLine={false}
             width={45}
+            domain={barDomain as [number, number | string]}
           />
           {showPriceOverlay && (
             <YAxis 
