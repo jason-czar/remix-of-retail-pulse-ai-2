@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Bell, Loader2, TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { Bell, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -18,18 +20,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAlertsBySymbol, useCreateAlert } from "@/hooks/use-alerts";
 import { useNavigate } from "react-router-dom";
-
-const ALERT_TYPES = [
-  { value: "sentiment_spike", label: "Sentiment Spike", icon: TrendingUp, description: "Alert when sentiment rises sharply" },
-  { value: "sentiment_drop", label: "Sentiment Drop", icon: TrendingDown, description: "Alert when sentiment falls sharply" },
-  { value: "volume_surge", label: "Volume Surge", icon: Activity, description: "Alert when message volume spikes" },
-  { value: "bullish_threshold", label: "Bullish Threshold", icon: TrendingUp, description: "Alert when bullish % exceeds threshold" },
-  { value: "bearish_threshold", label: "Bearish Threshold", icon: TrendingDown, description: "Alert when bearish % exceeds threshold" },
-];
+import {
+  ALERT_CATEGORIES,
+  getAlertTypeConfig,
+  getAlertTypeLabel,
+  getDefaultThreshold,
+  isEmotionAlert,
+} from "@/lib/alert-types";
 
 interface SymbolAlertDialogProps {
   symbol: string;
@@ -45,7 +47,8 @@ export function SymbolAlertDialog({ symbol }: SymbolAlertDialogProps) {
   const { data: existingAlerts = [] } = useAlertsBySymbol(symbol);
   const createAlert = useCreateAlert();
 
-  const needsThreshold = alertType === "bullish_threshold" || alertType === "bearish_threshold";
+  const selectedConfig = getAlertTypeConfig(alertType);
+  const needsThreshold = selectedConfig?.needsThreshold || false;
   const activeAlertsCount = existingAlerts.filter((a) => a.is_active).length;
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -55,6 +58,16 @@ export function SymbolAlertDialog({ symbol }: SymbolAlertDialogProps) {
       return;
     }
     setOpen(isOpen);
+  };
+
+  const handleAlertTypeChange = (value: string) => {
+    setAlertType(value);
+    const config = getAlertTypeConfig(value);
+    if (config?.needsThreshold && config.defaultThreshold) {
+      setThreshold(config.defaultThreshold.toString());
+    } else {
+      setThreshold("");
+    }
   };
 
   const handleSubmit = async () => {
@@ -99,7 +112,7 @@ export function SymbolAlertDialog({ symbol }: SymbolAlertDialogProps) {
         <DialogHeader>
           <DialogTitle>Create Alert for ${symbol}</DialogTitle>
           <DialogDescription>
-            Get notified when sentiment changes for this stock.
+            Get notified when sentiment or emotions change for this stock.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,17 +123,14 @@ export function SymbolAlertDialog({ symbol }: SymbolAlertDialogProps) {
             </p>
             <div className="flex flex-wrap gap-2">
               {existingAlerts.map((alert) => (
-                <span
+                <Badge
                   key={alert.id}
-                  className={`text-xs px-2 py-1 rounded ${
-                    alert.is_active
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+                  variant={alert.is_active ? "default" : "secondary"}
+                  className={isEmotionAlert(alert.alert_type) ? "bg-accent/20 text-accent-foreground border-accent" : ""}
                 >
-                  {ALERT_TYPES.find((t) => t.value === alert.alert_type)?.label || alert.alert_type}
+                  {getAlertTypeLabel(alert.alert_type)}
                   {alert.threshold && ` (${alert.threshold}%)`}
-                </span>
+                </Badge>
               ))}
             </div>
           </div>
@@ -129,41 +139,56 @@ export function SymbolAlertDialog({ symbol }: SymbolAlertDialogProps) {
         <div className="space-y-4 py-2">
           <div className="space-y-2">
             <Label>Alert Type</Label>
-            <Select value={alertType} onValueChange={setAlertType}>
+            <Select value={alertType} onValueChange={handleAlertTypeChange}>
               <SelectTrigger className="bg-secondary/50">
                 <SelectValue placeholder="Select alert type" />
               </SelectTrigger>
               <SelectContent>
-                {ALERT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    <div className="flex items-center gap-2">
-                      <type.icon className="h-4 w-4" />
-                      {type.label}
-                    </div>
-                  </SelectItem>
+                {ALERT_CATEGORIES.map((category) => (
+                  <SelectGroup key={category.id}>
+                    <SelectLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                      {category.label}
+                    </SelectLabel>
+                    {category.types.map((type) => {
+                      const Icon = type.icon;
+                      return (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center gap-2">
+                            <Icon className={`h-4 w-4 ${category.id === "emotion" ? "text-accent" : ""}`} />
+                            {type.label}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
-            {alertType && (
+            {selectedConfig && (
               <p className="text-xs text-muted-foreground">
-                {ALERT_TYPES.find((t) => t.value === alertType)?.description}
+                {selectedConfig.description}
               </p>
             )}
           </div>
 
-          {needsThreshold && (
+          {needsThreshold && selectedConfig && (
             <div className="space-y-2">
-              <Label htmlFor="threshold">Threshold (%)</Label>
+              <Label htmlFor="threshold">
+                {selectedConfig.thresholdLabel || "Threshold"} (%)
+              </Label>
               <Input
                 id="threshold"
                 type="number"
                 min="0"
-                max="100"
-                placeholder="e.g., 70"
+                max={selectedConfig.thresholdMax || 100}
+                placeholder={`e.g., ${getDefaultThreshold(alertType)}`}
                 value={threshold}
                 onChange={(e) => setThreshold(e.target.value)}
                 className="bg-secondary/50"
               />
+              <p className="text-xs text-muted-foreground">
+                Alert triggers when value exceeds {threshold || getDefaultThreshold(alertType)}%
+              </p>
             </div>
           )}
         </div>
