@@ -10,7 +10,8 @@ import {
   ResponsiveContainer,
   Cell,
   Legend,
-  Rectangle
+  Rectangle,
+  ReferenceLine
 } from "recharts";
 import { useMemo, useEffect, useState } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
@@ -1090,6 +1091,22 @@ function HourlyStackedNarrativeChart({
               dot={false}
               activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
               connectNulls
+            />
+          )}
+          {/* Previous Close Reference Line - only on Today view */}
+          {showPriceOverlay && is5MinView && priceData?.previousClose && (
+            <ReferenceLine
+              yAxisId="right"
+              y={priceData.previousClose}
+              stroke="hsl(215 20% 65%)"
+              strokeDasharray="4 4"
+              strokeWidth={1.5}
+              label={{
+                value: `Prev Close $${priceData.previousClose.toFixed(2)}`,
+                position: "right",
+                fill: "hsl(215 20% 65%)",
+                fontSize: 10,
+              }}
             />
           )}
         </ComposedChart>

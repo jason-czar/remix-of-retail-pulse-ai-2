@@ -620,6 +620,22 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               connectNulls
             />
           )}
+          {/* Previous Close Reference Line - only on Today view */}
+          {showPriceOverlay && showPriceToggle && is5MinView && priceData?.previousClose && (
+            <ReferenceLine
+              yAxisId="right"
+              y={priceData.previousClose}
+              stroke="hsl(215 20% 65%)"
+              strokeDasharray="4 4"
+              strokeWidth={1.5}
+              label={{
+                value: `Prev Close $${priceData.previousClose.toFixed(2)}`,
+                position: "right",
+                fill: "hsl(215 20% 65%)",
+                fontSize: 10,
+              }}
+            />
+          )}
         </ComposedChart>
       </ResponsiveContainer>
     </div>
