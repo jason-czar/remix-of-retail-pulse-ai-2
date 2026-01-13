@@ -149,8 +149,27 @@ function aggregateEmotions(historyData: any[]): {
   // Sort historical data chronologically (oldest first for chart)
   historicalData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   
-  // Take last 8 points for timeline
-  const timelineData = historicalData.slice(-8);
+  // For aggregated data, group by date to get one point per day
+  const dailyAggregated = new Map<string, EmotionTimePoint>();
+  historicalData.forEach(point => {
+    const dateKey = new Date(point.timestamp).toISOString().split('T')[0];
+    if (!dailyAggregated.has(dateKey)) {
+      dailyAggregated.set(dateKey, point);
+    } else {
+      // Average the emotions for this day
+      const existing = dailyAggregated.get(dateKey)!;
+      const emotionNames = new Set([...Object.keys(existing.emotions), ...Object.keys(point.emotions)]);
+      emotionNames.forEach(name => {
+        const existingVal = existing.emotions[name] || 0;
+        const newVal = point.emotions[name] || 0;
+        existing.emotions[name] = Math.round((existingVal + newVal) / 2);
+      });
+    }
+  });
+  
+  // Convert back to array and sort chronologically
+  const timelineData = Array.from(dailyAggregated.values())
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   // Calculate average scores and determine trends
   const emotions: EmotionScore[] = EMOTION_NAMES.map(name => {
