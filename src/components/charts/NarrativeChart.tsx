@@ -349,7 +349,238 @@ function TimeSeriesNarrativeChart({
   );
 }
 
-// Horizontal bar chart for 1H/6H/24H
+// Hourly stacked bar chart for 1D/24H - Independent hourly view
+function HourlyStackedNarrativeChart({ 
+  symbol, 
+  timeRange 
+}: { 
+  symbol: string; 
+  timeRange: '1D' | '24H';
+}) {
+  const hours = timeRange === '1D' ? 1 : 1; // Both use 1 day of data
+  const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(
+    symbol, 
+    hours, 
+    "hourly"
+  );
+
+  const { stackedChartData, totalMessages } = useMemo(() => {
+    if (!historyData?.data || historyData.data.length === 0) {
+      return { stackedChartData: [], totalMessages: 0 };
+    }
+
+    // For 1D, filter to today only (in user's timezone)
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const filteredData = timeRange === '1D' 
+      ? historyData.data.filter(point => new Date(point.recorded_at) >= todayStart)
+      : historyData.data;
+
+    // Group data by hour
+    const byHour = new Map<string, { 
+      hour: string; 
+      sortKey: string;
+      narratives: { name: string; count: number; sentiment: string }[];
+      totalMessages: number;
+    }>();
+    
+    filteredData.forEach(point => {
+      const date = new Date(point.recorded_at);
+      const hourKey = date.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
+      const sortKey = date.toISOString();
+      
+      if (!byHour.has(sortKey)) {
+        byHour.set(sortKey, { 
+          hour: hourKey, 
+          sortKey, 
+          narratives: [],
+          totalMessages: 0
+        });
+      }
+      
+      const entry = byHour.get(sortKey)!;
+      entry.totalMessages += point.message_count;
+      
+      // Accumulate narratives for this hour
+      if (point.narratives && Array.isArray(point.narratives)) {
+        point.narratives.forEach((n: any) => {
+          const existing = entry.narratives.find(x => x.name === n.name);
+          if (existing) {
+            existing.count += n.count || 0;
+          } else {
+            entry.narratives.push({
+              name: n.name,
+              count: n.count || 0,
+              sentiment: n.sentiment || 'neutral'
+            });
+          }
+        });
+      }
+    });
+
+    // Process each hour: sort by count and take top segments
+    const stackedChartData = Array.from(byHour.values())
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .map(hourData => {
+        // Sort narratives by count descending and take top MAX_SEGMENTS
+        const topNarratives = hourData.narratives
+          .sort((a, b) => b.count - a.count)
+          .slice(0, MAX_SEGMENTS);
+        
+        // Build flattened data structure for Recharts
+        const flatData: Record<string, any> = {
+          hour: hourData.hour,
+          sortKey: hourData.sortKey,
+          totalMessages: hourData.totalMessages,
+        };
+        
+        topNarratives.forEach((n, idx) => {
+          flatData[`segment${idx}`] = n.count;
+          flatData[`segment${idx}Name`] = n.name;
+          flatData[`segment${idx}Sentiment`] = n.sentiment;
+        });
+        
+        // Fill remaining segments with zeros
+        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+          flatData[`segment${i}`] = 0;
+          flatData[`segment${i}Name`] = '';
+          flatData[`segment${i}Sentiment`] = 'neutral';
+        }
+        
+        return flatData;
+      });
+
+    const totalMessages = filteredData.reduce((sum, point) => sum + point.message_count, 0);
+
+    return { stackedChartData, totalMessages };
+  }, [historyData, timeRange]);
+
+  if (isLoading) {
+    return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
+  }
+
+  if (error) {
+    return (
+      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <p className="text-sm">Failed to load narrative history. Please try again.</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (stackedChartData.length === 0) {
+    return (
+      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+        <Sparkles className="h-8 w-8" />
+        <p className="text-sm">No hourly narrative data found for {symbol}. Data accumulates during market hours.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[500px] w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
+        <div className="flex items-center gap-3">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Hourly Narrative Breakdown</span>
+              <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
+                independent
+              </span>
+              <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
+                {historyData?.data.length || 0} snapshots
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+              {totalMessages > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
+                </span>
+              )}
+              <span>{timeRange === '1D' ? 'Today' : 'Last 24h'} • each bar shows that hour's top narratives</span>
+            </div>
+          </div>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="h-8 px-3 text-xs"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+          {isFetching ? 'Refreshing...' : 'Refresh'}
+        </Button>
+      </div>
+
+      {/* Sentiment Legend */}
+      <div className="flex items-center gap-4 mb-3 text-xs">
+        <span className="text-muted-foreground">Sentiment:</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bullish }} />
+          <span>Bullish</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.bearish }} />
+          <span>Bearish</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: SENTIMENT_COLORS.neutral }} />
+          <span>Neutral</span>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height="80%">
+        <BarChart 
+          data={stackedChartData}
+          margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
+          <XAxis 
+            dataKey="hour"
+            stroke="hsl(215 20% 55%)" 
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis 
+            stroke="hsl(215 20% 55%)" 
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            width={45}
+          />
+          <Tooltip content={<DailyNarrativeTooltip />} />
+          {/* Render segment bars - each segment uses its own sentiment color */}
+          {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
+            <Bar 
+              key={`segment${idx}`}
+              dataKey={`segment${idx}`}
+              stackId="narratives"
+              radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+            >
+              {stackedChartData.map((entry, entryIdx) => (
+                <Cell 
+                  key={`cell-${entryIdx}`} 
+                  fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral}
+                />
+              ))}
+            </Bar>
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// Horizontal bar chart for 1H/6H
 function HorizontalNarrativeChart({ 
   symbol, 
   timeRange 
@@ -516,6 +747,11 @@ export function NarrativeChart({ symbol, timeRange = '24H' }: NarrativeChartProp
     return <TimeSeriesNarrativeChart symbol={symbol} timeRange={timeRange} />;
   }
 
-  // Use horizontal bar chart for shorter time ranges
+  // Use hourly stacked bar chart for 1D and 24H
+  if (timeRange === '1D' || timeRange === '24H') {
+    return <HourlyStackedNarrativeChart symbol={symbol} timeRange={timeRange} />;
+  }
+
+  // Use horizontal bar chart for 1H/6H
   return <HorizontalNarrativeChart symbol={symbol} timeRange={timeRange} />;
 }
