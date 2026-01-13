@@ -9,14 +9,15 @@ import {
   Tooltip, 
   ResponsiveContainer,
   Cell,
-  Legend
+  Legend,
+  Rectangle
 } from "recharts";
 import { useMemo, useEffect, useState } from "react";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToHourSlots, alignPricesToDateSlots } from "@/lib/stock-price-api";
+import { alignPricesToHourSlots, alignPricesToDateSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
 import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle, DollarSign } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
@@ -95,6 +96,44 @@ const SENTIMENT_COLORS = {
 
 // Max segments per day
 const MAX_SEGMENTS = 6;
+const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
+
+// Custom bar shape that expands width to cover full hour in 5-min view
+function WideBarShape(props: any) {
+  const { x, y, width, height, fill, radius, payload, is5MinView } = props;
+  
+  // In 5-min view, expand bar width to cover 12 slots (full hour)
+  // Only render for hour-start slots
+  if (is5MinView) {
+    if (!payload?.isHourStart || height === 0) {
+      return null;
+    }
+    // Expand width to cover 12 slots
+    const expandedWidth = width * SLOTS_PER_HOUR;
+    return (
+      <Rectangle
+        x={x}
+        y={y}
+        width={expandedWidth}
+        height={height}
+        fill={fill}
+        radius={radius}
+      />
+    );
+  }
+  
+  // Normal rendering for non-5-min views
+  return (
+    <Rectangle
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      fill={fill}
+      radius={radius}
+    />
+  );
+}
 
 // Custom tooltip for independent daily/hourly view with volume indicator
 function NarrativeStackedTooltip({ active, payload, label }: any) {
@@ -573,10 +612,14 @@ function HourlyStackedNarrativeChart({
   // Fetch stock price data
   const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
 
-  const { stackedChartData, totalMessages, hasAnyData } = useMemo(() => {
-    // For "Today" view (1D), use 24 hourly slots for full-width bars
+  const { stackedChartData, totalMessages, hasAnyData, is5MinView } = useMemo(() => {
+    // For "Today" view (1D), use 288 5-minute slots for granular price line
+    // but only put bar data at hour boundaries
     if (timeRange === '1D') {
-      // Create 24 hourly slots
+      const SLOTS_PER_HOUR = 12;
+      const TOTAL_SLOTS = 24 * SLOTS_PER_HOUR; // 288 slots
+      
+      // First, collect hourly narrative data
       const hourlyNarratives: Map<number, { 
         narratives: { name: string; count: number; sentiment: string }[];
         totalMessages: number;
@@ -624,34 +667,55 @@ function HourlyStackedNarrativeChart({
       const hourData = Array.from(hourlyNarratives.values());
       const maxMessages = Math.max(...hourData.map(h => h.totalMessages), 1);
       
-      // Build 24-slot chart data (hourly slots for full-width bars)
+      // Build 288-slot chart data
       const stackedChartData: Record<string, any>[] = [];
       
-      for (let hour = 0; hour < 24; hour++) {
+      for (let slotIdx = 0; slotIdx < TOTAL_SLOTS; slotIdx++) {
+        const hour = Math.floor(slotIdx / SLOTS_PER_HOUR);
+        const isHourStart = slotIdx % SLOTS_PER_HOUR === 0;
+        
+        // Time label: show hour label at hour boundaries
         const hourLabel = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
-        const hourNarr = hourlyNarratives.get(hour)!;
-        const topNarratives = hourNarr.narratives
-          .sort((a, b) => b.count - a.count)
-          .slice(0, MAX_SEGMENTS);
         
         const flatData: Record<string, any> = {
           time: hourLabel,
+          slotIndex: slotIdx,
           hourIndex: hour,
-          totalMessages: hourNarr.totalMessages,
-          volumePercent: (hourNarr.totalMessages / maxMessages) * 100,
-          isEmpty: hourNarr.totalMessages === 0,
+          isHourStart,
+          totalMessages: 0,
+          volumePercent: 0,
+          isEmpty: true,
         };
         
-        topNarratives.forEach((n, idx) => {
-          flatData[`segment${idx}`] = n.count;
-          flatData[`segment${idx}Name`] = n.name;
-          flatData[`segment${idx}Sentiment`] = n.sentiment;
-        });
-        
-        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
-          flatData[`segment${i}`] = 0;
-          flatData[`segment${i}Name`] = '';
-          flatData[`segment${i}Sentiment`] = 'neutral';
+        // Only add narrative bar data at hour boundaries
+        if (isHourStart) {
+          const hourNarr = hourlyNarratives.get(hour)!;
+          const topNarratives = hourNarr.narratives
+            .sort((a, b) => b.count - a.count)
+            .slice(0, MAX_SEGMENTS);
+          
+          flatData.totalMessages = hourNarr.totalMessages;
+          flatData.volumePercent = (hourNarr.totalMessages / maxMessages) * 100;
+          flatData.isEmpty = hourNarr.totalMessages === 0;
+          
+          topNarratives.forEach((n, idx) => {
+            flatData[`segment${idx}`] = n.count;
+            flatData[`segment${idx}Name`] = n.name;
+            flatData[`segment${idx}Sentiment`] = n.sentiment;
+          });
+          
+          for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = '';
+            flatData[`segment${i}Sentiment`] = 'neutral';
+          }
+        } else {
+          // Non-hour slots have no bar data (price line only)
+          for (let i = 0; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = '';
+            flatData[`segment${i}Sentiment`] = 'neutral';
+          }
         }
         
         stackedChartData.push(flatData);
@@ -660,12 +724,12 @@ function HourlyStackedNarrativeChart({
       const totalMessages = hourData.reduce((sum, h) => sum + h.totalMessages, 0);
       const hasAnyData = hourData.some(h => h.totalMessages > 0);
       
-      return { stackedChartData, totalMessages, hasAnyData };
+      return { stackedChartData, totalMessages, hasAnyData, is5MinView: true };
     }
     
     // Original logic for 24H view
     if (!historyData?.data || historyData.data.length === 0) {
-      return { stackedChartData: [], totalMessages: 0, hasAnyData: false };
+      return { stackedChartData: [], totalMessages: 0, hasAnyData: false, is5MinView: false };
     }
 
     const filteredData = historyData.data.filter(point => {
@@ -758,7 +822,7 @@ function HourlyStackedNarrativeChart({
 
     const totalMessages = filteredData.reduce((sum, point) => sum + point.message_count, 0);
 
-    return { stackedChartData, totalMessages, hasAnyData: stackedChartData.length > 0 };
+    return { stackedChartData, totalMessages, hasAnyData: stackedChartData.length > 0, is5MinView: false };
   }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now]);
 
   // Merge price data into chart data
@@ -767,7 +831,21 @@ function HourlyStackedNarrativeChart({
       return stackedChartData;
     }
 
-    // Build hour-to-price map
+    // For 5-minute view (Today), use 5-minute slot alignment for granular price line
+    if (is5MinView) {
+      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices);
+      
+      return stackedChartData.map(item => {
+        const slotIndex = item.slotIndex;
+        const pricePoint = priceBySlot.get(slotIndex);
+        return {
+          ...item,
+          price: pricePoint?.price ?? null,
+        };
+      });
+    }
+
+    // Build hour-to-price map for other views
     const priceByHour = alignPricesToHourSlots(priceData.prices, timeRange);
 
     return stackedChartData.map(item => {
@@ -778,7 +856,7 @@ function HourlyStackedNarrativeChart({
         price: pricePoint?.price ?? null,
       };
     });
-  }, [stackedChartData, priceData, showPriceOverlay, timeRange]);
+  }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
 
   // Calculate price domain for right Y-axis
   const priceDomain = useMemo(() => {
@@ -915,7 +993,19 @@ function HourlyStackedNarrativeChart({
             fontSize={11}
             tickLine={false}
             axisLine={false}
-            interval={0}
+            interval={is5MinView ? 11 : 0}
+            tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
+              // Only show tick labels at hour boundaries for 5-min view
+              if (is5MinView) {
+                const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
+                if (!item?.isHourStart) return null;
+              }
+              return (
+                <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                  {payload.value}
+                </text>
+              );
+            }}
           />
           <YAxis 
             yAxisId="left"
@@ -940,13 +1030,20 @@ function HourlyStackedNarrativeChart({
           )}
           <Tooltip content={<NarrativeStackedTooltip />} />
           {/* Render segment bars - each segment uses its own sentiment color */}
+          {/* For 5-min view, custom shape expands bars to span the full hour */}
           {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
             <Bar 
               key={`segment${idx}`}
               yAxisId="left"
               dataKey={`segment${idx}`}
               stackId="narratives"
-              radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+              shape={(props: any) => (
+                <WideBarShape 
+                  {...props} 
+                  is5MinView={is5MinView}
+                  radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                />
+              )}
             >
               {chartDataWithPrice.map((entry, entryIdx) => (
                 <Cell 
