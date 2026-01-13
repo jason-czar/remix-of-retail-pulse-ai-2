@@ -23,6 +23,13 @@ interface EmotionSnapshot {
   message_count: number;
 }
 
+interface FailedSymbol {
+  symbol: string;
+  type: "narrative" | "emotion" | "both";
+  error: string;
+  retryable: boolean;
+}
+
 // Market hours: 9:30 AM - 4:00 PM ET
 // Extended hours: 7:30 AM - 6:00 PM ET (2 hours before/after)
 function isWithinTradingHours(): boolean {
@@ -43,10 +50,69 @@ function isWeekday(): boolean {
   return day >= 1 && day <= 5; // Monday = 1, Friday = 5
 }
 
+// Determine if an error/status code is retryable
+function isRetryableError(status: number): boolean {
+  // Retry on rate limits (429), server errors (5xx)
+  return status === 429 || status >= 500;
+}
+
+// Fetch with automatic retry and exponential backoff
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3
+): Promise<{ response: Response | null; retried: boolean; error?: string }> {
+  let lastError: string | null = null;
+  let retried = false;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+
+      // Don't retry client errors (except rate limits)
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        return { response, retried };
+      }
+
+      // Success
+      if (response.ok) {
+        return { response, retried };
+      }
+
+      // Retry on rate limits and server errors
+      if (isRetryableError(response.status)) {
+        if (attempt < maxRetries) {
+          retried = true;
+          const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms - status ${response.status}`);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+      }
+
+      // Max retries exceeded or non-retryable error
+      return { response, retried };
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+      if (attempt < maxRetries) {
+        retried = true;
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Retry ${attempt + 1}/${maxRetries} after network error: ${lastError}`);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+
+  return { response: null, retried, error: lastError || "Max retries exceeded" };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const FUNCTION_TIMEOUT_MS = 140000; // 140s safety margin (edge functions have 150s max)
+  const startTime = Date.now();
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -111,95 +177,215 @@ Deno.serve(async (req) => {
     const narrativeSnapshots: NarrativeSnapshot[] = [];
     const emotionSnapshots: EmotionSnapshot[] = [];
     const errors: string[] = [];
+    const failedSymbols: FailedSymbol[] = [];
     const recordedAt = new Date().toISOString();
+    let retriedCount = 0;
+    let processedCount = 0;
 
-    // Process symbols in batches of 3 to avoid rate limits
+    // Helper to process a single symbol
+    async function processSymbol(
+      symbol: string,
+      isRetryPass: boolean = false
+    ): Promise<{ narrativeSuccess: boolean; emotionSuccess: boolean; narrativeRetryable: boolean; emotionRetryable: boolean }> {
+      let narrativeSuccess = false;
+      let emotionSuccess = false;
+      let narrativeRetryable = false;
+      let emotionRetryable = false;
+
+      try {
+        // Fetch narrative analysis (skipCache to get fresh data)
+        const narrativeResult = await fetchWithRetry(
+          `${supabaseUrl}/functions/v1/analyze-narratives`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({ symbol, timeRange: "1H", skipCache: true }),
+          }
+        );
+
+        if (narrativeResult.retried) retriedCount++;
+
+        if (narrativeResult.response?.ok) {
+          const narrativeData = await narrativeResult.response.json();
+          const narratives = narrativeData.narratives || [];
+          const dominantNarrative = narratives.length > 0 ? narratives[0].theme : null;
+
+          narrativeSnapshots.push({
+            symbol,
+            recorded_at: recordedAt,
+            period_type: periodType,
+            narratives,
+            dominant_narrative: dominantNarrative,
+            message_count: narrativeData.messageCount || 0,
+          });
+          narrativeSuccess = true;
+        } else if (narrativeResult.response) {
+          const status = narrativeResult.response.status;
+          narrativeRetryable = isRetryableError(status);
+          if (!isRetryPass) {
+            errors.push(`Narrative fetch failed for ${symbol}: ${status}`);
+          }
+        } else {
+          narrativeRetryable = true; // Network errors are retryable
+          if (!isRetryPass) {
+            errors.push(`Narrative fetch failed for ${symbol}: ${narrativeResult.error}`);
+          }
+        }
+
+        // Fetch emotion analysis (skipCache to get fresh data)
+        const emotionResult = await fetchWithRetry(
+          `${supabaseUrl}/functions/v1/analyze-emotions`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({ symbol, timeRange: "1H", skipCache: true }),
+          }
+        );
+
+        if (emotionResult.retried) retriedCount++;
+
+        if (emotionResult.response?.ok) {
+          const emotionData = await emotionResult.response.json();
+          const emotions = emotionData.emotions || {};
+
+          // Find dominant emotion
+          let dominantEmotion: string | null = null;
+          let maxCount = 0;
+          for (const [emotion, count] of Object.entries(emotions)) {
+            if (typeof count === "number" && count > maxCount) {
+              maxCount = count;
+              dominantEmotion = emotion;
+            }
+          }
+
+          emotionSnapshots.push({
+            symbol,
+            recorded_at: recordedAt,
+            period_type: periodType,
+            emotions,
+            dominant_emotion: dominantEmotion,
+            message_count: emotionData.messageCount || 0,
+          });
+          emotionSuccess = true;
+        } else if (emotionResult.response) {
+          const status = emotionResult.response.status;
+          emotionRetryable = isRetryableError(status);
+          if (!isRetryPass) {
+            errors.push(`Emotion fetch failed for ${symbol}: ${status}`);
+          }
+        } else {
+          emotionRetryable = true; // Network errors are retryable
+          if (!isRetryPass) {
+            errors.push(`Emotion fetch failed for ${symbol}: ${emotionResult.error}`);
+          }
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        if (!isRetryPass) {
+          errors.push(`Error processing ${symbol}: ${errorMessage}`);
+        }
+        narrativeRetryable = true;
+        emotionRetryable = true;
+      }
+
+      return { narrativeSuccess, emotionSuccess, narrativeRetryable, emotionRetryable };
+    }
+
+    // First pass: Process symbols in batches of 3 to avoid rate limits
     const batchSize = 3;
     for (let i = 0; i < symbols.length; i += batchSize) {
+      // Check for timeout
+      if (Date.now() - startTime > FUNCTION_TIMEOUT_MS) {
+        console.log("Approaching timeout, stopping first pass processing");
+        errors.push(`Timeout: ${symbols.length - processedCount} symbols not processed in first pass`);
+        break;
+      }
+
       const batch = symbols.slice(i, i + batchSize);
-      
-      await Promise.all(
+
+      const results = await Promise.all(
         batch.map(async (symbol) => {
-          try {
-            // Fetch narrative analysis (skipCache to get fresh data)
-            const narrativeResponse = await fetch(
-              `${supabaseUrl}/functions/v1/analyze-narratives`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${supabaseServiceKey}`,
-                },
-                body: JSON.stringify({ symbol, timeRange: "1H", skipCache: true }),
-              }
-            );
-
-            if (narrativeResponse.ok) {
-              const narrativeData = await narrativeResponse.json();
-              const narratives = narrativeData.narratives || [];
-              const dominantNarrative = narratives.length > 0 ? narratives[0].theme : null;
-
-              narrativeSnapshots.push({
-                symbol,
-                recorded_at: recordedAt,
-                period_type: periodType,
-                narratives,
-                dominant_narrative: dominantNarrative,
-                message_count: narrativeData.messageCount || 0,
-              });
-            } else {
-              errors.push(`Narrative fetch failed for ${symbol}: ${narrativeResponse.status}`);
-            }
-
-            // Fetch emotion analysis (skipCache to get fresh data)
-            const emotionResponse = await fetch(
-              `${supabaseUrl}/functions/v1/analyze-emotions`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${supabaseServiceKey}`,
-                },
-                body: JSON.stringify({ symbol, timeRange: "1H", skipCache: true }),
-              }
-            );
-
-            if (emotionResponse.ok) {
-              const emotionData = await emotionResponse.json();
-              const emotions = emotionData.emotions || {};
-              
-              // Find dominant emotion
-              let dominantEmotion: string | null = null;
-              let maxCount = 0;
-              for (const [emotion, count] of Object.entries(emotions)) {
-                if (typeof count === "number" && count > maxCount) {
-                  maxCount = count;
-                  dominantEmotion = emotion;
-                }
-              }
-
-              emotionSnapshots.push({
-                symbol,
-                recorded_at: recordedAt,
-                period_type: periodType,
-                emotions,
-                dominant_emotion: dominantEmotion,
-                message_count: emotionData.messageCount || 0,
-              });
-            } else {
-              errors.push(`Emotion fetch failed for ${symbol}: ${emotionResponse.status}`);
-            }
-          } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            errors.push(`Error processing ${symbol}: ${errorMessage}`);
-          }
+          const result = await processSymbol(symbol, false);
+          processedCount++;
+          return { symbol, ...result };
         })
       );
+
+      // Track failed symbols for second pass
+      for (const result of results) {
+        const { symbol, narrativeSuccess, emotionSuccess, narrativeRetryable, emotionRetryable } = result;
+        
+        if (!narrativeSuccess && !emotionSuccess && (narrativeRetryable || emotionRetryable)) {
+          failedSymbols.push({
+            symbol,
+            type: "both",
+            error: "Both analyses failed",
+            retryable: true,
+          });
+        } else if (!narrativeSuccess && narrativeRetryable) {
+          failedSymbols.push({
+            symbol,
+            type: "narrative",
+            error: "Narrative analysis failed",
+            retryable: true,
+          });
+        } else if (!emotionSuccess && emotionRetryable) {
+          failedSymbols.push({
+            symbol,
+            type: "emotion",
+            error: "Emotion analysis failed",
+            retryable: true,
+          });
+        }
+      }
 
       // Small delay between batches
       if (i + batchSize < symbols.length) {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
+    }
+
+    // Second pass: Retry failed symbols with longer cooldown
+    if (failedSymbols.length > 0 && Date.now() - startTime < FUNCTION_TIMEOUT_MS - 30000) {
+      console.log(`Second pass: Retrying ${failedSymbols.length} failed symbols...`);
+      await new Promise((r) => setTimeout(r, 5000)); // 5s cooldown before retry pass
+
+      const retryableSymbols = failedSymbols.filter((f) => f.retryable);
+      let successfulRetries = 0;
+
+      for (const failed of retryableSymbols) {
+        // Check for timeout
+        if (Date.now() - startTime > FUNCTION_TIMEOUT_MS) {
+          console.log("Approaching timeout, stopping second pass");
+          errors.push(`Timeout during retry pass: ${retryableSymbols.length - successfulRetries} symbols not retried`);
+          break;
+        }
+
+        console.log(`Retrying ${failed.symbol} (${failed.type})...`);
+        const result = await processSymbol(failed.symbol, true);
+
+        if (
+          (failed.type === "both" && result.narrativeSuccess && result.emotionSuccess) ||
+          (failed.type === "narrative" && result.narrativeSuccess) ||
+          (failed.type === "emotion" && result.emotionSuccess)
+        ) {
+          successfulRetries++;
+          console.log(`Retry successful for ${failed.symbol}`);
+        } else {
+          errors.push(`Final retry failed for ${failed.symbol} (${failed.type})`);
+        }
+
+        // Longer delay between retry attempts
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
+      console.log(`Second pass completed: ${successfulRetries}/${retryableSymbols.length} successful retries`);
     }
 
     // Insert narrative snapshots and update cache
@@ -271,8 +457,9 @@ Deno.serve(async (req) => {
       console.log(`Cleanup warning: ${cleanupError.message}`);
     }
 
+    const executionTime = Date.now() - startTime;
     console.log(
-      `Recorded ${narrativeSnapshots.length} narrative and ${emotionSnapshots.length} emotion snapshots`
+      `Recorded ${narrativeSnapshots.length} narrative and ${emotionSnapshots.length} emotion snapshots in ${executionTime}ms (${retriedCount} retries)`
     );
 
     return new Response(
@@ -282,6 +469,8 @@ Deno.serve(async (req) => {
         narrativeRecords: narrativeSnapshots.length,
         emotionRecords: emotionSnapshots.length,
         symbols: symbols.length,
+        retriedCount,
+        executionTimeMs: executionTime,
         errors: errors.length > 0 ? errors : undefined,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
