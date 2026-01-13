@@ -17,7 +17,7 @@ import {
 } from "recharts";
 import { useMemo, useState } from "react";
 import { useEmotionAnalysis, EmotionScore, EmotionTimePoint } from "@/hooks/use-emotion-analysis";
-import { AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target, Activity } from "lucide-react";
+import { AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
@@ -73,7 +73,7 @@ const getIntensityColor = (intensity: string) => {
 export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   const [viewMode, setViewMode] = useState<"bar" | "radar" | "timeline">("bar");
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(["Excitement", "Fear", "Conviction"]);
-  const { data, isLoading, error } = useEmotionAnalysis(symbol, timeRange);
+  const { data, isLoading, error, forceRefresh, isFetching } = useEmotionAnalysis(symbol, timeRange);
   
   const chartData = useMemo(() => {
     if (!data?.emotions || data.emotions.length === 0) {
@@ -174,6 +174,17 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
               {data.emotionalIntensity} intensity
             </Badge>
           )}
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={forceRefresh}
+            disabled={isFetching}
+            className="h-8 px-3 text-xs"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
           
           <div className="flex gap-1 ml-2">
             <Button

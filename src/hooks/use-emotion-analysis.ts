@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useState } from "react";
 
 export interface EmotionScore {
   name: string;
@@ -28,12 +29,20 @@ export interface EmotionAnalysisResult {
 }
 
 export function useEmotionAnalysis(symbol: string, timeRange: string = "24H") {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const [skipCache, setSkipCache] = useState(false);
+
+  const query = useQuery({
     queryKey: ["emotion-analysis", symbol, timeRange],
     queryFn: async (): Promise<EmotionAnalysisResult> => {
       const { data, error } = await supabase.functions.invoke("analyze-emotions", {
-        body: { symbol, timeRange },
+        body: { symbol, timeRange, skipCache },
       });
+
+      // Reset skipCache after fetch
+      if (skipCache) {
+        setSkipCache(false);
+      }
 
       if (error) {
         console.error("Emotion analysis error:", error);
@@ -51,4 +60,14 @@ export function useEmotionAnalysis(symbol: string, timeRange: string = "24H") {
     refetchInterval: false, // Don't auto-refetch, rely on cache
     retry: 1,
   });
+
+  const forceRefresh = useCallback(() => {
+    setSkipCache(true);
+    queryClient.invalidateQueries({ queryKey: ["emotion-analysis", symbol, timeRange] });
+  }, [queryClient, symbol, timeRange]);
+
+  return {
+    ...query,
+    forceRefresh,
+  };
 }
