@@ -198,7 +198,7 @@ export default function SymbolPage() {
                 </div>
               ) : (
                 <p className="text-muted-foreground leading-relaxed">
-                  {summary}
+                  <FormattedSummary text={summary} />
                 </p>
               )}
             </div>
@@ -400,5 +400,24 @@ function MessageCard({
         ))}
       </div>
     </div>
+  );
+}
+
+// Simple markdown-style bold text formatter
+function FormattedSummary({ text }: { text: string }) {
+  // Split text by **bold** patterns
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  
+  return (
+    <>
+      {parts.map((part, index) => {
+        // Check if this part is bold (wrapped in **)
+        if (part.startsWith('**') && part.endsWith('**')) {
+          const boldText = part.slice(2, -2);
+          return <strong key={index} className="text-foreground font-semibold">{boldText}</strong>;
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
   );
 }
