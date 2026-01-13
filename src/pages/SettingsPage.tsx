@@ -16,6 +16,7 @@ import {
   CreditCard, 
   Bell,
   Database,
+  Palette,
   Plus,
   Copy,
   Trash2,
@@ -26,6 +27,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import AlertsManager from "@/components/AlertsManager";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import HistoryBackfillUploader from "@/components/HistoryBackfillUploader";
 import ManualSnapshotTrigger from "@/components/ManualSnapshotTrigger";
 import { toast } from "sonner";
@@ -244,6 +246,10 @@ export default function SettingsPage() {
               <Database className="h-4 w-4" />
               Data
             </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex items-center gap-2">
+              <Palette className="h-4 w-4" />
+              Appearance
+            </TabsTrigger>
             <TabsTrigger value="subscription" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Subscription
@@ -426,6 +432,22 @@ export default function SettingsPage() {
           <TabsContent value="data" className="space-y-6">
             <ManualSnapshotTrigger />
             <HistoryBackfillUploader />
+          </TabsContent>
+
+          {/* Appearance Tab */}
+          <TabsContent value="appearance">
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-6">Appearance</h2>
+              <div className="space-y-6">
+                <div>
+                  <Label className="text-base">Theme</Label>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Choose how SentimentIQ looks to you
+                  </p>
+                  <ThemeSwitcher />
+                </div>
+              </div>
+            </Card>
           </TabsContent>
 
           {/* Subscription Tab */}
