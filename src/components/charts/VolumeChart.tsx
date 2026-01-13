@@ -456,15 +456,18 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         
         {showPriceToggle && (
           <div className="flex items-center gap-2">
-            <DollarSign className={`h-4 w-4 ${showPriceOverlay ? 'text-amber-400' : 'text-muted-foreground'}`} />
+            <DollarSign 
+              className="h-4 w-4" 
+              style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
+            />
             <span className="text-xs text-muted-foreground">Price</span>
             <Switch
               checked={showPriceOverlay}
               onCheckedChange={setShowPriceOverlay}
-              className="data-[state=checked]:bg-amber-500"
+              style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
             />
             {showPriceOverlay && priceData?.currentPrice && (
-              <span className="text-xs text-amber-400 font-semibold ml-1">
+              <span className="text-xs font-semibold ml-1" style={{ color: priceLineColor }}>
                 ${priceData.currentPrice.toFixed(2)}
               </span>
             )}
