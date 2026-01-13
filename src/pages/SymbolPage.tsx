@@ -191,39 +191,39 @@ export default function SymbolPage() {
           </TabsContent>
 
           <TabsContent value="emotions">
-            <Card className="p-6">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Emotion Trends</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="sentiment">
-            <Card className="p-6">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Sentiment Over Time</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="momentum">
-            <Card className="p-6">
+            <div className="p-6">
               <EmotionMomentumChart symbol={symbol} days={7} />
-            </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="volume">
-            <Card className="p-6">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Message Volume</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </Card>
+            </div>
           </TabsContent>
         </Tabs>
 
