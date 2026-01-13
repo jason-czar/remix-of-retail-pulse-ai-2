@@ -126,13 +126,19 @@ export function EmotionTrendsChart({
     return { chartData: combined, gapCount: missingDates.length };
   }, [data, days, periodType]);
 
-  // Emotions to display
+  // Emotions to display - default to trading signal emotions
   const displayEmotions = useMemo(() => {
     if (selectedEmotions.size > 0) {
       return data?.dominantEmotions.filter((e) => selectedEmotions.has(e)) || [];
     }
-    // Show top 5 by default
-    return data?.dominantEmotions.slice(0, 5) || [];
+    // Show trading signal emotions by default (Capitulation, Regret, FOMO, Euphoria, Greed)
+    const signalEmotionsPresent = SIGNAL_EMOTIONS.filter(e => 
+      data?.dominantEmotions.includes(e)
+    );
+    // If we have signal emotions in the data, show those; otherwise fall back to top 5
+    return signalEmotionsPresent.length > 0 
+      ? signalEmotionsPresent 
+      : data?.dominantEmotions.slice(0, 5) || [];
   }, [data?.dominantEmotions, selectedEmotions]);
 
   const toggleEmotion = (emotion: string) => {
