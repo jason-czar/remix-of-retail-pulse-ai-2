@@ -20,6 +20,9 @@ interface EmotionTimePoint {
   emotions: Record<string, number>;
 }
 
+// Standard emotion names
+const EMOTION_NAMES = ["Excitement", "Fear", "Hopefulness", "Frustration", "Conviction", "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise"];
+
 // Helper to convert timeRange to date parameters
 function getDateRange(timeRange: string): { start: string; end: string; limit: number } {
   const now = new Date();
@@ -57,6 +60,124 @@ function getDateRange(timeRange: string): { start: string; end: string; limit: n
     start: pastDate.toISOString().split("T")[0],
     end: now.toISOString().split("T")[0],
     limit,
+  };
+}
+
+// Aggregate emotions from multiple history snapshots
+function aggregateEmotions(historyData: any[]): {
+  emotions: EmotionScore[];
+  dominantEmotion: string;
+  emotionalIntensity: string;
+  historicalData: EmotionTimePoint[];
+} {
+  // Collect all emotion scores across snapshots
+  const emotionTotals: Record<string, { scores: number[]; percentages: number[] }> = {};
+  EMOTION_NAMES.forEach(name => {
+    emotionTotals[name] = { scores: [], percentages: [] };
+  });
+
+  // Build historical data points from snapshots
+  const historicalData: EmotionTimePoint[] = [];
+
+  historyData.forEach((snapshot, index) => {
+    const emotions = snapshot.emotions || {};
+    const snapshotEmotions: Record<string, number> = {};
+    
+    // Handle different emotion data formats
+    if (Array.isArray(emotions)) {
+      // Format: [{name: "Fear", score: 50, ...}, ...]
+      emotions.forEach((e: any) => {
+        if (e.name && EMOTION_NAMES.includes(e.name)) {
+          emotionTotals[e.name].scores.push(e.score || 0);
+          emotionTotals[e.name].percentages.push(e.percentage || 0);
+          snapshotEmotions[e.name] = e.score || 0;
+        }
+      });
+    } else if (typeof emotions === 'object') {
+      // Format: {Fear: 50, Excitement: 30, ...} or {emotions: [...]}
+      if (emotions.emotions && Array.isArray(emotions.emotions)) {
+        emotions.emotions.forEach((e: any) => {
+          if (e.name && EMOTION_NAMES.includes(e.name)) {
+            emotionTotals[e.name].scores.push(e.score || 0);
+            emotionTotals[e.name].percentages.push(e.percentage || 0);
+            snapshotEmotions[e.name] = e.score || 0;
+          }
+        });
+      } else {
+        EMOTION_NAMES.forEach(name => {
+          const score = emotions[name];
+          if (typeof score === 'number') {
+            emotionTotals[name].scores.push(score);
+            snapshotEmotions[name] = score;
+          }
+        });
+      }
+    }
+
+    // Add to historical timeline
+    const recordedAt = new Date(snapshot.recorded_at);
+    const now = Date.now();
+    const hoursAgo = Math.round((now - recordedAt.getTime()) / (1000 * 60 * 60));
+    const label = hoursAgo < 24 ? `${hoursAgo}h ago` : `${Math.round(hoursAgo / 24)}d ago`;
+    
+    historicalData.push({
+      timestamp: snapshot.recorded_at,
+      label,
+      emotions: snapshotEmotions
+    });
+  });
+
+  // Sort historical data chronologically (oldest first for chart)
+  historicalData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  
+  // Take last 8 points for timeline
+  const timelineData = historicalData.slice(-8);
+
+  // Calculate average scores and determine trends
+  const emotions: EmotionScore[] = EMOTION_NAMES.map(name => {
+    const data = emotionTotals[name];
+    const avgScore = data.scores.length > 0 
+      ? Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length)
+      : 0;
+    const avgPercentage = data.percentages.length > 0
+      ? Math.round(data.percentages.reduce((a, b) => a + b, 0) / data.percentages.length)
+      : 0;
+    
+    // Determine trend by comparing first half to second half
+    let trend: "rising" | "falling" | "stable" = "stable";
+    if (data.scores.length >= 4) {
+      const mid = Math.floor(data.scores.length / 2);
+      const firstHalf = data.scores.slice(0, mid).reduce((a, b) => a + b, 0) / mid;
+      const secondHalf = data.scores.slice(mid).reduce((a, b) => a + b, 0) / (data.scores.length - mid);
+      if (secondHalf > firstHalf + 5) trend = "rising";
+      else if (secondHalf < firstHalf - 5) trend = "falling";
+    }
+    
+    return {
+      name,
+      score: avgScore,
+      percentage: avgPercentage,
+      trend,
+      examples: [] // No examples when aggregating
+    };
+  });
+
+  // Find dominant emotion
+  const sortedEmotions = [...emotions].sort((a, b) => b.score - a.score);
+  const dominantEmotion = sortedEmotions[0]?.name || "Neutral";
+
+  // Determine overall intensity
+  const avgTopScores = sortedEmotions.slice(0, 3).reduce((sum, e) => sum + e.score, 0) / 3;
+  let emotionalIntensity = "low";
+  if (avgTopScores >= 70) emotionalIntensity = "extreme";
+  else if (avgTopScores >= 50) emotionalIntensity = "high";
+  else if (avgTopScores >= 30) emotionalIntensity = "moderate";
+
+  return {
+    emotions: sortedEmotions,
+    dominantEmotion,
+    emotionalIntensity,
+    historicalData: timelineData
   };
 }
 
@@ -111,9 +232,65 @@ serve(async (req) => {
       }
     }
 
-    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for emotions ${symbol} ${timeRange}, fetching messages...`);
+    // For 7D and 30D time ranges, try to aggregate from historical snapshots first
+    if (timeRange === "7D" || timeRange === "30D") {
+      const daysBack = timeRange === "7D" ? 7 : 30;
+      const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+      
+      console.log(`Checking emotion_history for ${symbol} since ${startDate.toISOString()}`);
+      
+      const { data: historyData, error: historyError } = await supabase
+        .from("emotion_history")
+        .select("emotions, message_count, recorded_at, dominant_emotion")
+        .eq("symbol", symbol.toUpperCase())
+        .gte("recorded_at", startDate.toISOString())
+        .order("recorded_at", { ascending: false });
+      
+      if (!historyError && historyData && historyData.length > 0) {
+        // Minimum snapshots needed for aggregation
+        const minSnapshots = timeRange === "7D" ? 8 : 20;
+        
+        if (historyData.length >= minSnapshots) {
+          console.log(`Aggregating ${historyData.length} emotion snapshots for ${symbol} ${timeRange}`);
+          
+          const aggregated = aggregateEmotions(historyData);
+          const totalMessages = historyData.reduce((sum, h) => sum + (h.message_count || 0), 0);
+          
+          const cacheData = {
+            ...aggregated,
+            messageCount: totalMessages,
+            snapshotCount: historyData.length,
+          };
 
-    console.log(`Cache miss for emotions ${symbol} ${timeRange}, fetching messages...`);
+          // Cache the aggregated result (2 hour expiry)
+          const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+          await supabase
+            .from("emotion_cache")
+            .upsert(
+              {
+                symbol: symbol.toUpperCase(),
+                time_range: timeRange,
+                emotions: cacheData,
+                expires_at: expiresAt,
+              },
+              { onConflict: "symbol,time_range" }
+            );
+          
+          return new Response(
+            JSON.stringify({ 
+              ...cacheData,
+              cached: false, 
+              aggregated: true 
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } else {
+          console.log(`Only ${historyData.length} emotion snapshots found, need ${minSnapshots}. Falling back to AI analysis.`);
+        }
+      }
+    }
+
+    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for emotions ${symbol} ${timeRange}, fetching messages...`);
 
     // Get date range based on timeRange
     const { start, end, limit } = getDateRange(timeRange);
@@ -372,8 +549,7 @@ ${messageTexts}`
     });
 
     // Ensure all 10 emotions are present with at least 0 score
-    const emotionNames = ["Excitement", "Fear", "Hopefulness", "Frustration", "Conviction", "Disappointment", "Sarcasm", "Humor", "Grit", "Surprise"];
-    const completeEmotions = emotionNames.map(name => {
+    const completeEmotions = EMOTION_NAMES.map(name => {
       const found = result.emotions.find((e: EmotionScore) => e.name === name);
       return found || { name, score: 0, percentage: 0, trend: "stable", examples: [] };
     });
@@ -404,7 +580,7 @@ ${messageTexts}`
     console.log(`Cached emotion analysis for ${symbol} ${timeRange}`);
 
     return new Response(
-      JSON.stringify({ ...cacheData, cached: false }),
+      JSON.stringify({ ...cacheData, cached: false, aggregated: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
