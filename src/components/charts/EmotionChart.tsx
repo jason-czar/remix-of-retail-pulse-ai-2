@@ -1,29 +1,33 @@
 import { 
+  ComposedChart,
   BarChart,
   Bar,
+  Line,
   XAxis, 
   YAxis, 
-  CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
   Cell,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  LineChart,
-  Line,
+  Rectangle,
+  ReferenceLine
 } from "recharts";
 import { useMemo, useState } from "react";
-import { useEmotionAnalysis, EmotionScore, EmotionTimePoint } from "@/hooks/use-emotion-analysis";
-import { AlertCircle, TrendingUp, TrendingDown, Minus, BarChart3, Target, Activity, RefreshCw } from "lucide-react";
+import { useEmotionAnalysis, EmotionScore } from "@/hooks/use-emotion-analysis";
+import { useEmotionHistory } from "@/hooks/use-emotion-history";
+import { useStockPrice, TimeRange as StockTimeRange } from "@/hooks/use-stock-price";
+import { alignPricesToFiveMinSlots, PricePoint } from "@/lib/stock-price-api";
+import { AlertCircle, RefreshCw, Sparkles, DollarSign, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
-import { Sparkles } from "lucide-react";
+import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
+
+// Stock price line colors
+const PRICE_UP_COLOR = "#00C805";
+const PRICE_DOWN_COLOR = "#FF6A26";
 
 interface EmotionChartProps {
   symbol: string;
@@ -32,9 +36,17 @@ interface EmotionChartProps {
   end?: string;
 }
 
-// Emotion colors - includes trading-specific psychology
-const emotionColors: Record<string, string> = {
-  // Core emotions
+// Default signal emotions to display
+const DEFAULT_SIGNAL_EMOTIONS = ["Euphoria", "Regret", "Capitulation", "FOMO", "Greed"];
+
+// Emotion colors - trading-specific psychology
+const EMOTION_COLORS: Record<string, string> = {
+  "Euphoria": "hsl(300 80% 60%)",      // Magenta - peak excitement
+  "Regret": "hsl(220 60% 50%)",        // Muted blue - sadness
+  "Capitulation": "hsl(0 50% 45%)",    // Dark red - surrender
+  "FOMO": "hsl(25 95% 55%)",           // Orange - urgency
+  "Greed": "hsl(50 100% 45%)",         // Gold - money/excess
+  // Additional core emotions
   "Excitement": "hsl(168 84% 45%)",
   "Fear": "hsl(0 72% 51%)",
   "Hopefulness": "hsl(142 71% 45%)",
@@ -45,78 +57,497 @@ const emotionColors: Record<string, string> = {
   "Humor": "hsl(45 93% 47%)",
   "Grit": "hsl(262 83% 58%)",
   "Surprise": "hsl(173 80% 40%)",
-  // Trading-specific psychology
-  "FOMO": "hsl(25 95% 55%)",        // Orange - urgency/anxiety
-  "Greed": "hsl(50 100% 45%)",      // Gold - money/excess
-  "Capitulation": "hsl(0 50% 35%)", // Dark red - surrender
-  "Euphoria": "hsl(300 80% 60%)",   // Magenta - peak excitement
-  "Regret": "hsl(220 60% 50%)",     // Muted blue - sadness
 };
 
-// Emotion categories for signal detection
-const SIGNAL_EMOTIONS = ["FOMO", "Greed", "Capitulation", "Euphoria", "Regret"];
+// Custom tooltip for stacked emotion bars
+function EmotionStackedTooltip({ active, payload, label, priceColor }: any) {
+  if (!active || !payload || !payload.length) return null;
 
-const getTrendIcon = (trend: string) => {
-  switch (trend) {
-    case "rising":
-      return <TrendingUp className="h-3 w-3 text-emerald-400" />;
-    case "falling":
-      return <TrendingDown className="h-3 w-3 text-red-400" />;
-    default:
-      return <Minus className="h-3 w-3 text-muted-foreground" />;
+  const dataPoint = payload[0]?.payload;
+  
+  if (dataPoint?.isEmpty) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
+        <span className="font-semibold text-card-foreground">{label}</span>
+        <p className="text-sm text-muted-foreground mt-1">No data available yet</p>
+        {dataPoint.price != null && (
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
+            <DollarSign className="h-3 w-3" style={{ color: priceColor || PRICE_UP_COLOR }} />
+            <span className="font-semibold" style={{ color: priceColor || PRICE_UP_COLOR }}>${dataPoint.price.toFixed(2)}</span>
+          </div>
+        )}
+      </div>
+    );
   }
-};
 
-const getIntensityColor = (intensity: string) => {
-  switch (intensity) {
-    case "extreme":
-      return "bg-red-500/20 text-red-400 border-red-500/30";
-    case "high":
-      return "bg-orange-500/20 text-orange-400 border-orange-500/30";
-    case "moderate":
-      return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-    default:
-      return "bg-muted text-muted-foreground border-border";
+  const price = dataPoint?.price;
+  const emotions = DEFAULT_SIGNAL_EMOTIONS.map(name => ({
+    name,
+    score: dataPoint?.[name] || 0,
+    color: EMOTION_COLORS[name]
+  })).filter(e => e.score > 0);
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[200px]">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-semibold text-card-foreground">{label}</span>
+      </div>
+      
+      {price != null && (
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
+          <DollarSign className="h-4 w-4" style={{ color: priceColor || PRICE_UP_COLOR }} />
+          <span className="font-bold text-lg" style={{ color: priceColor || PRICE_UP_COLOR }}>${price.toFixed(2)}</span>
+        </div>
+      )}
+      
+      {emotions.length > 0 && (
+        <div className="space-y-1.5">
+          {emotions.map((emotion, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-sm">
+              <div 
+                className="w-3 h-3 rounded-sm flex-shrink-0" 
+                style={{ backgroundColor: emotion.color }}
+              />
+              <span className="text-card-foreground flex-1">{emotion.name}</span>
+              <span className="text-muted-foreground font-medium">{emotion.score}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Custom bar shape that expands to fill hour width for 5-min view
+const WideBarShape = (props: any) => {
+  const { x, y, width, height, fill, is5MinView, activeHour, radius } = props;
+  
+  if (!is5MinView || height <= 0) {
+    return <Rectangle {...props} />;
   }
+  
+  const hourWidth = width * 12; // 12 5-minute slots per hour
+  const slotIndex = Math.floor(props.index % 12);
+  const newX = x - (slotIndex * width);
+  
+  const hourIndex = Math.floor(props.index / 12);
+  const isHovered = activeHour === hourIndex;
+  const opacity = isHovered ? 0.7 : 0.35;
+  
+  return (
+    <Rectangle
+      x={newX}
+      y={y}
+      width={hourWidth}
+      height={height}
+      fill={fill}
+      fillOpacity={opacity}
+      radius={radius}
+    />
+  );
 };
 
 export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
-  const [viewMode, setViewMode] = useState<"bar" | "radar" | "timeline">("bar");
-  const [selectedEmotions, setSelectedEmotions] = useState<string[]>(["Excitement", "Fear", "FOMO", "Greed"]);
+  const [showPriceOverlay, setShowPriceOverlay] = useState(true);
+  const [activeHour, setActiveHour] = useState<number | null>(null);
+  const [marketSession, setMarketSession] = useState<MarketSession>("regular");
+
+  // Determine view type
+  const is1DView = timeRange === '1D';
+  const is24HView = timeRange === '24H';
+  const is5MinView = is1DView;
+  const showPriceToggle = is1DView || is24HView;
+
+  // Fetch emotion history for hourly data
+  const periodType = (is1DView || is24HView) ? "hourly" : "daily";
+  const days = is1DView ? 1 : is24HView ? 1 : timeRange === '7D' ? 7 : 30;
+  
+  const { data: historyData, isLoading: historyLoading, refetch, isFetching } = useEmotionHistory(symbol, days, periodType);
+  
+  // Fallback to live AI analysis if no history
+  const { data: liveData, isLoading: liveLoading, forceRefresh } = useEmotionAnalysis(symbol, timeRange);
+
+  // Fetch stock price data for overlay - use 1D for 5-min data
+  const priceTimeRange: StockTimeRange = is5MinView ? '1D' : '24H';
+  const { data: priceData, isLoading: priceLoading } = useStockPrice(
+    symbol,
+    priceTimeRange,
+    showPriceOverlay && showPriceToggle
+  );
+
+  // Determine price line color
+  const priceLineColor = useMemo(() => {
+    if (!priceData?.prices?.length || !priceData?.previousClose) return PRICE_UP_COLOR;
+    const latestPrice = priceData.prices[priceData.prices.length - 1]?.price;
+    return latestPrice >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
+  }, [priceData]);
+
+  // Get session time range
+  const sessionRange = SESSION_RANGES[marketSession];
+
+  // Build chart data for stacked bar view
+  const chartDataWithPrice = useMemo(() => {
+    if (!is1DView && !is24HView) return [];
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+
+    // For 1D view, create 5-minute slots within session hours
+    if (is5MinView) {
+      const slots: any[] = [];
+      const startHour = sessionRange.startHour;
+      const endHour = sessionRange.endHour;
+
+      for (let h = startHour; h < endHour; h++) {
+        for (let m = 0; m < 60; m += 5) {
+          const slotTime = new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate(), h, m);
+          const hourLabel = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
+          
+          const slot: any = {
+            time: hourLabel,
+            timestamp: slotTime.getTime(),
+            hourIndex: h - startHour,
+            slotIndex: (h - startHour) * 12 + Math.floor(m / 5),
+            isHourStart: m === 0,
+            isEmpty: true,
+          };
+
+          // Initialize emotion values
+          DEFAULT_SIGNAL_EMOTIONS.forEach(emotion => {
+            slot[emotion] = 0;
+          });
+
+          slots.push(slot);
+        }
+      }
+
+      // Fill in emotion data from history
+      if (historyData?.data) {
+        const todayData = historyData.data.filter(point => {
+          const pointDate = new Date(point.recorded_at);
+          return pointDate.getTime() >= todayStart.getTime();
+        });
+
+        todayData.forEach(point => {
+          const pointDate = new Date(point.recorded_at);
+          const hour = pointDate.getHours();
+          
+          if (hour >= startHour && hour < endHour) {
+            // Find all slots for this hour and fill them
+            slots.forEach(slot => {
+              const slotDate = new Date(slot.timestamp);
+              if (slotDate.getHours() === hour) {
+                slot.isEmpty = false;
+                DEFAULT_SIGNAL_EMOTIONS.forEach(emotion => {
+                  if (point.emotions[emotion]) {
+                    slot[emotion] = point.emotions[emotion];
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+
+      // Align price data
+      if (priceData?.prices && showPriceOverlay) {
+        const alignedPrices = alignPricesToFiveMinSlots(priceData.prices, startHour, endHour);
+        
+        slots.forEach(slot => {
+          const slotDate = new Date(slot.timestamp);
+          const slotHour = slotDate.getHours();
+          const slotMinute = slotDate.getMinutes();
+          const slotIndex = (slotHour - startHour) * 12 + Math.floor(slotMinute / 5);
+          
+          const matchingPrice = alignedPrices.get(slotIndex);
+          if (matchingPrice) {
+            slot.price = matchingPrice.price;
+          }
+        });
+      }
+
+      return slots;
+    }
+
+    // For 24H view, create hourly slots
+    const hourSlots: any[] = [];
+    for (let h = 0; h < 24; h++) {
+      const hourLabel = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
+      const slot: any = {
+        time: hourLabel,
+        hourIndex: h,
+        isEmpty: true,
+      };
+
+      DEFAULT_SIGNAL_EMOTIONS.forEach(emotion => {
+        slot[emotion] = 0;
+      });
+
+      hourSlots.push(slot);
+    }
+
+    // Fill from history data
+    if (historyData?.data) {
+      historyData.data.forEach(point => {
+        const pointDate = new Date(point.recorded_at);
+        const hour = pointDate.getHours();
+        
+        if (hourSlots[hour]) {
+          hourSlots[hour].isEmpty = false;
+          DEFAULT_SIGNAL_EMOTIONS.forEach(emotion => {
+            if (point.emotions[emotion]) {
+              hourSlots[hour][emotion] = point.emotions[emotion];
+            }
+          });
+        }
+      });
+    }
+
+    return hourSlots;
+  }, [is1DView, is24HView, is5MinView, historyData, priceData, showPriceOverlay, sessionRange]);
+
+  // Calculate bar domain
+  const barDomain = useMemo(() => {
+    if (chartDataWithPrice.length === 0) return [0, 100];
+    
+    let maxStackedValue = 0;
+    chartDataWithPrice.forEach(slot => {
+      let stackTotal = 0;
+      DEFAULT_SIGNAL_EMOTIONS.forEach(emotion => {
+        stackTotal += slot[emotion] || 0;
+      });
+      maxStackedValue = Math.max(maxStackedValue, stackTotal);
+    });
+    
+    return [0, Math.max(maxStackedValue * 2, 100)];
+  }, [chartDataWithPrice]);
+
+  // Calculate price domain
+  const priceDomain = useMemo(() => {
+    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
+      return ['auto', 'auto'];
+    }
+    const prices = priceData.prices.map(p => p.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const range = maxPrice - minPrice;
+    const padding = Math.max(range * 0.03, 0.25);
+    const roundTo = 0.25;
+    return [
+      Math.floor((minPrice - padding) / roundTo) * roundTo,
+      Math.ceil((maxPrice + padding) / roundTo) * roundTo
+    ];
+  }, [priceData, showPriceOverlay]);
+
+  const isLoading = historyLoading || liveLoading;
+  const hasData = chartDataWithPrice.some(d => !d.isEmpty) || (liveData?.emotions?.length ?? 0) > 0;
+
+  if (isLoading) {
+    return <AIAnalysisLoader symbol={symbol} analysisType="emotions" />;
+  }
+
+  // For non-today views or no data, show horizontal bar chart fallback
+  if (!is1DView && !is24HView) {
+    return <HorizontalEmotionChart symbol={symbol} timeRange={timeRange} />;
+  }
+
+  return (
+    <div className="h-[600px] w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Brain className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold">Market Psychology</h4>
+              {historyData?.data && historyData.data.length > 0 && (
+                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs">
+                  {historyData.data.length} snapshots
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {is1DView && (
+            <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
+          )}
+          
+          {showPriceToggle && (
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
+              <Switch
+                checked={showPriceOverlay}
+                onCheckedChange={setShowPriceOverlay}
+                className="data-[state=checked]:bg-primary"
+                style={showPriceOverlay ? { backgroundColor: priceLineColor } : undefined}
+              />
+            </div>
+          )}
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="h-8 px-3 text-xs"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {DEFAULT_SIGNAL_EMOTIONS.map(emotion => (
+          <div key={emotion} className="flex items-center gap-1.5 px-2 py-1 rounded bg-card/50 border border-border text-xs">
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: EMOTION_COLORS[emotion] }} />
+            <span>{emotion}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <div className="h-[480px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart
+            data={chartDataWithPrice}
+            margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+            barCategoryGap={is5MinView ? 0 : "10%"}
+            barGap={0}
+            onMouseMove={(state: any) => {
+              if (state.activePayload?.[0]?.payload) {
+                setActiveHour(state.activePayload[0].payload.hourIndex);
+              }
+            }}
+            onMouseLeave={() => setActiveHour(null)}
+          >
+            {/* CartesianGrid hidden for cleaner look */}
+            <XAxis 
+              dataKey="time"
+              stroke="hsl(215 20% 55%)" 
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              interval={is5MinView ? 11 : 0}
+              tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
+                if (is5MinView) {
+                  const item = chartDataWithPrice[payload.index] as any;
+                  if (!item?.isHourStart) return null;
+                }
+                return (
+                  <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                    {payload.value}
+                  </text>
+                );
+              }}
+            />
+            <YAxis 
+              yAxisId="left"
+              stroke="hsl(215 20% 55%)" 
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={10}
+              tick={false}
+              domain={barDomain as [number, number]}
+            />
+            {showPriceOverlay && (
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                stroke={priceLineColor}
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                width={10}
+                tick={false}
+                domain={priceDomain as [number, number]}
+              />
+            )}
+            <Tooltip content={<EmotionStackedTooltip priceColor={priceLineColor} />} />
+            
+            {/* Stacked emotion bars */}
+            {DEFAULT_SIGNAL_EMOTIONS.map((emotion, idx) => (
+              <Bar 
+                key={emotion}
+                yAxisId="left"
+                dataKey={emotion}
+                stackId="emotions"
+                fill={EMOTION_COLORS[emotion]}
+                shape={(props: any) => (
+                  <WideBarShape 
+                    {...props} 
+                    is5MinView={is5MinView}
+                    activeHour={activeHour}
+                    radius={idx === DEFAULT_SIGNAL_EMOTIONS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                  />
+                )}
+                activeBar={false}
+              />
+            ))}
+            
+            {/* Price Line Overlay */}
+            {showPriceOverlay && (
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="price"
+                stroke={priceLineColor}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
+                connectNulls
+              />
+            )}
+            
+            {/* Previous Close Reference Line */}
+            {showPriceOverlay && is5MinView && priceData?.previousClose && (
+              <ReferenceLine
+                yAxisId="right"
+                y={priceData.previousClose}
+                stroke="hsl(215 20% 65% / 0.5)"
+                strokeDasharray="2 3"
+                strokeWidth={1}
+              />
+            )}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// Horizontal bar chart for 1H/6H/7D/30D views
+function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRange: TimeRange }) {
   const { data, isLoading, error, forceRefresh, isFetching } = useEmotionAnalysis(symbol, timeRange);
   
   const chartData = useMemo(() => {
-    if (!data?.emotions || data.emotions.length === 0) {
-      return [];
-    }
+    if (!data?.emotions || data.emotions.length === 0) return [];
     
-    return data.emotions
+    // Filter to show signal emotions first, then others
+    const signalEmotions = data.emotions.filter((e: EmotionScore) => 
+      DEFAULT_SIGNAL_EMOTIONS.includes(e.name)
+    );
+    const otherEmotions = data.emotions.filter((e: EmotionScore) => 
+      !DEFAULT_SIGNAL_EMOTIONS.includes(e.name)
+    );
+    
+    return [...signalEmotions, ...otherEmotions]
       .map((emotion: EmotionScore) => ({
         ...emotion,
-        fill: emotionColors[emotion.name] || "hsl(215 20% 55%)",
+        fill: EMOTION_COLORS[emotion.name] || "hsl(215 20% 55%)",
       }))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
   }, [data]);
-
-  const timelineData = useMemo(() => {
-    if (!data?.historicalData || data.historicalData.length === 0) {
-      return [];
-    }
-    
-    return data.historicalData.map((point: EmotionTimePoint) => ({
-      label: point.label,
-      timestamp: point.timestamp,
-      ...point.emotions,
-    }));
-  }, [data]);
-
-  const toggleEmotion = (emotion: string) => {
-    setSelectedEmotions(prev => 
-      prev.includes(emotion) 
-        ? prev.filter(e => e !== emotion)
-        : [...prev, emotion].slice(-5) // Max 5 emotions at once
-    );
-  };
 
   if (isLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="emotions" />;
@@ -142,9 +573,8 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
 
   return (
     <div className="h-[550px] w-full">
-      {/* Prominent metadata header */}
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
-      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-primary" />
           <div>
             <div className="flex items-center gap-2">
@@ -152,22 +582,10 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
               {data?.cached && (
                 <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs">cached</span>
               )}
-              {data?.aggregated && (
-                <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
-                  {data.snapshotCount} snapshots
-                </span>
-              )}
             </div>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+            <div className="text-xs text-muted-foreground mt-0.5">
               {data?.messageCount && data.messageCount > 0 && (
-                <span className="flex items-center gap-1">
-                  <span className="font-semibold text-primary">{data.messageCount.toLocaleString()}</span> messages analyzed
-                </span>
-              )}
-              {data?.timestamp && (
-                <span className="flex items-center gap-1">
-                  Updated: {new Date(data.timestamp).toLocaleTimeString()}
-                </span>
+                <span>{data.messageCount.toLocaleString()} messages analyzed</span>
               )}
             </div>
           </div>
@@ -179,12 +597,6 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
               Dominant: {data.dominantEmotion}
             </Badge>
           )}
-          {data?.emotionalIntensity && (
-            <Badge variant="outline" className={`text-xs ${getIntensityColor(data.emotionalIntensity)}`}>
-              {data.emotionalIntensity} intensity
-            </Badge>
-          )}
-          
           <Button 
             variant="ghost" 
             size="sm" 
@@ -195,229 +607,95 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
             <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
             {isFetching ? 'Refreshing...' : 'Refresh'}
           </Button>
-          
-          <div className="flex gap-1 ml-2">
-            <Button
-              variant={viewMode === "bar" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setViewMode("bar")}
-              title="Bar Chart"
-            >
-              <BarChart3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "radar" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setViewMode("radar")}
-              title="Radar Chart"
-            >
-              <Target className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "timeline" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setViewMode("timeline")}
-              title="Timeline View"
-            >
-              <Activity className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
       </div>
       
-      {viewMode === "bar" ? (
-        <ResponsiveContainer width="100%" height="75%">
-          <BarChart 
-            data={chartData} 
-            layout="vertical"
-            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+      <ResponsiveContainer width="100%" height="75%">
+        <BarChart 
+          data={chartData} 
+          layout="vertical"
+          margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+        >
+          <XAxis 
+            type="number"
+            domain={[0, 100]}
+            stroke="hsl(215 20% 55%)" 
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis 
+            type="category"
+            dataKey="name"
+            stroke="hsl(215 20% 55%)" 
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            width={110}
+            tick={({ x, y, payload }) => (
+              <g transform={`translate(${x},${y})`}>
+                <text
+                  x={-5}
+                  y={0}
+                  dy={4}
+                  textAnchor="end"
+                  fill="hsl(210 40% 98%)"
+                  fontSize={12}
+                >
+                  {payload.value}
+                </text>
+              </g>
+            )}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--card))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: "8px",
+              boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
+            }}
+            labelStyle={{ color: "hsl(var(--card-foreground))" }}
+            formatter={(value: number, name: string, props: any) => [
+              <div key="tooltip" className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-lg">{value}</span>
+                  <span className="text-muted-foreground text-xs">/ 100 score</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {props.payload.percentage}% of messages
+                </div>
+              </div>,
+              ""
+            ]}
+          />
+          <Bar 
+            dataKey="score" 
+            radius={[0, 4, 4, 0]}
+            maxBarSize={35}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" horizontal={false} />
-            <XAxis 
-              type="number"
-              domain={[0, 100]}
-              stroke="hsl(215 20% 55%)" 
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis 
-              type="category"
-              dataKey="name"
-              stroke="hsl(215 20% 55%)" 
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              width={110}
-              tick={({ x, y, payload }) => (
-                <g transform={`translate(${x},${y})`}>
-                  <text
-                    x={-5}
-                    y={0}
-                    dy={4}
-                    textAnchor="end"
-                    fill="hsl(210 40% 98%)"
-                    fontSize={12}
-                  >
-                    {payload.value}
-                  </text>
-                </g>
-              )}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-              }}
-              labelStyle={{ color: "hsl(var(--card-foreground))" }}
-              formatter={(value: number, name: string, props: any) => [
-                <div key="tooltip" className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-lg">{value}</span>
-                    <span className="text-muted-foreground text-xs">/ 100 score</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span>{props.payload.percentage}% of messages</span>
-                    {getTrendIcon(props.payload.trend)}
-                    <span className="text-muted-foreground">{props.payload.trend}</span>
-                  </div>
-                  {props.payload.examples?.length > 0 && (
-                    <div className="text-xs text-muted-foreground italic border-t border-border pt-2 mt-1">
-                      "{props.payload.examples[0]}"
-                    </div>
-                  )}
-                </div>,
-                ""
-              ]}
-            />
-            <Bar 
-              dataKey="score" 
-              radius={[0, 4, 4, 0]}
-              maxBarSize={35}
-            >
-              {chartData.map((entry: any, index: number) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      ) : viewMode === "radar" ? (
-        <ResponsiveContainer width="100%" height="75%">
-          <RadarChart data={chartData} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-            <PolarGrid stroke="hsl(217 33% 17%)" />
-            <PolarAngleAxis 
-              dataKey="name" 
-              tick={{ fill: "hsl(210 40% 98%)", fontSize: 11 }}
-            />
-            <PolarRadiusAxis 
-              angle={90} 
-              domain={[0, 100]} 
-              tick={{ fill: "hsl(215 20% 55%)", fontSize: 10 }}
-            />
-            <Radar
-              name="Score"
-              dataKey="score"
-              stroke="hsl(199 89% 48%)"
-              fill="hsl(199 89% 48%)"
-              fillOpacity={0.3}
-              strokeWidth={2}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-      ) : (
-        // Timeline view
-        <div className="h-[75%] flex flex-col">
-          {/* Emotion selector pills */}
-          <div className="flex flex-wrap gap-2 mb-4 px-2">
-            {Object.entries(emotionColors).map(([emotion, color]) => (
-              <button
-                key={emotion}
-                onClick={() => toggleEmotion(emotion)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all border ${
-                  selectedEmotions.includes(emotion)
-                    ? "border-primary/50 bg-primary/10"
-                    : "border-border bg-card/30 opacity-60 hover:opacity-100"
-                }`}
-              >
-                <div 
-                  className="w-2 h-2 rounded-full" 
-                  style={{ backgroundColor: color }}
-                />
-                <span className="text-foreground">{emotion}</span>
-              </button>
+            {chartData.map((entry: any, index: number) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
             ))}
-          </div>
-          
-          {timelineData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={timelineData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" />
-                <XAxis 
-                  dataKey="label" 
-                  stroke="hsl(215 20% 55%)" 
-                  fontSize={11}
-                  tickLine={false}
-                />
-                <YAxis 
-                  domain={[0, 100]} 
-                  stroke="hsl(215 20% 55%)" 
-                  fontSize={11}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-                  }}
-                  labelStyle={{ color: "hsl(var(--card-foreground))" }}
-                />
-                {selectedEmotions.map((emotion) => (
-                  <Line
-                    key={emotion}
-                    type="monotone"
-                    dataKey={emotion}
-                    stroke={emotionColors[emotion]}
-                    strokeWidth={2}
-                    dot={{ fill: emotionColors[emotion], strokeWidth: 0, r: 4 }}
-                    activeDot={{ r: 6, strokeWidth: 0 }}
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <p className="text-sm">No historical data available yet</p>
-            </div>
-          )}
-        </div>
-      )}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
       
-      {/* Legend with trends */}
-      {viewMode !== "timeline" && (
-        <div className="flex flex-wrap gap-3 mt-4 justify-center">
-          {chartData.slice(0, 5).map((emotion: any) => (
+      {/* Legend */}
+      <div className="flex flex-wrap gap-3 mt-4 justify-center">
+        {chartData.slice(0, 5).map((emotion: any) => (
+          <div 
+            key={emotion.name}
+            className="flex items-center gap-2 text-xs bg-card/50 px-3 py-1.5 rounded-full border border-border"
+          >
             <div 
-              key={emotion.name}
-              className="flex items-center gap-2 text-xs bg-card/50 px-3 py-1.5 rounded-full border border-border"
-            >
-              <div 
-                className="w-2.5 h-2.5 rounded-full" 
-                style={{ backgroundColor: emotion.fill }}
-              />
-              <span className="text-foreground font-medium">{emotion.name}</span>
-              <span className="text-muted-foreground">{emotion.score}</span>
-              {getTrendIcon(emotion.trend)}
-            </div>
-          ))}
-        </div>
-      )}
+              className="w-2.5 h-2.5 rounded-full" 
+              style={{ backgroundColor: emotion.fill }}
+            />
+            <span className="text-foreground font-medium">{emotion.name}</span>
+            <span className="text-muted-foreground">{emotion.score}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
