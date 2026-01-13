@@ -25,6 +25,7 @@ const generateDataPoints = (timeRange: string) => {
   const ranges: Record<string, { points: number; intervalMs: number }> = {
     '1H': { points: 12, intervalMs: 5 * 60 * 1000 }, // 5 min intervals
     '6H': { points: 24, intervalMs: 15 * 60 * 1000 }, // 15 min intervals
+    '1D': { points: now.getHours() + 1, intervalMs: 60 * 60 * 1000 }, // Today: hours since midnight
     '24H': { points: 24, intervalMs: 60 * 60 * 1000 }, // 1 hour intervals
     '7D': { points: 28, intervalMs: 6 * 60 * 60 * 1000 }, // 6 hour intervals
     '30D': { points: 30, intervalMs: 24 * 60 * 60 * 1000 }, // 1 day intervals
@@ -33,16 +34,23 @@ const generateDataPoints = (timeRange: string) => {
   const config = ranges[timeRange] || ranges['24H'];
   const data = [];
   
-  for (let i = config.points - 1; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * config.intervalMs);
+  // For 1D (Today), start from midnight in user's timezone
+  const startTime = timeRange === '1D' 
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    : now.getTime() - (config.points - 1) * config.intervalMs;
+  
+  for (let i = 0; i < config.points; i++) {
+    const time = new Date(startTime + i * config.intervalMs);
     const baseValue = 55 + Math.sin(i / 4) * 15;
     const noise = (Math.random() - 0.5) * 10;
     
     let timeLabel: string;
     if (timeRange === '7D' || timeRange === '30D') {
-      timeLabel = time.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      // Use user's locale for date formatting
+      timeLabel = time.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     } else {
-      timeLabel = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      // Use user's locale for time formatting
+      timeLabel = time.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
     }
     
     data.push({

@@ -29,7 +29,7 @@ import {
   ExternalLink
 } from "lucide-react";
 
-type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
+type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 type HistoryTimeRange = '24H' | 'TODAY' | '1W' | '30D';
 
 export default function SymbolPage() {
@@ -57,12 +57,23 @@ export default function SymbolPage() {
     }
   }, [historyTimeRange]);
   
-  // Calculate date range based on selection
+  // Calculate date range based on selection (timezone-aware)
   const { start, end } = useMemo(() => {
     const now = new Date();
+    
+    // Handle "1D" (Today) - from midnight in user's timezone to now
+    if (timeRange === '1D') {
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return {
+        start: startOfDay.toISOString(),
+        end: now.toISOString()
+      };
+    }
+    
     const ranges: Record<TimeRange, number> = {
       '1H': 1/24,
       '6H': 0.25,
+      '1D': 1, // fallback, handled above
       '24H': 1,
       '7D': 7,
       '30D': 30
@@ -70,8 +81,8 @@ export default function SymbolPage() {
     const days = ranges[timeRange] || 7;
     const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
     return {
-      start: startDate.toISOString().split('T')[0],
-      end: now.toISOString().split('T')[0]
+      start: startDate.toISOString(),
+      end: now.toISOString()
     };
   }, [timeRange]);
   
@@ -354,9 +365,18 @@ function MetricCard({
 }
 
 function TimeRangeSelector({ value, onChange }: { value: TimeRange; onChange: (v: TimeRange) => void }) {
+  const labels: Record<TimeRange, string> = {
+    '1H': '1H',
+    '6H': '6H',
+    '1D': 'Today',
+    '24H': '24H',
+    '7D': '7D',
+    '30D': '30D',
+  };
+  
   return (
     <div className="flex gap-1">
-      {(["1H", "6H", "24H", "7D", "30D"] as const).map((range) => (
+      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map((range) => (
         <Button
           key={range}
           variant={range === value ? "default" : "ghost"}
@@ -364,7 +384,7 @@ function TimeRangeSelector({ value, onChange }: { value: TimeRange; onChange: (v
           className="px-3"
           onClick={() => onChange(range)}
         >
-          {range}
+          {labels[range]}
         </Button>
       ))}
     </div>

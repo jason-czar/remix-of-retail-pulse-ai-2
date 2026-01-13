@@ -17,7 +17,7 @@ import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
-type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
+type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
 interface NarrativeChartProps {
   symbol: string;

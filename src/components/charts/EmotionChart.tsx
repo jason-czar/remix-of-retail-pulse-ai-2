@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { Sparkles } from "lucide-react";
 
-type TimeRange = '1H' | '6H' | '24H' | '7D' | '30D';
+type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
 interface EmotionChartProps {
   symbol: string;
