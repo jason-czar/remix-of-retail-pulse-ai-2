@@ -95,9 +95,9 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
     if (timeRange === '1D') {
       const now = new Date();
       const currentHour = now.getHours();
-      const START_HOUR = 5;  // 5 AM
-      const END_HOUR = 18;   // 6 PM (inclusive)
-      
+      const START_HOUR = 7;  // 7 AM
+      const END_HOUR = 16;   // 4 PM (inclusive)
+
       // Create skeleton for hours 5 AM to 6 PM
       const hourSlots: { time: string; hourIndex: number; sentiment: number | null; bullish: number | null; bearish: number | null; isEmpty: boolean }[] = [];
       

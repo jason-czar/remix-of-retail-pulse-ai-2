@@ -193,11 +193,11 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     const isTodayView = timeRange === '1D';
     
     // For '1D' (Today), use 5-minute slots for granular price line
-    // Show only 5 AM to 6 PM (hours 5-18, 14 hours total)
+    // Show only 7 AM to 4 PM (hours 7-16, 10 hours total)
     if (isTodayView) {
-      const START_HOUR = 5;  // 5 AM
-      const END_HOUR = 18;   // 6 PM (inclusive)
-      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 14 hours
+      const START_HOUR = 7;  // 7 AM
+      const END_HOUR = 16;   // 4 PM (inclusive)
+      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 10 hours
       const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR; // 168 slots
       
       // First, collect hourly volume data

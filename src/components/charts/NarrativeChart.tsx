@@ -641,9 +641,9 @@ function HourlyStackedNarrativeChart({
     // Show only 5 AM to 6 PM (hours 5-18, 14 hours total)
     if (timeRange === '1D') {
       const SLOTS_PER_HOUR = 12;
-      const START_HOUR = 5;  // 5 AM
-      const END_HOUR = 18;   // 6 PM (inclusive, so hours 5-18 = 14 hours)
-      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 14 hours
+      const START_HOUR = 7;  // 7 AM
+      const END_HOUR = 16;   // 4 PM (inclusive, so hours 7-16 = 10 hours)
+      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 10 hours
       const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR; // 168 slots
       
       // First, collect hourly narrative data
