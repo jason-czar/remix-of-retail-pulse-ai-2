@@ -22,6 +22,7 @@ export interface EmotionAnalysisResult {
   historicalData: EmotionTimePoint[];
   messageCount: number;
   cached: boolean;
+  timestamp?: string;
 }
 
 export function useEmotionAnalysis(symbol: string, timeRange: string = "24H") {
@@ -37,7 +38,10 @@ export function useEmotionAnalysis(symbol: string, timeRange: string = "24H") {
         throw error;
       }
 
-      return data as EmotionAnalysisResult;
+      return {
+        ...data,
+        timestamp: new Date().toISOString(),
+      } as EmotionAnalysisResult;
     },
     enabled: !!symbol,
     staleTime: 30 * 60 * 1000, // 30 minutes

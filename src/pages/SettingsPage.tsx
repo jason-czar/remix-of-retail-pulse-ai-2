@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import AlertsManager from "@/components/AlertsManager";
 import HistoryBackfillUploader from "@/components/HistoryBackfillUploader";
+import ManualSnapshotTrigger from "@/components/ManualSnapshotTrigger";
 import { toast } from "sonner";
 
 interface ApiKey {
@@ -422,7 +423,8 @@ export default function SettingsPage() {
           </TabsContent>
 
           {/* Data Management Tab */}
-          <TabsContent value="data">
+          <TabsContent value="data" className="space-y-6">
+            <ManualSnapshotTrigger />
             <HistoryBackfillUploader />
           </TabsContent>
 
