@@ -404,10 +404,10 @@ function HourlyStackedNarrativeChart({
   symbol: string; 
   timeRange: '1D' | '24H';
 }) {
-  const hours = timeRange === '1D' ? 1 : 1; // Both use 1 day of data
+  // Fetch 2 days of data to ensure we have today's full data in any timezone
   const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(
     symbol, 
-    hours, 
+    2, 
     "hourly"
   );
 
@@ -416,13 +416,23 @@ function HourlyStackedNarrativeChart({
       return { stackedChartData: [], totalMessages: 0 };
     }
 
-    // For 1D, filter to today only (in user's timezone)
+    // Get today's date boundaries in user's local timezone (12:00 AM to 11:59 PM)
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    
+    // For 24H, get last 24 hours from now
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
     const filteredData = timeRange === '1D' 
-      ? historyData.data.filter(point => new Date(point.recorded_at) >= todayStart)
-      : historyData.data;
+      ? historyData.data.filter(point => {
+          const pointDate = new Date(point.recorded_at);
+          return pointDate >= todayStart && pointDate <= todayEnd;
+        })
+      : historyData.data.filter(point => {
+          const pointDate = new Date(point.recorded_at);
+          return pointDate >= twentyFourHoursAgo && pointDate <= now;
+        });
 
     // Group data by hour
     const byHour = new Map<string, { 
