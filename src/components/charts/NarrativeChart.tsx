@@ -16,7 +16,7 @@ import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis"
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToHourSlots, alignPricesToDateSlots } from "@/lib/stock-price-api";
+import { alignPricesToHourSlots, alignPricesToDateSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
 import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle, DollarSign } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
@@ -573,29 +573,25 @@ function HourlyStackedNarrativeChart({
   // Fetch stock price data
   const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
 
-  const { stackedChartData, totalMessages, hasAnyData } = useMemo(() => {
-    // For "Today" view, always generate 24-hour skeleton
+  const { stackedChartData, totalMessages, hasAnyData, is5MinView } = useMemo(() => {
+    // For "Today" view, generate 5-minute slots (288 total) for granular price line
     if (timeRange === '1D') {
-      // Create 24-hour slots from 12 AM to 11 PM
-      const hourSlots: Map<number, { 
-        hour: string; 
-        hourIndex: number;
+      // Create 288 5-minute slots (24 hours * 12 slots per hour)
+      const SLOTS_PER_HOUR = 12;
+      const TOTAL_SLOTS = 24 * SLOTS_PER_HOUR;
+      
+      // First, collect hourly narrative data
+      const hourlyNarratives: Map<number, { 
         narratives: { name: string; count: number; sentiment: string }[];
         totalMessages: number;
       }> = new Map();
       
       // Initialize all 24 hours
       for (let h = 0; h < 24; h++) {
-        const hourLabel = h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`;
-        hourSlots.set(h, {
-          hour: hourLabel,
-          hourIndex: h,
-          narratives: [],
-          totalMessages: 0,
-        });
+        hourlyNarratives.set(h, { narratives: [], totalMessages: 0 });
       }
       
-      // Fill in actual data if available
+      // Fill in actual narrative data if available
       if (historyData?.data && historyData.data.length > 0) {
         const filteredData = historyData.data.filter(point => {
           const pointDate = new Date(point.recorded_at);
@@ -606,7 +602,7 @@ function HourlyStackedNarrativeChart({
           const date = new Date(point.recorded_at);
           const hourIndex = date.getHours();
           
-          const slot = hourSlots.get(hourIndex);
+          const slot = hourlyNarratives.get(hourIndex);
           if (slot) {
             slot.totalMessages += point.message_count;
             
@@ -629,24 +625,41 @@ function HourlyStackedNarrativeChart({
       }
       
       // Find max messages for relative volume
-      const slots = Array.from(hourSlots.values());
-      const maxMessages = Math.max(...slots.map(s => s.totalMessages), 1);
+      const hourData = Array.from(hourlyNarratives.values());
+      const maxMessages = Math.max(...hourData.map(h => h.totalMessages), 1);
       
-      // Build chart data for all 24 hours
-      const stackedChartData = slots
-        .sort((a, b) => a.hourIndex - b.hourIndex)
-        .map(hourData => {
-          const topNarratives = hourData.narratives
+      // Build 288-slot chart data
+      const stackedChartData: Record<string, any>[] = [];
+      
+      for (let slotIdx = 0; slotIdx < TOTAL_SLOTS; slotIdx++) {
+        const hour = Math.floor(slotIdx / SLOTS_PER_HOUR);
+        const minuteInHour = (slotIdx % SLOTS_PER_HOUR) * 5;
+        const isHourStart = slotIdx % SLOTS_PER_HOUR === 0;
+        
+        // Time label: show hour label at hour boundaries, otherwise just minutes
+        const hourLabel = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+        const timeLabel = isHourStart ? hourLabel : `${hour}:${minuteInHour.toString().padStart(2, '0')}`;
+        
+        const flatData: Record<string, any> = {
+          time: timeLabel,
+          slotIndex: slotIdx,
+          hourIndex: hour,
+          isHourStart,
+          totalMessages: 0,
+          volumePercent: 0,
+          isEmpty: true,
+        };
+        
+        // Only add narrative bar data at hour boundaries
+        if (isHourStart) {
+          const hourNarr = hourlyNarratives.get(hour)!;
+          const topNarratives = hourNarr.narratives
             .sort((a, b) => b.count - a.count)
             .slice(0, MAX_SEGMENTS);
           
-          const flatData: Record<string, any> = {
-            hour: hourData.hour,
-            hourIndex: hourData.hourIndex,
-            totalMessages: hourData.totalMessages,
-            volumePercent: (hourData.totalMessages / maxMessages) * 100,
-            isEmpty: hourData.totalMessages === 0,
-          };
+          flatData.totalMessages = hourNarr.totalMessages;
+          flatData.volumePercent = (hourNarr.totalMessages / maxMessages) * 100;
+          flatData.isEmpty = hourNarr.totalMessages === 0;
           
           topNarratives.forEach((n, idx) => {
             flatData[`segment${idx}`] = n.count;
@@ -659,19 +672,27 @@ function HourlyStackedNarrativeChart({
             flatData[`segment${i}Name`] = '';
             flatData[`segment${i}Sentiment`] = 'neutral';
           }
-          
-          return flatData;
-        });
+        } else {
+          // Non-hour slots have no bar data
+          for (let i = 0; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = '';
+            flatData[`segment${i}Sentiment`] = 'neutral';
+          }
+        }
+        
+        stackedChartData.push(flatData);
+      }
       
-      const totalMessages = slots.reduce((sum, slot) => sum + slot.totalMessages, 0);
-      const hasAnyData = slots.some(s => s.totalMessages > 0);
+      const totalMessages = hourData.reduce((sum, h) => sum + h.totalMessages, 0);
+      const hasAnyData = hourData.some(h => h.totalMessages > 0);
       
-      return { stackedChartData, totalMessages, hasAnyData };
+      return { stackedChartData, totalMessages, hasAnyData, is5MinView: true };
     }
     
     // Original logic for 24H view
     if (!historyData?.data || historyData.data.length === 0) {
-      return { stackedChartData: [], totalMessages: 0, hasAnyData: false };
+      return { stackedChartData: [], totalMessages: 0, hasAnyData: false, is5MinView: false };
     }
 
     const filteredData = historyData.data.filter(point => {
@@ -764,7 +785,7 @@ function HourlyStackedNarrativeChart({
 
     const totalMessages = filteredData.reduce((sum, point) => sum + point.message_count, 0);
 
-    return { stackedChartData, totalMessages, hasAnyData: stackedChartData.length > 0 };
+    return { stackedChartData, totalMessages, hasAnyData: stackedChartData.length > 0, is5MinView: false };
   }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now]);
 
   // Merge price data into chart data
@@ -773,7 +794,21 @@ function HourlyStackedNarrativeChart({
       return stackedChartData;
     }
 
-    // Build hour-to-price map
+    // For 5-minute view (Today), use 5-minute slot alignment
+    if (is5MinView) {
+      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices);
+      
+      return stackedChartData.map(item => {
+        const slotIndex = item.slotIndex;
+        const pricePoint = priceBySlot.get(slotIndex);
+        return {
+          ...item,
+          price: pricePoint?.price ?? null,
+        };
+      });
+    }
+
+    // Build hour-to-price map for other views
     const priceByHour = alignPricesToHourSlots(priceData.prices, timeRange);
 
     return stackedChartData.map(item => {
@@ -784,7 +819,7 @@ function HourlyStackedNarrativeChart({
         price: pricePoint?.price ?? null,
       };
     });
-  }, [stackedChartData, priceData, showPriceOverlay, timeRange]);
+  }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
 
   // Calculate price domain for right Y-axis
   const priceDomain = useMemo(() => {
@@ -914,11 +949,24 @@ function HourlyStackedNarrativeChart({
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
           <XAxis 
-            dataKey="hour"
+            dataKey="time"
             stroke="hsl(215 20% 55%)" 
             fontSize={11}
             tickLine={false}
             axisLine={false}
+            interval={is5MinView ? 11 : 0}
+            tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
+              // Only show tick labels at hour boundaries for 5-min view
+              if (is5MinView) {
+                const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
+                if (!item?.isHourStart) return null;
+              }
+              return (
+                <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                  {payload.value}
+                </text>
+              );
+            }}
           />
           <YAxis 
             yAxisId="left"

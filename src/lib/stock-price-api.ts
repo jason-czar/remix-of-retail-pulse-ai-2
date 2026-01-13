@@ -78,6 +78,28 @@ export function alignPricesToHourSlots(
   return priceByHour;
 }
 
+// Helper to align price data to 5-minute slots for granular price line
+export function alignPricesToFiveMinSlots(
+  prices: PricePoint[]
+): Map<number, PricePoint> {
+  const priceBySlot = new Map<number, PricePoint>();
+
+  prices.forEach(point => {
+    const date = new Date(point.timestamp);
+    const hour = date.getHours();
+    const minute = date.getMinutes();
+    // Calculate 5-minute slot index (0-287 for 24 hours)
+    const slotIndex = hour * 12 + Math.floor(minute / 5);
+    
+    // Keep the latest price for each 5-minute slot
+    if (!priceBySlot.has(slotIndex) || new Date(priceBySlot.get(slotIndex)!.timestamp) < date) {
+      priceBySlot.set(slotIndex, point);
+    }
+  });
+
+  return priceBySlot;
+}
+
 // Helper to align price data to date strings for 7D/30D charts
 export function alignPricesToDateSlots(
   prices: PricePoint[]
