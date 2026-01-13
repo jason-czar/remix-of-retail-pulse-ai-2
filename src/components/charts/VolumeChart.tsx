@@ -1,7 +1,6 @@
 import { 
   ComposedChart,
   Bar,
-  Line,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -12,15 +11,19 @@ import {
 } from "recharts";
 import { useVolumeAnalytics } from "@/hooks/use-stocktwits";
 import { useCachedVolumeAnalytics } from "@/hooks/use-analytics-cache";
-import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToFiveMinSlots, alignPricesToHourSlots } from "@/lib/stock-price-api";
+import { usePriceOverlay } from "@/hooks/use-price-overlay";
+import { 
+  PriceLine, 
+  PriceYAxis, 
+  PriceToggle, 
+  PriceTooltipInline,
+  PRICE_LINE_COLOR 
+} from "@/components/charts/PriceOverlayElements";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { useMemo, useState } from "react";
-import { Database, DollarSign } from "lucide-react";
-
-type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
+import { Database } from "lucide-react";
+import { TimeRange } from "@/lib/stock-price-api";
 
 interface VolumeChartProps {
   symbol: string;
@@ -29,8 +32,6 @@ interface VolumeChartProps {
   timeRange?: string;
 }
 
-// Stock price line color
-const PRICE_LINE_COLOR = "hsl(38 92% 50%)";
 const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view
@@ -70,7 +71,6 @@ const generateVolumeData = (timeRange: string) => {
   const now = new Date();
   const baselineVolume = 5000;
   
-  // For '1D' (Today), generate full 24-hour skeleton
   if (timeRange === '1D') {
     const currentHour = now.getHours();
     const data = [];
@@ -89,7 +89,6 @@ const generateVolumeData = (timeRange: string) => {
           isEmpty: false,
         });
       } else {
-        // Future hours - no data
         data.push({
           time: timeLabel,
           volume: 0,
@@ -141,23 +140,8 @@ const generateVolumeData = (timeRange: string) => {
 export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeChartProps) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   
-  // Try cache first
   const { data: cacheResult, isLoading: cacheLoading } = useCachedVolumeAnalytics(symbol, timeRange);
-  
-  // Fall back to API if cache empty
-  const { data: apiData, isLoading: apiLoading } = useVolumeAnalytics(
-    symbol, 
-    timeRange, 
-    start, 
-    end
-  );
-  
-  // Fetch stock price data
-  const { data: priceData, isLoading: priceLoading } = useStockPrice(
-    symbol, 
-    timeRange as TimeRange, 
-    showPriceOverlay && (timeRange === '1D' || timeRange === '24H')
-  );
+  const { data: apiData, isLoading: apiLoading } = useVolumeAnalytics(symbol, timeRange, start, end);
 
   const isLoading = cacheLoading || (cacheResult?.source === 'api' && apiLoading);
   const isFromCache = cacheResult?.source === 'cache';
@@ -165,25 +149,20 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
   const snapshotCount = cacheResult?.snapshotCount;
   
   const is5MinView = timeRange === '1D';
+  const showPriceToggle = timeRange === '1D' || timeRange === '24H';
   
   const chartData = useMemo(() => {
     const now = new Date();
     const currentHour = now.getHours();
-    const isTodayView = timeRange === '1D';
     
-    // For '1D' (Today), use 288 5-minute slots for granular price line
-    if (isTodayView) {
-      const TOTAL_SLOTS = 24 * SLOTS_PER_HOUR; // 288 slots
-      
-      // First, collect hourly volume data
+    if (timeRange === '1D') {
+      const TOTAL_SLOTS = 24 * SLOTS_PER_HOUR;
       const hourlyVolumes: Map<number, { volume: number; isEmpty: boolean }> = new Map();
       
-      // Initialize all 24 hours
       for (let h = 0; h < 24; h++) {
         hourlyVolumes.set(h, { volume: 0, isEmpty: h > currentHour });
       }
       
-      // Fill in actual volume data if available
       const sourceData = cacheResult?.data || apiData || [];
       const volumes = sourceData.map((d: any) => d.volume || d.message_count || 0);
       const baseline = volumes.length > 0 
@@ -217,7 +196,6 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           }
         });
       } else {
-        // Generate mock data for past hours
         for (let h = 0; h <= currentHour; h++) {
           hourlyVolumes.set(h, { 
             volume: Math.round(baseline * (0.7 + Math.random() * 0.6)), 
@@ -226,7 +204,6 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         }
       }
       
-      // Build 288-slot chart data
       const slots: any[] = [];
       
       for (let slotIdx = 0; slotIdx < TOTAL_SLOTS; slotIdx++) {
@@ -240,8 +217,9 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           time: hourLabel,
           slotIndex: slotIdx,
           hour,
+          hourIndex: hour,
           isHourStart,
-          volume: isHourStart ? hourData.volume : 0, // Only put volume at hour start
+          volume: isHourStart ? hourData.volume : 0,
           baseline,
           isSpike: hourData.volume > baseline * 2,
           isEmpty: hourData.isEmpty,
@@ -251,7 +229,6 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       return slots;
     }
     
-    // For '24H', generate 24 hourly slots
     if (timeRange === '24H') {
       const hourSlots: any[] = [];
       const sourceData = cacheResult?.data || apiData || [];
@@ -274,7 +251,6 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         });
       }
       
-      // Merge data
       if (sourceData.length > 0) {
         sourceData.forEach((item: any) => {
           let itemHour: number | null = null;
@@ -303,7 +279,6 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           }
         });
       } else {
-        // Generate mock data
         for (let h = 0; h < 24; h++) {
           hourSlots[h].volume = Math.round(baseline * (0.7 + Math.random() * 0.6));
           hourSlots[h].isEmpty = false;
@@ -313,7 +288,6 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       return hourSlots;
     }
     
-    // Use cache data if available (for other views)
     if (cacheResult?.data && cacheResult.data.length > 0) {
       const volumes = cacheResult.data.map((d: any) => d.volume || d.message_count || 0);
       const baseline = volumes.length > 0 
@@ -329,72 +303,39 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       }));
     }
     
-    // Use API data if available
     if (apiData && apiData.length > 0) {
       return apiData;
     }
     
-    // Fall back to mock data
     return generateVolumeData(timeRange);
   }, [cacheResult?.data, apiData, timeRange]);
 
-  // Merge price data into chart data
-  const chartDataWithPrice = useMemo(() => {
-    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
-      return chartData;
+  // Use reusable price overlay hook
+  const { 
+    dataWithPrice: chartDataWithPrice, 
+    priceDomain, 
+    currentPrice,
+    changePercent,
+    isSupported: priceSupported 
+  } = usePriceOverlay(
+    {
+      symbol,
+      timeRange: timeRange as TimeRange,
+      enabled: showPriceOverlay && showPriceToggle,
+      use5MinSlots: is5MinView,
+    },
+    chartData,
+    {
+      getSlotIndex: (item) => item.slotIndex,
+      getHourIndex: (item) => item.hourIndex ?? item.hour,
     }
+  );
 
-    // For 5-minute view (Today), use 5-minute slot alignment for granular price line
-    if (is5MinView) {
-      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices);
-      
-      return chartData.map((item: any) => {
-        const slotIndex = item.slotIndex;
-        const pricePoint = priceBySlot.get(slotIndex);
-        return {
-          ...item,
-          price: pricePoint?.price ?? null,
-        };
-      });
-    }
-
-    // Build hour-to-price map for 24H view
-    if (timeRange === '24H') {
-      const priceByHour = alignPricesToHourSlots(priceData.prices, timeRange as TimeRange);
-      
-      return chartData.map((item: any) => {
-        const hourIndex = item.hourIndex ?? item.hour;
-        const pricePoint = priceByHour.get(hourIndex);
-        return {
-          ...item,
-          price: pricePoint?.price ?? null,
-        };
-      });
-    }
-
-    return chartData;
-  }, [chartData, priceData, showPriceOverlay, timeRange, is5MinView]);
-
-  // Calculate baseline
   const baseline = useMemo(() => {
     if (chartData.length === 0) return 5000;
     const volumes = chartData.map((d: any) => d.volume || 0);
     return Math.round(volumes.reduce((a: number, b: number) => a + b, 0) / Math.max(volumes.length, 1));
   }, [chartData]);
-
-  // Calculate price domain for right Y-axis
-  const priceDomain = useMemo(() => {
-    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
-      return ['auto', 'auto'];
-    }
-    const prices = priceData.prices.map(p => p.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const padding = (maxPrice - minPrice) * 0.1 || 1;
-    return [Math.floor(minPrice - padding), Math.ceil(maxPrice + padding)];
-  }, [priceData, showPriceOverlay]);
-
-  const showPriceToggle = timeRange === '1D' || timeRange === '24H';
 
   if (isLoading) {
     return <Skeleton className="h-[400px] w-full" />;
@@ -408,39 +349,32 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     );
   }
 
+  const showPrice = showPriceOverlay && showPriceToggle && priceSupported;
+
   return (
     <div className="h-[400px] w-full">
       <div className="flex justify-between items-center mb-2">
-        {(isFromCache || isFromHistory) && (
+        {(isFromCache || isFromHistory) ? (
           <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
             <Database className="w-3 h-3 mr-1" />
             {isFromHistory ? `aggregated (${snapshotCount} snapshots)` : 'cached'}
           </Badge>
-        )}
-        {!isFromCache && !isFromHistory && <div />}
+        ) : <div />}
         
         {showPriceToggle && (
-          <div className="flex items-center gap-2">
-            <DollarSign className={`h-4 w-4 ${showPriceOverlay ? 'text-amber-400' : 'text-muted-foreground'}`} />
-            <span className="text-xs text-muted-foreground">Price</span>
-            <Switch
-              checked={showPriceOverlay}
-              onCheckedChange={setShowPriceOverlay}
-              className="data-[state=checked]:bg-amber-500"
-            />
-            {showPriceOverlay && priceData?.currentPrice && (
-              <span className="text-xs text-amber-400 font-semibold ml-1">
-                ${priceData.currentPrice.toFixed(2)}
-              </span>
-            )}
-          </div>
+          <PriceToggle
+            enabled={showPriceOverlay}
+            onToggle={setShowPriceOverlay}
+            currentPrice={currentPrice}
+            changePercent={changePercent}
+          />
         )}
       </div>
       
       <ResponsiveContainer width="100%" height="95%">
         <ComposedChart 
           data={chartDataWithPrice} 
-          margin={{ top: 20, right: showPriceOverlay && showPriceToggle ? 60 : 30, left: 0, bottom: 0 }}
+          margin={{ top: 20, right: showPrice ? 60 : 30, left: 0, bottom: 0 }}
           barCategoryGap={is5MinView ? 0 : undefined}
           barGap={is5MinView ? 0 : undefined}
         >
@@ -448,10 +382,6 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="hsl(168 84% 45%)" stopOpacity={0.8}/>
               <stop offset="95%" stopColor="hsl(168 84% 45%)" stopOpacity={0.3}/>
-            </linearGradient>
-            <linearGradient id="spikeGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(38 92% 50%)" stopOpacity={0.9}/>
-              <stop offset="95%" stopColor="hsl(38 92% 50%)" stopOpacity={0.4}/>
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
@@ -479,49 +409,20 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             tickLine={false}
             tickFormatter={(value) => `${(value / 1000).toFixed(1)}K`}
           />
-          {showPriceOverlay && showPriceToggle && (
-            <YAxis 
-              yAxisId="right"
-              orientation="right"
-              stroke="hsl(38 92% 50%)"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              width={55}
-              domain={priceDomain as [number, number]}
-              tickFormatter={(value) => `$${value}`}
-            />
-          )}
+          {showPrice && <PriceYAxis domain={priceDomain} yAxisId="price" />}
           <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(222 47% 8%)",
-              border: "1px solid hsl(217 33% 17%)",
-              borderRadius: "8px",
-              boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-            }}
-            labelStyle={{ color: "hsl(210 40% 98%)" }}
             content={({ active, payload, label }) => {
               if (!active || !payload || payload.length === 0) return null;
               const dataPoint = payload[0]?.payload;
               
               if (dataPoint?.isEmpty) {
                 return (
-                  <div 
-                    style={{
-                      backgroundColor: "hsl(222 47% 8%)",
-                      border: "1px solid hsl(217 33% 17%)",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-                    }}
-                  >
-                    <div style={{ color: "hsl(210 40% 98%)", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
-                    <p style={{ color: "hsl(215 20% 55%)", fontSize: "14px" }}>No data available yet</p>
+                  <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl">
+                    <div className="font-semibold text-foreground mb-1">{label}</div>
+                    <p className="text-sm text-muted-foreground">No data available yet</p>
                     {dataPoint.price != null && (
-                      <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid hsl(217 33% 25%)" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <span style={{ color: PRICE_LINE_COLOR, fontWeight: 600 }}>${dataPoint.price.toFixed(2)}</span>
-                        </div>
+                      <div className="mt-2 pt-2 border-t border-border/50">
+                        <PriceTooltipInline price={dataPoint.price} />
                       </div>
                     )}
                   </div>
@@ -529,25 +430,14 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               }
               
               return (
-                <div 
-                  style={{
-                    backgroundColor: "hsl(222 47% 8%)",
-                    border: "1px solid hsl(217 33% 17%)",
-                    borderRadius: "8px",
-                    padding: "12px",
-                    boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-                  }}
-                >
-                  <div style={{ color: "hsl(210 40% 98%)", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
+                <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl">
+                  <div className="font-semibold text-foreground mb-1">{label}</div>
                   {dataPoint.price != null && (
-                    <div style={{ marginBottom: "8px", paddingBottom: "8px", borderBottom: "1px solid hsl(217 33% 25%)" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <DollarSign style={{ width: 14, height: 14, color: PRICE_LINE_COLOR }} />
-                        <span style={{ color: PRICE_LINE_COLOR, fontWeight: 700, fontSize: "16px" }}>${dataPoint.price.toFixed(2)}</span>
-                      </div>
+                    <div className="mb-2 pb-2 border-b border-border/50">
+                      <PriceTooltipInline price={dataPoint.price} />
                     </div>
                   )}
-                  <p style={{ color: "hsl(168 84% 45%)", fontSize: "14px" }}>
+                  <p className="text-sm text-primary">
                     {dataPoint?.volume?.toLocaleString() || 0} messages
                   </p>
                 </div>
@@ -574,19 +464,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             ) : undefined}
             radius={!is5MinView ? [4, 4, 0, 0] : undefined}
           />
-          {/* Price Line Overlay */}
-          {showPriceOverlay && showPriceToggle && (
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="price"
-              stroke={PRICE_LINE_COLOR}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ fill: PRICE_LINE_COLOR, strokeWidth: 2, stroke: "#fff", r: 5 }}
-              connectNulls
-            />
-          )}
+          {showPrice && <PriceLine yAxisId="price" />}
         </ComposedChart>
       </ResponsiveContainer>
     </div>
