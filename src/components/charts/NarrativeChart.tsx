@@ -158,7 +158,7 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
   // Handle gap placeholders
   if (dataPoint?.isGap) {
     return (
-      <div className="bg-[hsl(222_47%_8%)] border border-dashed border-amber-500/50 rounded-lg p-3 shadow-xl min-w-[200px]">
+      <div className="bg-card border border-dashed border-amber-500/50 rounded-lg p-3 shadow-xl min-w-[200px]">
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
           <span className="font-semibold text-amber-500">{label}</span>
@@ -176,8 +176,8 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
   // Handle empty hours (no data yet - e.g., future hours in "Today" view)
   if (dataPoint?.isEmpty) {
     return (
-      <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl min-w-[180px]">
-        <span className="font-semibold text-[hsl(210_40%_98%)]">{label}</span>
+      <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
+        <span className="font-semibold text-card-foreground">{label}</span>
         <p className="text-sm text-muted-foreground mt-1">
           No data available yet
         </p>
@@ -211,9 +211,9 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
   const price = dataPoint?.price;
 
   return (
-    <div className="bg-[hsl(222_47%_8%)] border border-[hsl(217_33%_17%)] rounded-lg p-3 shadow-xl min-w-[280px]">
+    <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[280px]">
       <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-[hsl(210_40%_98%)]">{label}</span>
+        <span className="font-semibold text-card-foreground">{label}</span>
         {totalMessages > 0 && (
           <div className="flex items-center gap-1.5 text-xs">
             <MessageSquare className="h-3 w-3 text-amber-400" />
@@ -260,7 +260,7 @@ function NarrativeStackedTooltip({ active, payload, label }: any) {
                 className="w-3 h-3 rounded-sm flex-shrink-0" 
                 style={{ backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral }}
               />
-              <span className="text-[hsl(210_40%_98%)] flex-1 truncate max-w-[160px]">{segment.name}</span>
+              <span className="text-card-foreground flex-1 truncate max-w-[160px]">{segment.name}</span>
               <span className="text-muted-foreground">{segment.count}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded border ${getSentimentBadge(segment.sentiment)}`}>
                 {segment.sentiment}
