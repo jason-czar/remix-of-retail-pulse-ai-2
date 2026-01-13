@@ -134,13 +134,13 @@ export default function SymbolPage() {
         </div>
 
         {/* Decision Lens Selector */}
-        <div className="mb-4">
+        <div className="mt-8 mb-4">
           <h3 className="text-sm font-medium text-muted-foreground mb-3">Decision Context</h3>
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
         {/* AI Summary */}
-        <Card className="p-6 mb-8 bg-gradient-card">
+        <Card className="p-6 mb-12 bg-gradient-card">
           <div className="flex items-start gap-4">
             <div className="p-2 rounded-lg bg-primary/10">
               {lensSummaryLoading ? (
