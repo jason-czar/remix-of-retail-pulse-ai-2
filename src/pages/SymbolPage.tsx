@@ -181,13 +181,13 @@ export default function SymbolPage() {
           </TabsList>
 
           <TabsContent value="narratives">
-            <Card className="p-6">
+            <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold">Top 10 Narratives</h3>
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>
               <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="emotions">
