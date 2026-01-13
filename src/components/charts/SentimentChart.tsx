@@ -10,7 +10,8 @@ import {
 } from "recharts";
 import { useSentimentAnalytics } from "@/hooks/use-stocktwits";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 
 interface SentimentChartProps {
   symbol: string;
@@ -88,15 +89,17 @@ const generateDataPoints = (timeRange: string) => {
 
 export function SentimentChart({ symbol, start, end, timeRange = '24H' }: SentimentChartProps) {
   const { data: apiData, isLoading } = useSentimentAnalytics(symbol, timeRange, start, end);
+  const [marketSession, setMarketSession] = useState<MarketSession>('regular');
+  
+  // Get session-specific hour range
+  const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
   
   // Generate data based on time range - regenerates when timeRange changes
   const chartData = useMemo(() => {
-    // For Today view, generate skeleton for 5 AM to 6 PM only
+    // For Today view, generate skeleton for selected session hours only
     if (timeRange === '1D') {
       const now = new Date();
       const currentHour = now.getHours();
-      const START_HOUR = 7;  // 7 AM
-      const END_HOUR = 16;   // 4 PM (inclusive)
 
       // Create skeleton for hours 5 AM to 6 PM
       const hourSlots: { time: string; hourIndex: number; sentiment: number | null; bullish: number | null; bearish: number | null; isEmpty: boolean }[] = [];
@@ -157,7 +160,7 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
     }
     // Fall back to generated data if API returns nothing
     return generateDataPoints(timeRange);
-  }, [apiData, timeRange]);
+  }, [apiData, timeRange, START_HOUR, END_HOUR]);
 
   if (isLoading) {
     return <Skeleton className="h-[400px] w-full" />;
@@ -165,6 +168,12 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
 
   return (
     <div className="h-[400px] w-full">
+      {/* Session selector for Today view */}
+      {timeRange === '1D' && (
+        <div className="flex justify-end mb-2">
+          <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
+        </div>
+      )}
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
           <defs>

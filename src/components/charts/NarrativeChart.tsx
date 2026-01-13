@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { detectMissingDates, createGapPlaceholders, mergeDataWithGaps, isGapPlaceholder } from "@/lib/chart-gap-utils";
+import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
@@ -604,6 +605,12 @@ function HourlyStackedNarrativeChart({
 }) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [activeHour, setActiveHour] = useState<number | null>(null);
+  const [marketSession, setMarketSession] = useState<MarketSession>('regular');
+  
+  // Get session-specific hour range
+  const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
+  const VISIBLE_HOURS = END_HOUR - START_HOUR + 1;
+  const SLOTS_PER_HOUR = 12;
   
   // Calculate proper day boundaries in user's local timezone
   const { todayStart, todayEnd, twentyFourHoursAgo, now } = useMemo(() => {
@@ -638,13 +645,8 @@ function HourlyStackedNarrativeChart({
   const { stackedChartData, totalMessages, hasAnyData, is5MinView } = useMemo(() => {
     // For "Today" view (1D), use 5-minute slots for granular price line
     // but only put bar data at hour boundaries
-    // Show only 5 AM to 6 PM (hours 5-18, 14 hours total)
     if (timeRange === '1D') {
-      const SLOTS_PER_HOUR = 12;
-      const START_HOUR = 7;  // 7 AM
-      const END_HOUR = 16;   // 4 PM (inclusive, so hours 7-16 = 10 hours)
-      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 10 hours
-      const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR; // 168 slots
+      const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR;
       
       // First, collect hourly narrative data
       const hourlyNarratives: Map<number, { 
@@ -652,7 +654,7 @@ function HourlyStackedNarrativeChart({
         totalMessages: number;
       }> = new Map();
       
-      // Initialize hours 5 AM to 6 PM
+      // Initialize hours based on selected session
       for (let h = START_HOUR; h <= END_HOUR; h++) {
         hourlyNarratives.set(h, { narratives: [], totalMessages: 0 });
       }
@@ -842,7 +844,7 @@ function HourlyStackedNarrativeChart({
     const totalMessages = filteredData.reduce((sum, point) => sum + point.message_count, 0);
 
     return { stackedChartData, totalMessages, hasAnyData: stackedChartData.length > 0, is5MinView: false };
-  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now]);
+  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now, START_HOUR, END_HOUR, VISIBLE_HOURS, SLOTS_PER_HOUR]);
 
   // Merge price data into chart data
   const chartDataWithPrice = useMemo(() => {
@@ -852,7 +854,7 @@ function HourlyStackedNarrativeChart({
 
     // For 5-minute view (Today), use 5-minute slot alignment for granular price line
     if (is5MinView) {
-      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices);
+      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
       
       return stackedChartData.map(item => {
         const slotIndex = item.slotIndex;
@@ -943,6 +945,13 @@ function HourlyStackedNarrativeChart({
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Market Session Selector - only for Today view */}
+          {timeRange === '1D' && (
+            <MarketSessionSelector 
+              session={marketSession} 
+              onSessionChange={setMarketSession}
+            />
+          )}
           {/* Price Toggle */}
           <div className="flex items-center gap-2">
             <DollarSign className={`h-4 w-4 ${showPriceOverlay ? 'text-amber-400' : 'text-muted-foreground'}`} />

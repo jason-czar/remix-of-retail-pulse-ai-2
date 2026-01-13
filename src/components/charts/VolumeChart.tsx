@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useMemo, useState } from "react";
 import { Database, DollarSign } from "lucide-react";
+import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
@@ -153,6 +154,11 @@ const generateVolumeData = (timeRange: string) => {
 export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeChartProps) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [activeHour, setActiveHour] = useState<number | null>(null);
+  const [marketSession, setMarketSession] = useState<MarketSession>('regular');
+  
+  // Get session-specific hour range
+  const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
+  const VISIBLE_HOURS = END_HOUR - START_HOUR + 1;
   
   // Try cache first
   const { data: cacheResult, isLoading: cacheLoading } = useCachedVolumeAnalytics(symbol, timeRange);
@@ -193,17 +199,13 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     const isTodayView = timeRange === '1D';
     
     // For '1D' (Today), use 5-minute slots for granular price line
-    // Show only 7 AM to 4 PM (hours 7-16, 10 hours total)
     if (isTodayView) {
-      const START_HOUR = 7;  // 7 AM
-      const END_HOUR = 16;   // 4 PM (inclusive)
-      const VISIBLE_HOURS = END_HOUR - START_HOUR + 1; // 10 hours
-      const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR; // 168 slots
+      const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR;
       
       // First, collect hourly volume data
       const hourlyVolumes: Map<number, { volume: number; isEmpty: boolean }> = new Map();
       
-      // Initialize hours 5 AM to 6 PM
+      // Initialize hours based on selected session
       for (let h = START_HOUR; h <= END_HOUR; h++) {
         hourlyVolumes.set(h, { volume: 0, isEmpty: h > currentHour });
       }
@@ -361,7 +363,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     
     // Fall back to mock data
     return generateVolumeData(timeRange);
-  }, [cacheResult?.data, apiData, timeRange]);
+  }, [cacheResult?.data, apiData, timeRange, START_HOUR, END_HOUR, VISIBLE_HOURS]);
 
   // Merge price data into chart data
   const chartDataWithPrice = useMemo(() => {
@@ -371,7 +373,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
 
     // For 5-minute view (Today), use 5-minute slot alignment for granular price line
     if (is5MinView) {
-      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices);
+      const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
       
       return chartData.map((item: any) => {
         const slotIndex = item.slotIndex;
@@ -398,7 +400,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     }
 
     return chartData;
-  }, [chartData, priceData, showPriceOverlay, timeRange, is5MinView]);
+  }, [chartData, priceData, showPriceOverlay, timeRange, is5MinView, START_HOUR, END_HOUR]);
 
   // Calculate baseline
   const baseline = useMemo(() => {
@@ -436,13 +438,21 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
   return (
     <div className="h-[400px] w-full">
       <div className="flex justify-between items-center mb-2">
-        {(isFromCache || isFromHistory) && (
-          <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
-            <Database className="w-3 h-3 mr-1" />
-            {isFromHistory ? `aggregated (${snapshotCount} snapshots)` : 'cached'}
-          </Badge>
-        )}
-        {!isFromCache && !isFromHistory && <div />}
+        <div className="flex items-center gap-2">
+          {(isFromCache || isFromHistory) && (
+            <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
+              <Database className="w-3 h-3 mr-1" />
+              {isFromHistory ? `aggregated (${snapshotCount} snapshots)` : 'cached'}
+            </Badge>
+          )}
+          {/* Market Session Selector - only for Today view */}
+          {timeRange === '1D' && (
+            <MarketSessionSelector 
+              session={marketSession} 
+              onSessionChange={setMarketSession}
+            />
+          )}
+        </div>
         
         {showPriceToggle && (
           <div className="flex items-center gap-2">
