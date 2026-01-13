@@ -12,6 +12,8 @@ export interface NarrativeAnalysisResult {
   narratives: Narrative[];
   messageCount: number;
   cached: boolean;
+  aggregated?: boolean;
+  snapshotCount?: number;
   timestamp?: string;
 }
 

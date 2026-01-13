@@ -22,6 +22,8 @@ export interface EmotionAnalysisResult {
   historicalData: EmotionTimePoint[];
   messageCount: number;
   cached: boolean;
+  aggregated?: boolean;
+  snapshotCount?: number;
   timestamp?: string;
 }
 

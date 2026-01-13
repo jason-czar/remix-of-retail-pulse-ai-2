@@ -134,13 +134,18 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
     <div className="h-[550px] w-full">
       {/* Prominent metadata header */}
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-primary" />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">AI Emotion Analysis</span>
               {data?.cached && (
                 <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs">cached</span>
+              )}
+              {data?.aggregated && (
+                <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
+                  {data.snapshotCount} snapshots
+                </span>
               )}
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">

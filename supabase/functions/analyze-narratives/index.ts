@@ -11,6 +11,7 @@ interface Narrative {
   count: number;
   sentiment: "bullish" | "bearish" | "neutral";
 }
+
 // Helper to convert timeRange to date parameters
 function getDateRange(timeRange: string): { start: string; end: string; limit: number } {
   const now = new Date();
@@ -49,6 +50,63 @@ function getDateRange(timeRange: string): { start: string; end: string; limit: n
     end: now.toISOString().split("T")[0],
     limit,
   };
+}
+
+// Normalize narrative names for aggregation
+function normalizeNarrativeName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(/\s+/)
+    .filter(word => word.length > 2)
+    .slice(0, 4)
+    .join(" ")
+    .trim();
+}
+
+// Get dominant sentiment from array of sentiments
+function getDominantSentiment(sentiments: string[]): "bullish" | "bearish" | "neutral" {
+  const counts = { bullish: 0, bearish: 0, neutral: 0 };
+  sentiments.forEach(s => {
+    if (s in counts) counts[s as keyof typeof counts]++;
+  });
+  
+  if (counts.bullish >= counts.bearish && counts.bullish >= counts.neutral) return "bullish";
+  if (counts.bearish >= counts.neutral) return "bearish";
+  return "neutral";
+}
+
+// Aggregate narratives from multiple history snapshots
+function aggregateNarratives(historyData: any[]): Narrative[] {
+  const narrativeTotals = new Map<string, { count: number; sentiments: string[]; originalNames: string[] }>();
+  
+  historyData.forEach(snapshot => {
+    const narratives = snapshot.narratives || [];
+    narratives.forEach((n: any) => {
+      const normalized = normalizeNarrativeName(n.name);
+      if (!normalized) return;
+      
+      if (!narrativeTotals.has(normalized)) {
+        narrativeTotals.set(normalized, { count: 0, sentiments: [], originalNames: [] });
+      }
+      const entry = narrativeTotals.get(normalized)!;
+      entry.count += n.count || 1;
+      entry.sentiments.push(n.sentiment);
+      if (!entry.originalNames.includes(n.name)) {
+        entry.originalNames.push(n.name);
+      }
+    });
+  });
+  
+  // Build final narratives with dominant sentiment
+  return Array.from(narrativeTotals.entries())
+    .map(([normalized, data]) => ({
+      name: data.originalNames[0] || normalized, // Use first original name
+      count: data.count,
+      sentiment: getDominantSentiment(data.sentiments)
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
 }
 
 serve(async (req) => {
@@ -96,6 +154,63 @@ serve(async (req) => {
           JSON.stringify({ narratives: cachedNarratives, messageCount, cached: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+    }
+
+    // For 7D and 30D time ranges, try to aggregate from historical snapshots first
+    if (timeRange === "7D" || timeRange === "30D") {
+      const daysBack = timeRange === "7D" ? 7 : 30;
+      const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+      
+      console.log(`Checking narrative_history for ${symbol} since ${startDate.toISOString()}`);
+      
+      const { data: historyData, error: historyError } = await supabase
+        .from("narrative_history")
+        .select("narratives, message_count, recorded_at")
+        .eq("symbol", symbol.toUpperCase())
+        .gte("recorded_at", startDate.toISOString())
+        .order("recorded_at", { ascending: false });
+      
+      if (!historyError && historyData && historyData.length > 0) {
+        // We need at least some snapshots to make aggregation worthwhile
+        // For 7D: ideally 8+ hourly snapshots (1 per business day)
+        // For 30D: ideally 20+ snapshots
+        const minSnapshots = timeRange === "7D" ? 8 : 20;
+        
+        if (historyData.length >= minSnapshots) {
+          console.log(`Aggregating ${historyData.length} historical snapshots for ${symbol} ${timeRange}`);
+          
+          const aggregatedNarratives = aggregateNarratives(historyData);
+          const totalMessages = historyData.reduce((sum, h) => sum + (h.message_count || 0), 0);
+          
+          // Cache the aggregated result (2 hour expiry for aggregated data)
+          const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+          await supabase
+            .from("narrative_cache")
+            .upsert(
+              {
+                symbol: symbol.toUpperCase(),
+                time_range: timeRange,
+                narratives: aggregatedNarratives,
+                message_count: totalMessages,
+                expires_at: expiresAt,
+              },
+              { onConflict: "symbol,time_range" }
+            );
+          
+          return new Response(
+            JSON.stringify({ 
+              narratives: aggregatedNarratives, 
+              messageCount: totalMessages,
+              snapshotCount: historyData.length,
+              cached: false, 
+              aggregated: true 
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } else {
+          console.log(`Only ${historyData.length} snapshots found, need ${minSnapshots}. Falling back to AI analysis.`);
+        }
       }
     }
 
@@ -279,7 +394,7 @@ ${messageTexts}`,
     console.log(`Cached ${narratives.length} narratives for ${symbol} ${timeRange}`);
 
     return new Response(
-      JSON.stringify({ narratives, messageCount: totalMessages, cached: false }),
+      JSON.stringify({ narratives, messageCount: totalMessages, cached: false, aggregated: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
