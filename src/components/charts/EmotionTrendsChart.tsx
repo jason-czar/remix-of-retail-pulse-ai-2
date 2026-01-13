@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChartErrorState } from "@/components/ChartErrorState";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
+import { EmotionChart } from "@/components/charts/EmotionChart";
 import { format } from "date-fns";
 import { Brain, TrendingUp, TrendingDown, Minus, RefreshCw, Download, AlertTriangle } from "lucide-react";
 import { detectMissingDates } from "@/lib/chart-gap-utils";
@@ -190,6 +191,16 @@ export function EmotionTrendsChart({
     );
   }
 
+  // For hourly views (Today/24H), fall back to live AI analysis if no historical data
+  const isHourlyView = periodType === "hourly" || days <= 1;
+  const shouldFallbackToLive = !isLoading && (!data || chartData.length === 0);
+  
+  if (shouldFallbackToLive && isHourlyView) {
+    // Map days to time range for EmotionChart
+    const timeRange = days <= 0.5 ? '1D' : '24H';
+    return <EmotionChart symbol={symbol} timeRange={timeRange} />;
+  }
+  
   if (!data || chartData.length === 0) {
     return (
       <div className="h-[400px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
