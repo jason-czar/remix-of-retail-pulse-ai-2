@@ -443,7 +443,7 @@ function TimeSeriesNarrativeChart({
 
   if (error) {
     return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="h-[350px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-sm">Failed to load narrative history. Please try again.</p>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -456,7 +456,7 @@ function TimeSeriesNarrativeChart({
 
   if (stackedChartData.length === 0) {
     return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="h-[350px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <Sparkles className="h-8 w-8" />
         <p className="text-sm">No narrative history found for {symbol}. Data will accumulate over time.</p>
       </div>
@@ -464,7 +464,7 @@ function TimeSeriesNarrativeChart({
   }
 
   return (
-    <div className="h-[500px] w-full">
+    <div className="h-[350px] w-full">
       {/* Backfill indicator */}
       {isBackfilling && (
         <div className="mb-3">
@@ -918,7 +918,7 @@ function HourlyStackedNarrativeChart({
 
   if (error) {
     return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="h-[350px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-sm">Failed to load narrative history. Please try again.</p>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -930,7 +930,7 @@ function HourlyStackedNarrativeChart({
   }
 
   return (
-    <div className="h-[500px] w-full">
+    <div className="h-[350px] w-full">
       {/* Header - Collapsible */}
       <Collapsible defaultOpen={false} className="mb-2">
         <CollapsibleTrigger asChild>
@@ -1146,7 +1146,7 @@ function HorizontalNarrativeChart({
 
   if (error) {
     return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="h-[350px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-sm">Failed to analyze narratives. Please try again.</p>
         <Button variant="outline" size="sm" onClick={forceRefresh}>
@@ -1159,7 +1159,7 @@ function HorizontalNarrativeChart({
 
   if (chartData.length === 0) {
     return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="h-[350px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <Sparkles className="h-8 w-8" />
         <p className="text-sm">No narratives found for {symbol}. Try a different time range.</p>
       </div>
@@ -1167,7 +1167,7 @@ function HorizontalNarrativeChart({
   }
 
   return (
-    <div className="h-[500px] w-full">
+    <div className="h-[350px] w-full">
       {/* Prominent metadata header */}
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
         <div className="flex items-center gap-3">
