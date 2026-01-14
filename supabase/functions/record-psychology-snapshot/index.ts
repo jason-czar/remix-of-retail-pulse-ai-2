@@ -918,6 +918,15 @@ function buildTemporalAttribution(
 
 // ============= INTERPRETATION GENERATION =============
 
+interface NarrativeOutcomeForAI {
+  narrative_id: string;
+  label: string;
+  episode_count: number;
+  avg_10d_move: number | null;
+  win_rate_10d: number | null;
+  confidence_label: string;
+}
+
 async function generateInterpretationLayer(
   symbol: string,
   observedState: ObservedState,
@@ -925,7 +934,8 @@ async function generateInterpretationLayer(
   temporalSynthesis: TemporalSynthesis | null,
   narrativePersistence: NarrativePersistence[],
   effectiveWeights: Record<string, number>,
-  lovableApiKey: string
+  lovableApiKey: string,
+  narrativeOutcomes?: any[]
 ): Promise<Interpretation> {
   const { narratives, emotions, signals, concentration } = observedState;
   
@@ -957,6 +967,32 @@ async function generateInterpretationLayer(
   const hourlyNote = temporalSynthesis?.hourly_override_triggered
     ? "NOTE: Hourly data included due to extreme velocity - treat as potential inflection signal."
     : "Hourly data de-weighted per lens configuration.";
+  
+  // Build narrative outcomes summary for AI (only include if episode_count >= 5)
+  let outcomesSummary = "No historical outcome data available yet.";
+  const qualifiedOutcomes: NarrativeOutcomeForAI[] = [];
+  
+  if (narrativeOutcomes && narrativeOutcomes.length > 0) {
+    for (const outcome of narrativeOutcomes) {
+      const episodeCount = outcome.historical_outcomes?.episode_count || 0;
+      if (episodeCount >= 5) {
+        qualifiedOutcomes.push({
+          narrative_id: outcome.narrative_id,
+          label: outcome.label,
+          episode_count: episodeCount,
+          avg_10d_move: outcome.historical_outcomes?.avg_price_move_10d,
+          win_rate_10d: outcome.historical_outcomes?.win_rate_10d,
+          confidence_label: outcome.confidence_label,
+        });
+      }
+    }
+    
+    if (qualifiedOutcomes.length > 0) {
+      outcomesSummary = qualifiedOutcomes
+        .map(o => `${o.label}: ${o.episode_count} episodes, avg 10D move ${o.avg_10d_move !== null ? `${o.avg_10d_move}%` : 'N/A'}, win rate ${o.win_rate_10d !== null ? `${o.win_rate_10d}%` : 'N/A'} [${o.confidence_label}]`)
+        .join("; ");
+    }
+  }
   
   const narrativeSummary = narratives.slice(0, 5)
     .map(n => `${n.label} (${n.prevalence_pct}%, skew: ${n.sentiment_skew})`)
@@ -1005,6 +1041,18 @@ TEMPORAL CONSISTENCY: ${consistencyNote}
 NARRATIVE PERSISTENCE ANALYSIS:
 ${persistenceSummary}
 
+HISTORICAL OUTCOME DATA (Narrative Impact Intelligence):
+${outcomesSummary}
+
+CRITICAL OUTCOME USAGE RULES:
+- This is DESCRIPTIVE intelligence, not predictive forecasting
+- If episode_count >= 5: You may reference outcomes using language like "Historically, when [narrative] dominated (N episodes), the typical 10D move was X%"
+- If episode_count < 5 or no data: Say "Insufficient historical data for [narrative]"
+- NEVER fabricate outcome numbers - cite only what is provided
+- When confidence is "moderate": use "historically associated with..."
+- When dispersion is high: note "outcomes have been variable"
+- Do NOT compute or imply "expected returns" or price targets
+
 STRUCTURAL narratives → use for strategy recommendations
 EVENT-DRIVEN narratives → use for timing and messaging only
 EMERGING narratives → monitor closely
@@ -1021,7 +1069,7 @@ Generate:
    - risk_score (0-100) - weighted by narrative persistence
    - dominant_concerns (top 3 specific concerns - prefer structural narratives)
    - recommended_focus (top 3 areas to address)
-   - recommended_actions (3-5 specific actions - reference whether evidence is structural or event-driven)
+   - recommended_actions (3-5 specific actions - reference historical outcomes where available with confidence level)
 
 2. DECISION READINESS for each lens:
    - readiness_score (0-100, 100 = market fully supportive) - penalize if only hourly data supports
@@ -1031,7 +1079,7 @@ Generate:
    - recommended_delay (if delay, specify timeframe)
 
 3. SNAPSHOT SUMMARY:
-   - one_liner: 1-sentence executive summary acknowledging temporal context
+   - one_liner: 1-sentence executive summary acknowledging temporal context and any notable historical patterns
    - primary_risk: main risk identified (prefer structural risks)
    - dominant_emotion: key emotion driving sentiment
    - action_bias: recommended stance`,

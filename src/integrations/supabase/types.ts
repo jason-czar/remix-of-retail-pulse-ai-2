@@ -278,6 +278,45 @@ export type Database = {
         }
         Relationships: []
       }
+      price_history: {
+        Row: {
+          close: number
+          created_at: string | null
+          date: string
+          high: number | null
+          id: string
+          low: number | null
+          open: number | null
+          source: string | null
+          symbol: string
+          volume: number | null
+        }
+        Insert: {
+          close: number
+          created_at?: string | null
+          date: string
+          high?: number | null
+          id?: string
+          low?: number | null
+          open?: number | null
+          source?: string | null
+          symbol: string
+          volume?: number | null
+        }
+        Update: {
+          close?: number
+          created_at?: string | null
+          date?: string
+          high?: number | null
+          id?: string
+          low?: number | null
+          open?: number | null
+          source?: string | null
+          symbol?: string
+          volume?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           api_calls_reset_at: string
@@ -326,6 +365,7 @@ export type Database = {
           interpretation: Json
           interpretation_version: number
           message_count: number
+          narrative_outcomes: Json | null
           observed_state: Json
           period_type: string
           snapshot_end: string
@@ -341,6 +381,7 @@ export type Database = {
           interpretation?: Json
           interpretation_version?: number
           message_count?: number
+          narrative_outcomes?: Json | null
           observed_state?: Json
           period_type: string
           snapshot_end: string
@@ -356,6 +397,7 @@ export type Database = {
           interpretation?: Json
           interpretation_version?: number
           message_count?: number
+          narrative_outcomes?: Json | null
           observed_state?: Json
           period_type?: string
           snapshot_end?: string
