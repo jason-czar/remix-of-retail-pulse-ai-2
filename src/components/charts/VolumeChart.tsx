@@ -13,7 +13,7 @@ import {
 import { useVolumeAnalytics } from "@/hooks/use-stocktwits";
 import { useCachedVolumeAnalytics } from "@/hooks/use-analytics-cache";
 import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToFiveMinSlots, alignPricesToHourSlots } from "@/lib/stock-price-api";
+import { alignPricesToFiveMinSlots, alignPricesToHourSlots, alignPricesToDateSlots } from "@/lib/stock-price-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -171,11 +171,11 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     end
   );
   
-  // Fetch stock price data
+  // Fetch stock price data - enable for all time ranges
   const { data: priceData, isLoading: priceLoading } = useStockPrice(
     symbol, 
     timeRange as TimeRange, 
-    showPriceOverlay && (timeRange === '1D' || timeRange === '24H')
+    showPriceOverlay
   );
 
   // Determine price line color based on current price vs previous close
@@ -419,6 +419,32 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       });
     }
 
+    // For 7D/30D views, align by date
+    if (timeRange === '7D' || timeRange === '30D') {
+      const priceByDate = alignPricesToDateSlots(priceData.prices);
+      
+      return chartData.map((item: any) => {
+        // Try to find matching price by parsing the time label
+        // Time labels are like "Jan 10", "Jan 11", etc.
+        // We need to find the sortKey (YYYY-MM-DD) that matches
+        let matchingPrice = null;
+        
+        // Check all date keys for a matching label
+        priceByDate.forEach((pricePoint, dateKey) => {
+          const priceDate = new Date(pricePoint.timestamp);
+          const priceDateLabel = priceDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+          if (priceDateLabel === item.time) {
+            matchingPrice = pricePoint.price;
+          }
+        });
+        
+        return {
+          ...item,
+          price: matchingPrice,
+        };
+      });
+    }
+
     return chartData;
   }, [chartData, priceData, showPriceOverlay, timeRange, is5MinView, START_HOUR, END_HOUR]);
 
@@ -438,17 +464,17 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const range = maxPrice - minPrice;
-    // Use 3% padding for tight fit, minimum $0.25 to handle flat prices
-    const padding = Math.max(range * 0.03, 0.25);
-    // Round to nearest $0.25 for cleaner axis labels
-    const roundTo = 0.25;
+    // Use 5% padding for 7D/30D (more range), 3% for shorter views
+    const isLongRange = timeRange === '7D' || timeRange === '30D';
+    const padding = Math.max(range * (isLongRange ? 0.05 : 0.03), isLongRange ? 0.50 : 0.25);
+    const roundTo = isLongRange ? 0.50 : 0.25;
     return [
       Math.floor((minPrice - padding) / roundTo) * roundTo,
       Math.ceil((maxPrice + padding) / roundTo) * roundTo
     ];
-  }, [priceData, showPriceOverlay]);
+  }, [priceData, showPriceOverlay, timeRange]);
 
-  const showPriceToggle = timeRange === '1D' || timeRange === '24H';
+  const showPriceToggle = true; // Enable price toggle for all time ranges
 
   if (isLoading) {
     return <Skeleton className="h-[300px] md:h-[400px] w-full" />;

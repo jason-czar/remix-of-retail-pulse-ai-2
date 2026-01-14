@@ -18,7 +18,7 @@ import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis"
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToHourSlots, alignPricesToDateSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
+import { alignPricesToHourSlots, alignPricesToDateSlots, alignPricesToFiveMinSlots, alignPricesToDailySlots } from "@/lib/stock-price-api";
 import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle, DollarSign, ChevronDown, ChevronRight } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
@@ -274,7 +274,7 @@ function NarrativeStackedTooltip({ active, payload, label, priceColor }: any) {
   );
 }
 
-// Time series stacked bar chart for 7D/30D - Independent daily view
+// Time series stacked bar chart for 7D/30D - Independent daily view with price overlay
 function TimeSeriesNarrativeChart({ 
   symbol, 
   timeRange 
@@ -282,12 +282,16 @@ function TimeSeriesNarrativeChart({
   symbol: string; 
   timeRange: '7D' | '30D';
 }) {
+  const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const days = timeRange === '7D' ? 7 : 30;
   const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(
     symbol, 
     days, 
     "daily"
   );
+  
+  // Fetch stock price data with 1-hour intervals
+  const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
   
   // Auto-backfill hook
   const { 
@@ -296,6 +300,14 @@ function TimeSeriesNarrativeChart({
     progress: backfillProgress,
     checkAndFillGaps 
   } = useAutoBackfill(symbol, days);
+  
+  // Determine price line color based on current price vs previous close
+  const priceLineColor = useMemo(() => {
+    if (!priceData?.currentPrice || !priceData?.previousClose) {
+      return PRICE_UP_COLOR; // Default to green
+    }
+    return priceData.currentPrice >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
+  }, [priceData?.currentPrice, priceData?.previousClose]);
   
   // Check for gaps when data loads
   useEffect(() => {
@@ -437,6 +449,44 @@ function TimeSeriesNarrativeChart({
     return { stackedChartData, totalMessages, gapCount: missingDates.length, barDomain };
   }, [historyData]);
 
+  // Merge price data into chart data - use daily closing prices
+  const chartDataWithPrice = useMemo(() => {
+    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
+      return stackedChartData;
+    }
+
+    // Build date-to-price map using sortKey (YYYY-MM-DD)
+    const priceByDate = alignPricesToDateSlots(priceData.prices);
+
+    return stackedChartData.map(item => {
+      const sortKey = item.sortKey;
+      const pricePoint = priceByDate.get(sortKey);
+      return {
+        ...item,
+        price: pricePoint?.price ?? null,
+      };
+    });
+  }, [stackedChartData, priceData, showPriceOverlay]);
+
+  // Calculate price domain for right Y-axis - tight padding to fill vertical space
+  const priceDomain = useMemo(() => {
+    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
+      return ['auto', 'auto'];
+    }
+    const prices = priceData.prices.map(p => p.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const range = maxPrice - minPrice;
+    // Use 5% padding for 7D/30D views (slightly more than intraday)
+    const padding = Math.max(range * 0.05, 0.50);
+    // Round to nearest $0.50 for cleaner axis labels
+    const roundTo = 0.50;
+    return [
+      Math.floor((minPrice - padding) / roundTo) * roundTo,
+      Math.ceil((maxPrice + padding) / roundTo) * roundTo
+    ];
+  }, [priceData, showPriceOverlay]);
+
   if (isLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
   }
@@ -510,7 +560,20 @@ function TimeSeriesNarrativeChart({
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {/* Price Toggle */}
+              <div className="flex items-center gap-2">
+                <DollarSign 
+                  className="h-4 w-4" 
+                  style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
+                />
+                <span className="text-xs text-muted-foreground">Price</span>
+                <Switch
+                  checked={showPriceOverlay}
+                  onCheckedChange={setShowPriceOverlay}
+                  style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
+                />
+              </div>
               <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
               <Button 
                 variant="ghost" 
@@ -530,9 +593,9 @@ function TimeSeriesNarrativeChart({
       {/* Legend - Hidden for now */}
 
       <ResponsiveContainer width="100%" height="80%">
-        <BarChart 
-          data={stackedChartData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+        <ComposedChart 
+          data={chartDataWithPrice}
+          margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
           <XAxis 
@@ -543,21 +606,37 @@ function TimeSeriesNarrativeChart({
             axisLine={false}
           />
           <YAxis 
+            yAxisId="left"
             stroke="hsl(215 20% 55%)" 
             fontSize={11}
             tickLine={false}
             axisLine={false}
-            width={45}
+            width={10}
+            tick={false}
             domain={barDomain}
           />
-          <Tooltip content={<NarrativeStackedTooltip />} />
+          {showPriceOverlay && (
+            <YAxis 
+              yAxisId="right"
+              orientation="right"
+              stroke={priceLineColor}
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              width={50}
+              tickFormatter={(value) => `$${value.toFixed(0)}`}
+              domain={priceDomain as [number, number]}
+            />
+          )}
+          <Tooltip content={<NarrativeStackedTooltip priceColor={priceLineColor} />} />
           {/* Gap placeholder bars - shown with dashed pattern */}
           <Bar 
+            yAxisId="left"
             dataKey="gapPlaceholder"
             stackId="narratives"
             radius={[4, 4, 0, 0]}
           >
-            {stackedChartData.map((entry, entryIdx) => (
+            {chartDataWithPrice.map((entry, entryIdx) => (
               <Cell 
                 key={`gap-${entryIdx}`} 
                 fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"}
@@ -571,19 +650,34 @@ function TimeSeriesNarrativeChart({
           {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
             <Bar 
               key={`segment${idx}`}
+              yAxisId="left"
               dataKey={`segment${idx}`}
               stackId="narratives"
               radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
             >
-              {stackedChartData.map((entry, entryIdx) => (
+              {chartDataWithPrice.map((entry, entryIdx) => (
                 <Cell 
                   key={`cell-${entryIdx}`} 
                   fill={entry.isGap ? "transparent" : (SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral)}
+                  fillOpacity={0.25}
                 />
               ))}
             </Bar>
           ))}
-        </BarChart>
+          {/* Price Line Overlay */}
+          {showPriceOverlay && (
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="price"
+              stroke={priceLineColor}
+              strokeWidth={2}
+              dot={true}
+              activeDot={{ r: 4, stroke: priceLineColor, strokeWidth: 2, fill: 'hsl(var(--background))' }}
+              connectNulls={true}
+            />
+          )}
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
