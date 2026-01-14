@@ -138,45 +138,8 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="mt-6 md:mt-8 mb-4">
-          <h3 className="text-sm font-medium text-muted-foreground mb-3">Decision Context</h3>
-          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
-        </div>
-
-        {/* AI Summary - Reduced padding on mobile */}
-        <Card className="p-4 md:p-6 mb-6 bg-gradient-card">
-          <div className="flex items-start gap-3 md:gap-4">
-            <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
-              {lensSummaryLoading ? (
-                <Loader2 className="h-4 w-4 md:h-5 md:w-5 text-primary animate-spin" />
-              ) : (
-                <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
-                <Badge variant="outline" className="text-[10px] md:text-xs">
-                  {getLensDisplayName(decisionLens)}
-                </Badge>
-              </div>
-              {lensSummaryLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              ) : (
-                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  <FormattedSummary text={summary} />
-                </p>
-              )}
-            </div>
-          </div>
-        </Card>
-
         {/* Charts Section - Scrollable tabs on mobile */}
-        <Tabs defaultValue="narratives" className="mb-6 md:mb-8">
+        <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
             <TabsList className="mb-4 md:mb-6 w-max md:w-auto">
               <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
@@ -233,6 +196,43 @@ export default function SymbolPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Decision Lens Selector - Horizontal scroll on mobile */}
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Decision Context</h3>
+          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
+        </div>
+
+        {/* AI Summary - Reduced padding on mobile */}
+        <Card className="p-4 md:p-6 mb-6 bg-gradient-card">
+          <div className="flex items-start gap-3 md:gap-4">
+            <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
+              {lensSummaryLoading ? (
+                <Loader2 className="h-4 w-4 md:h-5 md:w-5 text-primary animate-spin" />
+              ) : (
+                <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
+                <Badge variant="outline" className="text-[10px] md:text-xs">
+                  {getLensDisplayName(decisionLens)}
+                </Badge>
+              </div>
+              {lensSummaryLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ) : (
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  <FormattedSummary text={summary} />
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
 
         {/* Decision Readiness Dashboard */}
         <div className="mb-8 md:mb-12">
