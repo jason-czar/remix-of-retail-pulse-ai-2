@@ -3,7 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useLatestPsychologySnapshot, DecisionReadiness, DecisionOverlay } from "@/hooks/use-psychology-snapshot";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  useLatestPsychologySnapshot, 
+  DecisionReadiness, 
+  DecisionOverlay,
+  NarrativePersistence,
+  TemporalAttribution 
+} from "@/hooks/use-psychology-snapshot";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -22,8 +29,10 @@ import {
   ChevronDown,
   ChevronUp,
   Lightbulb,
-  AlertCircle
+  AlertCircle,
+  Timer
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DecisionReadinessDashboardProps {
   symbol: string;
@@ -71,7 +80,94 @@ function getRiskColor(score: number): string {
   return "text-bullish";
 }
 
-function LensReadinessCard({ 
+// ============= TEMPORAL ATTRIBUTION COMPONENTS =============
+
+function TemporalAttributionBadge({ attribution }: { attribution?: TemporalAttribution }) {
+  if (!attribution) return null;
+
+  const { primary_timeframes, effective_weights, confidence_basis } = attribution;
+  
+  const dominantPeriods = Object.entries(effective_weights)
+    .filter(([_, weight]) => weight > 0.25)
+    .map(([period]) => period);
+
+  return (
+    <div className="flex flex-col gap-1 text-xs">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Timer className="h-3 w-3" />
+        <span>Based on {dominantPeriods.join(" + ")} data</span>
+        {confidence_basis.timeframe_agreement === "high" && (
+          <Badge variant="outline" className="text-xs bg-bullish/10 text-bullish border-bullish/30">
+            High agreement
+          </Badge>
+        )}
+        {confidence_basis.timeframe_agreement === "low" && (
+          <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-400 border-amber-500/30">
+            Low agreement
+          </Badge>
+        )}
+      </div>
+      {confidence_basis.hourly_override_active && (
+        <div className="flex items-center gap-1 text-amber-400">
+          <AlertTriangle className="h-3 w-3" />
+          <span>{confidence_basis.override_reason}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NarrativePersistenceBadge({ 
+  narrativeId, 
+  persistence 
+}: { 
+  narrativeId: string; 
+  persistence?: NarrativePersistence[] 
+}) {
+  const p = persistence?.find(np => np.narrative_id === narrativeId);
+  if (!p) return <span className="text-xs">{narrativeId.replace(/_/g, " ")}</span>;
+
+  const config = {
+    structural: { 
+      bg: "bg-blue-500/20", 
+      text: "text-blue-400",
+      label: "structural",
+      tooltip: `Present in ${p.monthly_presence_pct}% of monthly data - use for strategy`
+    },
+    "event-driven": { 
+      bg: "bg-amber-500/20", 
+      text: "text-amber-400",
+      label: "event",
+      tooltip: "Recent/temporary - use for timing only"
+    },
+    emerging: { 
+      bg: "bg-purple-500/20", 
+      text: "text-purple-400",
+      label: "emerging",
+      tooltip: "Building momentum - monitor closely"
+    },
+  };
+
+  const style = config[p.classification];
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn("px-2 py-0.5 rounded text-[10px]", style.bg, style.text)}>
+            {narrativeId.replace(/_/g, " ")} ({style.label})
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{style.tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+// ============= LENS CARDS =============
+
   lensKey, 
   readiness, 
   overlay 
@@ -290,7 +386,10 @@ function OverviewCard({
             <p className="text-sm text-muted-foreground mb-3">{summary.one_liner}</p>
           )}
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          {/* Temporal Attribution */}
+          <TemporalAttributionBadge attribution={snapshot.interpretation.temporal_attribution} />
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-3">
             {summary.dominant_emotion && (
               <div>
                 <span className="text-muted-foreground">Dominant Emotion</span>
