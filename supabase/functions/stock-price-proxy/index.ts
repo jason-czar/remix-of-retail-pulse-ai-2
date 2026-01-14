@@ -146,9 +146,9 @@ function getYahooParams(timeRange: string): { range: string; interval: string } 
     case "24H":
       return { range: "1d", interval: "15m" };
     case "7D":
-      return { range: "5d", interval: "1h" };
+      return { range: "7d", interval: "1h" }; // 1-hour intervals for 7D
     case "30D":
-      return { range: "1mo", interval: "1d" };
+      return { range: "1mo", interval: "1h" }; // 1-hour intervals for 30D
     default:
       return { range: "1d", interval: "1h" };
   }

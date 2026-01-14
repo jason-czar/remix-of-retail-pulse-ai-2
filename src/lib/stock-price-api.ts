@@ -103,7 +103,7 @@ export function alignPricesToFiveMinSlots(
   return priceBySlot;
 }
 
-// Helper to align price data to date strings for 7D/30D charts
+// Helper to align price data to date strings for 7D/30D charts (daily)
 export function alignPricesToDateSlots(
   prices: PricePoint[]
 ): Map<string, PricePoint> {
@@ -116,6 +116,50 @@ export function alignPricesToDateSlots(
     // Keep the latest price for each day (closing price)
     if (!priceByDate.has(dateKey) || new Date(priceByDate.get(dateKey)!.timestamp) < date) {
       priceByDate.set(dateKey, point);
+    }
+  });
+
+  return priceByDate;
+}
+
+// Helper to align hourly price data for 7D/30D charts
+// Returns a map keyed by "YYYY-MM-DD-HH" for matching chart data points
+export function alignPricesToHourlyTimeSlots(
+  prices: PricePoint[]
+): Map<string, PricePoint> {
+  const priceByHour = new Map<string, PricePoint>();
+
+  prices.forEach(point => {
+    const date = new Date(point.timestamp);
+    // Create key as "YYYY-MM-DD-HH" for precise hour matching
+    const dateKey = date.toISOString().split('T')[0];
+    const hour = date.getHours().toString().padStart(2, '0');
+    const key = `${dateKey}-${hour}`;
+    
+    // Keep the latest price for each hour slot
+    if (!priceByHour.has(key) || new Date(priceByHour.get(key)!.timestamp) < date) {
+      priceByHour.set(key, point);
+    }
+  });
+
+  return priceByHour;
+}
+
+// Helper to get daily closing prices for 7D/30D date-based charts
+export function alignPricesToDailySlots(
+  prices: PricePoint[]
+): Map<string, { price: number; dateLabel: string }> {
+  const priceByDate = new Map<string, { price: number; dateLabel: string }>();
+
+  prices.forEach(point => {
+    const date = new Date(point.timestamp);
+    const dateKey = date.toISOString().split('T')[0];
+    // Format as "MMM d" for matching chart x-axis labels
+    const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    // Keep the latest price for each day
+    if (!priceByDate.has(dateKey) || new Date(point.timestamp) > new Date()) {
+      priceByDate.set(dateKey, { price: point.price, dateLabel });
     }
   });
 
