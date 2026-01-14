@@ -398,7 +398,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   }
 
   return (
-    <div className="h-[400px] md:h-[600px] w-full">
+    <div className="h-[320px] md:h-[480px] w-full">
       {/* Header - Stacked on mobile */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4">
         <div className="flex items-center gap-2 md:gap-3">
@@ -489,7 +489,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       </div>
 
       {/* Chart - Responsive height */}
-      <div className="h-[300px] md:h-[480px]">
+      <div className="h-[240px] md:h-[384px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartDataWithPrice}
@@ -629,7 +629,7 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
 
   if (error) {
     return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="h-[400px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-sm">Failed to analyze emotions. Please try again.</p>
       </div>
@@ -638,7 +638,7 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
 
   if (chartData.length === 0) {
     return (
-      <div className="h-[500px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="h-[400px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <Sparkles className="h-8 w-8" />
         <p className="text-sm">No emotions found for {symbol}. Try a different time range.</p>
       </div>
@@ -646,7 +646,7 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
   }
 
   return (
-    <div className="h-[550px] w-full">
+    <div className="h-[440px] w-full">
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-primary" />
