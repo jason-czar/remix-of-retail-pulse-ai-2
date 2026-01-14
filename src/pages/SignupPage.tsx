@@ -77,7 +77,7 @@ export default function SignupPage() {
         </div>
 
         {/* Signup Form */}
-        <Card className="p-8 bg-gradient-card">
+        <Card className="p-8 glass-card">
           {/* Logo */}
           <Link to="/" className="flex items-center justify-center gap-2 mb-8">
             <Zap className="h-8 w-8 text-primary" />

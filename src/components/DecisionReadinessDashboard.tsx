@@ -88,7 +88,7 @@ function LensReadinessCard({
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <Card className="p-4 bg-gradient-card hover:bg-secondary/50 transition-colors">
+      <Card className="p-4 glass-card hover:bg-secondary/50 transition-colors">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ function OverviewCard({
     .map(([key]) => key.replace(/_/g, " "));
 
   return (
-    <Card className="p-4 md:p-5 bg-gradient-card border-primary/20 mb-4">
+    <Card className="p-4 md:p-5 glass-card border-primary/20 mb-4">
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-primary/10 shrink-0">
           <Brain className="h-5 w-5 text-primary" />

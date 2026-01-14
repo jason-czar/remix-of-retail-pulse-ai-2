@@ -52,7 +52,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-gradient-glow opacity-30" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       
-      <Card className="w-full max-w-md p-8 bg-gradient-card relative">
+      <Card className="w-full max-w-md p-8 glass-card relative">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Zap className="h-8 w-8 text-primary" />

@@ -113,7 +113,7 @@ function TrendingCard({
   
   return (
     <Card 
-      className="p-4 bg-gradient-card hover:shadow-glow transition-all hover:-translate-y-1 cursor-pointer group"
+      className="p-4 glass-card hover:shadow-glow transition-all hover:-translate-y-1 cursor-pointer group"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="flex items-start justify-between mb-3">
