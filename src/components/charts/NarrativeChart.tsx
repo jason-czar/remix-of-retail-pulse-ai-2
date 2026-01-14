@@ -9,7 +9,6 @@ import {
   Tooltip, 
   ResponsiveContainer,
   Cell,
-  Legend,
   Rectangle,
   ReferenceLine
 } from "recharts";
@@ -18,8 +17,8 @@ import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis"
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToHourSlots, alignPricesToDateSlots, alignPricesToFiveMinSlots, alignPricesToDailySlots } from "@/lib/stock-price-api";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, Download, AlertTriangle, DollarSign, ChevronDown, ChevronRight } from "lucide-react";
+import { alignPricesToHourSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
+import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, AlertTriangle, DollarSign, ChevronDown } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
@@ -27,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { format } from "date-fns";
-import { detectMissingDates, createGapPlaceholders, mergeDataWithGaps, isGapPlaceholder } from "@/lib/chart-gap-utils";
+import { detectMissingDates } from "@/lib/chart-gap-utils";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
@@ -449,24 +448,55 @@ function TimeSeriesNarrativeChart({
     return { stackedChartData, totalMessages, gapCount: missingDates.length, barDomain };
   }, [historyData]);
 
-  // Merge price data into chart data - use daily closing prices
-  const chartDataWithPrice = useMemo(() => {
+  // Create hourly price data points for continuous line overlay
+  const priceLineData = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
-      return stackedChartData;
+      return [];
     }
 
-    // Build date-to-price map using sortKey (YYYY-MM-DD)
-    const priceByDate = alignPricesToDateSlots(priceData.prices);
+    // Build hourly data points with positions that span across the daily bars
+    const sortedBarDates = stackedChartData.map(d => d.sortKey).sort();
+    const startDate = sortedBarDates[0];
+    const endDate = sortedBarDates[sortedBarDates.length - 1];
+    
+    if (!startDate || !endDate) return [];
 
-    return stackedChartData.map(item => {
-      const sortKey = item.sortKey;
-      const pricePoint = priceByDate.get(sortKey);
-      return {
-        ...item,
-        price: pricePoint?.price ?? null,
-      };
+    // Create a mapping of date to bar index for positioning
+    const dateToIndex = new Map<string, number>();
+    sortedBarDates.forEach((date, idx) => {
+      dateToIndex.set(date, idx);
     });
+
+    // Process hourly price points
+    return priceData.prices
+      .filter(p => {
+        const dateKey = new Date(p.timestamp).toISOString().split('T')[0];
+        return dateKey >= startDate && dateKey <= endDate;
+      })
+      .map(point => {
+        const date = new Date(point.timestamp);
+        const dateKey = date.toISOString().split('T')[0];
+        const hour = date.getHours();
+        
+        // Calculate x position: barIndex + (hour / 24) to interpolate within the day
+        const barIndex = dateToIndex.get(dateKey) ?? 0;
+        const xPosition = barIndex + (hour / 24);
+        
+        return {
+          x: xPosition,
+          price: point.price,
+          timestamp: point.timestamp,
+          dateLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          timeLabel: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        };
+      })
+      .sort((a, b) => a.x - b.x);
   }, [stackedChartData, priceData, showPriceOverlay]);
+
+  // Chart data for bars (without price - price is rendered separately)
+  const chartDataWithPrice = useMemo(() => {
+    return stackedChartData;
+  }, [stackedChartData]);
 
   // Calculate price domain for right Y-axis - tight padding to fill vertical space
   const priceDomain = useMemo(() => {
@@ -599,12 +629,23 @@ function TimeSeriesNarrativeChart({
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
           <XAxis 
+            xAxisId="bar"
             dataKey="date"
             stroke="hsl(215 20% 55%)" 
             fontSize={11}
             tickLine={false}
             axisLine={false}
           />
+          {/* Hidden numeric X-axis for price line positioning */}
+          {showPriceOverlay && (
+            <XAxis 
+              xAxisId="price"
+              type="number"
+              dataKey="x"
+              domain={[0, chartDataWithPrice.length - 1]}
+              hide={true}
+            />
+          )}
           <YAxis 
             yAxisId="left"
             stroke="hsl(215 20% 55%)" 
@@ -631,6 +672,7 @@ function TimeSeriesNarrativeChart({
           <Tooltip content={<NarrativeStackedTooltip priceColor={priceLineColor} />} />
           {/* Gap placeholder bars - shown with dashed pattern */}
           <Bar 
+            xAxisId="bar"
             yAxisId="left"
             dataKey="gapPlaceholder"
             stackId="narratives"
@@ -650,6 +692,7 @@ function TimeSeriesNarrativeChart({
           {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
             <Bar 
               key={`segment${idx}`}
+              xAxisId="bar"
               yAxisId="left"
               dataKey={`segment${idx}`}
               stackId="narratives"
@@ -664,15 +707,17 @@ function TimeSeriesNarrativeChart({
               ))}
             </Bar>
           ))}
-          {/* Price Line Overlay */}
-          {showPriceOverlay && (
+          {/* Hourly Price Line Overlay - uses separate data with numeric X positions */}
+          {showPriceOverlay && priceLineData.length > 0 && (
             <Line
+              xAxisId="price"
               yAxisId="right"
+              data={priceLineData}
               type="monotone"
               dataKey="price"
               stroke={priceLineColor}
               strokeWidth={2}
-              dot={true}
+              dot={{ r: 2, fill: priceLineColor }}
               activeDot={{ r: 4, stroke: priceLineColor, strokeWidth: 2, fill: 'hsl(var(--background))' }}
               connectNulls={true}
             />
