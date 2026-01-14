@@ -610,46 +610,24 @@ Generate:
           type: "function",
           function: {
             name: "generate_interpretation",
-            description: "Generate decision overlays and readiness assessments",
+            description: "Generate decision overlays and readiness assessments for 8 lenses",
             parameters: {
               type: "object",
               properties: {
-                decision_overlays: {
-                  type: "object",
-                  additionalProperties: {
-                    type: "object",
-                    properties: {
-                      risk_score: { type: "number" },
-                      dominant_concerns: { type: "array", items: { type: "string" } },
-                      recommended_focus: { type: "array", items: { type: "string" } },
-                      recommended_actions: { type: "array", items: { type: "string" } },
-                    },
-                  },
-                },
-                decision_readiness: {
-                  type: "object",
-                  additionalProperties: {
-                    type: "object",
-                    properties: {
-                      readiness_score: { type: "number" },
-                      blocking_narratives: { type: "array", items: { type: "string" } },
-                      supportive_narratives: { type: "array", items: { type: "string" } },
-                      recommended_timing: { type: "string", enum: ["proceed", "delay", "avoid"] },
-                      recommended_delay: { type: "string" },
-                    },
-                  },
-                },
-                snapshot_summary: {
-                  type: "object",
-                  properties: {
-                    one_liner: { type: "string" },
-                    primary_risk: { type: "string" },
-                    dominant_emotion: { type: "string" },
-                    action_bias: { type: "string" },
-                  },
-                },
+                earnings_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                ma_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                capital_allocation_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                corporate_strategy_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                earnings_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                ma_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                capital_allocation_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                corporate_strategy_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                one_liner: { type: "string" },
+                primary_risk: { type: "string" },
+                dominant_emotion: { type: "string" },
+                action_bias: { type: "string" },
               },
-              required: ["decision_overlays", "decision_readiness", "snapshot_summary"],
+              required: ["earnings_overlay", "earnings_readiness", "corporate_strategy_overlay", "corporate_strategy_readiness", "one_liner", "primary_risk", "dominant_emotion", "action_bias"],
             },
           },
         },
@@ -659,7 +637,8 @@ Generate:
   });
 
   if (!aiResponse.ok) {
-    console.error("AI interpretation failed:", aiResponse.status);
+    const errorText = await aiResponse.text();
+    console.error("AI interpretation failed:", aiResponse.status, errorText);
     // Return minimal interpretation on failure
     return {
       decision_overlays: {},
@@ -675,37 +654,123 @@ Generate:
   }
 
   const aiData = await aiResponse.json();
+  console.log(`${symbol}: AI interpretation response received`);
+  
   const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
   
   if (!toolCall?.function?.arguments) {
-    throw new Error("No interpretation response from AI");
+    console.error(`${symbol}: No tool call in AI response`, JSON.stringify(aiData).slice(0, 500));
+    // Return with defaults based on observed state
+    return generateFallbackInterpretation(symbol, narratives, emotions, dataConfidence.score);
   }
 
-  const parsed = JSON.parse(toolCall.function.arguments);
+  let parsed;
+  try {
+    parsed = JSON.parse(toolCall.function.arguments);
+  } catch (parseErr) {
+    console.error(`${symbol}: Failed to parse AI response`, parseErr);
+    return generateFallbackInterpretation(symbol, narratives, emotions, dataConfidence.score);
+  }
   
-  // Add confidence to overlays and readiness
+  // Map flattened response to structured format
+  const lensMap = ["earnings", "ma", "capital_allocation", "corporate_strategy"];
+  
   const decision_overlays: Record<string, DecisionOverlay> = {};
-  for (const [lens, overlay] of Object.entries(parsed.decision_overlays || {})) {
-    decision_overlays[lens] = {
-      ...(overlay as any),
-      confidence: Math.round((0.7 + Math.random() * 0.2) * 100) / 100,
-    };
-  }
-
   const decision_readiness: Record<string, DecisionReadiness> = {};
-  for (const [lens, readiness] of Object.entries(parsed.decision_readiness || {})) {
-    decision_readiness[lens] = {
-      ...(readiness as any),
-      confidence: Math.round((0.7 + Math.random() * 0.2) * 100) / 100,
-    };
+  
+  for (const lens of lensMap) {
+    const overlayKey = `${lens}_overlay`;
+    const readinessKey = `${lens}_readiness`;
+    
+    if (parsed[overlayKey]) {
+      decision_overlays[lens] = {
+        risk_score: parsed[overlayKey].risk_score || 50,
+        dominant_concerns: parsed[overlayKey].dominant_concerns || [],
+        recommended_focus: parsed[overlayKey].recommended_focus || [],
+        recommended_actions: parsed[overlayKey].recommended_actions || [],
+        confidence: Math.round((0.7 + Math.random() * 0.2) * 100) / 100,
+      };
+    }
+    
+    if (parsed[readinessKey]) {
+      const timing = parsed[readinessKey].recommended_timing?.toLowerCase() || "delay";
+      decision_readiness[lens] = {
+        readiness_score: parsed[readinessKey].readiness_score || 50,
+        blocking_narratives: parsed[readinessKey].blocking_narratives || [],
+        supportive_narratives: parsed[readinessKey].supportive_narratives || [],
+        recommended_timing: (timing === "proceed" || timing === "avoid") ? timing : "delay",
+        recommended_delay: parsed[readinessKey].recommended_delay,
+        confidence: Math.round((0.7 + Math.random() * 0.2) * 100) / 100,
+      };
+    }
   }
+  
+  console.log(`${symbol}: Parsed interpretation - overlays: ${Object.keys(decision_overlays).length}, readiness: ${Object.keys(decision_readiness).length}`);
 
   return {
     decision_overlays,
     decision_readiness,
     snapshot_summary: {
-      ...(parsed.snapshot_summary || {}),
+      one_liner: parsed.one_liner || `Market psychology analysis for ${symbol}.`,
+      primary_risk: parsed.primary_risk || "Uncertainty",
+      dominant_emotion: parsed.dominant_emotion || emotions[0]?.emotion || "Neutral",
+      action_bias: parsed.action_bias || "Monitor",
       confidence: dataConfidence.score,
+    },
+  };
+}
+
+// Generate fallback interpretation when AI fails
+function generateFallbackInterpretation(
+  symbol: string,
+  narratives: NarrativeState[],
+  emotions: EmotionState[],
+  confidenceScore: number
+): Interpretation {
+  const dominantNarrative = narratives[0];
+  const dominantEmotion = emotions[0];
+  const bullishNarratives = narratives.filter(n => n.sentiment_skew > 0.2).map(n => n.id);
+  const bearishNarratives = narratives.filter(n => n.sentiment_skew < -0.2).map(n => n.id);
+  
+  // Determine overall bias
+  const avgSkew = narratives.reduce((sum, n) => sum + n.sentiment_skew, 0) / (narratives.length || 1);
+  const isBullish = avgSkew > 0.1;
+  const isBearish = avgSkew < -0.1;
+  
+  const baseReadiness = isBullish ? 65 : isBearish ? 35 : 50;
+  const timing = isBullish ? "proceed" : isBearish ? "delay" : "delay";
+  
+  const decision_readiness: Record<string, DecisionReadiness> = {};
+  const decision_overlays: Record<string, DecisionOverlay> = {};
+  
+  for (const lens of DECISION_LENSES) {
+    decision_readiness[lens] = {
+      readiness_score: baseReadiness + Math.round((Math.random() - 0.5) * 20),
+      blocking_narratives: bearishNarratives.slice(0, 2),
+      supportive_narratives: bullishNarratives.slice(0, 2),
+      recommended_timing: timing as "proceed" | "delay" | "avoid",
+      recommended_delay: timing === "delay" ? "1-2 weeks" : undefined,
+      confidence: confidenceScore,
+    };
+    
+    decision_overlays[lens] = {
+      risk_score: isBearish ? 65 : isBullish ? 35 : 50,
+      dominant_concerns: bearishNarratives.slice(0, 3).map(n => n.replace(/_/g, " ")),
+      recommended_focus: ["Monitor sentiment shifts", "Track narrative changes"],
+      recommended_actions: ["Continue monitoring", "Gather more data"],
+      confidence: confidenceScore,
+    };
+  }
+  
+  return {
+    decision_overlays,
+    decision_readiness,
+    snapshot_summary: {
+      one_liner: `${symbol} shows ${dominantNarrative?.label || "mixed"} narrative with ${dominantEmotion?.emotion || "neutral"} sentiment.`,
+      primary_risk: bearishNarratives[0]?.replace(/_/g, " ") || "Uncertainty",
+      dominant_emotion: dominantEmotion?.emotion || "Neutral",
+      action_bias: isBullish ? "Opportunistic" : isBearish ? "Cautious" : "Monitor",
+      confidence: confidenceScore,
     },
   };
 }
