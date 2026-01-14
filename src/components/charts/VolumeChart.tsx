@@ -544,8 +544,15 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       return ['auto', 'auto'];
     }
     const prices = priceData.prices.map(p => p.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    let minPrice = Math.min(...prices);
+    let maxPrice = Math.max(...prices);
+    
+    // Include previousClose in the domain so the reference line is always visible
+    if (priceData.previousClose != null) {
+      minPrice = Math.min(minPrice, priceData.previousClose);
+      maxPrice = Math.max(maxPrice, priceData.previousClose);
+    }
+    
     const range = maxPrice - minPrice;
     // Use 5% padding for 7D/30D (more range), 3% for shorter views
     const isLongRange = timeRange === '7D' || timeRange === '30D';
