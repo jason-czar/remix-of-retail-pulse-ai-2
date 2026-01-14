@@ -324,11 +324,8 @@ function NarrativeSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:flex items-center justify-center",
-        "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
-        "dark:backdrop-blur-xl dark:border dark:border-white/10",
-        "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
-        "border border-border/60"
+        "w-[260px] flex-shrink-0 p-4 hidden md:flex items-center justify-center",
+        "glass-card"
       )}>
         <p className="text-sm text-muted-foreground text-center">
           No data available
@@ -341,11 +338,8 @@ function NarrativeSidePanel({
   if (data.isGap) {
     return (
       <div className={cn(
-        "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:block",
-        "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
-        "dark:backdrop-blur-xl dark:border dark:border-dashed dark:border-amber-500/50",
-        "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
-        "border border-dashed border-amber-500/50"
+        "w-[260px] flex-shrink-0 p-4 hidden md:block",
+        "glass-card !border-dashed !border-amber-500/50"
       )}>
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
@@ -365,11 +359,8 @@ function NarrativeSidePanel({
   if (data.isEmpty) {
     return (
       <div className={cn(
-        "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:block",
-        "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
-        "dark:backdrop-blur-xl dark:border dark:border-white/10",
-        "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
-        "border border-border/60"
+        "w-[260px] flex-shrink-0 p-4 hidden md:block",
+        "glass-card"
       )}>
         <span className="font-semibold text-card-foreground">{data.label}</span>
         <p className="text-sm text-muted-foreground mt-2">
@@ -394,11 +385,8 @@ function NarrativeSidePanel({
   
   return (
     <div className={cn(
-      "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:block",
-      "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
-      "dark:backdrop-blur-xl dark:border dark:border-white/10",
-      "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
-      "border border-border/60",
+      "w-[260px] flex-shrink-0 p-4 hidden md:block",
+      "glass-card",
       !isHovering && "ring-1 ring-primary/20"
     )}>
       {/* Time/Date Header */}
