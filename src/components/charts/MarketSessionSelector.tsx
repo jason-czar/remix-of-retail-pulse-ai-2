@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Clock, Sun, Sunrise, Sunset } from "lucide-react";
+import { Clock, Sun } from "lucide-react";
 
 export type MarketSession = 'all' | 'pre-market' | 'regular' | 'after-hours';
 
@@ -27,37 +26,28 @@ export function MarketSessionSelector({
   onSessionChange,
   className = ""
 }: MarketSessionSelectorProps) {
+  const sessions = [
+    { key: 'all' as const, icon: Clock, label: 'All', title: 'All Hours (4 AM - 8 PM)' },
+    { key: 'regular' as const, icon: Sun, label: 'Regular', title: 'Regular Hours (7 AM - 4 PM)' },
+  ];
+
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
-      <Button
-        variant={session === 'all' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onSessionChange('all')}
-        className={`h-7 px-2 text-xs ${
-          session === 'all' 
-            ? 'bg-slate-600 hover:bg-slate-700 text-white' 
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-        title="All Hours (4 AM - 8 PM)"
-      >
-        <Clock className="h-3 w-3 mr-1" />
-        All
-      </Button>
-      <Button
-        variant={session === 'regular' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onSessionChange('regular')}
-        className={`h-7 px-2 text-xs ${
-          session === 'regular' 
-            ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
-            : 'text-muted-foreground hover:text-foreground'
-        }`}
-        title="Regular Hours (7 AM - 4 PM)"
-      >
-        <Sun className="h-3 w-3 mr-1" />
-        Regular
-      </Button>
-      {/* Pre-market and After-hours buttons hidden for now */}
+    <div className={`inline-flex h-8 items-center justify-center rounded-full p-1 text-muted-foreground bg-muted/60 dark:bg-white/5 backdrop-blur-xl border border-border/40 dark:border-white/10 shadow-sm dark:shadow-lg dark:shadow-black/20 ${className}`}>
+      {sessions.map(({ key, icon: Icon, label, title }) => (
+        <button
+          key={key}
+          onClick={() => onSessionChange(key)}
+          title={title}
+          className={`inline-flex items-center justify-center whitespace-nowrap px-2 py-1 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 ${
+            session === key
+              ? 'bg-background text-foreground shadow-md dark:shadow-black/30 dark:bg-white/10 dark:backdrop-blur-sm'
+              : 'text-muted-foreground hover:text-foreground/80'
+          }`}
+        >
+          <Icon className="h-3 w-3 mr-1" />
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

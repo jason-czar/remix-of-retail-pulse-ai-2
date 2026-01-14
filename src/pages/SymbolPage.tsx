@@ -363,17 +363,19 @@ function TimeRangeSelector({ value, onChange }: { value: TimeRange; onChange: (v
   };
   
   return (
-    <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
+    <div className="inline-flex h-9 md:h-10 items-center justify-center rounded-full p-1 md:p-1.5 text-muted-foreground bg-muted/60 dark:bg-white/5 backdrop-blur-xl border border-border/40 dark:border-white/10 shadow-sm dark:shadow-lg dark:shadow-black/20 overflow-x-auto scrollbar-hide">
       {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map((range) => (
-        <Button
+        <button
           key={range}
-          variant={range === value ? "default" : "ghost"}
-          size="sm"
-          className="px-2 md:px-3 text-xs md:text-sm shrink-0"
           onClick={() => onChange(range)}
+          className={`inline-flex items-center justify-center whitespace-nowrap px-2.5 md:px-3.5 py-1.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0 ${
+            range === value
+              ? 'bg-background text-foreground shadow-md dark:shadow-black/30 dark:bg-white/10 dark:backdrop-blur-sm'
+              : 'text-muted-foreground hover:text-foreground/80'
+          }`}
         >
           {labels[range]}
-        </Button>
+        </button>
       ))}
     </div>
   );
