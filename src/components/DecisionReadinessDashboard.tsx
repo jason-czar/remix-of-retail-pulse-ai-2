@@ -191,9 +191,9 @@ function LensReadinessCard({
   const TimingIcon = timing.icon;
 
   return (
-    <Card className="p-4 glass-card hover:bg-secondary/50 transition-colors flex flex-col h-full">
-      {/* Main Content - grows to fill space */}
-      <div className="flex-1">
+    <Card className="p-4 glass-card hover:bg-secondary/50 transition-colors">
+      {/* Main Content */}
+      <div>
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -280,7 +280,7 @@ function LensReadinessCard({
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full text-xs text-muted-foreground hover:text-foreground mt-auto pt-2 border-t border-border/30"
+          className="w-full text-xs text-muted-foreground hover:text-foreground pt-2 border-t border-border/30"
         >
           {isExpanded ? (
             <>
@@ -542,7 +542,7 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
     return (
       <div className="space-y-4">
         <Skeleton className="h-32 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-48 w-full" />
           ))}
@@ -585,7 +585,7 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
 
       {/* Lens Cards Grid */}
       {sortedEntries.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
           {sortedEntries.map(([lensKey, readiness]) => (
             <LensReadinessCard
               key={lensKey}
