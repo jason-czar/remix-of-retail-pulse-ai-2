@@ -168,6 +168,7 @@ function NarrativePersistenceBadge({
 
 // ============= LENS CARDS =============
 
+function LensReadinessCard({ 
   lensKey, 
   readiness, 
   overlay 
