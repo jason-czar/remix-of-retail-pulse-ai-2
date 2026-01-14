@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Light theme */
-    --background: 0 0% 100%;
+    --background: 240 18% 96%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 98%;
