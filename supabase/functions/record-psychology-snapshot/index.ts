@@ -614,14 +614,25 @@ Generate:
             parameters: {
               type: "object",
               properties: {
+                // Overlays for all 8 lenses
                 earnings_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
                 ma_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
                 capital_allocation_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
                 corporate_strategy_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                leadership_change_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                strategic_pivot_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                product_launch_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                activist_risk_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                // Readiness for all 8 lenses
                 earnings_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
                 ma_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
                 capital_allocation_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
                 corporate_strategy_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                leadership_change_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                strategic_pivot_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                product_launch_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                activist_risk_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                // Summary
                 one_liner: { type: "string" },
                 primary_risk: { type: "string" },
                 dominant_emotion: { type: "string" },
@@ -672,8 +683,8 @@ Generate:
     return generateFallbackInterpretation(symbol, narratives, emotions, dataConfidence.score);
   }
   
-  // Map flattened response to structured format
-  const lensMap = ["earnings", "ma", "capital_allocation", "corporate_strategy"];
+  // Map flattened response to structured format - all 8 lenses
+  const lensMap = ["earnings", "ma", "capital_allocation", "corporate_strategy", "leadership_change", "strategic_pivot", "product_launch", "activist_risk"];
   
   const decision_overlays: Record<string, DecisionOverlay> = {};
   const decision_readiness: Record<string, DecisionReadiness> = {};
