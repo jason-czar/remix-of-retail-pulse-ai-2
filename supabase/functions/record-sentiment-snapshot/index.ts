@@ -252,7 +252,13 @@ Deno.serve(async (req) => {
             }
           }
 
-          const messageVolume = parseInt(stats.volume?.replace(/[^\d]/g, '') || '0') || 0
+          // Calculate total volume from hourly distribution (the correct source)
+          const hourlyDistribution = volumeData?.hourlyDistribution || []
+          const totalDailyVolume = hourlyDistribution.reduce(
+            (sum: number, h: any) => sum + (h.count || 0), 
+            0
+          )
+          const messageVolume = totalDailyVolume || parseInt(stats.volume?.replace(/[^\d]/g, '') || '0') || 0
 
           const snapshot: SentimentSnapshot = {
             symbol,
