@@ -329,6 +329,33 @@
       inset 0 1px 0 hsl(0 0% 100% / 0.6);
   }
 
+  /* Glass Tabs Enhancement */
+  .glass-tabs-list {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(20px);
+  }
+
+  .dark .glass-tabs-list {
+    background: linear-gradient(
+      135deg,
+      hsl(0 0% 100% / 0.08) 0%,
+      hsl(0 0% 100% / 0.04) 100%
+    );
+  }
+
+  /* Active tab glow effect */
+  [data-state="active"].glass-tabs-trigger {
+    box-shadow: 
+      0 2px 8px hsl(0 0% 0% / 0.1),
+      0 1px 2px hsl(0 0% 0% / 0.06);
+  }
+
+  .dark [data-state="active"].glass-tabs-trigger {
+    box-shadow: 
+      0 4px 12px hsl(0 0% 0% / 0.4),
+      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+  }
+
   /* Glow button with ::before pseudo-element blur halo */
   .btn-glow {
     @apply relative overflow-hidden font-semibold;
