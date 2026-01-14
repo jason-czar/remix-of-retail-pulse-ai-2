@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useLatestPsychologySnapshot, DecisionReadiness, DecisionOverlay } from "@/hooks/use-psychology-snapshot";
 import { 
   CheckCircle2, 
@@ -13,7 +15,14 @@ import {
   Shield,
   Target,
   Activity,
-  Brain
+  Brain,
+  Users,
+  Rocket,
+  RefreshCcw,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  AlertCircle
 } from "lucide-react";
 
 interface DecisionReadinessDashboardProps {
@@ -22,13 +31,13 @@ interface DecisionReadinessDashboardProps {
 
 const LENS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   earnings: { label: "Earnings", icon: TrendingUp, color: "text-chart-1" },
-  "m-and-a": { label: "M&A", icon: Target, color: "text-chart-2" },
-  "capital-allocation": { label: "Capital Allocation", icon: Activity, color: "text-chart-3" },
-  "corporate-strategy": { label: "Corporate Strategy", icon: Brain, color: "text-chart-4" },
-  "investor-relations": { label: "Investor Relations", icon: Shield, color: "text-chart-5" },
-  "crisis-management": { label: "Crisis Management", icon: AlertTriangle, color: "text-destructive" },
-  "product-launch": { label: "Product Launch", icon: TrendingUp, color: "text-chart-1" },
-  "competitive-positioning": { label: "Competitive Positioning", icon: Target, color: "text-chart-2" },
+  ma: { label: "M&A", icon: Target, color: "text-chart-2" },
+  capital_allocation: { label: "Capital Allocation", icon: Activity, color: "text-chart-3" },
+  corporate_strategy: { label: "Corporate Strategy", icon: Brain, color: "text-chart-4" },
+  leadership_change: { label: "Leadership", icon: Users, color: "text-chart-5" },
+  strategic_pivot: { label: "Strategic Pivot", icon: RefreshCcw, color: "text-primary" },
+  product_launch: { label: "Product Launch", icon: Rocket, color: "text-chart-1" },
+  activist_risk: { label: "Activist Risk", icon: Shield, color: "text-destructive" },
 };
 
 function getTimingBadge(timing: DecisionReadiness["recommended_timing"]) {
@@ -56,6 +65,12 @@ function getProgressColor(score: number): string {
   return "bg-bearish";
 }
 
+function getRiskColor(score: number): string {
+  if (score >= 70) return "text-bearish";
+  if (score >= 40) return "text-amber-500";
+  return "text-bullish";
+}
+
 function LensReadinessCard({ 
   lensKey, 
   readiness, 
@@ -65,100 +80,171 @@ function LensReadinessCard({
   readiness: DecisionReadiness;
   overlay?: DecisionOverlay;
 }) {
-  const config = LENS_CONFIG[lensKey] || { label: lensKey, icon: Activity, color: "text-muted-foreground" };
+  const [isExpanded, setIsExpanded] = useState(false);
+  const config = LENS_CONFIG[lensKey] || { label: lensKey.replace(/_/g, " "), icon: Activity, color: "text-muted-foreground" };
   const Icon = config.icon;
   const timing = getTimingBadge(readiness.recommended_timing);
   const TimingIcon = timing.icon;
 
   return (
-    <Card className="p-4 bg-gradient-card hover:bg-secondary/50 transition-colors">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Icon className={`h-4 w-4 ${config.color}`} />
-          <span className="font-medium text-sm">{config.label}</span>
+    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+      <Card className="p-4 bg-gradient-card hover:bg-secondary/50 transition-colors">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Icon className={`h-4 w-4 ${config.color}`} />
+            <span className="font-medium text-sm">{config.label}</span>
+          </div>
+          <Badge variant={timing.variant} className="text-xs">
+            <TimingIcon className="h-3 w-3 mr-1" />
+            {timing.label}
+          </Badge>
         </div>
-        <Badge variant={timing.variant} className="text-xs">
-          <TimingIcon className="h-3 w-3 mr-1" />
-          {timing.label}
-        </Badge>
-      </div>
 
-      {/* Readiness Score */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-muted-foreground">Readiness Score</span>
-          <span className={`text-lg font-display ${getReadinessColor(readiness.readiness_score)}`}>
-            {readiness.readiness_score}
-          </span>
-        </div>
-        <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-          <div 
-            className={`h-full transition-all ${getProgressColor(readiness.readiness_score)}`}
-            style={{ width: `${readiness.readiness_score}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Blocking Narratives */}
-      {readiness.blocking_narratives.length > 0 && (
+        {/* Readiness Score */}
         <div className="mb-3">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <TrendingDown className="h-3 w-3 text-bearish" />
-            <span className="text-xs font-medium text-bearish">Blocking</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-muted-foreground">Readiness Score</span>
+            <span className={`text-lg font-display ${getReadinessColor(readiness.readiness_score)}`}>
+              {readiness.readiness_score}
+            </span>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
-              <Badge key={idx} variant="outline" className="text-[10px] border-bearish/30 text-bearish bg-bearish/5">
-                {narrative}
-              </Badge>
-            ))}
-            {readiness.blocking_narratives.length > 3 && (
-              <Badge variant="outline" className="text-[10px]">
-                +{readiness.blocking_narratives.length - 3}
-              </Badge>
-            )}
+          <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div 
+              className={`h-full transition-all ${getProgressColor(readiness.readiness_score)}`}
+              style={{ width: `${readiness.readiness_score}%` }}
+            />
           </div>
         </div>
-      )}
 
-      {/* Supportive Narratives */}
-      {readiness.supportive_narratives.length > 0 && (
-        <div className="mb-3">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <TrendingUp className="h-3 w-3 text-bullish" />
-            <span className="text-xs font-medium text-bullish">Supportive</span>
+        {/* Blocking Narratives */}
+        {readiness.blocking_narratives.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <TrendingDown className="h-3 w-3 text-bearish" />
+              <span className="text-xs font-medium text-bearish">Blocking</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {readiness.blocking_narratives.slice(0, 2).map((narrative, idx) => (
+                <Badge key={idx} variant="outline" className="text-[10px] border-bearish/30 text-bearish bg-bearish/5">
+                  {narrative}
+                </Badge>
+              ))}
+              {readiness.blocking_narratives.length > 2 && (
+                <Badge variant="outline" className="text-[10px]">
+                  +{readiness.blocking_narratives.length - 2}
+                </Badge>
+              )}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => (
-              <Badge key={idx} variant="outline" className="text-[10px] border-bullish/30 text-bullish bg-bullish/5">
-                {narrative}
-              </Badge>
-            ))}
-            {readiness.supportive_narratives.length > 3 && (
-              <Badge variant="outline" className="text-[10px]">
-                +{readiness.supportive_narratives.length - 3}
-              </Badge>
-            )}
+        )}
+
+        {/* Supportive Narratives */}
+        {readiness.supportive_narratives.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <TrendingUp className="h-3 w-3 text-bullish" />
+              <span className="text-xs font-medium text-bullish">Supportive</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {readiness.supportive_narratives.slice(0, 2).map((narrative, idx) => (
+                <Badge key={idx} variant="outline" className="text-[10px] border-bullish/30 text-bullish bg-bullish/5">
+                  {narrative}
+                </Badge>
+              ))}
+              {readiness.supportive_narratives.length > 2 && (
+                <Badge variant="outline" className="text-[10px]">
+                  +{readiness.supportive_narratives.length - 2}
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Delay Recommendation */}
-      {readiness.recommended_delay && (
-        <div className="text-xs text-muted-foreground italic">
-          Recommended delay: {readiness.recommended_delay}
-        </div>
-      )}
+        {/* Delay Recommendation */}
+        {readiness.recommended_delay && readiness.recommended_delay !== "None" && (
+          <div className="text-xs text-muted-foreground italic mb-2">
+            Recommended delay: {readiness.recommended_delay}
+          </div>
+        )}
 
-      {/* Confidence Indicator */}
-      <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border/50">
-        <span className="text-[10px] text-muted-foreground">Confidence:</span>
-        <span className="text-[10px] font-medium">
-          {Math.round(readiness.confidence * 100)}%
-        </span>
-      </div>
-    </Card>
+        {/* Expand/Collapse Button */}
+        {overlay && (
+          <CollapsibleTrigger className="w-full">
+            <div className="flex items-center justify-center gap-1 pt-2 border-t border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="h-3 w-3" />
+                  <span>Hide Details</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3" />
+                  <span>Show Details</span>
+                </>
+              )}
+            </div>
+          </CollapsibleTrigger>
+        )}
+
+        {/* Expanded Overlay Details */}
+        <CollapsibleContent>
+          {overlay && (
+            <div className="pt-3 mt-2 border-t border-border/50 space-y-3">
+              {/* Risk Score */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Risk Score</span>
+                <span className={`text-sm font-medium ${getRiskColor(overlay.risk_score)}`}>
+                  {overlay.risk_score}/100
+                </span>
+              </div>
+
+              {/* Dominant Concerns */}
+              {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <AlertCircle className="h-3 w-3 text-amber-500" />
+                    <span className="text-xs font-medium">Key Concerns</span>
+                  </div>
+                  <ul className="space-y-1">
+                    {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
+                      <li key={idx} className="text-[11px] text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-amber-500/50 before:rounded-full">
+                        {concern}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Recommended Actions */}
+              {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Lightbulb className="h-3 w-3 text-primary" />
+                    <span className="text-xs font-medium">Recommended Actions</span>
+                  </div>
+                  <ul className="space-y-1">
+                    {overlay.recommended_actions.slice(0, 4).map((action, idx) => (
+                      <li key={idx} className="text-[11px] text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-primary/50 before:rounded-full">
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Confidence */}
+              <div className="flex items-center justify-end gap-1 pt-2">
+                <span className="text-[10px] text-muted-foreground">Confidence:</span>
+                <span className="text-[10px] font-medium">
+                  {Math.round(overlay.confidence * 100)}%
+                </span>
+              </div>
+            </div>
+          )}
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 
@@ -263,7 +349,7 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
       <div className="space-y-4">
         <Skeleton className="h-32 w-full" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-48 w-full" />
           ))}
         </div>
@@ -286,15 +372,18 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
   const { interpretation } = snapshot;
   const readinessEntries = Object.entries(interpretation.decision_readiness);
 
+  // Sort by readiness score descending
+  const sortedEntries = readinessEntries.sort(([, a], [, b]) => b.readiness_score - a.readiness_score);
+
   return (
     <div className="space-y-4">
       {/* Overview Card */}
       <OverviewCard snapshot={snapshot} />
 
       {/* Lens Cards Grid */}
-      {readinessEntries.length > 0 ? (
+      {sortedEntries.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {readinessEntries.map(([lensKey, readiness]) => (
+          {sortedEntries.map(([lensKey, readiness]) => (
             <LensReadinessCard
               key={lensKey}
               lensKey={lensKey}
