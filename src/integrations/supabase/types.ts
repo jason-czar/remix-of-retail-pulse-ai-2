@@ -317,6 +317,54 @@ export type Database = {
         }
         Relationships: []
       }
+      psychology_snapshots: {
+        Row: {
+          created_at: string
+          data_confidence: Json
+          historical_context: Json | null
+          id: string
+          interpretation: Json
+          interpretation_version: number
+          message_count: number
+          observed_state: Json
+          period_type: string
+          snapshot_end: string
+          snapshot_start: string
+          symbol: string
+          unique_authors: number
+        }
+        Insert: {
+          created_at?: string
+          data_confidence?: Json
+          historical_context?: Json | null
+          id?: string
+          interpretation?: Json
+          interpretation_version?: number
+          message_count?: number
+          observed_state?: Json
+          period_type: string
+          snapshot_end: string
+          snapshot_start: string
+          symbol: string
+          unique_authors?: number
+        }
+        Update: {
+          created_at?: string
+          data_confidence?: Json
+          historical_context?: Json | null
+          id?: string
+          interpretation?: Json
+          interpretation_version?: number
+          message_count?: number
+          observed_state?: Json
+          period_type?: string
+          snapshot_end?: string
+          snapshot_start?: string
+          symbol?: string
+          unique_authors?: number
+        }
+        Relationships: []
+      }
       sentiment_cache: {
         Row: {
           created_at: string | null
@@ -493,6 +541,7 @@ export type Database = {
       cleanup_lens_cache: { Args: never; Returns: undefined }
       cleanup_old_history: { Args: never; Returns: undefined }
       cleanup_psychology_history: { Args: never; Returns: undefined }
+      cleanup_psychology_snapshots: { Args: never; Returns: undefined }
       cleanup_volume_history: { Args: never; Returns: undefined }
     }
     Enums: {
