@@ -13,7 +13,7 @@ import {
 import { useVolumeAnalytics } from "@/hooks/use-stocktwits";
 import { useCachedVolumeAnalytics } from "@/hooks/use-analytics-cache";
 import { useStockPrice } from "@/hooks/use-stock-price";
-import { alignPricesToFiveMinSlots, alignPricesToHourSlots, alignPricesToDateSlots } from "@/lib/stock-price-api";
+import { alignPricesToFiveMinSlots, alignPricesToHourSlots } from "@/lib/stock-price-api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -419,34 +419,81 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       });
     }
 
-    // For 7D/30D views, align by date
+    // For 7D/30D views, create separate hourly price data - bars stay daily
     if (timeRange === '7D' || timeRange === '30D') {
-      const priceByDate = alignPricesToDateSlots(priceData.prices);
-      
-      return chartData.map((item: any) => {
-        // Try to find matching price by parsing the time label
-        // Time labels are like "Jan 10", "Jan 11", etc.
-        // We need to find the sortKey (YYYY-MM-DD) that matches
-        let matchingPrice = null;
-        
-        // Check all date keys for a matching label
-        priceByDate.forEach((pricePoint, dateKey) => {
-          const priceDate = new Date(pricePoint.timestamp);
-          const priceDateLabel = priceDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-          if (priceDateLabel === item.time) {
-            matchingPrice = pricePoint.price;
-          }
-        });
-        
-        return {
-          ...item,
-          price: matchingPrice,
-        };
-      });
+      // Return chart data without price - price is handled separately
+      return chartData;
     }
 
     return chartData;
   }, [chartData, priceData, showPriceOverlay, timeRange, is5MinView, START_HOUR, END_HOUR]);
+
+  // Create hourly price data for 7D/30D views (separate from bar data)
+  const priceLineData = useMemo(() => {
+    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
+      return [];
+    }
+    
+    if (timeRange !== '7D' && timeRange !== '30D') {
+      return []; // Not needed for other views
+    }
+
+    // Get date range from chart data
+    const chartDates = chartData.map((item: any) => {
+      // Parse the time label to get sortable date
+      const now = new Date();
+      const year = now.getFullYear();
+      const match = item.time?.match(/(\w+)\s+(\d+)/);
+      if (match) {
+        const monthStr = match[1];
+        const day = parseInt(match[2]);
+        const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(monthStr);
+        if (monthIndex >= 0) {
+          return { label: item.time, sortKey: `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` };
+        }
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (chartDates.length === 0) return [];
+
+    // Create mapping of date label to bar index
+    const dateToIndex = new Map<string, number>();
+    chartData.forEach((item: any, idx: number) => {
+      dateToIndex.set(item.time, idx);
+    });
+
+    // Build sorted date keys for range checking
+    const sortedDates = chartDates.map((d: any) => d.sortKey).sort();
+    const startDate = sortedDates[0];
+    const endDate = sortedDates[sortedDates.length - 1];
+
+    // Process hourly price points
+    return priceData.prices
+      .filter(p => {
+        const dateKey = new Date(p.timestamp).toISOString().split('T')[0];
+        return dateKey >= startDate && dateKey <= endDate;
+      })
+      .map(point => {
+        const date = new Date(point.timestamp);
+        const dateKey = date.toISOString().split('T')[0];
+        const hour = date.getHours();
+        const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        // Calculate x position: barIndex + (hour / 24) to interpolate within the day
+        const barIndex = dateToIndex.get(dateLabel) ?? 0;
+        const xPosition = barIndex + (hour / 24);
+        
+        return {
+          x: xPosition,
+          price: point.price,
+          timestamp: point.timestamp,
+          dateLabel,
+          timeLabel: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        };
+      })
+      .sort((a, b) => a.x - b.x);
+  }, [chartData, priceData, showPriceOverlay, timeRange]);
 
   // Calculate baseline
   const baseline = useMemo(() => {
@@ -553,6 +600,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           </defs>
           {/* CartesianGrid hidden for cleaner look */}
           <XAxis 
+            xAxisId="bar"
             dataKey="time" 
             stroke="hsl(215 20% 55%)" 
             fontSize={12}
@@ -569,6 +617,16 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               );
             } : undefined}
           />
+          {/* Hidden numeric X-axis for hourly price line positioning in 7D/30D */}
+          {showPriceOverlay && (timeRange === '7D' || timeRange === '30D') && (
+            <XAxis 
+              xAxisId="price"
+              type="number"
+              dataKey="x"
+              domain={[0, chartDataWithPrice.length - 1]}
+              hide={true}
+            />
+          )}
           <YAxis 
             yAxisId="left"
             stroke="hsl(215 20% 55%)" 
@@ -645,6 +703,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             label={{ value: "Baseline", position: "right", fill: "hsl(215 20% 55%)", fontSize: 12 }}
           />
           <Bar 
+            xAxisId="bar"
             yAxisId="left"
             dataKey="volume" 
             fill="url(#volumeGradient)"
@@ -659,9 +718,10 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             activeBar={!is5MinView ? { fillOpacity: 0.7 } : false}
             radius={!is5MinView ? [4, 4, 0, 0] : undefined}
           />
-          {/* Price Line Overlay */}
-          {showPriceOverlay && showPriceToggle && (
+          {/* Price Line Overlay - standard for non-7D/30D */}
+          {showPriceOverlay && showPriceToggle && timeRange !== '7D' && timeRange !== '30D' && (
             <Line
+              xAxisId="bar"
               yAxisId="right"
               type="monotone"
               dataKey="price"
@@ -670,6 +730,21 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               dot={false}
               activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
               connectNulls
+            />
+          )}
+          {/* Hourly Price Line Overlay for 7D/30D - uses separate data with numeric X positions */}
+          {showPriceOverlay && showPriceToggle && (timeRange === '7D' || timeRange === '30D') && priceLineData.length > 0 && (
+            <Line
+              xAxisId="price"
+              yAxisId="right"
+              data={priceLineData}
+              type="monotone"
+              dataKey="price"
+              stroke={priceLineColor}
+              strokeWidth={2}
+              dot={{ r: 1.5, fill: priceLineColor }}
+              activeDot={{ r: 4, stroke: priceLineColor, strokeWidth: 2, fill: 'hsl(var(--background))' }}
+              connectNulls={true}
             />
           )}
           {/* Previous Close Reference Line - only on Today view */}
