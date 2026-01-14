@@ -32,3 +32,12 @@ verify_jwt = false
 
 [functions.record-psychology-snapshot]
 verify_jwt = false
+
+[functions.collect-daily-prices]
+verify_jwt = false
+
+[functions.backfill-price-history]
+verify_jwt = false
+
+[functions.compute-narrative-outcomes]
+verify_jwt = false
