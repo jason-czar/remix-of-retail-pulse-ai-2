@@ -13,10 +13,10 @@ const TabsList = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-11 items-center justify-center rounded-full p-1.5 text-muted-foreground",
-      "bg-muted/60 dark:bg-gradient-to-br dark:from-white/8 dark:to-white/4",
+      "bg-muted/60 dark:bg-[linear-gradient(135deg,hsl(240_15%_25%/0.35)_0%,hsl(240_15%_18%/0.2)_100%)]",
       "backdrop-blur-xl",
       "border border-border/40 dark:border-white/15",
-      "shadow-sm dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
+      "shadow-sm dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
       className,
     )}
     {...props}
