@@ -124,7 +124,7 @@ export default function SymbolPage() {
           </div>
 
           {/* Right side: Action buttons */}
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:flex-nowrap scrollbar-hide shrink-0">
+          <div className="flex gap-2 overflow-x-auto lg:overflow-visible pb-1 pr-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pr-0 lg:flex-nowrap scrollbar-hide shrink-0">
             <FillTodayGapsButton 
               symbol={symbol} 
               onComplete={() => {
