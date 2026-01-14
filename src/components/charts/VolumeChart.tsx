@@ -756,6 +756,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             }}
           />
           <ReferenceLine 
+            xAxisId="bar"
             yAxisId="left"
             y={baseline} 
             stroke="hsl(215 20% 55%)" 
@@ -810,6 +811,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           {/* Previous Close Reference Line - only on Today view */}
           {showPriceOverlay && showPriceToggle && is5MinView && priceData?.previousClose && (
             <ReferenceLine
+              xAxisId="bar"
               yAxisId="right"
               y={priceData.previousClose}
               stroke="hsl(215 20% 65% / 0.5)"
