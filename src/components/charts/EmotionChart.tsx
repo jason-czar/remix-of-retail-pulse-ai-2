@@ -328,8 +328,15 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       return ['auto', 'auto'];
     }
     const prices = priceData.prices.map(p => p.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    let minPrice = Math.min(...prices);
+    let maxPrice = Math.max(...prices);
+    
+    // Include previousClose in the domain so the reference line is always visible
+    if (priceData.previousClose != null) {
+      minPrice = Math.min(minPrice, priceData.previousClose);
+      maxPrice = Math.max(maxPrice, priceData.previousClose);
+    }
+    
     const range = maxPrice - minPrice;
     const padding = Math.max(range * 0.03, 0.25);
     const roundTo = 0.25;
