@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { MeshBackground } from "@/components/MeshBackground";
 import { Zap, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -48,9 +49,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-glow opacity-30" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <MeshBackground />
       
       <Card className="w-full max-w-md p-8 glass-card relative">
         {/* Logo */}
