@@ -18,6 +18,7 @@ import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
 import { DecisionReadinessDashboard } from "@/components/DecisionReadinessDashboard";
+import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
@@ -240,6 +241,11 @@ export default function SymbolPage() {
         <div className="mb-8 md:mb-12">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
           <DecisionReadinessDashboard symbol={symbol} />
+        </div>
+
+        {/* Narrative Impact History Section */}
+        <div className="mb-8 md:mb-12">
+          <NarrativeImpactHistorySection symbol={symbol} />
         </div>
 
         {/* Representative Messages */}
