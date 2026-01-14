@@ -18,7 +18,7 @@ import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
 import { alignPricesToHourSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, AlertTriangle, DollarSign, ChevronDown } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, AlertTriangle, DollarSign, ChevronDown, Calendar } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
@@ -282,6 +282,7 @@ function TimeSeriesNarrativeChart({
   timeRange: '7D' | '30D';
 }) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
+  const [showWeekends, setShowWeekends] = useState(false);
   const days = timeRange === '7D' ? 7 : 30;
   const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(
     symbol, 
@@ -448,6 +449,34 @@ function TimeSeriesNarrativeChart({
     return { stackedChartData, totalMessages, gapCount: missingDates.length, barDomain };
   }, [historyData]);
 
+  // Helper to check if a date is a weekend
+  const isWeekend = (sortKey: string) => {
+    const [year, month, day] = sortKey.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    const dayOfWeek = date.getUTCDay();
+    return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+  };
+
+  // Filter data based on showWeekends toggle
+  const filteredChartData = useMemo(() => {
+    if (showWeekends) {
+      return stackedChartData;
+    }
+    return stackedChartData.filter(d => !isWeekend(d.sortKey));
+  }, [stackedChartData, showWeekends]);
+
+  // Recalculate bar domain for filtered data
+  const filteredBarDomain = useMemo(() => {
+    const maxStackedValue = Math.max(...filteredChartData.filter(d => !d.isGap).map(item => {
+      let sum = 0;
+      for (let i = 0; i < MAX_SEGMENTS; i++) {
+        sum += (item[`segment${i}`] as number) || 0;
+      }
+      return sum;
+    }), 1);
+    return [0, maxStackedValue * 2] as [number, number];
+  }, [filteredChartData]);
+
   // Create hourly price data points for continuous line overlay
   const priceLineData = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
@@ -455,22 +484,23 @@ function TimeSeriesNarrativeChart({
     }
 
     // Build hourly data points with positions that span across the daily bars
-    const sortedBarDates = stackedChartData.map(d => d.sortKey).sort();
+    const sortedBarDates = filteredChartData.map(d => d.sortKey).sort();
     const startDate = sortedBarDates[0];
     const endDate = sortedBarDates[sortedBarDates.length - 1];
     
     if (!startDate || !endDate) return [];
 
-    // Create a mapping of date to bar index for positioning
+    // Create a mapping of date to bar index for positioning (based on filtered data)
     const dateToIndex = new Map<string, number>();
     sortedBarDates.forEach((date, idx) => {
       dateToIndex.set(date, idx);
     });
 
-    // Process hourly price points
+    // Process hourly price points - filter weekends if not showing them
     return priceData.prices
       .filter(p => {
         const dateKey = new Date(p.timestamp).toISOString().split('T')[0];
+        if (!showWeekends && isWeekend(dateKey)) return false;
         return dateKey >= startDate && dateKey <= endDate;
       })
       .map(point => {
@@ -491,12 +521,12 @@ function TimeSeriesNarrativeChart({
         };
       })
       .sort((a, b) => a.x - b.x);
-  }, [stackedChartData, priceData, showPriceOverlay]);
+  }, [filteredChartData, priceData, showPriceOverlay, showWeekends]);
 
-  // Chart data for bars (without price - price is rendered separately)
+  // Chart data for bars (using filtered data)
   const chartDataWithPrice = useMemo(() => {
-    return stackedChartData;
-  }, [stackedChartData]);
+    return filteredChartData;
+  }, [filteredChartData]);
 
   // Calculate price domain for right Y-axis - tight padding to fill vertical space
   const priceDomain = useMemo(() => {
@@ -591,6 +621,18 @@ function TimeSeriesNarrativeChart({
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Weekend Toggle */}
+              <div className="flex items-center gap-2">
+                <Calendar 
+                  className="h-4 w-4" 
+                  style={{ color: showWeekends ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }} 
+                />
+                <span className="text-xs text-muted-foreground">Weekends</span>
+                <Switch
+                  checked={showWeekends}
+                  onCheckedChange={setShowWeekends}
+                />
+              </div>
               {/* Price Toggle */}
               <div className="flex items-center gap-2">
                 <DollarSign 
@@ -654,7 +696,7 @@ function TimeSeriesNarrativeChart({
             axisLine={false}
             width={10}
             tick={false}
-            domain={barDomain}
+            domain={filteredBarDomain}
           />
           {showPriceOverlay && (
             <YAxis 

@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useMemo, useState } from "react";
-import { Database, DollarSign } from "lucide-react";
+import { Database, DollarSign, Calendar } from "lucide-react";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
@@ -153,6 +153,7 @@ const generateVolumeData = (timeRange: string) => {
 
 export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeChartProps) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
+  const [showWeekends, setShowWeekends] = useState(false);
   const [activeHour, setActiveHour] = useState<number | null>(null);
   const [marketSession, setMarketSession] = useState<MarketSession>('regular');
   
@@ -428,6 +429,40 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     return chartData;
   }, [chartData, priceData, showPriceOverlay, timeRange, is5MinView, START_HOUR, END_HOUR]);
 
+  // Helper to check if a date is a weekend
+  const isWeekend = (sortKey: string) => {
+    const [year, month, day] = sortKey.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    const dayOfWeek = date.getUTCDay();
+    return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
+  };
+
+  // Filter 7D/30D chart data based on showWeekends toggle
+  const filteredChartData = useMemo(() => {
+    if (timeRange !== '7D' && timeRange !== '30D') {
+      return chartDataWithPrice;
+    }
+    if (showWeekends) {
+      return chartDataWithPrice;
+    }
+    // Parse date labels and filter weekends
+    const now = new Date();
+    const year = now.getFullYear();
+    return chartDataWithPrice.filter((item: any) => {
+      const match = item.time?.match(/(\w+)\s+(\d+)/);
+      if (match) {
+        const monthStr = match[1];
+        const day = parseInt(match[2]);
+        const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(monthStr);
+        if (monthIndex >= 0) {
+          const sortKey = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          return !isWeekend(sortKey);
+        }
+      }
+      return true;
+    });
+  }, [chartDataWithPrice, showWeekends, timeRange]);
+
   // Create hourly price data for 7D/30D views (separate from bar data)
   const priceLineData = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
@@ -438,11 +473,11 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       return []; // Not needed for other views
     }
 
-    // Get date range from chart data
-    const chartDates = chartData.map((item: any) => {
+    // Get date range from filtered chart data
+    const now = new Date();
+    const year = now.getFullYear();
+    const chartDates = filteredChartData.map((item: any) => {
       // Parse the time label to get sortable date
-      const now = new Date();
-      const year = now.getFullYear();
       const match = item.time?.match(/(\w+)\s+(\d+)/);
       if (match) {
         const monthStr = match[1];
@@ -457,9 +492,9 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
 
     if (chartDates.length === 0) return [];
 
-    // Create mapping of date label to bar index
+    // Create mapping of date label to bar index (based on filtered data)
     const dateToIndex = new Map<string, number>();
-    chartData.forEach((item: any, idx: number) => {
+    filteredChartData.forEach((item: any, idx: number) => {
       dateToIndex.set(item.time, idx);
     });
 
@@ -468,10 +503,11 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
     const startDate = sortedDates[0];
     const endDate = sortedDates[sortedDates.length - 1];
 
-    // Process hourly price points
+    // Process hourly price points - filter weekends if not showing them
     return priceData.prices
       .filter(p => {
         const dateKey = new Date(p.timestamp).toISOString().split('T')[0];
+        if (!showWeekends && isWeekend(dateKey)) return false;
         return dateKey >= startDate && dateKey <= endDate;
       })
       .map(point => {
@@ -493,7 +529,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         };
       })
       .sort((a, b) => a.x - b.x);
-  }, [chartData, priceData, showPriceOverlay, timeRange]);
+  }, [filteredChartData, priceData, showPriceOverlay, timeRange, showWeekends]);
 
   // Calculate baseline
   const baseline = useMemo(() => {
@@ -555,29 +591,46 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         </div>
         
         {showPriceToggle && (
-          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-            <DollarSign 
-              className="h-3.5 w-3.5 md:h-4 md:w-4" 
-              style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
-            />
-            <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:inline">Price</span>
-            <Switch
-              checked={showPriceOverlay}
-              onCheckedChange={setShowPriceOverlay}
-              style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
-            />
-            {showPriceOverlay && priceData?.currentPrice && (
-              <span className="text-xs font-semibold ml-1" style={{ color: priceLineColor }}>
-                ${priceData.currentPrice.toFixed(2)}
-              </span>
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            {/* Weekend Toggle - only for 7D/30D */}
+            {(timeRange === '7D' || timeRange === '30D') && (
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <Calendar 
+                  className="h-3.5 w-3.5 md:h-4 md:w-4" 
+                  style={{ color: showWeekends ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }} 
+                />
+                <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:inline">Weekends</span>
+                <Switch
+                  checked={showWeekends}
+                  onCheckedChange={setShowWeekends}
+                />
+              </div>
             )}
+            {/* Price Toggle */}
+            <div className="flex items-center gap-1.5 md:gap-2">
+              <DollarSign 
+                className="h-3.5 w-3.5 md:h-4 md:w-4" 
+                style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} 
+              />
+              <span className="text-[10px] md:text-xs text-muted-foreground hidden sm:inline">Price</span>
+              <Switch
+                checked={showPriceOverlay}
+                onCheckedChange={setShowPriceOverlay}
+                style={{ backgroundColor: showPriceOverlay ? priceLineColor : undefined }}
+              />
+              {showPriceOverlay && priceData?.currentPrice && (
+                <span className="text-xs font-semibold ml-1" style={{ color: priceLineColor }}>
+                  ${priceData.currentPrice.toFixed(2)}
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
       
       <ResponsiveContainer width="100%" height="95%">
         <ComposedChart 
-          data={chartDataWithPrice} 
+          data={filteredChartData}
           margin={{ top: 20, right: showPriceOverlay && showPriceToggle ? 60 : 30, left: 0, bottom: 0 }}
           barCategoryGap={is5MinView ? 0 : undefined}
           barGap={is5MinView ? 0 : undefined}
@@ -608,7 +661,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
             interval={is5MinView ? 11 : undefined}
             minTickGap={timeRange === '1D' ? 30 : undefined}
             tick={is5MinView ? ({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
-              const item = chartDataWithPrice[payload.index] as any;
+              const item = filteredChartData[payload.index] as any;
               if (!item?.isHourStart) return null;
               return (
                 <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={12}>
@@ -623,7 +676,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
               xAxisId="price"
               type="number"
               dataKey="x"
-              domain={[0, chartDataWithPrice.length - 1]}
+              domain={[0, filteredChartData.length - 1]}
               hide={true}
             />
           )}
