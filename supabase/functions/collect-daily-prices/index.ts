@@ -28,19 +28,18 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get unique symbols from watchlists
+    // Get unique symbols from watchlists (symbols is an array column)
     const { data: watchlistItems, error: watchlistError } = await supabase
       .from("watchlists")
-      .select("symbol")
-      .order("symbol");
+      .select("symbols");
 
     if (watchlistError) {
       console.error("Error fetching watchlist:", watchlistError);
       throw watchlistError;
     }
 
-    // Get unique symbols
-    const symbols = [...new Set(watchlistItems?.map(w => w.symbol) || [])];
+    // Flatten and dedupe symbols from all watchlists
+    const symbols = [...new Set(watchlistItems?.flatMap(w => w.symbols || []) || [])];
     
     if (symbols.length === 0) {
       console.log("No symbols in watchlists to collect prices for");
