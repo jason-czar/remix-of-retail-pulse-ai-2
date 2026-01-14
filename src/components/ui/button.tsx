@@ -20,6 +20,7 @@ const buttonVariants = cva(
         bullish: "bg-bullish text-bullish-foreground hover:bg-bullish/90",
         bearish: "bg-bearish text-bearish-foreground hover:bg-bearish/90",
         glass: "glass hover:bg-secondary/50",
+        glow: "btn-glow text-primary-foreground",
       },
       size: {
         default: "h-10 px-4 py-2",

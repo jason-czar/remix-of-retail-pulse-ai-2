@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { MeshBackground } from "@/components/MeshBackground";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -90,6 +91,7 @@ export default function SymbolPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <MeshBackground />
       <Header />
       
       <main className="container mx-auto px-4 py-6 md:py-8">
