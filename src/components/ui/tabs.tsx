@@ -13,8 +13,7 @@ const TabsList = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-11 items-center justify-center rounded-full p-1.5 text-muted-foreground",
-      "bg-muted/60 dark:bg-transparent",
-      "glass-tabs-list",
+      "bg-muted/60 dark:bg-[linear-gradient(135deg,hsl(240_15%_25%/0.35)_0%,hsl(240_15%_18%/0.2)_100%)]",
       "backdrop-blur-xl",
       "border border-border/40 dark:border-white/15",
       "shadow-sm dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
@@ -34,7 +33,6 @@ const TabsTrigger = React.forwardRef<
     className={cn(
       "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium",
       "rounded-full",
-      "glass-tabs-trigger",
       "ring-offset-background transition-all duration-200",
       "text-muted-foreground hover:text-foreground/80",
       "data-[state=active]:bg-background data-[state=active]:text-foreground",
