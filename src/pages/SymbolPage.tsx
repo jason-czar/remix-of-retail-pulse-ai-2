@@ -93,35 +93,38 @@ export default function SymbolPage() {
       
       <main className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
-        <div className="flex flex-col gap-4 mb-6 md:mb-8">
-          {statsLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-8 md:h-10 w-32 md:w-48" />
-              <Skeleton className="h-5 md:h-6 w-24 md:w-32" />
-            </div>
-          ) : (
-            <div>
-              <div className="flex items-center gap-2 md:gap-3 flex-wrap mb-2">
-                <h1 className="text-2xl md:text-4xl font-display">${symbol}</h1>
-                <Badge variant={data.trend}>{data.trend}</Badge>
-                {data.badges.includes("trending") && (
-                  <Badge variant="trending">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    Trending
-                  </Badge>
-                )}
-                {data.badges.includes("surge") && (
-                  <Badge variant="glow">Volume Surge</Badge>
-                )}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6 md:mb-8">
+          {/* Left side: Symbol info */}
+          <div className="flex-1">
+            {statsLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 md:h-10 w-32 md:w-48" />
+                <Skeleton className="h-5 md:h-6 w-24 md:w-32" />
               </div>
-              <p className="text-base md:text-lg text-muted-foreground">
-                {data.name} • NASDAQ
-              </p>
-            </div>
-          )}
+            ) : (
+              <div>
+                <div className="flex items-center gap-2 md:gap-3 flex-wrap mb-2">
+                  <h1 className="text-2xl md:text-4xl font-display">${symbol}</h1>
+                  <Badge variant={data.trend}>{data.trend}</Badge>
+                  {data.badges.includes("trending") && (
+                    <Badge variant="trending">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      Trending
+                    </Badge>
+                  )}
+                  {data.badges.includes("surge") && (
+                    <Badge variant="glow">Volume Surge</Badge>
+                  )}
+                </div>
+                <p className="text-base md:text-lg text-muted-foreground">
+                  {data.name} • NASDAQ
+                </p>
+              </div>
+            )}
+          </div>
 
-          {/* Action buttons - horizontal scroll on mobile */}
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap scrollbar-hide">
+          {/* Right side: Action buttons */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 lg:mx-0 lg:px-0 lg:flex-nowrap scrollbar-hide shrink-0">
             <FillTodayGapsButton 
               symbol={symbol} 
               onComplete={() => {
