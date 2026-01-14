@@ -11,12 +11,13 @@ import {
   Rectangle,
   ReferenceLine
 } from "recharts";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { useEmotionAnalysis, EmotionScore } from "@/hooks/use-emotion-analysis";
 import { useEmotionHistory } from "@/hooks/use-emotion-history";
 import { useStockPrice, TimeRange as StockTimeRange } from "@/hooks/use-stock-price";
 import { alignPricesToFiveMinSlots, PricePoint } from "@/lib/stock-price-api";
-import { AlertCircle, RefreshCw, Sparkles, DollarSign, Brain } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, DollarSign, Brain, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -118,6 +119,149 @@ function EmotionStackedTooltip({ active, payload, label, priceColor }: any) {
   );
 }
 
+// Types for side panel data
+interface EmotionSidePanelData {
+  label: string;
+  totalScore: number;
+  price?: number | null;
+  intensityPercent: number;
+  emotions: { name: string; score: number; color: string }[];
+  isEmpty?: boolean;
+}
+
+// Persistent side panel component with liquid glass styling
+function EmotionSidePanel({ 
+  data, 
+  priceColor,
+  isHovering 
+}: { 
+  data: EmotionSidePanelData | null;
+  priceColor: string;
+  isHovering: boolean;
+}) {
+  if (!data) {
+    return (
+      <div className={cn(
+        "w-[280px] flex-shrink-0 p-5 hidden md:flex items-center justify-center",
+        "glass-card"
+      )}>
+        <p className="text-base text-muted-foreground text-center">
+          No data available
+        </p>
+      </div>
+    );
+  }
+
+  // Handle empty slots
+  if (data.isEmpty) {
+    return (
+      <div className={cn(
+        "w-[280px] flex-shrink-0 p-5 hidden md:block",
+        "glass-card"
+      )}>
+        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
+        <p className="text-base text-muted-foreground mt-2">
+          No data available yet
+        </p>
+        {data.price != null && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50 dark:border-white/10">
+            <DollarSign className="h-5 w-5" style={{ color: priceColor }} />
+            <span className="font-bold text-xl" style={{ color: priceColor }}>${data.price.toFixed(2)}</span>
+          </div>
+        )}
+        {!isHovering && (
+          <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+            <span className="text-sm text-muted-foreground italic">
+              Showing latest • Hover chart to explore
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  return (
+    <div className={cn(
+      "w-[280px] flex-shrink-0 p-5 hidden md:block",
+      "glass-card",
+      !isHovering && "ring-1 ring-primary/20"
+    )}>
+      {/* Time Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
+        {data.totalScore > 0 && (
+          <div className="flex items-center gap-1.5 text-sm">
+            <Brain className="h-4 w-4 text-primary" />
+            <span className="text-primary font-medium">{data.totalScore}</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Stock Price */}
+      {data.price != null && (
+        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/50 dark:border-white/10">
+          <DollarSign className="h-5 w-5" style={{ color: priceColor }} />
+          <span className="font-bold text-xl" style={{ color: priceColor }}>
+            ${data.price.toFixed(2)}
+          </span>
+        </div>
+      )}
+      
+      {/* Intensity Bar */}
+      {data.intensityPercent > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-sm mb-1">
+            <span className="text-muted-foreground">Relative Intensity</span>
+            <span className={cn(
+              "font-medium",
+              data.intensityPercent >= 80 ? "text-amber-400" : 
+              data.intensityPercent >= 50 ? "text-primary" : "text-muted-foreground"
+            )}>
+              {data.intensityPercent.toFixed(0)}%
+            </span>
+          </div>
+          <div className="h-2 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className={cn(
+                "h-full rounded-full transition-all",
+                data.intensityPercent >= 80 ? "bg-amber-400" : 
+                data.intensityPercent >= 50 ? "bg-primary" : "bg-muted-foreground/50"
+              )}
+              style={{ width: `${Math.min(data.intensityPercent, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Emotion Breakdown */}
+      {data.emotions.length > 0 && (
+        <div className="space-y-2.5 pt-3 border-t border-border/50 dark:border-white/10">
+          <div className="text-sm text-muted-foreground mb-2">Signal Emotions:</div>
+          {data.emotions.map((emotion, idx) => (
+            <div key={idx} className="flex items-center gap-2.5 text-base">
+              <div 
+                className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
+                style={{ backgroundColor: emotion.color }}
+              />
+              <span className="text-card-foreground flex-1 truncate text-sm">{emotion.name}</span>
+              <span className="text-muted-foreground text-sm font-medium">{emotion.score}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Default indicator */}
+      {!isHovering && (
+        <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+          <span className="text-sm text-muted-foreground italic">
+            Showing latest • Hover chart to explore
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Custom bar shape that expands to fill hour width for 5-min view
 const WideBarShape = (props: any) => {
   const { x, y, width, height, fill, is5MinView, activeHour, radius } = props;
@@ -151,6 +295,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [activeHour, setActiveHour] = useState<number | null>(null);
   const [marketSession, setMarketSession] = useState<MarketSession>("regular");
+  const [hoveredData, setHoveredData] = useState<EmotionSidePanelData | null>(null);
 
   // Determine view type
   const is1DView = timeRange === '1D';
@@ -388,6 +533,105 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
     };
   }, [chartDataWithPrice]);
 
+  // Calculate max stacked value for intensity percentage
+  const maxStackedValue = useMemo(() => {
+    let max = 0;
+    chartDataWithPrice.forEach(slot => {
+      let stackTotal = 0;
+      DEFAULT_SIGNAL_EMOTIONS.forEach(emotion => {
+        stackTotal += slot[emotion] || 0;
+      });
+      max = Math.max(max, stackTotal);
+    });
+    return max || 100;
+  }, [chartDataWithPrice]);
+
+  // Helper to extract emotions from a data point
+  const extractEmotionsFromDataPoint = useCallback((dataPoint: Record<string, any>): { name: string; score: number; color: string }[] => {
+    return DEFAULT_SIGNAL_EMOTIONS
+      .map(name => ({
+        name,
+        score: dataPoint[name] || 0,
+        color: EMOTION_COLORS[name]
+      }))
+      .filter(e => e.score > 0)
+      .sort((a, b) => b.score - a.score);
+  }, []);
+
+  // Calculate panel data - show hovered data or default to latest
+  const panelData: EmotionSidePanelData | null = useMemo(() => {
+    if (hoveredData) return hoveredData;
+    
+    // Find latest data point with emotion data
+    const latestWithData = [...chartDataWithPrice].reverse().find(d => !d.isEmpty);
+    if (!latestWithData) {
+      // Return empty state with latest slot info
+      const latestSlot = chartDataWithPrice[chartDataWithPrice.length - 1];
+      if (latestSlot) {
+        return {
+          label: latestSlot.time || 'Latest',
+          totalScore: 0,
+          price: latestSlot.price ?? null,
+          intensityPercent: 0,
+          emotions: [],
+          isEmpty: true,
+        };
+      }
+      return null;
+    }
+    
+    const emotions = extractEmotionsFromDataPoint(latestWithData);
+    const totalScore = emotions.reduce((sum, e) => sum + e.score, 0);
+    const intensityPercent = maxStackedValue > 0 ? (totalScore / maxStackedValue) * 100 : 0;
+    
+    return {
+      label: latestWithData.time || 'Latest',
+      totalScore,
+      price: latestWithData.price ?? null,
+      intensityPercent,
+      emotions,
+    };
+  }, [hoveredData, chartDataWithPrice, extractEmotionsFromDataPoint, maxStackedValue]);
+
+  // Chart mouse handlers
+  const handleChartMouseMove = useCallback((state: any) => {
+    if (!state.activePayload?.[0]?.payload) {
+      return;
+    }
+    
+    const payload = state.activePayload[0].payload;
+    setActiveHour(payload.hourIndex);
+    
+    if (payload.isEmpty) {
+      setHoveredData({
+        label: payload.time || '',
+        totalScore: 0,
+        price: payload.price ?? null,
+        intensityPercent: 0,
+        emotions: [],
+        isEmpty: true,
+      });
+      return;
+    }
+    
+    const emotions = extractEmotionsFromDataPoint(payload);
+    const totalScore = emotions.reduce((sum, e) => sum + e.score, 0);
+    const intensityPercent = maxStackedValue > 0 ? (totalScore / maxStackedValue) * 100 : 0;
+    
+    setHoveredData({
+      label: payload.time || '',
+      totalScore,
+      price: payload.price ?? null,
+      intensityPercent,
+      emotions,
+    });
+  }, [extractEmotionsFromDataPoint, maxStackedValue]);
+
+  const handleChartMouseLeave = useCallback(() => {
+    setHoveredData(null);
+    setActiveHour(null);
+  }, []);
+
   if (isLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="emotions" />;
   }
@@ -488,112 +732,127 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
         ))}
       </div>
 
-      {/* Chart - Responsive height */}
-      <div className="h-[240px] md:h-[384px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={chartDataWithPrice}
-            margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
-            barCategoryGap={is5MinView ? 0 : "10%"}
-            barGap={0}
-            onMouseMove={(state: any) => {
-              if (state.activePayload?.[0]?.payload) {
-                setActiveHour(state.activePayload[0].payload.hourIndex);
-              }
-            }}
-            onMouseLeave={() => setActiveHour(null)}
-          >
-            {/* CartesianGrid hidden for cleaner look */}
-            <XAxis 
-              dataKey="time"
-              stroke="hsl(215 20% 55%)" 
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              interval={is5MinView ? 11 : 0}
-              tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
-                if (is5MinView) {
-                  const item = chartDataWithPrice[payload.index] as any;
-                  if (!item?.isHourStart) return null;
-                }
-                return (
-                  <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
-                    {payload.value}
-                  </text>
-                );
-              }}
-            />
-            <YAxis 
-              yAxisId="left"
-              stroke="hsl(215 20% 55%)" 
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              width={10}
-              tick={false}
-              domain={barDomain as [number, number]}
-            />
-            {showPriceOverlay && (
+      {/* Main content: Side Panel + Chart */}
+      <div className="flex gap-4 h-[calc(100%-100px)]">
+        {/* Left Side Panel - Always visible on desktop */}
+        <EmotionSidePanel 
+          data={panelData} 
+          priceColor={priceLineColor}
+          isHovering={hoveredData !== null}
+        />
+        
+        {/* Chart - Takes remaining space */}
+        <div className="flex-1 min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart
+              data={chartDataWithPrice}
+              margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+              barCategoryGap={is5MinView ? 0 : "10%"}
+              barGap={0}
+              onMouseMove={handleChartMouseMove}
+              onMouseLeave={handleChartMouseLeave}
+            >
+              {/* CartesianGrid hidden for cleaner look */}
+              <XAxis 
+                dataKey="time"
+                stroke="hsl(215 20% 55%)" 
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                interval={is5MinView ? 11 : 0}
+                tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
+                  if (is5MinView) {
+                    const item = chartDataWithPrice[payload.index] as any;
+                    if (!item?.isHourStart) return null;
+                  }
+                  return (
+                    <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                      {payload.value}
+                    </text>
+                  );
+                }}
+              />
               <YAxis 
-                yAxisId="right"
-                orientation="right"
-                stroke={priceLineColor}
+                yAxisId="left"
+                stroke="hsl(215 20% 55%)" 
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
                 width={10}
                 tick={false}
-                domain={priceDomain as [number, number]}
+                domain={barDomain as [number, number]}
               />
-            )}
-            <Tooltip content={<EmotionStackedTooltip priceColor={priceLineColor} />} />
-            
-            {/* Stacked emotion bars */}
-            {DEFAULT_SIGNAL_EMOTIONS.map((emotion, idx) => (
-              <Bar 
-                key={emotion}
-                yAxisId="left"
-                dataKey={emotion}
-                stackId="emotions"
-                fill={EMOTION_COLORS[emotion]}
-                shape={(props: any) => (
-                  <WideBarShape 
-                    {...props} 
-                    is5MinView={is5MinView}
-                    activeHour={activeHour}
-                    radius={idx === DEFAULT_SIGNAL_EMOTIONS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-                  />
-                )}
-                activeBar={false}
+              {showPriceOverlay && (
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  stroke={priceLineColor}
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={10}
+                  tick={false}
+                  domain={priceDomain as [number, number]}
+                />
+              )}
+              {/* Tooltip hidden on desktop (side panel shows info), visible on mobile */}
+              <Tooltip 
+                content={({ active, payload, label }) => {
+                  // On desktop, hide tooltip (side panel handles it)
+                  if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                    return null;
+                  }
+                  return <EmotionStackedTooltip active={active} payload={payload} label={label} priceColor={priceLineColor} />;
+                }}
               />
-            ))}
-            
-            {/* Price Line Overlay */}
-            {showPriceOverlay && (
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="price"
-                stroke={priceLineColor}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
-                connectNulls
-              />
-            )}
-            
-            {/* Previous Close Reference Line */}
-            {showPriceOverlay && is5MinView && priceData?.previousClose && (
-              <ReferenceLine
-                yAxisId="right"
-                y={priceData.previousClose}
-                stroke="hsl(215 20% 65% / 0.5)"
-                strokeDasharray="2 3"
-                strokeWidth={1}
-              />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
+              
+              {/* Stacked emotion bars */}
+              {DEFAULT_SIGNAL_EMOTIONS.map((emotion, idx) => (
+                <Bar 
+                  key={emotion}
+                  yAxisId="left"
+                  dataKey={emotion}
+                  stackId="emotions"
+                  fill={EMOTION_COLORS[emotion]}
+                  shape={(props: any) => (
+                    <WideBarShape 
+                      {...props} 
+                      is5MinView={is5MinView}
+                      activeHour={activeHour}
+                      radius={idx === DEFAULT_SIGNAL_EMOTIONS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  )}
+                  activeBar={false}
+                />
+              ))}
+              
+              {/* Price Line Overlay */}
+              {showPriceOverlay && (
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="price"
+                  stroke={priceLineColor}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
+                  connectNulls
+                />
+              )}
+              
+              {/* Previous Close Reference Line */}
+              {showPriceOverlay && is5MinView && priceData?.previousClose && (
+                <ReferenceLine
+                  yAxisId="right"
+                  y={priceData.previousClose}
+                  stroke="hsl(215 20% 65% / 0.5)"
+                  strokeDasharray="2 3"
+                  strokeWidth={1}
+                />
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
