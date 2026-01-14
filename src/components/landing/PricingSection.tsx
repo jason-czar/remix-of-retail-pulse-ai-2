@@ -98,7 +98,7 @@ function PricingCard({
   popular: boolean;
 }) {
   return (
-    <Card className={`relative p-6 ${popular ? "border-primary shadow-glow" : "bg-gradient-card"}`}>
+    <Card className={`relative p-6 glass-card ${popular ? "border-primary shadow-glow" : ""}`}>
       {popular && (
         <Badge variant="trending" className="absolute -top-3 left-1/2 -translate-x-1/2">
           <Sparkles className="h-3 w-3 mr-1" />

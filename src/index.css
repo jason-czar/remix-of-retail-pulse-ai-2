@@ -63,6 +63,11 @@
     --gradient-bearish: linear-gradient(135deg, hsl(0 72% 50%), hsl(38 92% 45%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 14% 96%));
     --gradient-glow: radial-gradient(ellipse at top, hsl(168 84% 40% / 0.1), transparent 50%);
+    --gradient-glass: linear-gradient(
+      135deg,
+      hsl(0 0% 100% / 0.9) 0%,
+      hsl(0 0% 98% / 0.7) 100%
+    );
 
     /* Shadows */
     --shadow-glow: 0 0 40px -10px hsl(168 84% 40% / 0.2);
@@ -134,6 +139,11 @@
     --gradient-bearish: linear-gradient(135deg, hsl(0 72% 51%), hsl(38 92% 50%));
     --gradient-card: linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 8%));
     --gradient-glow: radial-gradient(ellipse at top, hsl(168 84% 45% / 0.15), transparent 50%);
+    --gradient-glass: linear-gradient(
+      135deg,
+      hsl(0 0% 12% / 0.8) 0%,
+      hsl(0 0% 8% / 0.6) 100%
+    );
 
     /* Shadows */
     --shadow-glow: 0 0 40px -10px hsl(168 84% 45% / 0.3);
@@ -264,5 +274,27 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply relative overflow-hidden rounded-2xl;
+    background: var(--gradient-glass);
+    backdrop-filter: blur(20px);
+  }
+
+  .dark .glass-card {
+    @apply border border-white/10;
+    box-shadow: 
+      0 8px 32px hsl(240 15% 0% / 0.3),
+      inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  }
+
+  :not(.dark) .glass-card {
+    @apply border border-border/50;
+    box-shadow: 
+      0 8px 32px hsl(206 100% 50% / 0.08),
+      inset 0 1px 0 hsl(0 0% 100% / 0.5);
   }
 }

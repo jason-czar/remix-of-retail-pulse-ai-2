@@ -194,7 +194,7 @@ export function MarketPsychologyCard({ symbols, showSaveButton = true }: MarketP
 
   if (psychology.isLoading) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 glass-card">
         <div className="flex items-center gap-2 mb-6">
           <Brain className="h-5 w-5 text-accent" />
           <h3 className="text-lg font-semibold">Market Psychology</h3>
@@ -210,7 +210,7 @@ export function MarketPsychologyCard({ symbols, showSaveButton = true }: MarketP
 
   if (!psychology.hasData || symbols.length === 0) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 glass-card">
         <div className="flex items-center gap-2 mb-6">
           <Brain className="h-5 w-5 text-accent" />
           <h3 className="text-lg font-semibold">Market Psychology</h3>
@@ -226,7 +226,7 @@ export function MarketPsychologyCard({ symbols, showSaveButton = true }: MarketP
   }
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 glass-card">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-accent" />

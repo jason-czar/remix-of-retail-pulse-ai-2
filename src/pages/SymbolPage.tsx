@@ -204,7 +204,7 @@ export default function SymbolPage() {
         </div>
 
         {/* AI Summary - Reduced padding on mobile */}
-        <Card className="p-4 md:p-6 mb-6 bg-gradient-card">
+        <Card className="p-4 md:p-6 mb-6 glass-card">
           <div className="flex items-start gap-3 md:gap-4">
             <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
               {lensSummaryLoading ? (
@@ -241,7 +241,7 @@ export default function SymbolPage() {
         </div>
 
         {/* Representative Messages */}
-        <Card className="p-6">
+        <Card className="p-6 glass-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold">Representative Messages</h3>
             <Link to={`/symbol/${symbol}/messages`}>
@@ -326,7 +326,7 @@ function MetricCard({
   const ChangeIcon = change && change >= 0 ? ArrowUpRight : ArrowDownRight;
   
   return (
-    <Card className="p-3 md:p-4 bg-gradient-card">
+    <Card className="p-3 md:p-4 glass-card">
       <div className="text-xs md:text-sm text-muted-foreground mb-1">{label}</div>
       <div className="flex items-center gap-1.5 md:gap-2">
         <span className="text-lg md:text-2xl font-display">{value}</span>

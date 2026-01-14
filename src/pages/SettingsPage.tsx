@@ -258,7 +258,7 @@ export default function SettingsPage() {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <h2 className="text-lg font-semibold mb-6">Profile Information</h2>
               <div className="space-y-4 max-w-md">
                 <div className="space-y-2">
@@ -305,7 +305,7 @@ export default function SettingsPage() {
 
           {/* API Keys Tab */}
           <TabsContent value="api-keys">
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-lg font-semibold">API Keys</h2>
@@ -436,7 +436,7 @@ export default function SettingsPage() {
 
           {/* Appearance Tab */}
           <TabsContent value="appearance">
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <h2 className="text-lg font-semibold mb-6">Appearance</h2>
               <div className="space-y-6">
                 <div>
@@ -452,7 +452,7 @@ export default function SettingsPage() {
 
           {/* Subscription Tab */}
           <TabsContent value="subscription">
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <h2 className="text-lg font-semibold mb-6">Subscription & Usage</h2>
               
               <div className="grid md:grid-cols-2 gap-6">

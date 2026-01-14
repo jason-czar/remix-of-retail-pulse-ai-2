@@ -182,8 +182,8 @@ export default function OnboardingPage() {
               {plans.map((plan) => (
                 <Card 
                   key={plan.id}
-                  className={`p-6 cursor-pointer transition-all hover:-translate-y-1 ${
-                    plan.popular ? "border-primary shadow-glow" : "bg-gradient-card"
+                  className={`p-6 cursor-pointer transition-all hover:-translate-y-1 glass-card ${
+                    plan.popular ? "border-primary shadow-glow" : ""
                   } ${selectedPlan === plan.id ? "ring-2 ring-primary" : ""}`}
                   onClick={() => handlePlanSelect(plan.id)}
                 >
@@ -221,7 +221,7 @@ export default function OnboardingPage() {
 
         {/* Step: Profile Details */}
         {step === "profile" && (
-          <Card className="max-w-md mx-auto p-8 bg-gradient-card animate-fade-in">
+          <Card className="max-w-md mx-auto p-8 glass-card animate-fade-in">
             <div className="flex items-center gap-2 mb-6">
               <Button variant="ghost" size="icon" onClick={() => setStep("plan")}>
                 <ArrowLeft className="h-4 w-4" />
@@ -270,7 +270,7 @@ export default function OnboardingPage() {
 
         {/* Step: API Key */}
         {step === "api-key" && (
-          <Card className="max-w-lg mx-auto p-8 bg-gradient-card animate-fade-in">
+          <Card className="max-w-lg mx-auto p-8 glass-card animate-fade-in">
             <div className="text-center mb-6">
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
                 <Zap className="h-8 w-8 text-primary" />

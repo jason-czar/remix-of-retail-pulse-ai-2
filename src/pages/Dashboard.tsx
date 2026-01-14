@@ -90,7 +90,7 @@ export default function Dashboard() {
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Watchlist */}
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Star className="h-5 w-5 text-chart-5" />
@@ -127,7 +127,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Market Overview */}
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Market Sentiment Overview</h2>
                 <Badge variant="glow">
@@ -173,7 +173,7 @@ export default function Dashboard() {
             <PsychologyHistoryChart days={30} />
 
             {/* Alerts */}
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Bell className="h-5 w-5 text-primary" />
@@ -213,7 +213,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Trending Now */}
-            <Card className="p-6">
+            <Card className="p-6 glass-card">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-bullish" />

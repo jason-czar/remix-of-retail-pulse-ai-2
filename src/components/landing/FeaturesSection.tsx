@@ -102,7 +102,7 @@ function FeatureCard({
 }) {
   return (
     <div 
-      className="group glass rounded-xl p-6 hover:shadow-glow transition-all hover:-translate-y-1"
+      className="group glass-card p-6 hover:shadow-glow transition-all hover:-translate-y-1"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className={`inline-flex p-3 rounded-lg bg-secondary/50 mb-4 ${color}`}>
