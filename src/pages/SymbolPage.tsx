@@ -175,12 +175,6 @@ export default function SymbolPage() {
           </div>
         </Card>
 
-        {/* Decision Readiness Dashboard */}
-        <div className="mb-8 md:mb-12">
-          <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
-          <DecisionReadinessDashboard symbol={symbol} />
-        </div>
-
         {/* Charts Section - Scrollable tabs on mobile */}
         <Tabs defaultValue="narratives" className="mb-6 md:mb-8">
           <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
@@ -239,6 +233,12 @@ export default function SymbolPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Decision Readiness Dashboard */}
+        <div className="mb-8 md:mb-12">
+          <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
+          <DecisionReadinessDashboard symbol={symbol} />
+        </div>
 
         {/* Representative Messages */}
         <Card className="p-6">
