@@ -324,10 +324,10 @@ function NarrativeSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        "w-[260px] flex-shrink-0 p-4 hidden md:flex items-center justify-center",
+        "w-[312px] flex-shrink-0 p-5 hidden md:flex items-center justify-center",
         "glass-card"
       )}>
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-base text-muted-foreground text-center">
           No data available
         </p>
       </div>
@@ -338,17 +338,17 @@ function NarrativeSidePanel({
   if (data.isGap) {
     return (
       <div className={cn(
-        "w-[260px] flex-shrink-0 p-4 hidden md:block",
+        "w-[312px] flex-shrink-0 p-5 hidden md:block",
         "glass-card !border-dashed !border-amber-500/50"
       )}>
         <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle className="h-4 w-4 text-amber-500" />
-          <span className="font-semibold text-amber-500">{data.label}</span>
+          <AlertTriangle className="h-5 w-5 text-amber-500" />
+          <span className="font-semibold text-lg text-amber-500">{data.label}</span>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           No data available for this date.
         </p>
-        <p className="text-xs text-amber-500/80 mt-3">
+        <p className="text-sm text-amber-500/80 mt-3">
           Click "Fill Gaps" to fetch historical data.
         </p>
       </div>
@@ -359,22 +359,22 @@ function NarrativeSidePanel({
   if (data.isEmpty) {
     return (
       <div className={cn(
-        "w-[260px] flex-shrink-0 p-4 hidden md:block",
+        "w-[312px] flex-shrink-0 p-5 hidden md:block",
         "glass-card"
       )}>
-        <span className="font-semibold text-card-foreground">{data.label}</span>
-        <p className="text-sm text-muted-foreground mt-2">
+        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
+        <p className="text-base text-muted-foreground mt-2">
           No data available yet
         </p>
         {data.price != null && (
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50 dark:border-white/10">
-            <DollarSign className="h-4 w-4" style={{ color: priceColor }} />
-            <span className="font-bold text-lg" style={{ color: priceColor }}>${data.price.toFixed(2)}</span>
+            <DollarSign className="h-5 w-5" style={{ color: priceColor }} />
+            <span className="font-bold text-xl" style={{ color: priceColor }}>${data.price.toFixed(2)}</span>
           </div>
         )}
         {!isHovering && (
           <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
-            <span className="text-xs text-muted-foreground italic">
+            <span className="text-sm text-muted-foreground italic">
               Showing latest • Hover chart to explore
             </span>
           </div>
@@ -385,16 +385,16 @@ function NarrativeSidePanel({
   
   return (
     <div className={cn(
-      "w-[260px] flex-shrink-0 p-4 hidden md:block",
+      "w-[312px] flex-shrink-0 p-5 hidden md:block",
       "glass-card",
       !isHovering && "ring-1 ring-primary/20"
     )}>
       {/* Time/Date Header */}
       <div className="flex items-center justify-between mb-3">
-        <span className="font-semibold text-card-foreground">{data.label}</span>
+        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
         {data.totalMessages > 0 && (
-          <div className="flex items-center gap-1.5 text-xs">
-            <MessageSquare className="h-3 w-3 text-amber-400" />
+          <div className="flex items-center gap-1.5 text-sm">
+            <MessageSquare className="h-4 w-4 text-amber-400" />
             <span className="text-amber-400 font-medium">{data.totalMessages.toLocaleString()}</span>
           </div>
         )}
@@ -403,8 +403,8 @@ function NarrativeSidePanel({
       {/* Stock Price */}
       {data.price != null && (
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/50 dark:border-white/10">
-          <DollarSign className="h-4 w-4" style={{ color: priceColor }} />
-          <span className="font-bold text-lg" style={{ color: priceColor }}>
+          <DollarSign className="h-5 w-5" style={{ color: priceColor }} />
+          <span className="font-bold text-xl" style={{ color: priceColor }}>
             ${data.price.toFixed(2)}
           </span>
         </div>
@@ -413,7 +413,7 @@ function NarrativeSidePanel({
       {/* Relative Activity Bar */}
       {data.volumePercent > 0 && (
         <div className="mb-3">
-          <div className="flex items-center justify-between text-xs mb-1">
+          <div className="flex items-center justify-between text-sm mb-1">
             <span className="text-muted-foreground">Relative Activity</span>
             <span className={cn(
               "font-medium",
@@ -423,7 +423,7 @@ function NarrativeSidePanel({
               {data.volumePercent.toFixed(0)}%
             </span>
           </div>
-          <div className="h-1.5 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className="h-2 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
             <div 
               className={cn(
                 "h-full rounded-full transition-all",
@@ -438,16 +438,16 @@ function NarrativeSidePanel({
       
       {/* Top Narratives */}
       {data.segments.length > 0 && (
-        <div className="space-y-2 pt-3 border-t border-border/50 dark:border-white/10">
-          <div className="text-xs text-muted-foreground mb-2">Top Narratives:</div>
+        <div className="space-y-2.5 pt-3 border-t border-border/50 dark:border-white/10">
+          <div className="text-sm text-muted-foreground mb-2">Top Narratives:</div>
           {data.segments.map((segment, idx) => (
-            <div key={idx} className="flex items-center gap-2 text-sm">
+            <div key={idx} className="flex items-center gap-2.5 text-base">
               <div 
-                className="w-3 h-3 rounded-sm flex-shrink-0" 
+                className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
                 style={{ backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral }}
               />
-              <span className="text-card-foreground flex-1 truncate text-xs">{segment.name}</span>
-              <span className="text-muted-foreground text-xs">{segment.count}</span>
+              <span className="text-card-foreground flex-1 truncate text-sm">{segment.name}</span>
+              <span className="text-muted-foreground text-sm font-medium">{segment.count}</span>
             </div>
           ))}
         </div>
@@ -456,7 +456,7 @@ function NarrativeSidePanel({
       {/* Default indicator */}
       {!isHovering && (
         <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
-          <span className="text-xs text-muted-foreground italic">
+          <span className="text-sm text-muted-foreground italic">
             Showing latest • Hover chart to explore
           </span>
         </div>
