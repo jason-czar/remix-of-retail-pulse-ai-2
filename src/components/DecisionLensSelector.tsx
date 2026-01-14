@@ -37,7 +37,7 @@ export function DecisionLensSelector({
   value,
   onChange
 }: DecisionLensSelectorProps) {
-  return <div className="inline-flex items-center gap-1.5 rounded-full py-1.5 px-[10px] overflow-x-auto md:mx-0 scrollbar-hide bg-muted/60 dark:bg-[linear-gradient(135deg,hsl(240_15%_25%/0.35)_0%,hsl(240_15%_18%/0.2)_100%)] backdrop-blur-xl border border-border/40 dark:border-white/15 shadow-sm dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.1)] mx-[4px]">
+  return <div className="inline-flex items-center gap-1.5 rounded-full py-1.5 px-[10px] overflow-x-auto md:mx-0 scrollbar-hide bg-muted/60 backdrop-blur-xl border border-border/40 shadow-sm dark:glass-tabs-list mx-[4px]">
       {lensOptions.map(option => <button key={option.value} className={cn("inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", value === option.value ? "bg-background text-foreground shadow-md dark:shadow-[0_4px_16px_hsl(240_15%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.15)] dark:bg-[linear-gradient(180deg,hsl(0_0%_100%/0.12)_0%,hsl(0_0%_100%/0.06)_100%)] dark:border dark:border-white/12 dark:backdrop-blur-md" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")} onClick={() => onChange(option.value)}>
           {option.label}
         </button>)}
