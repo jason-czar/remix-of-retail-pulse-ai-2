@@ -16,6 +16,7 @@ import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
+import { DecisionReadinessDashboard } from "@/components/DecisionReadinessDashboard";
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
@@ -144,7 +145,7 @@ export default function SymbolPage() {
         </div>
 
         {/* AI Summary - Reduced padding on mobile */}
-        <Card className="p-4 md:p-6 mb-8 md:mb-12 bg-gradient-card">
+        <Card className="p-4 md:p-6 mb-6 bg-gradient-card">
           <div className="flex items-start gap-3 md:gap-4">
             <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
               {lensSummaryLoading ? (
@@ -173,6 +174,12 @@ export default function SymbolPage() {
             </div>
           </div>
         </Card>
+
+        {/* Decision Readiness Dashboard */}
+        <div className="mb-8 md:mb-12">
+          <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
+          <DecisionReadinessDashboard symbol={symbol} />
+        </div>
 
         {/* Charts Section - Scrollable tabs on mobile */}
         <Tabs defaultValue="narratives" className="mb-6 md:mb-8">
