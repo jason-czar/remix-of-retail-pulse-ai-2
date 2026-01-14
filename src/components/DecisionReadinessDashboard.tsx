@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
@@ -9,6 +11,10 @@ import {
   NarrativePersistence,
   TemporalAttribution 
 } from "@/hooks/use-psychology-snapshot";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -24,6 +30,8 @@ import {
   Users,
   Rocket,
   RefreshCcw,
+  RefreshCw,
+  Loader2,
   Lightbulb,
   AlertCircle,
   Timer
@@ -413,8 +421,83 @@ function OverviewCard({
   );
 }
 
+// ============= DASHBOARD HEADER =============
+
+function DashboardHeader({ 
+  symbol, 
+  createdAt,
+  onRefreshComplete 
+}: { 
+  symbol: string; 
+  createdAt: string;
+  onRefreshComplete: () => void;
+}) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const { error } = await supabase.functions.invoke(
+        "record-psychology-snapshot",
+        {
+          body: { 
+            symbol: symbol.toUpperCase(), 
+            periodType: "hourly",
+            forceRun: true 
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      toast.success(`Psychology snapshot refreshed for ${symbol}`);
+      onRefreshComplete();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Refresh failed: ${message}`);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const relativeTime = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-3">
+        <h2 className="text-lg font-semibold">Decision Readiness</h2>
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          Updated {relativeTime}
+        </span>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleRefresh}
+        disabled={isRefreshing}
+        className="flex items-center gap-2"
+      >
+        {isRefreshing ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <RefreshCw className="h-3.5 w-3.5" />
+        )}
+        {isRefreshing ? "Refreshing..." : "Refresh"}
+      </Button>
+    </div>
+  );
+}
+
+// ============= MAIN DASHBOARD =============
+
 export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboardProps) {
+  const queryClient = useQueryClient();
   const { data: snapshot, isLoading, error } = useLatestPsychologySnapshot(symbol);
+
+  const handleRefreshComplete = () => {
+    queryClient.invalidateQueries({ queryKey: ["psychology-snapshot-latest", symbol] });
+  };
 
   if (isLoading) {
     return (
@@ -449,6 +532,15 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
 
   return (
     <div className="space-y-4">
+      {/* Dashboard Header with Last Updated and Refresh */}
+      {snapshot && (
+        <DashboardHeader 
+          symbol={symbol} 
+          createdAt={snapshot.created_at}
+          onRefreshComplete={handleRefreshComplete}
+        />
+      )}
+
       {/* Overview Card */}
       <OverviewCard snapshot={snapshot} />
 
