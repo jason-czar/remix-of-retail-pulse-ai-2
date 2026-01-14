@@ -34,7 +34,9 @@ import {
   Loader2,
   Lightbulb,
   AlertCircle,
-  Timer
+  Timer,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -181,6 +183,7 @@ function LensReadinessCard({
   readiness: DecisionReadiness;
   overlay?: DecisionOverlay;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const config = LENS_CONFIG[lensKey] || { label: lensKey.replace(/_/g, " "), icon: Activity, color: "text-muted-foreground" };
   const Icon = config.icon;
   const timing = getTimingBadge(readiness.recommended_timing);
@@ -267,9 +270,31 @@ function LensReadinessCard({
         </div>
       )}
 
-      {/* Overlay Details - Always Visible */}
+      {/* Show Details Toggle Button */}
       {overlay && (
-        <div className="pt-3 border-t border-border/50 space-y-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full text-xs text-muted-foreground hover:text-foreground mt-2"
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className="h-3 w-3 mr-1" />
+              Hide Details
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3 w-3 mr-1" />
+              Show Details
+            </>
+          )}
+        </Button>
+      )}
+
+      {/* Overlay Details - Collapsible */}
+      {overlay && isExpanded && (
+        <div className="pt-3 border-t border-border/50 space-y-3 mt-2">
           {/* Risk Score */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Risk Score</span>
@@ -503,9 +528,9 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
     return (
       <div className="space-y-4">
         <Skeleton className="h-32 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full" />
+            <Skeleton key={i} className="h-48 w-full" />
           ))}
         </div>
       </div>
@@ -546,7 +571,7 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
 
       {/* Lens Cards Grid */}
       {sortedEntries.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {sortedEntries.map(([lensKey, readiness]) => (
             <LensReadinessCard
               key={lensKey}
