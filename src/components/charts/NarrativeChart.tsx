@@ -13,7 +13,8 @@ import {
   Rectangle,
   ReferenceLine
 } from "recharts";
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
@@ -299,6 +300,197 @@ function NarrativeStackedTooltip({ active, payload, label, priceColor }: any) {
   );
 }
 
+// Types for side panel data
+interface SidePanelData {
+  label: string;
+  totalMessages: number;
+  price?: number | null;
+  volumePercent: number;
+  segments: { name: string; count: number; sentiment: string }[];
+  isGap?: boolean;
+  isEmpty?: boolean;
+}
+
+// Persistent side panel component with liquid glass styling
+function NarrativeSidePanel({ 
+  data, 
+  priceColor,
+  isHovering 
+}: { 
+  data: SidePanelData | null;
+  priceColor: string;
+  isHovering: boolean;
+}) {
+  if (!data) {
+    return (
+      <div className={cn(
+        "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:flex items-center justify-center",
+        "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
+        "dark:backdrop-blur-xl dark:border dark:border-white/10",
+        "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
+        "border border-border/60"
+      )}>
+        <p className="text-sm text-muted-foreground text-center">
+          No data available
+        </p>
+      </div>
+    );
+  }
+
+  // Handle gap placeholders
+  if (data.isGap) {
+    return (
+      <div className={cn(
+        "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:block",
+        "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
+        "dark:backdrop-blur-xl dark:border dark:border-dashed dark:border-amber-500/50",
+        "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
+        "border border-dashed border-amber-500/50"
+      )}>
+        <div className="flex items-center gap-2 mb-3">
+          <AlertTriangle className="h-4 w-4 text-amber-500" />
+          <span className="font-semibold text-amber-500">{data.label}</span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          No data available for this date.
+        </p>
+        <p className="text-xs text-amber-500/80 mt-3">
+          Click "Fill Gaps" to fetch historical data.
+        </p>
+      </div>
+    );
+  }
+
+  // Handle empty hours
+  if (data.isEmpty) {
+    return (
+      <div className={cn(
+        "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:block",
+        "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
+        "dark:backdrop-blur-xl dark:border dark:border-white/10",
+        "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
+        "border border-border/60"
+      )}>
+        <span className="font-semibold text-card-foreground">{data.label}</span>
+        <p className="text-sm text-muted-foreground mt-2">
+          No data available yet
+        </p>
+        {data.price != null && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50 dark:border-white/10">
+            <DollarSign className="h-4 w-4" style={{ color: priceColor }} />
+            <span className="font-bold text-lg" style={{ color: priceColor }}>${data.price.toFixed(2)}</span>
+          </div>
+        )}
+        {!isHovering && (
+          <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+            <span className="text-xs text-muted-foreground italic">
+              Showing latest • Hover chart to explore
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  return (
+    <div className={cn(
+      "w-[260px] flex-shrink-0 p-4 rounded-xl hidden md:block",
+      "bg-card/80 dark:bg-[linear-gradient(135deg,hsl(240_15%_20%/0.4)_0%,hsl(240_15%_10%/0.2)_100%)]",
+      "dark:backdrop-blur-xl dark:border dark:border-white/10",
+      "dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),0_2px_8px_hsl(240_20%_10%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
+      "border border-border/60",
+      !isHovering && "ring-1 ring-primary/20"
+    )}>
+      {/* Time/Date Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="font-semibold text-card-foreground">{data.label}</span>
+        {data.totalMessages > 0 && (
+          <div className="flex items-center gap-1.5 text-xs">
+            <MessageSquare className="h-3 w-3 text-amber-400" />
+            <span className="text-amber-400 font-medium">{data.totalMessages.toLocaleString()}</span>
+          </div>
+        )}
+      </div>
+      
+      {/* Stock Price */}
+      {data.price != null && (
+        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/50 dark:border-white/10">
+          <DollarSign className="h-4 w-4" style={{ color: priceColor }} />
+          <span className="font-bold text-lg" style={{ color: priceColor }}>
+            ${data.price.toFixed(2)}
+          </span>
+        </div>
+      )}
+      
+      {/* Relative Activity Bar */}
+      {data.volumePercent > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="text-muted-foreground">Relative Activity</span>
+            <span className={cn(
+              "font-medium",
+              data.volumePercent >= 80 ? "text-amber-400" : 
+              data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground"
+            )}>
+              {data.volumePercent.toFixed(0)}%
+            </span>
+          </div>
+          <div className="h-1.5 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className={cn(
+                "h-full rounded-full transition-all",
+                data.volumePercent >= 80 ? "bg-amber-400" : 
+                data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50"
+              )}
+              style={{ width: `${Math.min(data.volumePercent, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Top Narratives */}
+      {data.segments.length > 0 && (
+        <div className="space-y-2 pt-3 border-t border-border/50 dark:border-white/10">
+          <div className="text-xs text-muted-foreground mb-2">Top Narratives:</div>
+          {data.segments.map((segment, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-sm">
+              <div 
+                className="w-3 h-3 rounded-sm flex-shrink-0" 
+                style={{ backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral }}
+              />
+              <span className="text-card-foreground flex-1 truncate text-xs">{segment.name}</span>
+              <span className="text-muted-foreground text-xs">{segment.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Default indicator */}
+      {!isHovering && (
+        <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+          <span className="text-xs text-muted-foreground italic">
+            Showing latest • Hover chart to explore
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Helper to extract segments from a data point
+function extractSegmentsFromDataPoint(dataPoint: Record<string, any>): { name: string; count: number; sentiment: string }[] {
+  const segments: { name: string; count: number; sentiment: string }[] = [];
+  for (let i = 0; i < MAX_SEGMENTS; i++) {
+    const name = dataPoint[`segment${i}Name`];
+    const count = dataPoint[`segment${i}Count`] ?? dataPoint[`segment${i}`];
+    const sentiment = dataPoint[`segment${i}Sentiment`];
+    if (name && count > 0) {
+      segments.push({ name, count, sentiment });
+    }
+  }
+  return segments;
+}
+
 // Time series stacked bar chart for 7D/30D - Independent daily view with price overlay
 function TimeSeriesNarrativeChart({ 
   symbol, 
@@ -309,6 +501,7 @@ function TimeSeriesNarrativeChart({
 }) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [showWeekends, setShowWeekends] = useState(false);
+  const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
   const days = timeRange === '7D' ? 7 : 30;
   const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(
     symbol, 
@@ -573,6 +766,69 @@ function TimeSeriesNarrativeChart({
     ];
   }, [priceData, showPriceOverlay]);
 
+  // Derive panel data (hovered or most recent with data)
+  const panelData = useMemo((): SidePanelData | null => {
+    if (hoveredData) {
+      return hoveredData;
+    }
+    
+    // Find most recent data point with messages (non-gap, has data)
+    const mostRecent = chartDataWithPrice
+      .slice()
+      .reverse()
+      .find(item => !item.isGap && item.totalMessages > 0);
+      
+    if (!mostRecent) return null;
+    
+    return {
+      label: mostRecent.date,
+      totalMessages: mostRecent.totalMessages,
+      price: mostRecent.price ?? null,
+      volumePercent: mostRecent.volumePercent || 0,
+      segments: extractSegmentsFromDataPoint(mostRecent),
+      isGap: mostRecent.isGap,
+    };
+  }, [hoveredData, chartDataWithPrice]);
+
+  // Handle chart mouse events for side panel
+  const handleChartMouseMove = useCallback((state: any) => {
+    if (state?.activePayload?.[0]?.payload) {
+      const payload = state.activePayload[0].payload;
+      
+      // For price line data, find corresponding bar data
+      if (payload.dateLabel !== undefined) {
+        // This is hourly price data - find matching date bar
+        const dateKey = new Date(payload.timestamp).toISOString().split('T')[0];
+        const matchingBar = chartDataWithPrice.find(d => d.sortKey === dateKey);
+        if (matchingBar) {
+          setHoveredData({
+            label: `${payload.dateLabel} ${payload.timeLabel}`,
+            totalMessages: matchingBar.totalMessages,
+            price: payload.price,
+            volumePercent: matchingBar.volumePercent || 0,
+            segments: extractSegmentsFromDataPoint(matchingBar),
+            isGap: matchingBar.isGap,
+          });
+        }
+        return;
+      }
+      
+      // Regular bar data
+      setHoveredData({
+        label: payload.date,
+        totalMessages: payload.totalMessages,
+        price: payload.price ?? null,
+        volumePercent: payload.volumePercent || 0,
+        segments: extractSegmentsFromDataPoint(payload),
+        isGap: payload.isGap,
+      });
+    }
+  }, [chartDataWithPrice]);
+
+  const handleChartMouseLeave = useCallback(() => {
+    setHoveredData(null);
+  }, []);
+
   if (isLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
   }
@@ -600,7 +856,7 @@ function TimeSeriesNarrativeChart({
   }
 
   return (
-    <div className="h-[600px] w-full">
+    <div className="h-[600px] md:h-[650px] w-full">
       {/* Backfill indicator */}
       {isBackfilling && (
         <div className="mb-3">
@@ -688,121 +944,140 @@ function TimeSeriesNarrativeChart({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Legend - Hidden for now */}
-
-      <ResponsiveContainer width="100%" height="80%">
-        <ComposedChart 
-          data={showPriceOverlay && priceLineData.length > 0 ? priceLineData : chartDataWithPrice}
-          margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
-          {/* X-axis for bar labels */}
-          <XAxis 
-            xAxisId="bar"
-            dataKey="date"
-            stroke="hsl(215 20% 55%)" 
-            fontSize={11}
-            tickLine={false}
-            axisLine={false}
-            ticks={chartDataWithPrice.map(d => d.date)}
-            allowDuplicatedCategory={false}
-          />
-          {/* Numeric X-axis for price line and hourly tooltip positioning */}
-          <XAxis 
-            xAxisId="price"
-            type="number"
-            dataKey="x"
-            domain={[0, chartDataWithPrice.length - 1]}
-            hide={true}
-            allowDataOverflow={true}
-          />
-          <YAxis 
-            yAxisId="left"
-            stroke="hsl(215 20% 55%)" 
-            fontSize={11}
-            tickLine={false}
-            axisLine={false}
-            width={10}
-            tick={false}
-            domain={filteredBarDomain}
-          />
-          {showPriceOverlay && (
-            <YAxis 
-              yAxisId="right"
-              orientation="right"
-              stroke={priceLineColor}
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              width={50}
-              tickFormatter={(value) => `$${value.toFixed(0)}`}
-              domain={priceDomain as [number, number]}
-            />
-          )}
-          {/* Tooltip - uses hourly price data when price overlay is on */}
-          <Tooltip 
-            content={showPriceOverlay && priceLineData.length > 0 
-              ? <HourlyPriceTooltip priceColor={priceLineColor} /> 
-              : <NarrativeStackedTooltip priceColor={priceLineColor} />
-            } 
-          />
-          {/* Gap placeholder bars - shown with dashed pattern */}
-          <Bar 
-            xAxisId="bar"
-            yAxisId="left"
-            dataKey="gapPlaceholder"
-            data={chartDataWithPrice}
-            stackId="narratives"
-            radius={[4, 4, 0, 0]}
-            isAnimationActive={false}
-          >
-            {chartDataWithPrice.map((entry, entryIdx) => (
-              <Cell 
-                key={`gap-${entryIdx}`} 
-                fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"}
-                stroke={entry.isGap ? "hsl(38 92% 50%)" : "transparent"}
-                strokeWidth={entry.isGap ? 1 : 0}
-                strokeDasharray={entry.isGap ? "4 2" : "0"}
-              />
-            ))}
-          </Bar>
-          {/* Render segment bars - each segment uses its own sentiment color */}
-          {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
-            <Bar 
-              key={`segment${idx}`}
-              xAxisId="bar"
-              yAxisId="left"
-              dataKey={`segment${idx}`}
-              data={chartDataWithPrice}
-              stackId="narratives"
-              radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-              isAnimationActive={false}
+      {/* Main content: Side Panel + Chart */}
+      <div className="flex gap-4 h-[calc(100%-60px)]">
+        {/* Left Side Panel - Always visible on desktop */}
+        <NarrativeSidePanel 
+          data={panelData} 
+          priceColor={priceLineColor}
+          isHovering={hoveredData !== null}
+        />
+        
+        {/* Chart - Takes remaining space */}
+        <div className="flex-1 min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart 
+              data={showPriceOverlay && priceLineData.length > 0 ? priceLineData : chartDataWithPrice}
+              margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
+              onMouseMove={handleChartMouseMove}
+              onMouseLeave={handleChartMouseLeave}
             >
-              {chartDataWithPrice.map((entry, entryIdx) => (
-                <Cell 
-                  key={`cell-${entryIdx}`} 
-                  fill={entry.isGap ? "transparent" : (SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral)}
-                  fillOpacity={0.25}
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
+              {/* X-axis for bar labels */}
+              <XAxis 
+                xAxisId="bar"
+                dataKey="date"
+                stroke="hsl(215 20% 55%)" 
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                ticks={chartDataWithPrice.map(d => d.date)}
+                allowDuplicatedCategory={false}
+              />
+              {/* Numeric X-axis for price line and hourly tooltip positioning */}
+              <XAxis 
+                xAxisId="price"
+                type="number"
+                dataKey="x"
+                domain={[0, chartDataWithPrice.length - 1]}
+                hide={true}
+                allowDataOverflow={true}
+              />
+              <YAxis 
+                yAxisId="left"
+                stroke="hsl(215 20% 55%)" 
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                width={10}
+                tick={false}
+                domain={filteredBarDomain}
+              />
+              {showPriceOverlay && (
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  stroke={priceLineColor}
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={50}
+                  tickFormatter={(value) => `$${value.toFixed(0)}`}
+                  domain={priceDomain as [number, number]}
                 />
+              )}
+              {/* Tooltip hidden on desktop (side panel shows info), visible on mobile */}
+              <Tooltip 
+                content={({ active, payload, label }) => {
+                  // On desktop, hide tooltip (side panel handles it)
+                  // Check if we're on mobile by checking window width
+                  if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                    return null;
+                  }
+                  return showPriceOverlay && priceLineData.length > 0 
+                    ? <HourlyPriceTooltip active={active} payload={payload} priceColor={priceLineColor} /> 
+                    : <NarrativeStackedTooltip active={active} payload={payload} label={label} priceColor={priceLineColor} />;
+                }} 
+              />
+              {/* Gap placeholder bars - shown with dashed pattern */}
+              <Bar 
+                xAxisId="bar"
+                yAxisId="left"
+                dataKey="gapPlaceholder"
+                data={chartDataWithPrice}
+                stackId="narratives"
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
+              >
+                {chartDataWithPrice.map((entry, entryIdx) => (
+                  <Cell 
+                    key={`gap-${entryIdx}`} 
+                    fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"}
+                    stroke={entry.isGap ? "hsl(38 92% 50%)" : "transparent"}
+                    strokeWidth={entry.isGap ? 1 : 0}
+                    strokeDasharray={entry.isGap ? "4 2" : "0"}
+                  />
+                ))}
+              </Bar>
+              {/* Render segment bars - each segment uses its own sentiment color */}
+              {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
+                <Bar 
+                  key={`segment${idx}`}
+                  xAxisId="bar"
+                  yAxisId="left"
+                  dataKey={`segment${idx}`}
+                  data={chartDataWithPrice}
+                  stackId="narratives"
+                  radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                  isAnimationActive={false}
+                >
+                  {chartDataWithPrice.map((entry, entryIdx) => (
+                    <Cell 
+                      key={`cell-${entryIdx}`} 
+                      fill={entry.isGap ? "transparent" : (SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral)}
+                      fillOpacity={0.25}
+                    />
+                  ))}
+                </Bar>
               ))}
-            </Bar>
-          ))}
-          {/* Hourly Price Line Overlay */}
-          {showPriceOverlay && priceLineData.length > 0 && (
-            <Line
-              xAxisId="price"
-              yAxisId="right"
-              type="monotone"
-              dataKey="price"
-              stroke={priceLineColor}
-              strokeWidth={2}
-              dot={{ r: 2, fill: priceLineColor }}
-              activeDot={{ r: 5, stroke: priceLineColor, strokeWidth: 2, fill: 'hsl(var(--background))' }}
-              connectNulls={true}
-            />
-          )}
-        </ComposedChart>
-      </ResponsiveContainer>
+              {/* Hourly Price Line Overlay */}
+              {showPriceOverlay && priceLineData.length > 0 && (
+                <Line
+                  xAxisId="price"
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="price"
+                  stroke={priceLineColor}
+                  strokeWidth={2}
+                  dot={{ r: 2, fill: priceLineColor }}
+                  activeDot={{ r: 5, stroke: priceLineColor, strokeWidth: 2, fill: 'hsl(var(--background))' }}
+                  connectNulls={true}
+                />
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
@@ -818,6 +1093,7 @@ function HourlyStackedNarrativeChart({
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [activeHour, setActiveHour] = useState<number | null>(null);
   const [marketSession, setMarketSession] = useState<MarketSession>('regular');
+  const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
   
   // Get session-specific hour range
   const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
@@ -1134,6 +1410,58 @@ function HourlyStackedNarrativeChart({
     ];
   }, [priceData, showPriceOverlay]);
 
+  // Derive panel data (hovered or most recent with data)
+  const panelData = useMemo((): SidePanelData | null => {
+    if (hoveredData) {
+      return hoveredData;
+    }
+    
+    // Find most recent data point with messages
+    const mostRecent = chartDataWithPrice
+      .slice()
+      .reverse()
+      .find(item => (item as any).totalMessages > 0 && !(item as any).isEmpty);
+      
+    if (!mostRecent) return null;
+    
+    const mr = mostRecent as Record<string, any>;
+    return {
+      label: mr.time || mr.hour || '',
+      totalMessages: mr.totalMessages || 0,
+      price: mr.price ?? null,
+      volumePercent: mr.volumePercent || 0,
+      segments: extractSegmentsFromDataPoint(mr),
+      isEmpty: mr.isEmpty,
+    };
+  }, [hoveredData, chartDataWithPrice]);
+
+  // Handle chart mouse events for side panel
+  const handleChartMouseMove = useCallback((state: any) => {
+    if (state?.activePayload?.[0]?.payload) {
+      const payload = state.activePayload[0].payload;
+      
+      // Update active hour for bar highlighting
+      if (payload.hourIndex !== undefined) {
+        setActiveHour(payload.hourIndex);
+      }
+      
+      // Update side panel data
+      setHoveredData({
+        label: payload.time || payload.hour,
+        totalMessages: payload.totalMessages || 0,
+        price: payload.price ?? null,
+        volumePercent: payload.volumePercent || 0,
+        segments: extractSegmentsFromDataPoint(payload),
+        isEmpty: payload.isEmpty,
+      });
+    }
+  }, []);
+
+  const handleChartMouseLeave = useCallback(() => {
+    setActiveHour(null);
+    setHoveredData(null);
+  }, []);
+
   // Determine if we should fall back to live AI analysis
   // For "Today" view, always show the 24-hour skeleton even with no data
   // For "24H" view, fall back to live AI if no data
@@ -1162,7 +1490,7 @@ function HourlyStackedNarrativeChart({
   }
 
   return (
-    <div className="h-[600px] w-full">
+    <div className="h-[600px] md:h-[650px] w-full">
       {/* Header - Collapsible */}
       <Collapsible defaultOpen={false} className="mb-2">
         <CollapsibleTrigger asChild>
@@ -1195,14 +1523,12 @@ function HourlyStackedNarrativeChart({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* Market Session Selector - only for Today view */}
               {timeRange === '1D' && (
                 <MarketSessionSelector 
                   session={marketSession} 
                   onSessionChange={setMarketSession}
                 />
               )}
-              {/* Price Toggle */}
               <div className="flex items-center gap-2">
                 <DollarSign 
                   className="h-4 w-4" 
@@ -1230,118 +1556,126 @@ function HourlyStackedNarrativeChart({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Legend */}
-      {/* Legend - Hidden for now */}
-
-      <ResponsiveContainer width="100%" height="80%">
-        <ComposedChart 
-          data={chartDataWithPrice}
-          margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
-          barCategoryGap={0}
-          barGap={0}
-          onMouseMove={(state: any) => {
-            if (state?.activePayload?.[0]?.payload?.hourIndex !== undefined) {
-              setActiveHour(state.activePayload[0].payload.hourIndex);
-            }
-          }}
-          onMouseLeave={() => setActiveHour(null)}
-        >
-          {/* CartesianGrid hidden for cleaner look */}
-          <XAxis 
-            dataKey="time"
-            stroke="hsl(215 20% 55%)" 
-            fontSize={11}
-            tickLine={false}
-            axisLine={false}
-            interval={is5MinView ? 11 : 0}
-            tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
-              // Only show tick labels at hour boundaries for 5-min view
-              if (is5MinView) {
-                const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
-                if (!item?.isHourStart) return null;
-              }
-              return (
-                <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
-                  {payload.value}
-                </text>
-              );
-            }}
-          />
-          <YAxis 
-            yAxisId="left"
-            stroke="hsl(215 20% 55%)" 
-            fontSize={11}
-            tickLine={false}
-            axisLine={false}
-            width={10}
-            tick={false}
-            domain={barDomain as [number, number | string]}
-          />
-          {showPriceOverlay && (
-            <YAxis 
-              yAxisId="right"
-              orientation="right"
-              stroke={priceLineColor}
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              width={10}
-              tick={false}
-              domain={priceDomain as [number, number]}
-            />
-          )}
-          <Tooltip content={<NarrativeStackedTooltip priceColor={priceLineColor} />} />
-          {/* Render segment bars - each segment uses its own sentiment color */}
-          {/* For 5-min view, custom shape expands bars to span the full hour */}
-          {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
-            <Bar 
-              key={`segment${idx}`}
-              yAxisId="left"
-              dataKey={`segment${idx}`}
-              stackId="narratives"
-              shape={(props: any) => (
-                <WideBarShape 
-                  {...props} 
-                  is5MinView={is5MinView}
-                  activeHour={activeHour}
-                  radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+      {/* Main content: Side Panel + Chart */}
+      <div className="flex gap-4 h-[calc(100%-60px)]">
+        {/* Left Side Panel - Always visible on desktop */}
+        <NarrativeSidePanel 
+          data={panelData} 
+          priceColor={priceLineColor}
+          isHovering={hoveredData !== null}
+        />
+        
+        {/* Chart - Takes remaining space */}
+        <div className="flex-1 min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart 
+              data={chartDataWithPrice}
+              margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
+              barCategoryGap={0}
+              barGap={0}
+              onMouseMove={handleChartMouseMove}
+              onMouseLeave={handleChartMouseLeave}
+            >
+              <XAxis 
+                dataKey="time"
+                stroke="hsl(215 20% 55%)" 
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                interval={is5MinView ? 11 : 0}
+                tick={({ x, y, payload }: { x: number; y: number; payload: { index: number; value: string } }) => {
+                  if (is5MinView) {
+                    const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
+                    if (!item?.isHourStart) return null;
+                  }
+                  return (
+                    <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                      {payload.value}
+                    </text>
+                  );
+                }}
+              />
+              <YAxis 
+                yAxisId="left"
+                stroke="hsl(215 20% 55%)" 
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                width={10}
+                tick={false}
+                domain={barDomain as [number, number | string]}
+              />
+              {showPriceOverlay && (
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  stroke={priceLineColor}
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={10}
+                  tick={false}
+                  domain={priceDomain as [number, number]}
                 />
               )}
-              activeBar={false}
-            >
-              {chartDataWithPrice.map((entry, entryIdx) => (
-                <Cell 
-                  key={`cell-${entryIdx}`} 
-                  fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral}
-                />
+              {/* Tooltip hidden on desktop, visible on mobile */}
+              <Tooltip 
+                content={({ active, payload, label }) => {
+                  if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                    return null;
+                  }
+                  return <NarrativeStackedTooltip active={active} payload={payload} label={label} priceColor={priceLineColor} />;
+                }} 
+              />
+              {Array.from({ length: MAX_SEGMENTS }).map((_, idx) => (
+                <Bar 
+                  key={`segment${idx}`}
+                  yAxisId="left"
+                  dataKey={`segment${idx}`}
+                  stackId="narratives"
+                  shape={(props: any) => (
+                    <WideBarShape 
+                      {...props} 
+                      is5MinView={is5MinView}
+                      activeHour={activeHour}
+                      radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  )}
+                  activeBar={false}
+                >
+                  {chartDataWithPrice.map((entry, entryIdx) => (
+                    <Cell 
+                      key={`cell-${entryIdx}`} 
+                      fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral}
+                    />
+                  ))}
+                </Bar>
               ))}
-            </Bar>
-          ))}
-          {/* Price Line Overlay */}
-          {showPriceOverlay && (
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="price"
-              stroke={priceLineColor}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
-              connectNulls
-            />
-          )}
-          {/* Previous Close Reference Line - only on Today view */}
-          {showPriceOverlay && is5MinView && priceData?.previousClose && (
-            <ReferenceLine
-              yAxisId="right"
-              y={priceData.previousClose}
-              stroke="hsl(215 20% 65% / 0.5)"
-              strokeDasharray="2 3"
-              strokeWidth={1}
-            />
-          )}
-        </ComposedChart>
-      </ResponsiveContainer>
+              {showPriceOverlay && (
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="price"
+                  stroke={priceLineColor}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
+                  connectNulls
+                />
+              )}
+              {showPriceOverlay && is5MinView && priceData?.previousClose && (
+                <ReferenceLine
+                  yAxisId="right"
+                  y={priceData.previousClose}
+                  stroke="hsl(215 20% 65% / 0.5)"
+                  strokeDasharray="2 3"
+                  strokeWidth={1}
+                />
+              )}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
