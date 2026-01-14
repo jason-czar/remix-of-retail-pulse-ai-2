@@ -174,6 +174,31 @@ export interface HistoricalContext {
   historical_bias: string;
 }
 
+// ============= NARRATIVE OUTCOME TYPES =============
+
+export interface NarrativeOutcome {
+  narrative_id: string;
+  label: string;
+  current_prevalence_pct: number;
+  dominant_emotion: string;
+  persistence: "structural" | "event-driven" | "emerging";
+  
+  historical_outcomes: {
+    episode_count: number;
+    avg_price_move_5d: number | null;
+    avg_price_move_10d: number | null;
+    median_price_move_10d: number | null;
+    p25_price_move_10d: number | null;
+    p75_price_move_10d: number | null;
+    win_rate_5d: number | null;
+    win_rate_10d: number | null;
+    max_drawdown_avg: number | null;
+  };
+  
+  confidence: number;
+  confidence_label: "experimental" | "moderate" | "high";
+}
+
 export interface PsychologySnapshot {
   id: string;
   symbol: string;
@@ -186,6 +211,7 @@ export interface PsychologySnapshot {
   observed_state: ObservedState;
   interpretation: Interpretation;
   historical_context: HistoricalContext | null;
+  narrative_outcomes: NarrativeOutcome[];
   created_at: string;
   interpretation_version: number;
 }
@@ -238,6 +264,7 @@ export function usePsychologySnapshot({
         historical_context: row.historical_context
           ? parseHistoricalContext(row.historical_context)
           : null,
+        narrative_outcomes: parseNarrativeOutcomes(row.narrative_outcomes),
         created_at: row.created_at,
         interpretation_version: row.interpretation_version,
       }));
@@ -284,6 +311,7 @@ export function useLatestPsychologySnapshot(symbol: string, enabled = true) {
         historical_context: data.historical_context
           ? parseHistoricalContext(data.historical_context)
           : null,
+        narrative_outcomes: parseNarrativeOutcomes(data.narrative_outcomes),
         created_at: data.created_at,
         interpretation_version: data.interpretation_version,
       };
@@ -343,6 +371,7 @@ export function usePsychologySnapshotHistory({
         historical_context: row.historical_context
           ? parseHistoricalContext(row.historical_context)
           : null,
+        narrative_outcomes: parseNarrativeOutcomes(row.narrative_outcomes),
         created_at: row.created_at,
         interpretation_version: row.interpretation_version,
       }));
@@ -437,4 +466,34 @@ function parseHistoricalContext(raw: unknown): HistoricalContext {
     similar_periods: (data?.similar_periods as HistoricalMatch[]) ?? [],
     historical_bias: (data?.historical_bias as string) ?? "",
   };
+}
+
+function parseNarrativeOutcomes(raw: unknown): NarrativeOutcome[] {
+  if (!raw || !Array.isArray(raw)) return [];
+  
+  return raw.map((item: unknown) => {
+    const data = item as Record<string, unknown>;
+    const historical = data?.historical_outcomes as Record<string, unknown> | undefined;
+    
+    return {
+      narrative_id: (data?.narrative_id as string) ?? "",
+      label: (data?.label as string) ?? "",
+      current_prevalence_pct: (data?.current_prevalence_pct as number) ?? 0,
+      dominant_emotion: (data?.dominant_emotion as string) ?? "Unknown",
+      persistence: (data?.persistence as "structural" | "event-driven" | "emerging") ?? "emerging",
+      historical_outcomes: {
+        episode_count: (historical?.episode_count as number) ?? 0,
+        avg_price_move_5d: (historical?.avg_price_move_5d as number | null) ?? null,
+        avg_price_move_10d: (historical?.avg_price_move_10d as number | null) ?? null,
+        median_price_move_10d: (historical?.median_price_move_10d as number | null) ?? null,
+        p25_price_move_10d: (historical?.p25_price_move_10d as number | null) ?? null,
+        p75_price_move_10d: (historical?.p75_price_move_10d as number | null) ?? null,
+        win_rate_5d: (historical?.win_rate_5d as number | null) ?? null,
+        win_rate_10d: (historical?.win_rate_10d as number | null) ?? null,
+        max_drawdown_avg: (historical?.max_drawdown_avg as number | null) ?? null,
+      },
+      confidence: (data?.confidence as number) ?? 0,
+      confidence_label: (data?.confidence_label as "experimental" | "moderate" | "high") ?? "experimental",
+    };
+  });
 }

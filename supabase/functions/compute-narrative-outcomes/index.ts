@@ -458,14 +458,13 @@ serve(async (req) => {
       // No body - process all watchlist symbols
     }
 
-    // If no symbols specified, get from watchlists
+    // If no symbols specified, get from watchlists (symbols is an array column)
     if (symbols.length === 0) {
       const { data: watchlistItems } = await supabase
         .from("watchlists")
-        .select("symbol")
-        .order("symbol");
+        .select("symbols");
       
-      symbols = [...new Set(watchlistItems?.map(w => w.symbol) || [])];
+      symbols = [...new Set(watchlistItems?.flatMap(w => w.symbols || []) || [])];
     }
 
     if (symbols.length === 0) {

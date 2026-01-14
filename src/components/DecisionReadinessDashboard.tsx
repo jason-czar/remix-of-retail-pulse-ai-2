@@ -10,8 +10,10 @@ import {
   DecisionReadiness, 
   DecisionOverlay,
   NarrativePersistence,
-  TemporalAttribution 
+  TemporalAttribution,
+  NarrativeOutcome
 } from "@/hooks/use-psychology-snapshot";
+import { NarrativeImpactSummary } from "@/components/NarrativeHistoricalImpact";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -178,11 +180,13 @@ function NarrativePersistenceBadge({
 function LensReadinessCard({ 
   lensKey, 
   readiness, 
-  overlay 
+  overlay,
+  narrativeOutcomes
 }: { 
   lensKey: string; 
   readiness: DecisionReadiness;
   overlay?: DecisionOverlay;
+  narrativeOutcomes?: NarrativeOutcome[];
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const config = LENS_CONFIG[lensKey] || { label: lensKey.replace(/_/g, " "), icon: Activity, color: "text-muted-foreground" };
@@ -356,6 +360,11 @@ function LensReadinessCard({
                   {Math.round(overlay.confidence * 100)}%
                 </span>
               </div>
+
+              {/* Narrative Historical Impact */}
+              {narrativeOutcomes && narrativeOutcomes.length > 0 && (
+                <NarrativeImpactSummary outcomes={narrativeOutcomes} maxDisplay={1} />
+              )}
             </div>
           </motion.div>
         )}
@@ -592,6 +601,7 @@ export function DecisionReadinessDashboard({ symbol }: DecisionReadinessDashboar
               lensKey={lensKey}
               readiness={readiness}
               overlay={interpretation.decision_overlays[lensKey]}
+              narrativeOutcomes={snapshot.narrative_outcomes}
             />
           ))}
         </div>
