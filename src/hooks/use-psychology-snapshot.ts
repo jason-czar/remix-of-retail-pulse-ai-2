@@ -51,7 +51,7 @@ export interface ObservedState {
     top_10_users_pct: number;
     bull_bear_polarization: number;
     retail_consensus_strength: "weak" | "moderate" | "strong";
-    echo_chamber_risk: "low" | "moderate" | "high";
+    // Note: echo_chamber_risk is now computed via computeEchoChamberRisk()
   };
   momentum: {
     overall_sentiment_velocity: number;
@@ -85,10 +85,71 @@ export interface SnapshotSummary {
   confidence: number;
 }
 
+// ============= TEMPORAL GOVERNANCE TYPES =============
+
+export interface NarrativePersistence {
+  narrative_id: string;
+  weekly_presence_pct: number;
+  monthly_presence_pct: number;
+  classification: "structural" | "event-driven" | "emerging";
+  first_seen_date: string;
+  days_active: number;
+}
+
+export interface ConfidenceBasis {
+  timeframe_agreement: "high" | "moderate" | "low";
+  narrative_persistence_ratio: number;
+  velocity_alignment: boolean;
+  hourly_override_active: boolean;
+  override_reason?: string;
+}
+
+export interface TemporalAttribution {
+  primary_timeframes: string[];
+  weights_applied: Record<string, number>;
+  effective_weights: Record<string, number>;
+  data_freshness: {
+    hourly: string | null;
+    daily: string | null;
+    weekly: string | null;
+    monthly: string | null;
+  };
+  confidence_basis: ConfidenceBasis;
+}
+
 export interface Interpretation {
   decision_overlays: Record<string, DecisionOverlay>;
   decision_readiness: Record<string, DecisionReadiness>;
   snapshot_summary: SnapshotSummary;
+  temporal_attribution?: TemporalAttribution;
+  narrative_persistence?: NarrativePersistence[];
+}
+
+// Derived computation - echo chamber risk computed at query time
+export function computeEchoChamberRisk(concentration: {
+  top_10_users_pct: number;
+  bull_bear_polarization: number;
+}): { risk_level: "high" | "moderate" | "low"; explanation: string } {
+  const { top_10_users_pct, bull_bear_polarization } = concentration;
+  
+  if (top_10_users_pct > 60 && bull_bear_polarization > 0.7) {
+    return {
+      risk_level: "high",
+      explanation: `Top 10 users drive ${top_10_users_pct}% of volume with ${Math.round(bull_bear_polarization * 100)}% polarization`,
+    };
+  }
+  
+  if (top_10_users_pct > 40 || bull_bear_polarization > 0.5) {
+    return {
+      risk_level: "moderate",
+      explanation: "Moderate concentration - validate against broader sources",
+    };
+  }
+  
+  return {
+    risk_level: "low",
+    explanation: "Broad participation with balanced sentiment",
+  };
 }
 
 export interface DataConfidence {
@@ -342,11 +403,7 @@ function parseObservedState(raw: unknown): ObservedState {
           | "weak"
           | "moderate"
           | "strong") ?? "weak",
-      echo_chamber_risk:
-        ((data?.concentration as Record<string, unknown>)?.echo_chamber_risk as
-          | "low"
-          | "moderate"
-          | "high") ?? "low",
+      // Note: echo_chamber_risk is now computed via computeEchoChamberRisk()
     },
     momentum: {
       overall_sentiment_velocity:

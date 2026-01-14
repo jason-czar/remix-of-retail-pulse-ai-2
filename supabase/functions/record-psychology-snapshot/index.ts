@@ -53,7 +53,77 @@ interface Concentration {
   top_10_users_pct: number;
   bull_bear_polarization: number;
   retail_consensus_strength: "weak" | "moderate" | "strong";
-  echo_chamber_risk: "low" | "moderate" | "high";
+  // Note: echo_chamber_risk is computed at query time, not stored
+}
+
+// ============= TEMPORAL GOVERNANCE TYPES =============
+
+interface NarrativePersistence {
+  narrative_id: string;
+  weekly_presence_pct: number;
+  monthly_presence_pct: number;
+  classification: "structural" | "event-driven" | "emerging";
+  first_seen_date: string;
+  days_active: number;
+}
+
+interface ConfidenceBasis {
+  timeframe_agreement: "high" | "moderate" | "low";
+  narrative_persistence_ratio: number;
+  velocity_alignment: boolean;
+  hourly_override_active: boolean;
+  override_reason?: string;
+}
+
+interface TemporalAttribution {
+  primary_timeframes: string[];
+  weights_applied: Record<string, number>;
+  effective_weights: Record<string, number>;
+  data_freshness: {
+    hourly: string | null;
+    daily: string | null;
+    weekly: string | null;
+    monthly: string | null;
+  };
+  confidence_basis: ConfidenceBasis;
+}
+
+interface WeightedNarrative {
+  id: string;
+  label: string;
+  weighted_score: number;
+  persistence: string;
+}
+
+interface WeightedEmotion {
+  emotion: string;
+  weighted_intensity: number;
+  trend: string;
+}
+
+interface WeightedComposite {
+  dominant_narratives: WeightedNarrative[];
+  dominant_emotions: WeightedEmotion[];
+  net_velocity: number;
+  stability_score: number;
+  temporal_consistency: "high" | "moderate" | "low";
+}
+
+interface TemporalSynthesis {
+  hourly: { narratives: NarrativeState[]; emotions: EmotionState[]; available: boolean } | null;
+  daily: { narratives: NarrativeState[]; emotions: EmotionState[]; available: boolean } | null;
+  weekly: { narratives: NarrativeState[]; emotions: EmotionState[]; available: boolean } | null;
+  monthly: { narratives: NarrativeState[]; emotions: EmotionState[]; available: boolean } | null;
+  weighted_composite: WeightedComposite;
+  data_sources_used: string[];
+  hourly_override_triggered: boolean;
+}
+
+interface MultiPeriodSnapshots {
+  hourly: any | null;
+  daily: any | null;
+  weekly: any | null;
+  monthly: any | null;
 }
 
 interface Momentum {
@@ -141,6 +211,34 @@ const LENS_CONTEXTS: Record<string, string> = {
   product_launch: "new product launches, product cycles, innovation pipeline, and market reception",
   activist_risk: "activist investor involvement, proxy fights, board challenges, and shareholder activism",
   corporate_strategy: "overall corporate strategy, competitive positioning, long-term vision, and strategic direction",
+};
+
+// ============= TEMPORAL GOVERNANCE =============
+
+// Lens-specific temporal weighting matrix
+const TEMPORAL_WEIGHTS: Record<string, { hourly: number; daily: number; weekly: number; monthly: number }> = {
+  earnings: { hourly: 0.15, daily: 0.35, weekly: 0.35, monthly: 0.15 },
+  capital_allocation: { hourly: 0.05, daily: 0.20, weekly: 0.40, monthly: 0.35 },
+  ma: { hourly: 0.00, daily: 0.10, weekly: 0.40, monthly: 0.50 },
+  leadership_change: { hourly: 0.10, daily: 0.25, weekly: 0.40, monthly: 0.25 },
+  product_launch: { hourly: 0.20, daily: 0.40, weekly: 0.30, monthly: 0.10 },
+  activist_risk: { hourly: 0.10, daily: 0.20, weekly: 0.40, monthly: 0.30 },
+  corporate_strategy: { hourly: 0.00, daily: 0.15, weekly: 0.35, monthly: 0.50 },
+  strategic_pivot: { hourly: 0.05, daily: 0.15, weekly: 0.40, monthly: 0.40 },
+};
+
+// Strategic lenses where hourly is always zero (except extreme velocity)
+const STRATEGIC_LENSES = ["ma", "corporate_strategy", "capital_allocation"];
+
+// Safety rails
+const HOURLY_INFLUENCE_CAP = 0.20;
+const EXTREME_VELOCITY_THRESHOLD = 2.5;
+
+const TEMPORAL_ROLES = {
+  hourly: "signal detection, volatility, inflections",
+  daily: "momentum confirmation",
+  weekly: "narrative dominance & legitimacy",
+  monthly: "strategic validity & durability",
 };
 
 // ============= HELPER FUNCTIONS =============
@@ -252,7 +350,6 @@ function calculateConcentration(messages: MessageWithAuthor[]): Concentration {
       top_10_users_pct: 0,
       bull_bear_polarization: 0,
       retail_consensus_strength: "weak",
-      echo_chamber_risk: "low",
     };
   }
 
@@ -283,16 +380,11 @@ function calculateConcentration(messages: MessageWithAuthor[]): Concentration {
   if (polarization > 0.7) consensusStrength = "strong";
   else if (polarization > 0.4) consensusStrength = "moderate";
   
-  // Echo chamber risk based on top 10 concentration
-  let echoChamberRisk: "low" | "moderate" | "high" = "low";
-  if (top10Pct > 60) echoChamberRisk = "high";
-  else if (top10Pct > 40) echoChamberRisk = "moderate";
-  
+  // Note: echo_chamber_risk is computed at query time, not stored
   return {
     top_10_users_pct: top10Pct,
     bull_bear_polarization: polarization,
     retail_consensus_strength: consensusStrength,
-    echo_chamber_risk: echoChamberRisk,
   };
 }
 
@@ -539,13 +631,332 @@ ${messageTexts}`,
   return { narratives, emotions };
 }
 
+// ============= TEMPORAL SYNTHESIS FUNCTIONS =============
+
+async function fetchMultiPeriodSnapshots(
+  supabase: any,
+  symbol: string
+): Promise<MultiPeriodSnapshots> {
+  const periodTypes = ["hourly", "daily", "weekly", "monthly"] as const;
+  
+  const queries = periodTypes.map(async (periodType) => {
+    const { data } = await supabase
+      .from("psychology_snapshots")
+      .select("*")
+      .eq("symbol", symbol.toUpperCase())
+      .eq("period_type", periodType)
+      .order("snapshot_start", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { periodType, data };
+  });
+
+  const responses = await Promise.all(queries);
+  return {
+    hourly: responses.find(r => r.periodType === "hourly")?.data || null,
+    daily: responses.find(r => r.periodType === "daily")?.data || null,
+    weekly: responses.find(r => r.periodType === "weekly")?.data || null,
+    monthly: responses.find(r => r.periodType === "monthly")?.data || null,
+  };
+}
+
+async function calculateNarrativePersistence(
+  supabase: any,
+  symbol: string,
+  currentNarratives: NarrativeState[]
+): Promise<NarrativePersistence[]> {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const { data: historicalSnapshots } = await supabase
+    .from("psychology_snapshots")
+    .select("observed_state, snapshot_start")
+    .eq("symbol", symbol.toUpperCase())
+    .eq("period_type", "daily")
+    .gte("snapshot_start", thirtyDaysAgo.toISOString())
+    .order("snapshot_start", { ascending: true });
+
+  const persistence: NarrativePersistence[] = [];
+  const totalDays = historicalSnapshots?.length || 0;
+  const last7 = historicalSnapshots?.slice(-7) || [];
+
+  for (const narrative of currentNarratives) {
+    let weeklyCount = 0;
+    let monthlyCount = 0;
+    let firstSeenDate: string | null = null;
+
+    if (historicalSnapshots) {
+      for (const snapshot of historicalSnapshots) {
+        const narratives = snapshot.observed_state?.narratives || [];
+        const found = narratives.some((n: any) => n.id === narrative.id);
+        if (found) {
+          monthlyCount++;
+          if (!firstSeenDate) firstSeenDate = snapshot.snapshot_start;
+        }
+      }
+
+      for (const snapshot of last7) {
+        const narratives = snapshot.observed_state?.narratives || [];
+        if (narratives.some((n: any) => n.id === narrative.id)) {
+          weeklyCount++;
+        }
+      }
+    }
+
+    // BUG FIX: Use last7.length instead of undefined last7Days
+    const weeklyPct = last7.length > 0 ? Math.round((weeklyCount / last7.length) * 100) : 0;
+    const monthlyPct = totalDays > 0 ? Math.round((monthlyCount / totalDays) * 100) : 0;
+
+    let classification: "structural" | "event-driven" | "emerging";
+    if (monthlyPct >= 70) {
+      classification = "structural";
+    } else if (monthlyPct <= 30 && weeklyPct <= 40) {
+      classification = "event-driven";
+    } else {
+      classification = "emerging";
+    }
+
+    persistence.push({
+      narrative_id: narrative.id,
+      weekly_presence_pct: weeklyPct,
+      monthly_presence_pct: monthlyPct,
+      classification,
+      first_seen_date: firstSeenDate || new Date().toISOString(),
+      days_active: monthlyCount,
+    });
+  }
+
+  return persistence;
+}
+
+function buildTemporalSynthesis(
+  multiPeriodSnapshots: MultiPeriodSnapshots,
+  lens: string,
+  narrativePersistence: NarrativePersistence[]
+): { synthesis: TemporalSynthesis; effectiveWeights: Record<string, number>; hourlyOverride: boolean; overrideReason?: string } {
+  const baseWeights = TEMPORAL_WEIGHTS[lens] || TEMPORAL_WEIGHTS.corporate_strategy;
+  const periods = ["hourly", "daily", "weekly", "monthly"] as const;
+  
+  // Check for extreme velocity override
+  let hourlyOverride = false;
+  let overrideReason: string | undefined;
+  const hourlySnapshot = multiPeriodSnapshots.hourly;
+  
+  if (hourlySnapshot?.observed_state?.narratives) {
+    const narrativeVelocities = hourlySnapshot.observed_state.narratives
+      .map((n: any) => n.velocity?.magnitude || 0);
+    const maxVelocity = Math.max(0, ...narrativeVelocities);
+    if (maxVelocity >= EXTREME_VELOCITY_THRESHOLD) {
+      hourlyOverride = true;
+      overrideReason = `Velocity ${maxVelocity.toFixed(1)}x exceeds threshold`;
+    }
+  }
+
+  // Calculate effective weights with safety rails
+  const effectiveWeights: Record<string, number> = {};
+  for (const period of periods) {
+    let weight = baseWeights[period];
+    
+    if (period === "hourly") {
+      // Hard cap on hourly influence
+      if (weight > HOURLY_INFLUENCE_CAP) {
+        weight = HOURLY_INFLUENCE_CAP;
+      }
+      
+      // Zero hourly for strategic lenses (unless extreme velocity)
+      if (STRATEGIC_LENSES.includes(lens) && !hourlyOverride) {
+        weight = 0;
+      }
+    }
+    
+    effectiveWeights[period] = weight;
+  }
+
+  // Normalize weights to sum to 1
+  const weightSum = Object.values(effectiveWeights).reduce((a, b) => a + b, 0);
+  if (weightSum > 0) {
+    for (const period of periods) {
+      effectiveWeights[period] = effectiveWeights[period] / weightSum;
+    }
+  }
+
+  // Build synthesis object
+  const synthesis: any = { data_sources_used: [], hourly_override_triggered: hourlyOverride };
+  
+  for (const period of periods) {
+    const snapshot = multiPeriodSnapshots[period];
+    if (snapshot?.observed_state) {
+      synthesis[period] = {
+        narratives: snapshot.observed_state.narratives || [],
+        emotions: snapshot.observed_state.emotions || [],
+        available: true,
+      };
+      synthesis.data_sources_used.push(period);
+    } else {
+      synthesis[period] = null;
+    }
+  }
+
+  // Build weighted narrative scores
+  const narrativeScores = new Map<string, { label: string; score: number; count: number }>();
+  for (const period of periods) {
+    if (!synthesis[period]) continue;
+    const weight = effectiveWeights[period];
+    for (const narrative of synthesis[period].narratives) {
+      const existing = narrativeScores.get(narrative.id) || { label: narrative.label, score: 0, count: 0 };
+      existing.score += (narrative.prevalence_pct || 0) * weight;
+      existing.count++;
+      narrativeScores.set(narrative.id, existing);
+    }
+  }
+
+  // Build weighted emotion intensities
+  const emotionScores = new Map<string, { intensity: number; count: number }>();
+  for (const period of periods) {
+    if (!synthesis[period]) continue;
+    const weight = effectiveWeights[period];
+    for (const emotion of synthesis[period].emotions) {
+      const existing = emotionScores.get(emotion.emotion) || { intensity: 0, count: 0 };
+      existing.intensity += (emotion.intensity || 0) * weight;
+      existing.count++;
+      emotionScores.set(emotion.emotion, existing);
+    }
+  }
+
+  // Calculate temporal consistency
+  const hourlyDominant = synthesis.hourly?.narratives[0]?.id;
+  const weeklyDominant = synthesis.weekly?.narratives[0]?.id;
+  const monthlyDominant = synthesis.monthly?.narratives[0]?.id;
+
+  let consistency: "high" | "moderate" | "low" = "moderate";
+  if (weeklyDominant && monthlyDominant) {
+    if (hourlyDominant === weeklyDominant && weeklyDominant === monthlyDominant) {
+      consistency = "high";
+    } else if (hourlyDominant !== weeklyDominant && hourlyDominant !== monthlyDominant && weeklyDominant !== monthlyDominant) {
+      consistency = "low";
+    }
+  }
+
+  synthesis.weighted_composite = {
+    dominant_narratives: Array.from(narrativeScores.entries())
+      .map(([id, data]) => ({
+        id,
+        label: data.label,
+        weighted_score: Math.round(data.score * 10) / 10,
+        persistence: narrativePersistence.find(p => p.narrative_id === id)?.classification || "unknown",
+      }))
+      .sort((a, b) => b.weighted_score - a.weighted_score)
+      .slice(0, 8),
+    dominant_emotions: Array.from(emotionScores.entries())
+      .map(([emotion, data]) => ({
+        emotion,
+        weighted_intensity: Math.round(data.intensity),
+        trend: "stable",
+      }))
+      .sort((a, b) => b.weighted_intensity - a.weighted_intensity)
+      .slice(0, 6),
+    net_velocity: 0,
+    stability_score: consistency === "high" ? 0.9 : consistency === "moderate" ? 0.6 : 0.3,
+    temporal_consistency: consistency,
+  };
+
+  return { synthesis: synthesis as TemporalSynthesis, effectiveWeights, hourlyOverride, overrideReason };
+}
+
+function buildConfidenceBasis(
+  temporalSynthesis: TemporalSynthesis,
+  narrativePersistence: NarrativePersistence[],
+  hourlyOverride: boolean,
+  overrideReason?: string
+): ConfidenceBasis {
+  // Calculate narrative persistence ratio (% of narratives that are structural)
+  const structuralCount = narrativePersistence.filter(p => p.classification === "structural").length;
+  const persistenceRatio = narrativePersistence.length > 0 
+    ? structuralCount / narrativePersistence.length 
+    : 0;
+
+  // Check velocity alignment across timeframes
+  const weeklyNarrative = temporalSynthesis.weekly?.narratives[0];
+  const monthlyNarrative = temporalSynthesis.monthly?.narratives[0];
+  const weeklyVelocity = weeklyNarrative?.velocity?.direction || "stable";
+  const monthlyVelocity = monthlyNarrative?.velocity?.direction || "stable";
+  const velocityAlignment = weeklyVelocity === monthlyVelocity;
+
+  return {
+    timeframe_agreement: temporalSynthesis.weighted_composite.temporal_consistency,
+    narrative_persistence_ratio: Math.round(persistenceRatio * 100) / 100,
+    velocity_alignment: velocityAlignment,
+    hourly_override_active: hourlyOverride,
+    override_reason: overrideReason,
+  };
+}
+
+function buildTemporalAttribution(
+  multiPeriodSnapshots: MultiPeriodSnapshots,
+  baseWeights: Record<string, number>,
+  effectiveWeights: Record<string, number>,
+  confidenceBasis: ConfidenceBasis
+): TemporalAttribution {
+  // Find dominant timeframes (>25% weight)
+  const primaryTimeframes = Object.entries(effectiveWeights)
+    .filter(([_, weight]) => weight > 0.25)
+    .map(([period]) => period);
+
+  return {
+    primary_timeframes: primaryTimeframes,
+    weights_applied: baseWeights,
+    effective_weights: effectiveWeights,
+    data_freshness: {
+      hourly: multiPeriodSnapshots.hourly?.snapshot_end || null,
+      daily: multiPeriodSnapshots.daily?.snapshot_end || null,
+      weekly: multiPeriodSnapshots.weekly?.snapshot_end || null,
+      monthly: multiPeriodSnapshots.monthly?.snapshot_end || null,
+    },
+    confidence_basis: confidenceBasis,
+  };
+}
+
+// ============= INTERPRETATION GENERATION =============
+
 async function generateInterpretationLayer(
   symbol: string,
   observedState: ObservedState,
   dataConfidence: DataConfidence,
+  temporalSynthesis: TemporalSynthesis | null,
+  narrativePersistence: NarrativePersistence[],
+  effectiveWeights: Record<string, number>,
   lovableApiKey: string
 ): Promise<Interpretation> {
   const { narratives, emotions, signals, concentration } = observedState;
+  
+  // Build persistence summary for AI
+  const persistenceSummary = narrativePersistence.length > 0
+    ? narrativePersistence
+        .map(p => `${p.narrative_id}: ${p.classification} (${p.monthly_presence_pct}% monthly)`)
+        .join("; ")
+    : "No persistence data available";
+
+  // Build weighted narratives summary
+  const weightedNarratives = temporalSynthesis?.weighted_composite.dominant_narratives
+    .map(n => `${n.label} (score: ${n.weighted_score}, ${n.persistence})`)
+    .join("; ") || "No temporal synthesis available";
+
+  // Build weight explanation
+  const weightExplanation = Object.entries(effectiveWeights)
+    .map(([period, weight]) => `${period}: ${Math.round(weight * 100)}%`)
+    .join(", ");
+
+  // Temporal consistency note
+  const consistencyNote = temporalSynthesis?.weighted_composite.temporal_consistency === "high"
+    ? "HIGH CONFIDENCE: Narratives are consistent across all timeframes."
+    : temporalSynthesis?.weighted_composite.temporal_consistency === "low"
+    ? "CAUTION: Significant divergence between short-term and long-term narratives."
+    : "MODERATE: Some variation across timeframes.";
+
+  // Hourly override note
+  const hourlyNote = temporalSynthesis?.hourly_override_triggered
+    ? "NOTE: Hourly data included due to extreme velocity - treat as potential inflection signal."
+    : "Hourly data de-weighted per lens configuration.";
   
   const narrativeSummary = narratives.slice(0, 5)
     .map(n => `${n.label} (${n.prevalence_pct}%, skew: ${n.sentiment_skew})`)
@@ -571,13 +982,34 @@ async function generateInterpretationLayer(
       messages: [
         {
           role: "system",
-          content: `You are a senior consulting analyst generating decision-support intelligence. Provide actionable, executive-ready analysis.`,
+          content: `You are a senior consulting analyst generating decision-support intelligence. Provide actionable, executive-ready analysis. CRITICAL: Do not overweight recent/hourly data. Prefer narratives that persist across weekly and monthly timeframes for strategic decisions.`,
         },
         {
           role: "user",
           content: `Generate comprehensive decision intelligence for ${symbol.toUpperCase()}.
 
-OBSERVED STATE:
+CRITICAL TEMPORAL GOVERNANCE RULES:
+1. Do NOT overweight information from the most recent period
+2. Penalize narratives that appear only in hourly data unless velocity is extreme
+3. Prefer narratives that persist across weekly and monthly snapshots for strategic decisions
+4. Treat hourly spikes as signals, not conclusions
+
+TEMPORAL WEIGHTS APPLIED: ${weightExplanation}
+${hourlyNote}
+
+WEIGHTED NARRATIVE SYNTHESIS (across timeframes):
+${weightedNarratives}
+
+TEMPORAL CONSISTENCY: ${consistencyNote}
+
+NARRATIVE PERSISTENCE ANALYSIS:
+${persistenceSummary}
+
+STRUCTURAL narratives → use for strategy recommendations
+EVENT-DRIVEN narratives → use for timing and messaging only
+EMERGING narratives → monitor closely
+
+CURRENT PERIOD OBSERVED STATE:
 - Narratives: ${narrativeSummary}
 - Emotions: ${emotionSummary}
 - Active Signals: ${signalSummary}
@@ -586,21 +1018,21 @@ OBSERVED STATE:
 
 Generate:
 1. DECISION OVERLAYS for each lens: earnings, ma, capital_allocation, leadership_change, strategic_pivot, product_launch, activist_risk, corporate_strategy
-   - risk_score (0-100)
-   - dominant_concerns (top 3 specific concerns)
+   - risk_score (0-100) - weighted by narrative persistence
+   - dominant_concerns (top 3 specific concerns - prefer structural narratives)
    - recommended_focus (top 3 areas to address)
-   - recommended_actions (3-5 specific actions)
+   - recommended_actions (3-5 specific actions - reference whether evidence is structural or event-driven)
 
 2. DECISION READINESS for each lens:
-   - readiness_score (0-100, 100 = market fully supportive)
+   - readiness_score (0-100, 100 = market fully supportive) - penalize if only hourly data supports
    - blocking_narratives (narrative IDs that resist this decision)
    - supportive_narratives (narrative IDs that support)
    - recommended_timing: "proceed" | "delay" | "avoid"
    - recommended_delay (if delay, specify timeframe)
 
 3. SNAPSHOT SUMMARY:
-   - one_liner: 1-sentence executive summary
-   - primary_risk: main risk identified
+   - one_liner: 1-sentence executive summary acknowledging temporal context
+   - primary_risk: main risk identified (prefer structural risks)
    - dominant_emotion: key emotion driving sentiment
    - action_bias: recommended stance`,
         },
@@ -976,13 +1408,58 @@ Deno.serve(async (req) => {
           priorSnapshot
         );
 
-        // Generate interpretation layer
+        // ============= TEMPORAL GOVERNANCE =============
+        // Fetch multi-period snapshots for temporal synthesis
+        const multiPeriodSnapshots = await fetchMultiPeriodSnapshots(supabase, symbol);
+        console.log(`${symbol}: Fetched multi-period snapshots: ${Object.keys(multiPeriodSnapshots).filter(k => (multiPeriodSnapshots as any)[k]).join(", ") || "none"}`);
+
+        // Calculate narrative persistence
+        const narrativePersistence = await calculateNarrativePersistence(supabase, symbol, narratives);
+        console.log(`${symbol}: Calculated persistence for ${narrativePersistence.length} narratives`);
+
+        // Build temporal synthesis (using corporate_strategy as default lens for overall synthesis)
+        const { synthesis: temporalSynthesis, effectiveWeights, hourlyOverride, overrideReason } = buildTemporalSynthesis(
+          multiPeriodSnapshots,
+          "corporate_strategy",
+          narrativePersistence
+        );
+
+        // Build confidence basis (trust anchor)
+        const confidenceBasis = buildConfidenceBasis(
+          temporalSynthesis,
+          narrativePersistence,
+          hourlyOverride,
+          overrideReason
+        );
+
+        // Build temporal attribution for transparency
+        const baseWeights = TEMPORAL_WEIGHTS.corporate_strategy;
+        const temporalAttribution = buildTemporalAttribution(
+          multiPeriodSnapshots,
+          baseWeights,
+          effectiveWeights,
+          confidenceBasis
+        );
+
+        console.log(`${symbol}: Temporal consistency: ${temporalSynthesis.weighted_composite.temporal_consistency}, hourly override: ${hourlyOverride}`);
+
+        // Generate interpretation layer with temporal governance
         const interpretation = await generateInterpretationLayer(
           symbol,
           observedState,
           dataConfidence,
+          temporalSynthesis,
+          narrativePersistence,
+          effectiveWeights,
           lovableApiKey
         );
+
+        // Add temporal attribution and persistence to interpretation
+        const enrichedInterpretation = {
+          ...interpretation,
+          temporal_attribution: temporalAttribution,
+          narrative_persistence: narrativePersistence,
+        };
 
         // Insert snapshot
         const { error: insertError } = await supabase
@@ -996,8 +1473,8 @@ Deno.serve(async (req) => {
             unique_authors: uniqueAuthors,
             data_confidence: dataConfidence,
             observed_state: observedState,
-            interpretation,
-            interpretation_version: 1,
+            interpretation: enrichedInterpretation,
+            interpretation_version: 2, // Bump version for temporal governance
           }, { onConflict: "symbol,period_type,snapshot_start" });
 
         if (insertError) {
