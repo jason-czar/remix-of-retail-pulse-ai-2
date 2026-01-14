@@ -13,10 +13,10 @@ const TabsList = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex h-11 items-center justify-center rounded-full p-1.5 text-muted-foreground",
-      "bg-muted/60 dark:bg-white/5",
+      "bg-muted/60 dark:bg-gradient-to-br dark:from-white/8 dark:to-white/4",
       "backdrop-blur-xl",
-      "border border-border/40 dark:border-white/10",
-      "shadow-sm dark:shadow-lg dark:shadow-black/20",
+      "border border-border/40 dark:border-white/15",
+      "shadow-sm dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
       className,
     )}
     {...props}
@@ -36,8 +36,10 @@ const TabsTrigger = React.forwardRef<
       "ring-offset-background transition-all duration-200",
       "text-muted-foreground hover:text-foreground/80",
       "data-[state=active]:bg-background data-[state=active]:text-foreground",
-      "data-[state=active]:shadow-md dark:data-[state=active]:shadow-black/30",
-      "data-[state=active]:dark:bg-white/10 data-[state=active]:dark:backdrop-blur-sm",
+      "data-[state=active]:shadow-md",
+      "data-[state=active]:dark:bg-white/15 data-[state=active]:dark:backdrop-blur-md",
+      "data-[state=active]:dark:border data-[state=active]:dark:border-white/10",
+      "data-[state=active]:dark:shadow-[0_4px_12px_hsl(240_15%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       "disabled:pointer-events-none disabled:opacity-50",
       className,

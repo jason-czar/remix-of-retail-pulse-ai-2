@@ -363,15 +363,15 @@ function TimeRangeSelector({ value, onChange }: { value: TimeRange; onChange: (v
   };
   
   return (
-    <div className="inline-flex h-9 md:h-10 items-center justify-center rounded-full p-1 md:p-1.5 text-muted-foreground bg-muted/60 dark:bg-white/5 backdrop-blur-xl border border-border/40 dark:border-white/10 shadow-sm dark:shadow-lg dark:shadow-black/20 overflow-x-auto scrollbar-hide">
+    <div className="inline-flex h-9 md:h-10 items-center justify-center rounded-full p-1 md:p-1.5 text-muted-foreground bg-muted/60 dark:bg-[linear-gradient(135deg,hsl(240_15%_25%/0.35)_0%,hsl(240_15%_18%/0.2)_100%)] backdrop-blur-xl border border-border/40 dark:border-white/15 shadow-sm dark:shadow-[0_8px_32px_hsl(240_15%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.1)] overflow-x-auto scrollbar-hide">
       {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map((range) => (
         <button
           key={range}
           onClick={() => onChange(range)}
           className={`inline-flex items-center justify-center whitespace-nowrap px-2.5 md:px-3.5 py-1.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0 ${
             range === value
-              ? 'bg-background text-foreground shadow-md dark:shadow-black/30 dark:bg-white/10 dark:backdrop-blur-sm'
-              : 'text-muted-foreground hover:text-foreground/80'
+              ? 'bg-background text-foreground shadow-md dark:shadow-[0_4px_16px_hsl(240_15%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.15)] dark:bg-[linear-gradient(180deg,hsl(0_0%_100%/0.12)_0%,hsl(0_0%_100%/0.06)_100%)] dark:border dark:border-white/12 dark:backdrop-blur-md'
+              : 'text-muted-foreground hover:text-foreground/80 hover:bg-white/5'
           }`}
         >
           {labels[range]}
