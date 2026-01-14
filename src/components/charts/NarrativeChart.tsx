@@ -3,6 +3,7 @@ import {
   BarChart,
   Bar,
   Line,
+  Scatter,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -146,6 +147,31 @@ function WideBarShape(props: any) {
       radius={radius}
       style={transitionStyle}
     />
+  );
+}
+
+// Custom tooltip for hourly price data on 7D/30D views
+function HourlyPriceTooltip({ active, payload, priceColor }: any) {
+  if (!active || !payload || !payload.length) return null;
+
+  const dataPoint = payload[0]?.payload;
+  
+  if (!dataPoint) return null;
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[160px]">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-semibold text-card-foreground">{dataPoint.dateLabel}</span>
+        <span className="text-xs text-muted-foreground">{dataPoint.timeLabel}</span>
+      </div>
+      
+      {dataPoint.price != null && (
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-4 w-4" style={{ color: priceColor || '#00C805' }} />
+          <span className="font-bold text-lg" style={{ color: priceColor || '#00C805' }}>${dataPoint.price.toFixed(2)}</span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -666,10 +692,11 @@ function TimeSeriesNarrativeChart({
 
       <ResponsiveContainer width="100%" height="80%">
         <ComposedChart 
-          data={chartDataWithPrice}
+          data={showPriceOverlay && priceLineData.length > 0 ? priceLineData : chartDataWithPrice}
           margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
+          {/* X-axis for bar labels */}
           <XAxis 
             xAxisId="bar"
             dataKey="date"
@@ -677,17 +704,18 @@ function TimeSeriesNarrativeChart({
             fontSize={11}
             tickLine={false}
             axisLine={false}
+            ticks={chartDataWithPrice.map(d => d.date)}
+            allowDuplicatedCategory={false}
           />
-          {/* Hidden numeric X-axis for price line positioning */}
-          {showPriceOverlay && (
-            <XAxis 
-              xAxisId="price"
-              type="number"
-              dataKey="x"
-              domain={[0, chartDataWithPrice.length - 1]}
-              hide={true}
-            />
-          )}
+          {/* Numeric X-axis for price line and hourly tooltip positioning */}
+          <XAxis 
+            xAxisId="price"
+            type="number"
+            dataKey="x"
+            domain={[0, chartDataWithPrice.length - 1]}
+            hide={true}
+            allowDataOverflow={true}
+          />
           <YAxis 
             yAxisId="left"
             stroke="hsl(215 20% 55%)" 
@@ -711,14 +739,22 @@ function TimeSeriesNarrativeChart({
               domain={priceDomain as [number, number]}
             />
           )}
-          <Tooltip content={<NarrativeStackedTooltip priceColor={priceLineColor} />} />
+          {/* Tooltip - uses hourly price data when price overlay is on */}
+          <Tooltip 
+            content={showPriceOverlay && priceLineData.length > 0 
+              ? <HourlyPriceTooltip priceColor={priceLineColor} /> 
+              : <NarrativeStackedTooltip priceColor={priceLineColor} />
+            } 
+          />
           {/* Gap placeholder bars - shown with dashed pattern */}
           <Bar 
             xAxisId="bar"
             yAxisId="left"
             dataKey="gapPlaceholder"
+            data={chartDataWithPrice}
             stackId="narratives"
             radius={[4, 4, 0, 0]}
+            isAnimationActive={false}
           >
             {chartDataWithPrice.map((entry, entryIdx) => (
               <Cell 
@@ -737,8 +773,10 @@ function TimeSeriesNarrativeChart({
               xAxisId="bar"
               yAxisId="left"
               dataKey={`segment${idx}`}
+              data={chartDataWithPrice}
               stackId="narratives"
               radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+              isAnimationActive={false}
             >
               {chartDataWithPrice.map((entry, entryIdx) => (
                 <Cell 
@@ -749,18 +787,17 @@ function TimeSeriesNarrativeChart({
               ))}
             </Bar>
           ))}
-          {/* Hourly Price Line Overlay - uses separate data with numeric X positions */}
+          {/* Hourly Price Line Overlay */}
           {showPriceOverlay && priceLineData.length > 0 && (
             <Line
               xAxisId="price"
               yAxisId="right"
-              data={priceLineData}
               type="monotone"
               dataKey="price"
               stroke={priceLineColor}
               strokeWidth={2}
               dot={{ r: 2, fill: priceLineColor }}
-              activeDot={{ r: 4, stroke: priceLineColor, strokeWidth: 2, fill: 'hsl(var(--background))' }}
+              activeDot={{ r: 5, stroke: priceLineColor, strokeWidth: 2, fill: 'hsl(var(--background))' }}
               connectNulls={true}
             />
           )}
