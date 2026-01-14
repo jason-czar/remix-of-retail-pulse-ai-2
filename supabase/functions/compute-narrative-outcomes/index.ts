@@ -250,7 +250,7 @@ async function computeOutcomesForSymbol(
   // Fetch psychology snapshots for this symbol
   const { data: snapshots, error: snapshotsError } = await supabase
     .from("psychology_snapshots")
-    .select("snapshot_start, observed_state, narrative_persistence")
+    .select("snapshot_start, observed_state, interpretation")
     .eq("symbol", symbol)
     .in("period_type", ["daily", "hourly"]) // Use daily primarily
     .gte("snapshot_start", lookbackDate.toISOString())
@@ -266,7 +266,8 @@ async function computeOutcomesForSymbol(
   // Get the latest snapshot to identify current narratives
   const latestSnapshot = snapshots[snapshots.length - 1];
   const currentNarratives = latestSnapshot?.observed_state?.narratives || [];
-  const persistenceData = latestSnapshot?.narrative_persistence || [];
+  // narrative_persistence is inside interpretation JSONB
+  const persistenceData = latestSnapshot?.interpretation?.narrative_persistence || [];
   
   if (currentNarratives.length === 0) {
     console.log(`${symbol}: No current narratives found`);
