@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.compute-narrative-outcomes]
 verify_jwt = false
+
+[functions.backfill-volume-history]
+verify_jwt = false
