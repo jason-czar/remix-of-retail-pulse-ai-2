@@ -34,7 +34,7 @@ export function HeroSection() {
             ease: [0.25, 0.4, 0.25, 1]
           }}>
               <span className="block font-normal font-sans text-4xl">We read the retail investor market, so you can stay ahead of it.  </span>
-              <span className="text-gradient">so you can stay ahead of it.</span>
+              
             </motion.h1>
 
             <motion.p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8" initial={{
