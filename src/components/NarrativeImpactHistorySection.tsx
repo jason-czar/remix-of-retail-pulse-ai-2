@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useLatestPsychologySnapshot, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
+import { useLatestSnapshotWithOutcomes, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
 import { 
   FlaskConical, 
   TrendingUp, 
@@ -425,7 +425,7 @@ function OutcomeDistributionChart({ outcomes }: { outcomes: NarrativeOutcome[] }
 }
 
 export function NarrativeImpactHistorySection({ symbol }: NarrativeImpactHistorySectionProps) {
-  const { data: snapshot, isLoading, error } = useLatestPsychologySnapshot(symbol);
+  const { data: snapshot, isLoading, error } = useLatestSnapshotWithOutcomes(symbol);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
   
