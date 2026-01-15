@@ -1,36 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
-import { FlaskConical, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
+import { FlaskConical, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NarrativeHistoricalImpactProps {
   outcome: NarrativeOutcome;
   compact?: boolean; // For inline display in lens cards
-}
-
-function getConfidenceBadge(label: NarrativeOutcome["confidence_label"]) {
-  const config = {
-    high: {
-      bg: "bg-bullish/20",
-      text: "text-bullish",
-      border: "border-bullish/30",
-      label: "HIGH CONFIDENCE",
-    },
-    moderate: {
-      bg: "bg-amber-500/20",
-      text: "text-amber-400",
-      border: "border-amber-500/30",
-      label: "MODERATE",
-    },
-    experimental: {
-      bg: "bg-purple-500/20",
-      text: "text-purple-400",
-      border: "border-purple-500/30",
-      label: "EXPERIMENTAL",
-    },
-  };
-  return config[label];
 }
 
 function formatPercent(value: number | null): string {
@@ -48,7 +25,6 @@ export function NarrativeHistoricalImpact({ outcome, compact = false }: Narrativ
   const { historical_outcomes, confidence_label, label } = outcome;
   const { episode_count, avg_price_move_10d, median_price_move_10d, win_rate_10d, p25_price_move_10d, p75_price_move_10d } = historical_outcomes;
   
-  const confidenceStyle = getConfidenceBadge(confidence_label);
   const isExperimental = episode_count < 5;
 
   // Compact version for lens cards
@@ -72,12 +48,11 @@ export function NarrativeHistoricalImpact({ outcome, compact = false }: Narrativ
           <span className="text-muted-foreground">
             When "{label}" dominated ({episode_count} episodes), {language}
           </span>
-          <Badge 
-            variant="outline" 
-            className={cn("ml-2 text-[9px]", confidenceStyle.bg, confidenceStyle.text, confidenceStyle.border)}
-          >
-            {confidenceStyle.label}
-          </Badge>
+          <ConfidenceBadge 
+            level={confidence_label} 
+            className="ml-2"
+            tooltipContent={`${episode_count} historical episodes analyzed`}
+          />
         </div>
       </div>
     );
@@ -98,13 +73,10 @@ export function NarrativeHistoricalImpact({ outcome, compact = false }: Narrativ
       {isExperimental ? (
         // Experimental state - not enough data
         <div className="flex items-center gap-2">
-          <Badge 
-            variant="outline" 
-            className={cn("text-[10px]", confidenceStyle.bg, confidenceStyle.text, confidenceStyle.border)}
-          >
-            <FlaskConical className="h-3 w-3 mr-1" />
-            {confidenceStyle.label}
-          </Badge>
+          <ConfidenceBadge 
+            level="experimental"
+            tooltipContent={`Only ${episode_count} episode${episode_count !== 1 ? "s" : ""} observed. Need 5+ for reliable analysis.`}
+          />
           <span className="text-xs text-muted-foreground">
             {episode_count} episode{episode_count !== 1 ? "s" : ""} (5 required for analysis)
           </span>
@@ -114,12 +86,10 @@ export function NarrativeHistoricalImpact({ outcome, compact = false }: Narrativ
         <div className="space-y-2">
           {/* Confidence Badge and Episode Count */}
           <div className="flex items-center gap-2">
-            <Badge 
-              variant="outline" 
-              className={cn("text-[10px]", confidenceStyle.bg, confidenceStyle.text, confidenceStyle.border)}
-            >
-              {confidenceStyle.label}
-            </Badge>
+            <ConfidenceBadge 
+              level={confidence_label}
+              tooltipContent={`Based on ${episode_count} historical episodes`}
+            />
             <span className="text-xs text-muted-foreground">
               {episode_count} episodes
             </span>
