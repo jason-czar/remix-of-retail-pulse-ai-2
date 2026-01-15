@@ -156,9 +156,11 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
     return null;
   }
   
-  // Get coherence from snapshot or compute it
-  const coherence = (snapshot.observed_state as any)?.coherence || 
-    computeCoherenceFromState(snapshot.observed_state);
+  // Prefer server-computed NCS, fallback to client-side calculation
+  const serverCoherence = (snapshot.observed_state as any)?.coherence as NarrativeCoherence | undefined;
+  const clientCoherence = serverCoherence ? null : computeCoherenceFromState(snapshot.observed_state);
+  const coherence = serverCoherence || clientCoherence;
+  const isServerComputed = !!serverCoherence;
   
   if (!coherence) return null;
   
@@ -180,7 +182,23 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
           </div>
           <div>
             <h3 className="font-semibold text-sm md:text-base">Narrative Coherence</h3>
-            <p className="text-xs text-muted-foreground">{getScoreLabel(coherence.score)}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs text-muted-foreground">{getScoreLabel(coherence.score)}</p>
+              {!isServerComputed && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-muted-foreground/30">
+                        Estimated
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">Computed client-side (legacy snapshot)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
