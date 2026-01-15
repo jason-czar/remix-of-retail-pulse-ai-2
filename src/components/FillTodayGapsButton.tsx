@@ -11,6 +11,10 @@ import {
 } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+
+// Admin email that can see the Fill Today button
+const ADMIN_EMAIL = "admin@czar.ing";
 
 interface FillTodayGapsButtonProps {
   symbol: string;
@@ -22,10 +26,19 @@ const START_HOUR = 5;
 const END_HOUR = 18;
 
 export function FillTodayGapsButton({ symbol, onComplete }: FillTodayGapsButtonProps) {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [missingHours, setMissingHours] = useState<number[]>([]);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+
+  // Only show for admin user
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  
+  // Don't render if not admin
+  if (!isAdmin) {
+    return null;
+  }
 
   // Check for missing hourly snapshots on mount and after fills
   useEffect(() => {
