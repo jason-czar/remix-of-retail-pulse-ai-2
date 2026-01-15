@@ -144,6 +144,85 @@ interface NarrativeCoherence {
   risk_drivers: string[];
 }
 
+// ============= COHERENCE CALCULATION FUNCTION =============
+function calculateNarrativeCoherence(
+  narratives: NarrativeState[],
+  emotions: EmotionState[]
+): NarrativeCoherence {
+  if (!narratives.length) {
+    return {
+      score: 0,
+      entropy: 1,
+      emotion_convergence: 0,
+      velocity_stability: 0,
+      dominant_narrative_share: 0,
+      risk_level: "high",
+      risk_drivers: ["No narrative data available"],
+    };
+  }
+
+  // 1. Calculate entropy (Shannon entropy normalized 0-1)
+  // Lower entropy = more concentrated = better coherence
+  const totalPrevalence = narratives.reduce((sum, n) => sum + (n.prevalence_pct || 0), 0);
+  let entropy = 0;
+  if (totalPrevalence > 0) {
+    for (const n of narratives) {
+      const p = (n.prevalence_pct || 0) / totalPrevalence;
+      if (p > 0) entropy -= p * Math.log2(p);
+    }
+    // Normalize by max possible entropy (log2 of count)
+    const maxEntropy = Math.log2(narratives.length);
+    entropy = maxEntropy > 0 ? entropy / maxEntropy : 0;
+  }
+
+  // 2. Emotion convergence - are emotions aligned in polarity?
+  const bullishEmotions = emotions.filter((e) => e.polarity === "bullish").length;
+  const bearishEmotions = emotions.filter((e) => e.polarity === "bearish").length;
+  const totalPolarized = bullishEmotions + bearishEmotions;
+  const emotionConvergence = totalPolarized > 0 
+    ? Math.abs(bullishEmotions - bearishEmotions) / totalPolarized 
+    : 0.5;
+
+  // 3. Velocity stability - are narratives changing erratically?
+  const velocityMagnitudes = narratives.map((n) => n.velocity?.magnitude || 0);
+  const avgVelocity = velocityMagnitudes.reduce((a, b) => a + b, 0) / velocityMagnitudes.length;
+  const velocityStability = Math.max(0, 1 - avgVelocity); // Lower velocity = more stable
+
+  // 4. Dominant narrative share
+  const dominantShare = narratives[0]?.prevalence_pct || 0;
+
+  // Composite score (0-100)
+  // Weight: 30% inverse entropy, 25% emotion convergence, 25% velocity stability, 20% dominant share
+  const score = Math.round(
+    (1 - entropy) * 30 +
+    emotionConvergence * 25 +
+    velocityStability * 25 +
+    (dominantShare / 100) * 20
+  );
+
+  // Determine risk level and drivers
+  const riskDrivers: string[] = [];
+  let riskLevel: "low" | "moderate" | "high" = "low";
+
+  if (entropy > 0.7) riskDrivers.push("Scattered narrative attention");
+  if (emotionConvergence < 0.3) riskDrivers.push("Conflicting emotional signals");
+  if (velocityStability < 0.4) riskDrivers.push("Rapid narrative shifts");
+  if (dominantShare < 20) riskDrivers.push("No dominant narrative");
+
+  if (riskDrivers.length >= 3 || score < 30) riskLevel = "high";
+  else if (riskDrivers.length >= 1 || score < 50) riskLevel = "moderate";
+
+  return {
+    score,
+    entropy: Math.round(entropy * 100) / 100,
+    emotion_convergence: Math.round(emotionConvergence * 100) / 100,
+    velocity_stability: Math.round(velocityStability * 100) / 100,
+    dominant_narrative_share: dominantShare,
+    risk_level: riskLevel,
+    risk_drivers: riskDrivers,
+  };
+}
+
 interface ObservedState {
   narratives: NarrativeState[];
   emotions: EmotionState[];
@@ -1452,6 +1531,9 @@ Deno.serve(async (req) => {
           dominant_emotion_velocity: emotions[0]?.velocity.magnitude || 0,
         };
 
+        // Calculate Narrative Coherence Score (NCS)
+        const coherence = calculateNarrativeCoherence(narratives, emotions);
+
         // Build observed state
         const observedState: ObservedState = {
           narratives,
@@ -1459,6 +1541,7 @@ Deno.serve(async (req) => {
           signals,
           concentration,
           momentum,
+          coherence,
         };
 
         // Compute confidence
