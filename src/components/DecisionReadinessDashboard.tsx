@@ -381,9 +381,7 @@ function OverviewCard({
   const activeSignals = Object.entries(observed_state.signals).filter(([_, signal]) => signal.active).map(([key]) => key.replace(/_/g, " "));
   return <Card className="p-4 md:p-5 glass-card border-primary/20 mb-4">
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-          <Brain className="h-5 w-5 text-primary" />
-        </div>
+        
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <h3 className="font-semibold text-sm md:text-base">Psychology Overview</h3>
