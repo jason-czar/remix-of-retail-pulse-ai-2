@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 export function HeroSection() {
   return <section className="relative pb-12 sm:pb-16 lg:pb-20 pt-[110px] lg:pt-[200px] sm:pt-[150px]">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl lg:max-w-3xl mx-auto">
           {/* Hero Card with glass effect */}
           <motion.div className="relative glass-card p-8 md:p-12 lg:p-16 text-center" initial={{
           opacity: 0,
