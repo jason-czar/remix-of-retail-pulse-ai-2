@@ -9,14 +9,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 dark:hover:shadow-[0_0_20px_hsl(211_100%_45%/0.3)]",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 dark:hover:shadow-[0_0_20px_hsl(168_84%_45%/0.3)]",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 dark:hover:shadow-[0_0_20px_hsl(0_72%_51%/0.3)]",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground dark:hover:border-white/25 dark:hover:shadow-[0_0_12px_hsl(0_0%_100%/0.08)]",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 dark:hover:shadow-[0_0_12px_hsl(0_0%_100%/0.06)]",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-white/8",
         link: "text-primary underline-offset-4 hover:underline dark:hover:text-primary/80",
         hero: "bg-gradient-primary text-primary-foreground shadow-glow hover:shadow-elevated hover:scale-[1.02] active:scale-[0.98]",
-        "hero-outline": "border-2 border-primary/50 text-primary hover:bg-primary/10 hover:border-primary dark:hover:shadow-[0_0_20px_hsl(211_100%_45%/0.25)]",
+        "hero-outline": "border-2 border-primary/50 text-primary hover:bg-primary/10 hover:border-primary dark:hover:shadow-[0_0_20px_hsl(168_84%_45%/0.25)]",
         bullish: "bg-bullish text-bullish-foreground hover:bg-bullish/90 dark:hover:shadow-[0_0_20px_hsl(142_71%_45%/0.3)]",
         bearish: "bg-bearish text-bearish-foreground hover:bg-bearish/90 dark:hover:shadow-[0_0_20px_hsl(0_72%_51%/0.3)]",
         glass: [
@@ -27,7 +27,7 @@ const buttonVariants = cva(
           "dark:border-white/15 dark:text-foreground",
           "dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_2px_8px_hsl(0_0%_5%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
           "dark:hover:bg-[linear-gradient(135deg,hsl(0_0%_28%/0.5)_0%,hsl(0_0%_20%/0.3)_100%)]",
-          "dark:hover:border-white/25 dark:hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_0_16px_hsl(211_100%_45%/0.15),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
+          "dark:hover:border-white/25 dark:hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_0_16px_hsl(168_84%_45%/0.15),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
         ].join(" "),
         "glass-pill": [
           "rounded-full backdrop-blur-xl border shadow-sm",
@@ -37,26 +37,7 @@ const buttonVariants = cva(
           "dark:border-white/15 dark:text-foreground",
           "dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_2px_8px_hsl(0_0%_5%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
           "dark:hover:bg-[linear-gradient(135deg,hsl(0_0%_28%/0.5)_0%,hsl(0_0%_20%/0.3)_100%)]",
-          "dark:hover:border-white/25 dark:hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_0_16px_hsl(211_100%_45%/0.15),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
-        ].join(" "),
-        "glass-primary": [
-          "rounded-full backdrop-blur-xl border shadow-md",
-          "bg-primary text-primary-foreground border-primary/30",
-          "hover:bg-primary/90 hover:border-primary/50",
-          "shadow-[0_4px_16px_hsl(211_100%_45%/0.25)]",
-          "hover:shadow-[0_8px_24px_hsl(211_100%_45%/0.35)]",
-          "dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_0_20px_hsl(211_100%_45%/0.25)]",
-          "dark:hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_0_28px_hsl(211_100%_45%/0.4)]",
-        ].join(" "),
-        "glass-outline": [
-          "rounded-full backdrop-blur-xl border shadow-sm",
-          "bg-white/70 border-black/[0.08] text-foreground",
-          "hover:bg-white/90 hover:border-black/[0.12]",
-          "dark:bg-[linear-gradient(135deg,hsl(0_0%_24%/0.4)_0%,hsl(0_0%_16%/0.2)_100%)]",
-          "dark:border-white/15 dark:text-foreground",
-          "dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_2px_8px_hsl(0_0%_5%/0.2),inset_0_1px_0_hsl(0_0%_100%/0.08)]",
-          "dark:hover:bg-[linear-gradient(135deg,hsl(0_0%_28%/0.5)_0%,hsl(0_0%_20%/0.3)_100%)]",
-          "dark:hover:border-white/25 dark:hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_0_16px_hsl(211_100%_45%/0.15),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
+          "dark:hover:border-white/25 dark:hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),0_0_16px_hsl(168_84%_45%/0.15),inset_0_1px_0_hsl(0_0%_100%/0.1)]",
         ].join(" "),
         glow: "btn-glow text-primary-foreground",
       },
