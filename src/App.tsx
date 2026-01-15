@@ -37,6 +37,8 @@ const App = () => (
             <Route path="/symbol/AAPL" element={<SymbolPage />} />
             <Route path="/symbol/NVDA" element={<SymbolPage />} />
             <Route path="/symbol/:symbol" element={<ProtectedRoute><SymbolPage /></ProtectedRoute>} />
+            <Route path="/symbol/AAPL/messages" element={<MessagesPage />} />
+            <Route path="/symbol/NVDA/messages" element={<MessagesPage />} />
             <Route path="/symbol/:symbol/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
