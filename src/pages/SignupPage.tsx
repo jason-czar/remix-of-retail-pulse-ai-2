@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { MeshBackground } from "@/components/MeshBackground";
+
 import { Zap, ArrowRight, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -47,7 +47,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <MeshBackground />
+      
       
       <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 relative">
         {/* Benefits Panel */}
