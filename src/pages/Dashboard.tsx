@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { MeshBackground } from "@/components/MeshBackground";
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <MeshBackground />
+      
       <Header />
       
       <main className="container mx-auto px-4 py-8">

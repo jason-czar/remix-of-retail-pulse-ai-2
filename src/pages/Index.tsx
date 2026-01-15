@@ -1,23 +1,25 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { LivePreviewSection } from "@/components/landing/LivePreviewSection";
-import { PricingSection } from "@/components/landing/PricingSection";
-import { CTASection } from "@/components/landing/CTASection";
-import { MeshBackground } from "@/components/MeshBackground";
+import { ProblemSection } from "@/components/landing/ProblemSection";
+import { SolutionSection } from "@/components/landing/SolutionSection";
+import { AudienceSection } from "@/components/landing/AudienceSection";
+import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { CredibilitySection } from "@/components/landing/CredibilitySection";
+import { FinalCTASection } from "@/components/landing/FinalCTASection";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <MeshBackground />
       <Header />
       <main>
         <HeroSection />
-        <FeaturesSection />
-        <LivePreviewSection />
-        <PricingSection />
-        <CTASection />
+        <ProblemSection />
+        <SolutionSection />
+        <AudienceSection />
+        <HowItWorksSection />
+        <CredibilitySection />
+        <FinalCTASection />
       </main>
       <Footer />
     </div>
