@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,17 +8,26 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
-import SymbolPage from "./pages/SymbolPage";
-import TrendingPage from "./pages/TrendingPage";
-import MessagesPage from "./pages/MessagesPage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import SettingsPage from "./pages/SettingsPage";
-import NotFound from "./pages/NotFound";
+
+// Lazy load all non-landing pages to reduce initial bundle size
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SymbolPage = lazy(() => import("./pages/SymbolPage"));
+const TrendingPage = lazy(() => import("./pages/TrendingPage"));
+const MessagesPage = lazy(() => import("./pages/MessagesPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignupPage = lazy(() => import("./pages/SignupPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
+
+// Minimal loading fallback
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="animate-pulse text-muted-foreground">Loading...</div>
+  </div>
+);
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
@@ -27,24 +37,26 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/trending" element={<ProtectedRoute><TrendingPage /></ProtectedRoute>} />
-            <Route path="/symbol/AAPL" element={<SymbolPage />} />
-            <Route path="/symbol/NVDA" element={<SymbolPage />} />
-            <Route path="/symbol/:symbol" element={<ProtectedRoute><SymbolPage /></ProtectedRoute>} />
-            <Route path="/symbol/AAPL/messages" element={<MessagesPage />} />
-            <Route path="/symbol/NVDA/messages" element={<MessagesPage />} />
-            <Route path="/symbol/:symbol/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-            <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/trending" element={<ProtectedRoute><TrendingPage /></ProtectedRoute>} />
+              <Route path="/symbol/AAPL" element={<SymbolPage />} />
+              <Route path="/symbol/NVDA" element={<SymbolPage />} />
+              <Route path="/symbol/:symbol" element={<ProtectedRoute><SymbolPage /></ProtectedRoute>} />
+              <Route path="/symbol/AAPL/messages" element={<MessagesPage />} />
+              <Route path="/symbol/NVDA/messages" element={<MessagesPage />} />
+              <Route path="/symbol/:symbol/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
       </TooltipProvider>
