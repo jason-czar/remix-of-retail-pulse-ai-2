@@ -21,6 +21,8 @@ import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
 import { DecisionReadinessDashboard } from "@/components/DecisionReadinessDashboard";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
+import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
+import { HistoricalEpisodeMatcher } from "@/components/HistoricalEpisodeMatcher";
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
@@ -220,6 +222,17 @@ export default function SymbolPage() {
         <div className="mb-8 md:mb-12">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
           <DecisionReadinessDashboard symbol={symbol} />
+        </div>
+
+        {/* Narrative Coherence Score */}
+        <div className="mb-8 md:mb-12">
+          <h3 className="text-lg font-semibold mb-4">Narrative Coherence</h3>
+          <NarrativeCoherenceCard symbol={symbol} />
+        </div>
+
+        {/* Historical Episode Matcher */}
+        <div className="mb-8 md:mb-12">
+          <HistoricalEpisodeMatcher symbol={symbol} />
         </div>
 
         {/* Narrative Impact History Section */}
