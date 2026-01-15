@@ -71,7 +71,7 @@ export function HeroSection() {
               </Link>
               <Link to="/symbol/NVDA">
                 <Button variant="outline" size="lg" className="px-8 rounded-full backdrop-blur-sm">
-                  View Live Demo
+                  View NVDA
                 </Button>
               </Link>
             </motion.div>
