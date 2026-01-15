@@ -143,7 +143,7 @@ export default function SymbolPage() {
 
         {/* Charts Section - Unified header with tabs and time range */}
         <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
-          {/* Unified header row: TabsList + TimeRangeSelector */}
+          {/* Unified header row: TabsList + TimeRangeSelector (desktop only) */}
           <div className="flex-col justify-between gap-3 mb-2 md:mb-3 px-0 flex md:flex-row">
             <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
               <TabsList className="w-max md:w-auto">
@@ -154,7 +154,12 @@ export default function SymbolPage() {
                 <TabsTrigger value="volume" className="text-xs md:text-sm px-2.5 md:px-3">Volume</TabsTrigger>
               </TabsList>
             </div>
-            {activeTab !== 'momentum' && <TimeRangeSelector value={timeRange} onChange={setTimeRange} />}
+            {/* Desktop: TimeRangeSelector in header row */}
+            {activeTab !== 'momentum' && (
+              <div className="hidden md:block">
+                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+              </div>
+            )}
           </div>
 
           <TabsContent value="narratives">
@@ -186,6 +191,13 @@ export default function SymbolPage() {
               <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
+
+          {/* Mobile: TimeRangeSelector below chart, centered and fit to content */}
+          {activeTab !== 'momentum' && (
+            <div className="flex justify-center mt-4 md:hidden">
+              <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+            </div>
+          )}
         </Tabs>
 
         {/* Section divider */}
