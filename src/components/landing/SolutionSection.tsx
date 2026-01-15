@@ -1,4 +1,5 @@
 import { Brain, Zap, BarChart3, LineChart } from "lucide-react";
+import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
 
 export function SolutionSection() {
   return (
@@ -8,7 +9,7 @@ export function SolutionSection() {
       
       <div className="container mx-auto px-4 relative">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-2xl md:text-3xl font-display mb-4">
               Our Solution
             </h2>
@@ -16,50 +17,58 @@ export function SolutionSection() {
               SentimentIQ transforms millions of retail investor conversations into 
               actionable intelligence for institutional decision-makers.
             </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <SolutionCard
-              icon={Brain}
-              title="Narrative Intelligence"
-              description="AI-powered extraction of the dominant themes, stories, and catalysts driving retail conversation for any symbol."
-              bullets={[
-                "Top 10 narratives ranked by prevalence",
-                "Narrative momentum tracking over time",
-                "Representative posts for qualitative review"
-              ]}
-            />
-            <SolutionCard
-              icon={LineChart}
-              title="Emotion Analysis"
-              description="Go beyond bullish/bearish. Understand the nuanced emotional composition of retail sentiment."
-              bullets={[
-                "Fear, greed, excitement, frustration detection",
-                "Conviction scoring and sarcasm filtering",
-                "Emotion momentum for regime change signals"
-              ]}
-            />
-            <SolutionCard
-              icon={Zap}
-              title="Real-Time Alerts"
-              description="Never miss a sentiment shift. Configure custom triggers based on your unique criteria."
-              bullets={[
-                "Sentiment flip detection",
-                "Volume surge alerts",
-                "Narrative emergence notifications"
-              ]}
-            />
-            <SolutionCard
-              icon={BarChart3}
-              title="Historical Analytics"
-              description="Analyze patterns across multiple timeframes to identify recurring behaviors and signals."
-              bullets={[
-                "1H, 6H, 24H, 7D, 30D views",
-                "Sentiment-to-price correlation",
-                "Historical narrative impact scoring"
-              ]}
-            />
-          </div>
+          <StaggerContainer className="grid md:grid-cols-2 gap-6" staggerDelay={0.12}>
+            <StaggerItem>
+              <SolutionCard
+                icon={Brain}
+                title="Narrative Intelligence"
+                description="AI-powered extraction of the dominant themes, stories, and catalysts driving retail conversation for any symbol."
+                bullets={[
+                  "Top 10 narratives ranked by prevalence",
+                  "Narrative momentum tracking over time",
+                  "Representative posts for qualitative review"
+                ]}
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <SolutionCard
+                icon={LineChart}
+                title="Emotion Analysis"
+                description="Go beyond bullish/bearish. Understand the nuanced emotional composition of retail sentiment."
+                bullets={[
+                  "Fear, greed, excitement, frustration detection",
+                  "Conviction scoring and sarcasm filtering",
+                  "Emotion momentum for regime change signals"
+                ]}
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <SolutionCard
+                icon={Zap}
+                title="Real-Time Alerts"
+                description="Never miss a sentiment shift. Configure custom triggers based on your unique criteria."
+                bullets={[
+                  "Sentiment flip detection",
+                  "Volume surge alerts",
+                  "Narrative emergence notifications"
+                ]}
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <SolutionCard
+                icon={BarChart3}
+                title="Historical Analytics"
+                description="Analyze patterns across multiple timeframes to identify recurring behaviors and signals."
+                bullets={[
+                  "1H, 6H, 24H, 7D, 30D views",
+                  "Sentiment-to-price correlation",
+                  "Historical narrative impact scoring"
+                ]}
+              />
+            </StaggerItem>
+          </StaggerContainer>
         </div>
       </div>
     </section>
@@ -78,7 +87,7 @@ function SolutionCard({
   bullets: string[];
 }) {
   return (
-    <div className="glass-card p-6 hover:shadow-glow transition-all duration-300 group">
+    <div className="glass-card p-6 hover:shadow-glow transition-all duration-300 group h-full">
       <div className="flex items-start gap-4">
         <div className="shrink-0 inline-flex p-3 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors">
           <Icon className="h-6 w-6 text-primary" />

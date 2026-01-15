@@ -1,57 +1,64 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Building2, Landmark, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ScrollReveal } from "./ScrollReveal";
 
 export function AudienceSection() {
   return (
     <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
-        <div className="max-w-5xl mx-auto space-y-16">
+        <div className="max-w-5xl mx-auto space-y-20">
           {/* Corporate Strategy */}
-          <AudienceBlock
-            icon={Building2}
-            title="For Corporate Strategy"
-            subtitle="Understand how retail investors perceive your company and competitors in real-time."
-            description="Monitor narrative shifts around your brand, track sentiment changes after announcements, and identify emerging themes before they hit mainstream coverage. Our platform gives strategy teams the retail perspective they need for informed decision-making."
-            bullets={[
-              "Track narrative evolution around key announcements",
-              "Monitor competitive sentiment positioning",
-              "Identify emerging retail concerns or opportunities"
-            ]}
-            cta="Learn More"
-            ctaLink="/signup"
-          />
+          <ScrollReveal>
+            <AudienceBlock
+              icon={Building2}
+              title="For Corporate Strategy"
+              subtitle="Understand how retail investors perceive your company and competitors in real-time."
+              description="Monitor narrative shifts around your brand, track sentiment changes after announcements, and identify emerging themes before they hit mainstream coverage. Our platform gives strategy teams the retail perspective they need for informed decision-making."
+              bullets={[
+                "Track narrative evolution around key announcements",
+                "Monitor competitive sentiment positioning",
+                "Identify emerging retail concerns or opportunities"
+              ]}
+              cta="Learn More"
+              ctaLink="/signup"
+            />
+          </ScrollReveal>
 
           {/* Investment Banks */}
-          <AudienceBlock
-            icon={Landmark}
-            title="For Investment Banks"
-            subtitle="Incorporate retail sentiment into deal intelligence and market analysis."
-            description="Enhance your research coverage with systematic retail sentiment data. Understand how retail positioning may impact pricing, timing, and execution of transactions. Give your clients an edge with insights they can't get elsewhere."
-            bullets={[
-              "Systematic retail sentiment for research coverage",
-              "Deal intelligence and market timing signals",
-              "Differentiated insights for client presentations"
-            ]}
-            cta="Contact Sales"
-            ctaLink="/signup"
-            reverse
-          />
+          <ScrollReveal>
+            <AudienceBlock
+              icon={Landmark}
+              title="For Investment Banks"
+              subtitle="Incorporate retail sentiment into deal intelligence and market analysis."
+              description="Enhance your research coverage with systematic retail sentiment data. Understand how retail positioning may impact pricing, timing, and execution of transactions. Give your clients an edge with insights they can't get elsewhere."
+              bullets={[
+                "Systematic retail sentiment for research coverage",
+                "Deal intelligence and market timing signals",
+                "Differentiated insights for client presentations"
+              ]}
+              cta="Contact Sales"
+              ctaLink="/signup"
+              reverse
+            />
+          </ScrollReveal>
 
           {/* Investor Relations */}
-          <AudienceBlock
-            icon={Users}
-            title="For Investor Relations"
-            subtitle="Stay ahead of retail investor perception and engagement."
-            description="Track how retail investors discuss your company, identify the narratives driving sentiment, and prepare for questions before they arise. Our platform helps IR teams understand their retail shareholder base like never before."
-            bullets={[
-              "Real-time retail perception monitoring",
-              "Narrative tracking for proactive communication",
-              "Sentiment trend analysis for board reporting"
-            ]}
-            cta="Get Started"
-            ctaLink="/signup"
-          />
+          <ScrollReveal>
+            <AudienceBlock
+              icon={Users}
+              title="For Investor Relations"
+              subtitle="Stay ahead of retail investor perception and engagement."
+              description="Track how retail investors discuss your company, identify the narratives driving sentiment, and prepare for questions before they arise. Our platform helps IR teams understand their retail shareholder base like never before."
+              bullets={[
+                "Real-time retail perception monitoring",
+                "Narrative tracking for proactive communication",
+                "Sentiment trend analysis for board reporting"
+              ]}
+              cta="Get Started"
+              ctaLink="/signup"
+            />
+          </ScrollReveal>
         </div>
       </div>
     </section>
