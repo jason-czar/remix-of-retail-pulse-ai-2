@@ -22,6 +22,7 @@ import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/compon
 import { DecisionReadinessDashboard } from "@/components/DecisionReadinessDashboard";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
+import { NCSTrendChart } from "@/components/NCSTrendChart";
 import { HistoricalEpisodeMatcher } from "@/components/HistoricalEpisodeMatcher";
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
@@ -228,6 +229,7 @@ export default function SymbolPage() {
         <div className="mb-8 md:mb-12">
           <h3 className="text-lg font-semibold mb-4">Narrative Coherence</h3>
           <NarrativeCoherenceCard symbol={symbol} />
+          <NCSTrendChart symbol={symbol} />
         </div>
 
         {/* Historical Episode Matcher */}
