@@ -163,7 +163,7 @@ export default function SymbolPage() {
           </div>
 
           <TabsContent value="narratives">
-            <div className="px-2 md:px-0">
+            <div className="-mx-2 md:mx-0 md:px-0">
               <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
