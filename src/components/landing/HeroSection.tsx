@@ -33,7 +33,7 @@ export function HeroSection() {
             delay: 0.2,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              <span className="block font-normal font-sans text-4xl">We read the retail investor market, so you can stay ahead of it.  </span>
+              <span className="block font-normal font-sans text-4xl">We read the retail investor market, so you can stay ahead of&nbsp;it.</span>
               
             </motion.h1>
 
