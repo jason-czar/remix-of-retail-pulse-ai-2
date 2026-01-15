@@ -34,6 +34,8 @@ const App = () => (
             <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/trending" element={<ProtectedRoute><TrendingPage /></ProtectedRoute>} />
+            <Route path="/symbol/AAPL" element={<SymbolPage />} />
+            <Route path="/symbol/NVDA" element={<SymbolPage />} />
             <Route path="/symbol/:symbol" element={<ProtectedRoute><SymbolPage /></ProtectedRoute>} />
             <Route path="/symbol/:symbol/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
