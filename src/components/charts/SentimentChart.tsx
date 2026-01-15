@@ -10,14 +10,160 @@ import {
 } from "recharts";
 import { useSentimentAnalytics } from "@/hooks/use-stocktwits";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface SentimentChartProps {
   symbol: string;
   start?: string;
   end?: string;
   timeRange?: string;
+}
+
+// Types for side panel data
+interface SentimentSidePanelData {
+  label: string;
+  sentiment: number | null;
+  bullish: number | null;
+  bearish: number | null;
+  isEmpty: boolean;
+}
+
+// Persistent side panel component with liquid glass styling
+function SentimentSidePanel({ 
+  data, 
+  isHovering 
+}: { 
+  data: SentimentSidePanelData | null;
+  isHovering: boolean;
+}) {
+  if (!data) {
+    return (
+      <div className={cn(
+        "w-[280px] flex-shrink-0 p-5 hidden md:flex items-center justify-center",
+        "glass-card"
+      )}>
+        <p className="text-base text-muted-foreground text-center">
+          No data available
+        </p>
+      </div>
+    );
+  }
+
+  // Handle empty slots
+  if (data.isEmpty) {
+    return (
+      <div className={cn(
+        "w-[280px] flex-shrink-0 p-5 hidden md:block",
+        "glass-card"
+      )}>
+        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
+        <p className="text-base text-muted-foreground mt-2">
+          No data available yet
+        </p>
+        {!isHovering && (
+          <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+            <span className="text-sm text-muted-foreground italic">
+              Showing latest • Hover chart to explore
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Determine sentiment trend
+  const getSentimentTrend = () => {
+    if (data.sentiment === null) return { label: 'Neutral', icon: Minus, color: 'text-muted-foreground' };
+    if (data.sentiment >= 60) return { label: 'Bullish', icon: TrendingUp, color: 'text-emerald-400' };
+    if (data.sentiment <= 40) return { label: 'Bearish', icon: TrendingDown, color: 'text-red-400' };
+    return { label: 'Neutral', icon: Minus, color: 'text-blue-400' };
+  };
+
+  const trend = getSentimentTrend();
+  const TrendIcon = trend.icon;
+  
+  return (
+    <div className={cn(
+      "w-[280px] flex-shrink-0 p-5 hidden md:block",
+      "glass-card",
+      !isHovering && "ring-1 ring-primary/20"
+    )}>
+      {/* Time Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
+        <div className={cn("flex items-center gap-1.5 text-sm", trend.color)}>
+          <TrendIcon className="h-4 w-4" />
+          <span className="font-medium">{trend.label}</span>
+        </div>
+      </div>
+      
+      {/* Sentiment Score */}
+      {data.sentiment !== null && (
+        <div className="mb-4 pb-3 border-b border-border/50 dark:border-white/10">
+          <div className="text-sm text-muted-foreground mb-1">Sentiment Score</div>
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-3xl" style={{ color: "hsl(168 84% 45%)" }}>
+              {data.sentiment}
+            </span>
+            <div className="flex-1">
+              <div className="h-2 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all"
+                  style={{ 
+                    width: `${data.sentiment}%`,
+                    backgroundColor: "hsl(168 84% 45%)"
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Bullish/Bearish Breakdown */}
+      <div className="space-y-3 pt-2">
+        <div className="text-sm text-muted-foreground mb-2">Breakdown:</div>
+        
+        {data.bullish !== null && (
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
+              style={{ backgroundColor: "hsl(142 71% 45%)" }}
+            />
+            <span className="text-card-foreground flex-1 text-sm">Bullish</span>
+            <span className="text-sm font-medium" style={{ color: "hsl(142 71% 45%)" }}>
+              {data.bullish}
+            </span>
+          </div>
+        )}
+        
+        {data.bearish !== null && (
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
+              style={{ backgroundColor: "hsl(0 72% 51%)" }}
+            />
+            <span className="text-card-foreground flex-1 text-sm">Bearish</span>
+            <span className="text-sm font-medium" style={{ color: "hsl(0 72% 51%)" }}>
+              {data.bearish}
+            </span>
+          </div>
+        )}
+      </div>
+      
+      {/* Default indicator */}
+      {!isHovering && (
+        <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+          <span className="text-sm text-muted-foreground italic">
+            Showing latest • Hover chart to explore
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Generate chart data based on time range
@@ -90,6 +236,8 @@ const generateDataPoints = (timeRange: string) => {
 export function SentimentChart({ symbol, start, end, timeRange = '24H' }: SentimentChartProps) {
   const { data: apiData, isLoading } = useSentimentAnalytics(symbol, timeRange, start, end);
   const [marketSession, setMarketSession] = useState<MarketSession>('regular');
+  const [hoveredData, setHoveredData] = useState<SentimentSidePanelData | null>(null);
+  const [isHovering, setIsHovering] = useState(false);
   
   // Get session-specific hour range
   const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
@@ -188,115 +336,168 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
     return generateDataPoints(timeRange);
   }, [apiData, timeRange, START_HOUR, END_HOUR]);
 
+  // Get default side panel data (latest non-empty point)
+  const defaultSidePanelData = useMemo((): SentimentSidePanelData | null => {
+    const nonEmptyPoints = chartData.filter(d => !d.isEmpty);
+    if (nonEmptyPoints.length === 0) return null;
+    const latest = nonEmptyPoints[nonEmptyPoints.length - 1];
+    return {
+      label: latest.time,
+      sentiment: latest.sentiment,
+      bullish: latest.bullish,
+      bearish: latest.bearish,
+      isEmpty: latest.isEmpty,
+    };
+  }, [chartData]);
+
+  // Handle mouse move on chart
+  const handleMouseMove = useCallback((state: any) => {
+    if (state?.activePayload?.length > 0) {
+      const dataPoint = state.activePayload[0].payload;
+      setHoveredData({
+        label: dataPoint.time,
+        sentiment: dataPoint.sentiment,
+        bullish: dataPoint.bullish,
+        bearish: dataPoint.bearish,
+        isEmpty: dataPoint.isEmpty,
+      });
+      setIsHovering(true);
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredData(null);
+    setIsHovering(false);
+  }, []);
+
+  // Determine which data to show in side panel
+  const sidePanelData = hoveredData || defaultSidePanelData;
+
   if (isLoading) {
     return <Skeleton className="h-[300px] md:h-[400px] w-full" />;
   }
 
   return (
-    <div className="h-[300px] md:h-[400px] w-full">
+    <div className="w-full">
       {/* Session selector for Today view */}
       {timeRange === '1D' && (
         <div className="flex justify-end mb-2">
           <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
         </div>
       )}
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="sentimentGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(168 84% 45%)" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="hsl(168 84% 45%)" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" />
-          <XAxis 
-            dataKey="time" 
-            stroke="hsl(215 20% 55%)" 
-            fontSize={12}
-            tickLine={false}
-            minTickGap={timeRange === '1D' ? 30 : 50}
-          />
-          <YAxis 
-            domain={[0, 100]} 
-            stroke="hsl(215 20% 55%)" 
-            fontSize={12}
-            tickLine={false}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-            }}
-            labelStyle={{ color: "hsl(var(--card-foreground))" }}
-            itemStyle={{ color: "hsl(168 84% 45%)" }}
-            content={({ active, payload, label }) => {
-              if (!active || !payload) return null;
-              
-              const dataPoint = payload[0]?.payload;
-              
-              // Handle empty hours (no data yet)
-              if (dataPoint?.isEmpty) {
-                return (
-                  <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[150px]">
-                    <div className="font-semibold mb-1 text-card-foreground">{label}</div>
-                    <p className="text-sm text-muted-foreground">No data available yet</p>
-                  </div>
-                );
-              }
-              
-              return (
-                <div className="bg-card border border-border rounded-lg p-3 shadow-xl">
-                  <div className="font-semibold mb-2 text-card-foreground">{label}</div>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(168 84% 45%)" }} />
-                      <span className="text-card-foreground">Sentiment: {dataPoint?.sentiment}</span>
+      
+      {/* Main layout: Side panel + Chart */}
+      <div className="flex gap-4">
+        {/* Persistent Side Panel */}
+        <SentimentSidePanel 
+          data={sidePanelData} 
+          isHovering={isHovering}
+        />
+        
+        {/* Chart */}
+        <div className="flex-1 h-[300px] md:h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart 
+              data={chartData} 
+              margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+            >
+              <defs>
+                <linearGradient id="sentimentGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(168 84% 45%)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="hsl(168 84% 45%)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" />
+              <XAxis 
+                dataKey="time" 
+                stroke="hsl(215 20% 55%)" 
+                fontSize={12}
+                tickLine={false}
+                minTickGap={timeRange === '1D' ? 30 : 50}
+              />
+              <YAxis 
+                domain={[0, 100]} 
+                stroke="hsl(215 20% 55%)" 
+                fontSize={12}
+                tickLine={false}
+              />
+              {/* Mobile tooltip - hidden on desktop where side panel shows */}
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  // Only show tooltip on mobile (side panel handles desktop)
+                  if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+                    return null;
+                  }
+                  
+                  if (!active || !payload) return null;
+                  
+                  const dataPoint = payload[0]?.payload;
+                  
+                  // Handle empty hours (no data yet)
+                  if (dataPoint?.isEmpty) {
+                    return (
+                      <div className="glass-popover rounded-lg p-3 min-w-[150px]">
+                        <div className="font-semibold mb-1 text-card-foreground">{label}</div>
+                        <p className="text-sm text-muted-foreground">No data available yet</p>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="glass-popover rounded-lg p-3">
+                      <div className="font-semibold mb-2 text-card-foreground">{label}</div>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(168 84% 45%)" }} />
+                          <span className="text-card-foreground">Sentiment: {dataPoint?.sentiment}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(142 71% 45%)" }} />
+                          <span className="text-card-foreground">Bullish: {dataPoint?.bullish}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(0 72% 51%)" }} />
+                          <span className="text-card-foreground">Bearish: {dataPoint?.bearish}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(142 71% 45%)" }} />
-                      <span className="text-card-foreground">Bullish: {dataPoint?.bullish}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsl(0 72% 51%)" }} />
-                      <span className="text-card-foreground">Bearish: {dataPoint?.bearish}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            }}
-          />
-          <ReferenceLine y={50} stroke="hsl(215 20% 55%)" strokeDasharray="5 5" />
-          <Line 
-            type="monotone" 
-            dataKey="sentiment" 
-            stroke="hsl(168 84% 45%)" 
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 6, fill: "hsl(168 84% 45%)" }}
-            connectNulls={false}
-          />
-          <Line 
-            type="monotone" 
-            dataKey="bullish" 
-            stroke="hsl(142 71% 45%)" 
-            strokeWidth={1.5}
-            strokeDasharray="5 5"
-            dot={false}
-            connectNulls={false}
-          />
-          <Line 
-            type="monotone" 
-            dataKey="bearish" 
-            stroke="hsl(0 72% 51%)" 
-            strokeWidth={1.5}
-            strokeDasharray="5 5"
-            dot={false}
-            connectNulls={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+                  );
+                }}
+              />
+              <ReferenceLine y={50} stroke="hsl(215 20% 55%)" strokeDasharray="5 5" />
+              <Line 
+                type="monotone" 
+                dataKey="sentiment" 
+                stroke="hsl(168 84% 45%)" 
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 6, fill: "hsl(168 84% 45%)" }}
+                connectNulls={false}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="bullish" 
+                stroke="hsl(142 71% 45%)" 
+                strokeWidth={1.5}
+                strokeDasharray="5 5"
+                dot={false}
+                connectNulls={false}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="bearish" 
+                stroke="hsl(0 72% 51%)" 
+                strokeWidth={1.5}
+                strokeDasharray="5 5"
+                dot={false}
+                connectNulls={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
