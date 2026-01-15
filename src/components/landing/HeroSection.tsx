@@ -8,7 +8,7 @@ export function HeroSection() {
         <div className="max-w-4xl mx-auto">
           {/* Hero Card with glass effect */}
           <motion.div
-            className="relative glass-card p-8 md:p-12 lg:py-16 lg:px-10 text-center"
+            className="relative glass-card p-8 md:p-12 lg:py-16 lg:px-12 text-center"
             initial={{
               opacity: 0,
               y: 30,
