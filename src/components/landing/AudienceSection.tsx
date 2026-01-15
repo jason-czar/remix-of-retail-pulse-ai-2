@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export function AudienceSection() {
   return (
-    <section className="py-20 lg:py-28 bg-secondary/30">
+    <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto space-y-16">
           {/* Corporate Strategy */}
@@ -87,18 +87,18 @@ function AudienceBlock({
         <p className="text-primary font-medium mb-4">{subtitle}</p>
         <p className="text-muted-foreground mb-6 leading-relaxed">{description}</p>
         <Link to={ctaLink}>
-          <Button variant="outline" className="group">
+          <Button variant="outline" className="group backdrop-blur-sm">
             {cta}
             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Button>
         </Link>
       </div>
-      <div className={`bg-card rounded-xl border border-border p-6 shadow-card ${reverse ? 'lg:order-1' : ''}`}>
+      <div className={`glass-card p-6 ${reverse ? 'lg:order-1' : ''}`}>
         <h4 className="font-semibold mb-4">Key Benefits</h4>
         <ul className="space-y-3">
           {bullets.map((bullet, i) => (
             <li key={i} className="flex items-start gap-3">
-              <div className="shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+              <div className="shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
                 <span className="text-xs font-medium text-primary">{i + 1}</span>
               </div>
               <span className="text-sm text-muted-foreground">{bullet}</span>

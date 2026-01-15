@@ -2,8 +2,11 @@ import { Brain, Zap, BarChart3, LineChart } from "lucide-react";
 
 export function SolutionSection() {
   return (
-    <section className="py-20 lg:py-28">
-      <div className="container mx-auto px-4">
+    <section className="py-20 lg:py-28 relative">
+      {/* Subtle background glow */}
+      <div className="absolute inset-0 bg-gradient-glow opacity-50 pointer-events-none" />
+      
+      <div className="container mx-auto px-4 relative">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-2xl md:text-3xl font-display mb-4">
@@ -15,7 +18,7 @@ export function SolutionSection() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-6">
             <SolutionCard
               icon={Brain}
               title="Narrative Intelligence"
@@ -75,13 +78,13 @@ function SolutionCard({
   bullets: string[];
 }) {
   return (
-    <div className="bg-card rounded-xl border border-border p-6 shadow-card hover:shadow-elevated transition-shadow">
+    <div className="glass-card p-6 hover:shadow-glow transition-all duration-300 group">
       <div className="flex items-start gap-4">
-        <div className="shrink-0 inline-flex p-3 rounded-lg bg-primary/10">
+        <div className="shrink-0 inline-flex p-3 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors">
           <Icon className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="font-semibold text-lg mb-2">{title}</h3>
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">{title}</h3>
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{description}</p>
           <ul className="space-y-2">
             {bullets.map((bullet, i) => (
