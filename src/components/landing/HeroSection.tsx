@@ -63,15 +63,15 @@ export function HeroSection() {
             delay: 0.5,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              <Link to="/signup">
+              <Link to="/symbol/NVDA">
                 <Button size="lg" className="px-8 rounded-full group">
-                  Request Access
+                  View NVDA
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link to="/symbol/NVDA">
+              <Link to="/signup">
                 <Button variant="outline" size="lg" className="px-8 rounded-full backdrop-blur-sm">
-                  View NVDA
+                  Get Started
                 </Button>
               </Link>
             </motion.div>
