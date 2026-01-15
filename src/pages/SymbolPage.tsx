@@ -198,7 +198,6 @@ export default function SymbolPage() {
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
         <div className="mb-4">
-          <h3 className="text-sm font-medium text-muted-foreground mb-3">Decision Context</h3>
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
