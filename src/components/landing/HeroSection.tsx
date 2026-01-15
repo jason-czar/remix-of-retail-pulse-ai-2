@@ -51,25 +51,33 @@ export function HeroSection() {
               and psychology — delivered in real-time for strategic decision-making.
             </motion.p>
 
-            <motion.div className="flex flex-col sm:flex-row gap-4 justify-center" initial={{
-            opacity: 0,
-            y: 20
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} transition={{
-            duration: 0.6,
-            delay: 0.5,
-            ease: [0.25, 0.4, 0.25, 1]
-          }}>
-              <Link to="/symbol/NVDA">
-                <Button size="lg" className="px-8 rounded-full group">
+            <motion.div
+              className="flex flex-row flex-nowrap items-center justify-center gap-3 sm:gap-4 max-w-full overflow-x-auto scrollbar-hide"
+              initial={{
+                opacity: 0,
+                y: 20,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.6,
+                delay: 0.5,
+                ease: [0.25, 0.4, 0.25, 1],
+              }}
+            >
+              <Link to="/symbol/NVDA" className="shrink-0">
+                <Button size="lg" className="px-5 sm:px-8 rounded-full group">
                   View NVDA
-                  
                 </Button>
               </Link>
-              <Link to="/signup">
-                <Button variant="outline" size="lg" className="px-8 rounded-full backdrop-blur-sm">
+              <Link to="/signup" className="shrink-0">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="px-5 sm:px-8 rounded-full backdrop-blur-sm"
+                >
                   Get Started
                 </Button>
               </Link>
