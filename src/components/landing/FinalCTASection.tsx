@@ -44,15 +44,15 @@ export function FinalCTASection() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link to="/signup">
+                  <Link to="/symbol/NVDA">
                     <Button size="lg" className="px-8 rounded-full group">
-                      Request Access
+                      View NVDA
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </Link>
-                  <Link to="/dashboard">
+                  <Link to="/signup">
                     <Button variant="outline" size="lg" className="px-8 rounded-full backdrop-blur-sm">
-                      Explore Demo
+                      Get Started
                     </Button>
                   </Link>
                 </div>
