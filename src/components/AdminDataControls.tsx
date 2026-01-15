@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Loader2, 
   Shield, 
@@ -16,7 +17,9 @@ import {
   CheckCircle2,
   XCircle,
   Info,
-  Calendar
+  Calendar,
+  Square,
+  SkipForward
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -47,6 +50,13 @@ interface BackfillProgress {
   created: number;
   skipped: number;
   failed: number;
+}
+
+interface EventLogEntry {
+  date: string;
+  status: "created" | "skipped" | "failed" | "processing";
+  reason?: string;
+  timestamp: Date;
 }
 
 // Helper to count weekdays between two dates
@@ -98,6 +108,8 @@ export default function AdminDataControls() {
   
   // Progress state
   const [backfillProgress, setBackfillProgress] = useState<BackfillProgress | null>(null);
+  const [eventLog, setEventLog] = useState<EventLogEntry[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Preview estimates
   const backfillPreview = useMemo(() => {
@@ -118,8 +130,12 @@ export default function AdminDataControls() {
       return;
     }
 
+    // Create abort controller for cancellation
+    abortControllerRef.current = new AbortController();
+
     setBackfillLoading(true);
     setBackfillResult(null);
+    setEventLog([]);
     setBackfillProgress({ currentDate: "", processed: 0, total: backfillPreview.weekdays, created: 0, skipped: 0, failed: 0 });
 
     try {
@@ -145,6 +161,7 @@ export default function AdminDataControls() {
           computeNcs,
           skipInsufficientData,
         }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
@@ -191,15 +208,32 @@ export default function AdminDataControls() {
                     skipped: data.skipped,
                     failed: data.failed,
                   });
+                  // Add processing entry to event log
+                  setEventLog(prev => {
+                    const filtered = prev.filter(e => e.date !== data.currentDate);
+                    return [...filtered, { date: data.currentDate, status: "processing", timestamp: new Date() }];
+                  });
                   break;
 
                 case "created":
-                  // Progress already updated, but we could show toast for each
+                  setEventLog(prev => {
+                    const filtered = prev.filter(e => e.date !== data.date);
+                    return [...filtered, { date: data.date, status: "created", timestamp: new Date() }];
+                  });
                   break;
 
                 case "skipped":
+                  setEventLog(prev => {
+                    const filtered = prev.filter(e => e.date !== data.date);
+                    return [...filtered, { date: data.date, status: "skipped", reason: data.reason, timestamp: new Date() }];
+                  });
+                  break;
+
                 case "error":
-                  // Already tracked in progress updates
+                  setEventLog(prev => {
+                    const filtered = prev.filter(e => e.date !== data.date);
+                    return [...filtered, { date: data.date, status: "failed", reason: data.error, timestamp: new Date() }];
+                  });
                   break;
 
                 case "complete":
@@ -243,11 +277,23 @@ export default function AdminDataControls() {
         }
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Backfill failed";
-      toast.error(message);
+      if (error instanceof Error && error.name === "AbortError") {
+        toast.info("Backfill cancelled");
+        setEventLog(prev => [...prev, { date: "—", status: "failed", reason: "Cancelled by user", timestamp: new Date() }]);
+      } else {
+        const message = error instanceof Error ? error.message : "Backfill failed";
+        toast.error(message);
+      }
       setBackfillProgress(null);
     } finally {
       setBackfillLoading(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleCancelBackfill = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
   };
 
@@ -407,9 +453,20 @@ export default function AdminDataControls() {
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 <span className="text-sm font-medium">Processing snapshots...</span>
               </div>
-              <span className="text-sm font-mono text-muted-foreground">
-                {backfillProgress.processed}/{backfillProgress.total}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-mono text-muted-foreground">
+                  {backfillProgress.processed}/{backfillProgress.total}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelBackfill}
+                  className="h-7 px-2 text-bearish border-bearish/30 hover:bg-bearish/10"
+                >
+                  <Square className="h-3 w-3 mr-1" />
+                  Cancel
+                </Button>
+              </div>
             </div>
             <Progress 
               value={(backfillProgress.processed / backfillProgress.total) * 100} 
@@ -429,6 +486,49 @@ export default function AdminDataControls() {
                 <span>Failed: {backfillProgress.failed}</span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Event Log */}
+        {eventLog.length > 0 && (
+          <div className="rounded-lg border border-border/50 bg-secondary/20 overflow-hidden">
+            <div className="px-3 py-2 bg-secondary/30 border-b border-border/50">
+              <span className="text-xs font-medium text-muted-foreground">Event Log</span>
+            </div>
+            <ScrollArea className="h-40">
+              <div className="p-2 space-y-1">
+                {eventLog.slice().reverse().map((entry, idx) => (
+                  <div 
+                    key={`${entry.date}-${idx}`}
+                    className="flex items-center gap-2 text-xs py-1 px-2 rounded hover:bg-secondary/30"
+                  >
+                    {entry.status === "created" && (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-bullish shrink-0" />
+                    )}
+                    {entry.status === "skipped" && (
+                      <SkipForward className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    )}
+                    {entry.status === "failed" && (
+                      <XCircle className="h-3.5 w-3.5 text-bearish shrink-0" />
+                    )}
+                    {entry.status === "processing" && (
+                      <Loader2 className="h-3.5 w-3.5 text-primary animate-spin shrink-0" />
+                    )}
+                    <span className="font-mono text-foreground">{entry.date}</span>
+                    <span className={`capitalize ${
+                      entry.status === "created" ? "text-bullish" :
+                      entry.status === "failed" ? "text-bearish" :
+                      "text-muted-foreground"
+                    }`}>
+                      {entry.status}
+                    </span>
+                    {entry.reason && (
+                      <span className="text-muted-foreground/70 truncate">— {entry.reason}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           </div>
         )}
 
