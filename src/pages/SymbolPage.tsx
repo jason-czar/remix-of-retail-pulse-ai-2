@@ -141,7 +141,7 @@ export default function SymbolPage() {
         {/* Charts Section - Unified header with tabs and time range */}
         <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
           {/* Unified header row: TabsList + TimeRangeSelector */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2 md:mb-3 px-3 md:px-6">
+          <div className="flex-col justify-between gap-3 mb-2 md:mb-3 px-0 flex md:flex-row">
             <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
               <TabsList className="w-max md:w-auto">
                 <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
