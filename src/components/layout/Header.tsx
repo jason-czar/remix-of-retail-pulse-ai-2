@@ -25,7 +25,7 @@ export function Header() {
   };
   return <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/30 dark:bg-background/30 border-b border-black/[0.08] dark:border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between relative">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
@@ -38,8 +38,8 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Desktop Navigation - Glass pill style */}
-          <nav className="hidden md:flex items-center">
+          {/* Desktop Navigation - Glass pill style - Absolutely centered */}
+          <nav className="hidden md:flex items-center absolute left-1/2 -translate-x-1/2">
             <div className="flex items-center gap-1 px-2 py-1.5 rounded-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.06] backdrop-blur-sm">
               <Link to="/dashboard" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
                 Dashboard
