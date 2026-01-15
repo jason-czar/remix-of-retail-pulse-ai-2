@@ -92,7 +92,7 @@ export function AddToWatchlistButton({
 
   return (
     <Button
-      variant={isInWatchlist ? "outline" : "default"}
+      variant="glass-pill"
       onClick={handleToggle}
       disabled={isLoading}
       className={className}

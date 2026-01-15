@@ -185,9 +185,9 @@ export function FillTodayGapsButton({ symbol, onComplete }: FillTodayGapsButtonP
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="outline"
+            variant="glass-pill"
             size="sm"
-            className="h-8 px-3 text-xs border-amber-500/50 text-amber-600 hover:bg-amber-500/10 hover:text-amber-600"
+            className="h-8 px-3 text-xs border-amber-500/50 text-amber-500 hover:border-amber-400/70"
             onClick={handleFillTodayGaps}
             disabled={isLoading}
           >
