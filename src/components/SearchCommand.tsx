@@ -21,11 +21,13 @@ export function SearchCommand({ open: controlledOpen, onOpenChange }: SearchComm
   const [internalOpen, setInternalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
-  const { data: trending = [], isLoading } = useTrending();
-
+  
   // Support both controlled and uncontrolled modes
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setIsOpen = onOpenChange || setInternalOpen;
+  
+  // Only fetch trending data when the dialog is open to avoid blocking FCP
+  const { data: trending = [], isLoading } = useTrending(isOpen);
 
   // Keyboard shortcut ⌘K / Ctrl+K
   useEffect(() => {

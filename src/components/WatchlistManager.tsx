@@ -32,7 +32,8 @@ interface WatchlistManagerProps {
 export function WatchlistManager({ open, onOpenChange }: WatchlistManagerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: watchlist, isLoading: watchlistLoading } = useDefaultWatchlist();
-  const { data: trending = [] } = useTrending();
+  // Only fetch trending data when the dialog is open to avoid unnecessary network requests
+  const { data: trending = [] } = useTrending(open);
   const addToWatchlist = useAddToWatchlist();
   const removeFromWatchlist = useRemoveFromWatchlist();
 
