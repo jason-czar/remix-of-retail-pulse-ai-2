@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
 import { Separator } from "@/components/ui/separator";
@@ -38,7 +38,10 @@ import {
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
 export default function SymbolPage() {
-  const { symbol = "AAPL" } = useParams<{ symbol: string }>();
+  const { symbol: paramSymbol } = useParams<{ symbol: string }>();
+  const location = useLocation();
+  // Extract symbol from URL path as fallback (handles static routes like /symbol/AAPL)
+  const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
   const [timeRange, setTimeRange] = useState<TimeRange>('1D');
   const [activeTab, setActiveTab] = useState<string>('narratives');
   const [decisionLens, setDecisionLens] = useState<DecisionLens>('corporate-strategy');

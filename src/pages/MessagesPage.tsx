@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
@@ -31,7 +31,10 @@ import type { DateRange } from "react-day-picker";
 type SentimentFilter = "all" | "bullish" | "bearish" | "neutral";
 
 export default function MessagesPage() {
-  const { symbol = "AAPL" } = useParams<{ symbol: string }>();
+  const { symbol: paramSymbol } = useParams<{ symbol: string }>();
+  const location = useLocation();
+  // Extract symbol from URL path as fallback (handles static routes like /symbol/AAPL)
+  const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
   const [sentimentFilter, setSentimentFilter] = useState<SentimentFilter>("all");
   const [visibleCount, setVisibleCount] = useState(20);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
