@@ -281,6 +281,19 @@
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  /* Interactive hover glow for dark mode */
+  .dark .interactive-glow {
+    @apply transition-shadow duration-200;
+  }
+  .dark .interactive-glow:hover {
+    box-shadow: 0 0 16px hsl(168 84% 45% / 0.2);
+  }
+
+  /* Link hover glow */
+  .dark a:not([class*="button"]):not(.no-glow):hover {
+    text-shadow: 0 0 12px hsl(168 84% 45% / 0.4);
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
