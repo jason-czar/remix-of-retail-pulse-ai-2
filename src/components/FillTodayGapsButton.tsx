@@ -34,16 +34,18 @@ export function FillTodayGapsButton({ symbol, onComplete }: FillTodayGapsButtonP
 
   // Only show for admin user
   const isAdmin = user?.email === ADMIN_EMAIL;
-  
-  // Don't render if not admin
-  if (!isAdmin) {
-    return null;
-  }
 
   // Check for missing hourly snapshots on mount and after fills
   useEffect(() => {
-    checkTodayGaps();
-  }, [symbol]);
+    if (isAdmin) {
+      checkTodayGaps();
+    }
+  }, [symbol, isAdmin]);
+  
+  // Don't render if not admin - must be AFTER all hooks
+  if (!isAdmin) {
+    return null;
+  }
 
   const checkTodayGaps = async () => {
     setIsChecking(true);
