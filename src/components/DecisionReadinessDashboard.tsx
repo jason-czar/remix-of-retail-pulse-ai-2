@@ -197,7 +197,11 @@ function LensReadinessCard({
   return (
     <Card className="p-4 glass-card hover:bg-secondary/50 transition-colors h-full flex flex-col">
       {/* Main Content - Fixed height container when collapsed */}
-      <div className={cn("flex-1", !isExpanded && "min-h-[240px] max-h-[240px] overflow-hidden")}>
+      <div className={cn("flex-1 relative", !isExpanded && "min-h-[240px] max-h-[240px] overflow-hidden")}>
+        {/* Fade gradient overlay when collapsed */}
+        {!isExpanded && (
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none z-10 dark:from-[hsl(240_15%_12%)]" />
+        )}
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
