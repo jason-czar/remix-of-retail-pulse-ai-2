@@ -35,9 +35,9 @@ export function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in-up delay-200">
-            <Link to="/signup">
+            <Link to="/symbol/NVDA">
               <Button variant="hero" size="xl" className="group">
-                Start Free Trial
+                View NVDA
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
