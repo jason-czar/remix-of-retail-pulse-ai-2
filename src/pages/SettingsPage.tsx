@@ -30,6 +30,7 @@ import AlertsManager from "@/components/AlertsManager";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import HistoryBackfillUploader from "@/components/HistoryBackfillUploader";
 import ManualSnapshotTrigger from "@/components/ManualSnapshotTrigger";
+import AdminDataControls from "@/components/AdminDataControls";
 import { toast } from "sonner";
 
 interface ApiKey {
@@ -430,6 +431,7 @@ export default function SettingsPage() {
 
           {/* Data Management Tab */}
           <TabsContent value="data" className="space-y-6">
+            <AdminDataControls />
             <ManualSnapshotTrigger />
             <HistoryBackfillUploader />
           </TabsContent>

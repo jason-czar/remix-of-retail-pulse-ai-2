@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.backfill-volume-history]
 verify_jwt = false
+
+[functions.admin-backfill-psychology]
+verify_jwt = false
