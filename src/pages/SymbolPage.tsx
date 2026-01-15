@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
+import { Separator } from "@/components/ui/separator";
 import { Footer } from "@/components/layout/Footer";
 import { MeshBackground } from "@/components/MeshBackground";
 import { Badge } from "@/components/ui/badge";
@@ -191,6 +192,9 @@ export default function SymbolPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Section divider */}
+        <Separator className="my-6 md:my-8 glass-divider" />
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
         <div className="mb-4">
