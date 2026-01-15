@@ -64,13 +64,13 @@ export function HeroSection() {
             ease: [0.25, 0.4, 0.25, 1]
           }}>
               <Link to="/signup">
-                <Button size="lg" className="px-8 group">
+                <Button size="lg" className="px-8 rounded-full group">
                   Request Access
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <Link to="/symbol/NVDA">
-                <Button variant="outline" size="lg" className="px-8 backdrop-blur-sm">
+                <Button variant="outline" size="lg" className="px-8 rounded-full backdrop-blur-sm">
                   View Live Demo
                 </Button>
               </Link>
