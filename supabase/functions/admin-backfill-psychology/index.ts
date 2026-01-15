@@ -650,7 +650,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Action: backfill - create new snapshots for historical dates
+    // Action: backfill - create new snapshots for historical dates (with SSE streaming)
     if (action === "backfill") {
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -689,171 +689,241 @@ Deno.serve(async (req) => {
         )
       );
 
-      const results = {
-        created: 0,
-        skipped_existing: 0,
-        skipped_insufficient: 0,
-        failed: 0,
-        errors: [] as string[],
-      };
+      // Set up SSE streaming
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const sendEvent = (data: any) => {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+          };
 
-      for (const date of dates) {
-        const dateStr = date.toISOString().split("T")[0];
-        
-        // Skip if already exists
-        if (existingDates.has(dateStr)) {
-          results.skipped_existing++;
-          continue;
-        }
+          const results = {
+            created: 0,
+            skipped_existing: 0,
+            skipped_insufficient: 0,
+            failed: 0,
+            errors: [] as string[],
+          };
 
-        try {
-          // Calculate snapshot window (market hours for that day)
-          const snapshotStart = new Date(date);
-          snapshotStart.setUTCHours(14, 30, 0, 0); // ~9:30 AM ET
-          const snapshotEnd = new Date(date);
-          snapshotEnd.setUTCHours(21, 0, 0, 0); // ~4:00 PM ET
-
-          // Fetch historical messages for this date
-          const messagesUrl = `${supabaseUrl}/functions/v1/stocktwits-proxy?action=messages&symbol=${upperSymbol}&limit=800&start=${dateStr}&end=${dateStr}`;
-          
-          const messagesResponse = await fetch(messagesUrl, {
-            headers: {
-              "x-api-key": stocktwitsApiKey,
-              "Content-Type": "application/json",
-            },
+          // Send initial progress
+          sendEvent({
+            type: "start",
+            symbol: upperSymbol,
+            totalDates: dates.length,
+            existingCount: existingDates.size,
           });
 
-          if (!messagesResponse.ok) {
-            throw new Error(`Failed to fetch messages: ${messagesResponse.status}`);
-          }
-
-          const messagesData = await messagesResponse.json();
-          const rawMessages = messagesData.data?.messages || messagesData.messages || [];
-          
-          const messages: MessageWithAuthor[] = rawMessages.map((m: any) => ({
-            id: m.id?.toString() || "",
-            author_id: m.user?.id?.toString() || m.author_id || "",
-            body: m.body || m.content || "",
-            sentiment: m.entities?.sentiment?.basic?.toLowerCase() || "neutral",
-            created_at: m.created_at || date.toISOString(),
-          })).filter((m: MessageWithAuthor) => m.body.length > 10);
-
-          const messageCount = messages.length;
-          const uniqueAuthors = new Set(messages.map(m => m.author_id)).size;
-
-          // Check minimum volume
-          if (messageCount < 5) {
-            if (skipInsufficientData) {
-              results.skipped_insufficient++;
-              continue;
-            } else {
-              throw new Error(`Insufficient messages: ${messageCount}`);
-            }
-          }
-
-          // Fetch prior snapshot for comparison
-          const { data: priorSnapshot } = await supabaseAdmin
-            .from("psychology_snapshots")
-            .select("*")
-            .eq("symbol", upperSymbol)
-            .eq("period_type", "daily")
-            .lt("snapshot_end", snapshotStart.toISOString())
-            .order("snapshot_end", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          // Extract psychology via AI
-          const { narratives, emotions } = await extractObservedStateViaAI(
-            messages,
-            upperSymbol,
-            priorSnapshot,
-            lovableApiKey
-          );
-
-          if (narratives.length === 0 && emotions.length === 0) {
-            if (skipInsufficientData) {
-              results.skipped_insufficient++;
-              continue;
-            } else {
-              throw new Error("AI extraction returned no data");
-            }
-          }
-
-          // Calculate all metrics
-          const concentration = calculateConcentration(messages);
-          const signals = detectSignals(emotions, narratives, concentration, priorSnapshot);
-          const momentum: Momentum = {
-            overall_sentiment_velocity: narratives[0]?.velocity.magnitude || 0,
-            dominant_narrative_velocity: narratives[0]?.velocity.magnitude || 0,
-            dominant_emotion_velocity: emotions[0]?.velocity.magnitude || 0,
-          };
-
-          // Calculate NCS if requested
-          const coherence = computeNcs ? calculateNarrativeCoherence(narratives, emotions) : undefined;
-
-          const observedState = {
-            narratives,
-            emotions,
-            signals,
-            concentration,
-            momentum,
-            ...(coherence && { coherence }),
-          };
-
-          const dataConfidence = computeConfidence(
-            messageCount,
-            uniqueAuthors,
-            narratives.length,
-            priorSnapshot
-          );
-
-          // Insert snapshot with backdated created_at
-          const { error: insertError } = await supabaseAdmin
-            .from("psychology_snapshots")
-            .insert({
-              symbol: upperSymbol,
-              period_type: "daily",
-              snapshot_start: snapshotStart.toISOString(),
-              snapshot_end: snapshotEnd.toISOString(),
-              message_count: messageCount,
-              unique_authors: uniqueAuthors,
-              data_confidence: dataConfidence,
-              observed_state: observedState,
-              interpretation: {
-                snapshot_origin: "admin_backfill",
-                backfill_timestamp: new Date().toISOString(),
-                backfill_admin: user.email,
-              },
-              interpretation_version: 2,
-              created_at: snapshotEnd.toISOString(), // Backdate created_at
+          for (let i = 0; i < dates.length; i++) {
+            const date = dates[i];
+            const dateStr = date.toISOString().split("T")[0];
+            
+            // Send progress update
+            sendEvent({
+              type: "progress",
+              currentDate: dateStr,
+              processed: i + 1,
+              total: dates.length,
+              created: results.created,
+              skipped: results.skipped_existing + results.skipped_insufficient,
+              failed: results.failed,
             });
 
-          if (insertError) {
-            throw new Error(`Insert failed: ${insertError.message}`);
+            // Skip if already exists
+            if (existingDates.has(dateStr)) {
+              results.skipped_existing++;
+              sendEvent({
+                type: "skipped",
+                date: dateStr,
+                reason: "existing",
+              });
+              continue;
+            }
+
+            try {
+              // Calculate snapshot window (market hours for that day)
+              const snapshotStart = new Date(date);
+              snapshotStart.setUTCHours(14, 30, 0, 0); // ~9:30 AM ET
+              const snapshotEnd = new Date(date);
+              snapshotEnd.setUTCHours(21, 0, 0, 0); // ~4:00 PM ET
+
+              // Fetch historical messages for this date
+              const messagesUrl = `${supabaseUrl}/functions/v1/stocktwits-proxy?action=messages&symbol=${upperSymbol}&limit=800&start=${dateStr}&end=${dateStr}`;
+              
+              const messagesResponse = await fetch(messagesUrl, {
+                headers: {
+                  "x-api-key": stocktwitsApiKey,
+                  "Content-Type": "application/json",
+                },
+              });
+
+              if (!messagesResponse.ok) {
+                throw new Error(`Failed to fetch messages: ${messagesResponse.status}`);
+              }
+
+              const messagesData = await messagesResponse.json();
+              const rawMessages = messagesData.data?.messages || messagesData.messages || [];
+              
+              const messages: MessageWithAuthor[] = rawMessages.map((m: any) => ({
+                id: m.id?.toString() || "",
+                author_id: m.user?.id?.toString() || m.author_id || "",
+                body: m.body || m.content || "",
+                sentiment: m.entities?.sentiment?.basic?.toLowerCase() || "neutral",
+                created_at: m.created_at || date.toISOString(),
+              })).filter((m: MessageWithAuthor) => m.body.length > 10);
+
+              const messageCount = messages.length;
+              const uniqueAuthors = new Set(messages.map(m => m.author_id)).size;
+
+              // Check minimum volume
+              if (messageCount < 5) {
+                if (skipInsufficientData) {
+                  results.skipped_insufficient++;
+                  sendEvent({
+                    type: "skipped",
+                    date: dateStr,
+                    reason: "insufficient",
+                    messageCount,
+                  });
+                  continue;
+                } else {
+                  throw new Error(`Insufficient messages: ${messageCount}`);
+                }
+              }
+
+              // Fetch prior snapshot for comparison
+              const { data: priorSnapshot } = await supabaseAdmin
+                .from("psychology_snapshots")
+                .select("*")
+                .eq("symbol", upperSymbol)
+                .eq("period_type", "daily")
+                .lt("snapshot_end", snapshotStart.toISOString())
+                .order("snapshot_end", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              // Extract psychology via AI
+              const { narratives, emotions } = await extractObservedStateViaAI(
+                messages,
+                upperSymbol,
+                priorSnapshot,
+                lovableApiKey
+              );
+
+              if (narratives.length === 0 && emotions.length === 0) {
+                if (skipInsufficientData) {
+                  results.skipped_insufficient++;
+                  sendEvent({
+                    type: "skipped",
+                    date: dateStr,
+                    reason: "no_ai_data",
+                  });
+                  continue;
+                } else {
+                  throw new Error("AI extraction returned no data");
+                }
+              }
+
+              // Calculate all metrics
+              const concentration = calculateConcentration(messages);
+              const signals = detectSignals(emotions, narratives, concentration, priorSnapshot);
+              const momentum: Momentum = {
+                overall_sentiment_velocity: narratives[0]?.velocity.magnitude || 0,
+                dominant_narrative_velocity: narratives[0]?.velocity.magnitude || 0,
+                dominant_emotion_velocity: emotions[0]?.velocity.magnitude || 0,
+              };
+
+              // Calculate NCS if requested
+              const coherence = computeNcs ? calculateNarrativeCoherence(narratives, emotions) : undefined;
+
+              const observedState = {
+                narratives,
+                emotions,
+                signals,
+                concentration,
+                momentum,
+                ...(coherence && { coherence }),
+              };
+
+              const dataConfidence = computeConfidence(
+                messageCount,
+                uniqueAuthors,
+                narratives.length,
+                priorSnapshot
+              );
+
+              // Insert snapshot with backdated created_at
+              const { error: insertError } = await supabaseAdmin
+                .from("psychology_snapshots")
+                .insert({
+                  symbol: upperSymbol,
+                  period_type: "daily",
+                  snapshot_start: snapshotStart.toISOString(),
+                  snapshot_end: snapshotEnd.toISOString(),
+                  message_count: messageCount,
+                  unique_authors: uniqueAuthors,
+                  data_confidence: dataConfidence,
+                  observed_state: observedState,
+                  interpretation: {
+                    snapshot_origin: "admin_backfill",
+                    backfill_timestamp: new Date().toISOString(),
+                    backfill_admin: user.email,
+                  },
+                  interpretation_version: 2,
+                  created_at: snapshotEnd.toISOString(), // Backdate created_at
+                });
+
+              if (insertError) {
+                throw new Error(`Insert failed: ${insertError.message}`);
+              }
+
+              results.created++;
+              sendEvent({
+                type: "created",
+                date: dateStr,
+                messageCount,
+                narrativeCount: narratives.length,
+                emotionCount: emotions.length,
+                ncsScore: coherence?.score,
+              });
+
+              // Rate limit
+              await new Promise(r => setTimeout(r, 1500));
+
+            } catch (err) {
+              results.failed++;
+              const errorMsg = err instanceof Error ? err.message : String(err);
+              results.errors.push(`${dateStr}: ${errorMsg}`);
+              sendEvent({
+                type: "error",
+                date: dateStr,
+                error: errorMsg,
+              });
+            }
           }
 
-          results.created++;
+          // Send completion event
+          sendEvent({
+            type: "complete",
+            success: true,
+            action: "backfill",
+            symbol: upperSymbol,
+            dateRange: { start: startDate, end: endDate },
+            totalDates: dates.length,
+            ...results,
+          });
 
-          // Rate limit
-          await new Promise(r => setTimeout(r, 1500));
+          controller.close();
+        },
+      });
 
-        } catch (err) {
-          results.failed++;
-          results.errors.push(`${dateStr}: ${err instanceof Error ? err.message : String(err)}`);
-        }
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          action: "backfill",
-          symbol: upperSymbol,
-          dateRange: { start: startDate, end: endDate },
-          totalDates: dates.length,
-          ...results
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
     }
 
     return new Response(
