@@ -189,14 +189,14 @@ export default {
   					opacity: '0.5'
   				}
   			},
-  			'pulse-glow': {
-  				'0%, 100%': {
-  					boxShadow: 'var(--glow-primary)'
-  				},
-  				'50%': {
-  					boxShadow: '0 0 60px hsl(168 84% 45% / 0.6)'
-  				}
-  			}
+			'pulse-glow': {
+				'0%, 100%': {
+					boxShadow: 'var(--glow-primary)'
+				},
+				'50%': {
+					boxShadow: '0 0 60px hsl(211 100% 50% / 0.6)'
+				}
+			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
