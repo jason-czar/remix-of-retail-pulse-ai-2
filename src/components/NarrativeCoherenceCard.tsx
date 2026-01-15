@@ -169,36 +169,24 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
   return (
     <Card className="p-4 md:p-5 glass-card">
       <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            "p-2 rounded-lg",
-            coherence.risk_level === "low" ? "bg-bullish/10" :
-            coherence.risk_level === "moderate" ? "bg-amber-500/10" : "bg-bearish/10"
-          )}>
-            <Target className={cn(
-              "h-5 w-5",
-              getRiskColor(coherence.risk_level)
-            )} />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm md:text-base">Narrative Coherence</h3>
-            <div className="flex items-center gap-1.5">
-              <p className="text-xs text-muted-foreground">{getScoreLabel(coherence.score)}</p>
-              {!isServerComputed && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-muted-foreground/30">
-                        Estimated
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">Computed client-side (legacy snapshot)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
+        <div>
+          <h3 className="font-semibold text-sm md:text-base">Narrative Coherence</h3>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground">{getScoreLabel(coherence.score)}</p>
+            {!isServerComputed && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-muted-foreground/30">
+                      Estimated
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">Computed client-side (legacy snapshot)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
