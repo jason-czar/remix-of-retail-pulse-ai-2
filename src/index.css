@@ -95,7 +95,7 @@
   }
 
   .dark {
-    --background: 0 0% 0%;
+    --background: 0 0% 12%;
     --foreground: 210 40% 98%;
 
     --card: 0 0% 8%;
@@ -166,7 +166,7 @@
     --glow-bullish: 0 0 30px hsl(142 71% 45% / 0.35);
     --glow-bearish: 0 0 30px hsl(0 72% 51% / 0.35);
 
-    --sidebar-background: 0 0% 0%;
+    --sidebar-background: 0 0% 12%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 168 84% 45%;
     --sidebar-primary-foreground: 0 0% 6%;
