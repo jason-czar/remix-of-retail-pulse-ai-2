@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 export function HeroSection() {
@@ -66,7 +65,7 @@ export function HeroSection() {
               <Link to="/symbol/NVDA">
                 <Button size="lg" className="px-8 rounded-full group">
                   View NVDA
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  
                 </Button>
               </Link>
               <Link to="/signup">
