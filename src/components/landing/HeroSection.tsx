@@ -6,7 +6,7 @@ export function HeroSection() {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Hero Card with glass effect */}
-          <motion.div className="relative glass-card p-8 md:p-12 lg:p-16 text-center" initial={{
+          <motion.div className="relative glass-card p-8 md:p-12 lg:p-16 text-center mx-[78px] my-0 px-[65px] py-[55px] pb-[45px]" initial={{
           opacity: 0,
           y: 30,
           scale: 0.98
@@ -32,7 +32,7 @@ export function HeroSection() {
             delay: 0.2,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              <span className="block font-normal font-sans text-3xl">We read the retail investor market, so you can stay ahead of&nbsp;it.</span>
+              <span className="block font-normal font-sans text-3xl px-[58px]">We read the retail investor market, so you can stay ahead of&nbsp;it.</span>
               
             </motion.h1>
 
