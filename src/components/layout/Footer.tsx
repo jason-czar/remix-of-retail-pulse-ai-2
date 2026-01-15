@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom";
-import { Zap, Twitter, Github, Linkedin } from "lucide-react";
-
+import { Twitter, Github, Linkedin } from "lucide-react";
 export function Footer() {
-  return (
-    <footer className="border-t border-border/50 py-12">
+  return <footer className="border-t border-border/50 py-12">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <Zap className="h-6 w-6 text-primary" />
+              
               <span className="font-display text-lg">
                 <span className="text-gradient">Sentiment</span>
                 <span className="text-foreground">IQ</span>
@@ -117,6 +115,5 @@ export function Footer() {
           © {new Date().getFullYear()} SentimentIQ. All rights reserved.
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 }
