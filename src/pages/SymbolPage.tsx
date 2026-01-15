@@ -39,6 +39,7 @@ type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 export default function SymbolPage() {
   const { symbol = "AAPL" } = useParams<{ symbol: string }>();
   const [timeRange, setTimeRange] = useState<TimeRange>('1D');
+  const [activeTab, setActiveTab] = useState<string>('narratives');
   const [decisionLens, setDecisionLens] = useState<DecisionLens>('corporate-strategy');
   const queryClient = useQueryClient();
   
@@ -142,60 +143,50 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Charts Section - Scrollable tabs on mobile */}
-        <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8">
-          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-            <TabsList className="mb-4 md:mb-6 w-max md:w-auto">
-              <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
-              <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
-              <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
-              <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
-              <TabsTrigger value="volume" className="text-xs md:text-sm px-2.5 md:px-3">Volume</TabsTrigger>
-            </TabsList>
+        {/* Charts Section - Unified header with tabs and time range */}
+        <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8" onValueChange={(v) => setActiveTab(v)}>
+          {/* Unified header row: TabsList + TimeRangeSelector */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6 p-3 md:p-6 pb-0 md:pb-0">
+            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+              <TabsList className="w-max md:w-auto">
+                <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
+                <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
+                <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
+                <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
+                <TabsTrigger value="volume" className="text-xs md:text-sm px-2.5 md:px-3">Volume</TabsTrigger>
+              </TabsList>
+            </div>
+            {activeTab !== 'momentum' && (
+              <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+            )}
           </div>
 
           <TabsContent value="narratives">
-            <div className="p-3 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-semibold">Top 10 Narratives</h3>
-                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-              </div>
+            <div className="p-3 md:p-6 pt-0">
               <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="emotions">
-            <div className="p-3 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-semibold">Emotion Trends</h3>
-                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-              </div>
+            <div className="p-3 md:p-6 pt-0">
               <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="sentiment">
-            <div className="p-3 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-semibold">Sentiment Over Time</h3>
-                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-              </div>
+            <div className="p-3 md:p-6 pt-0">
               <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="momentum">
-            <div className="p-3 md:p-6">
+            <div className="p-3 md:p-6 pt-0">
               <EmotionMomentumChart symbol={symbol} days={7} />
             </div>
           </TabsContent>
 
           <TabsContent value="volume">
-            <div className="p-3 md:p-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6">
-                <h3 className="text-base md:text-lg font-semibold">Message Volume</h3>
-                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-              </div>
+            <div className="p-3 md:p-6 pt-0">
               <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
