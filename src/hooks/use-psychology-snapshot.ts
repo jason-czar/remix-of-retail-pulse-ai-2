@@ -322,6 +322,56 @@ export function useLatestPsychologySnapshot(symbol: string, enabled = true) {
   });
 }
 
+// Get the latest snapshot that has narrative outcomes data
+export function useLatestSnapshotWithOutcomes(symbol: string, enabled = true) {
+  return useQuery({
+    queryKey: ["psychology-snapshot-with-outcomes", symbol],
+    queryFn: async (): Promise<PsychologySnapshot | null> => {
+      // Get the most recent snapshot that has non-empty narrative_outcomes
+      const { data, error } = await supabase
+        .from("psychology_snapshots")
+        .select("*")
+        .eq("symbol", symbol.toUpperCase())
+        .not("narrative_outcomes", "is", null)
+        .neq("narrative_outcomes", "[]")
+        .order("snapshot_start", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching snapshot with outcomes:", error);
+        throw error;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return {
+        id: data.id,
+        symbol: data.symbol,
+        period_type: data.period_type as PeriodType,
+        snapshot_start: data.snapshot_start,
+        snapshot_end: data.snapshot_end,
+        message_count: data.message_count,
+        unique_authors: data.unique_authors,
+        data_confidence: parseDataConfidence(data.data_confidence),
+        observed_state: parseObservedState(data.observed_state),
+        interpretation: parseInterpretation(data.interpretation),
+        historical_context: data.historical_context
+          ? parseHistoricalContext(data.historical_context)
+          : null,
+        narrative_outcomes: parseNarrativeOutcomes(data.narrative_outcomes),
+        created_at: data.created_at,
+        interpretation_version: data.interpretation_version,
+      };
+    },
+    enabled: enabled && !!symbol,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}
+
 // Get historical snapshots for trend analysis
 export function usePsychologySnapshotHistory({
   symbol,
