@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { useMemo, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useEmotionAnalysis, EmotionScore } from "@/hooks/use-emotion-analysis";
 import { useEmotionHistory } from "@/hooks/use-emotion-history";
 import { useStockPrice, TimeRange as StockTimeRange } from "@/hooks/use-stock-price";
@@ -141,16 +142,16 @@ function EmotionSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
-  // Base classes differ between mobile (full width, shown) and desktop (fixed width, hidden on mobile)
+  // Base classes differ between mobile (full width) and desktop (fixed width)
   const containerClasses = isMobile 
-    ? "w-full p-4 md:hidden glass-card"
-    : "w-[280px] flex-shrink-0 p-5 hidden md:block glass-card";
+    ? "w-full p-4 glass-card"
+    : "w-[280px] flex-shrink-0 p-5 glass-card";
 
   if (!data) {
     return (
       <div className={cn(
-        isMobile ? "w-full p-4 md:hidden" : "w-[280px] flex-shrink-0 p-5 hidden md:flex",
-        "glass-card items-center justify-center"
+        isMobile ? "w-full p-4" : "w-[280px] flex-shrink-0 p-5",
+        "glass-card flex items-center justify-center"
       )}>
         <p className="text-base text-muted-foreground text-center">
           No data available
@@ -299,6 +300,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   const [activeHour, setActiveHour] = useState<number | null>(null);
   const [marketSession, setMarketSession] = useState<MarketSession>("regular");
   const [hoveredData, setHoveredData] = useState<EmotionSidePanelData | null>(null);
+  const isMobileDevice = useIsMobile();
 
   // Determine view type
   const is1DView = timeRange === '1D';
@@ -739,12 +741,14 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
 
         {/* Main content: Side Panel + Chart */}
         <div className="flex gap-4 h-[calc(100%-100px)]">
-          {/* Left Side Panel - Always visible on desktop */}
-          <EmotionSidePanel 
-            data={panelData} 
-            priceColor={priceLineColor}
-            isHovering={hoveredData !== null}
-          />
+          {/* Left Side Panel - Only on desktop */}
+          {!isMobileDevice && (
+            <EmotionSidePanel 
+              data={panelData} 
+              priceColor={priceLineColor}
+              isHovering={hoveredData !== null}
+            />
+          )}
           
           {/* Chart - Takes remaining space */}
           <div className="flex-1 min-w-0">
@@ -861,8 +865,8 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
         </div>
       </div>
       
-      {/* Mobile Side Panel - Always visible below chart on mobile for Today view */}
-      {is1DView && (
+      {/* Mobile Side Panel - Only on mobile for Today view */}
+      {is1DView && isMobileDevice && (
         <EmotionSidePanel 
           data={panelData} 
           priceColor={priceLineColor}

@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { useMemo, useEffect, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
@@ -323,16 +324,16 @@ function NarrativeSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
-  // Base classes differ between mobile (full width, shown) and desktop (fixed width, hidden on mobile)
+  // Base classes differ between mobile (full width) and desktop (fixed width)
   const containerClasses = isMobile 
-    ? "w-full p-4 md:hidden glass-card"
-    : "w-[312px] flex-shrink-0 p-5 hidden md:block glass-card";
+    ? "w-full p-4 glass-card"
+    : "w-[312px] flex-shrink-0 p-5 glass-card";
   
   if (!data) {
     return (
       <div className={cn(
-        isMobile ? "w-full p-4 md:hidden" : "w-[312px] flex-shrink-0 p-5 hidden md:flex",
-        "glass-card items-center justify-center"
+        isMobile ? "w-full p-4" : "w-[312px] flex-shrink-0 p-5",
+        "glass-card flex items-center justify-center"
       )}>
         <p className="text-base text-muted-foreground text-center">
           No data available
@@ -1089,6 +1090,7 @@ function HourlyStackedNarrativeChart({
   const [activeHour, setActiveHour] = useState<number | null>(null);
   const [marketSession, setMarketSession] = useState<MarketSession>('regular');
   const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
+  const isMobileDevice = useIsMobile();
   
   // Get session-specific hour range
   const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
@@ -1555,12 +1557,14 @@ function HourlyStackedNarrativeChart({
 
         {/* Main content: Side Panel + Chart */}
         <div className="flex md:gap-4 h-[calc(100%-60px)]">
-          {/* Left Side Panel - Always visible on desktop */}
-          <NarrativeSidePanel 
-            data={panelData} 
-            priceColor={priceLineColor}
-            isHovering={hoveredData !== null}
-          />
+          {/* Left Side Panel - Only on desktop */}
+          {!isMobileDevice && (
+            <NarrativeSidePanel 
+              data={panelData} 
+              priceColor={priceLineColor}
+              isHovering={hoveredData !== null}
+            />
+          )}
           
           {/* Chart - Takes remaining space */}
           <div className="flex-1 min-w-0">
@@ -1675,8 +1679,8 @@ function HourlyStackedNarrativeChart({
         </div>
       </div>
       
-      {/* Mobile Side Panel - Always visible below chart on mobile for Today view */}
-      {is5MinView && (
+      {/* Mobile Side Panel - Only on mobile for Today view */}
+      {is5MinView && isMobileDevice && (
         <NarrativeSidePanel 
           data={panelData} 
           priceColor={priceLineColor}
