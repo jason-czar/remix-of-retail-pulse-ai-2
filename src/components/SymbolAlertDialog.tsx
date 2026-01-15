@@ -98,7 +98,7 @@ export function SymbolAlertDialog({ symbol }: SymbolAlertDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="relative">
+        <Button variant="glass-pill" className="relative">
           <Bell className="h-4 w-4 mr-2" />
           Set Alert
           {activeAlertsCount > 0 && (
