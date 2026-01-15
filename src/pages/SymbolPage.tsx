@@ -146,7 +146,7 @@ export default function SymbolPage() {
         {/* Charts Section - Unified header with tabs and time range */}
         <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8" onValueChange={(v) => setActiveTab(v)}>
           {/* Unified header row: TabsList + TimeRangeSelector */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 md:mb-6 p-3 md:p-6 pb-0 md:pb-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-2 md:mb-3 px-3 md:px-6">
             <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
               <TabsList className="w-max md:w-auto">
                 <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
@@ -162,31 +162,31 @@ export default function SymbolPage() {
           </div>
 
           <TabsContent value="narratives">
-            <div className="p-3 md:p-6 pt-0">
+            <div className="px-2 md:px-4">
               <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="emotions">
-            <div className="p-3 md:p-6 pt-0">
+            <div className="px-2 md:px-4">
               <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="sentiment">
-            <div className="p-3 md:p-6 pt-0">
+            <div className="px-2 md:px-4">
               <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="momentum">
-            <div className="p-3 md:p-6 pt-0">
+            <div className="px-2 md:px-4">
               <EmotionMomentumChart symbol={symbol} days={7} />
             </div>
           </TabsContent>
 
           <TabsContent value="volume">
-            <div className="p-3 md:p-6 pt-0">
+            <div className="px-2 md:px-4">
               <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>

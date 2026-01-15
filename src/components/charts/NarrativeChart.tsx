@@ -853,7 +853,7 @@ function TimeSeriesNarrativeChart({
       )}
       
       {/* Header - Collapsible (collapsed by default, showing only arrow) */}
-      <Collapsible defaultOpen={false} className="mb-2">
+      <Collapsible defaultOpen={false} className="mb-1">
         <CollapsibleTrigger asChild>
           <div className="flex items-center justify-end p-1 cursor-pointer hover:bg-card/30 rounded transition-colors">
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
