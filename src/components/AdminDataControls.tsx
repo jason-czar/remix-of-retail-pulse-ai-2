@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, 
   Shield, 
@@ -14,7 +15,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
-  Info
+  Info,
+  Calendar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,6 +40,41 @@ interface BackfillResult {
   dryRun?: boolean;
 }
 
+interface BackfillProgress {
+  currentDate: string;
+  processed: number;
+  total: number;
+  created: number;
+  skipped: number;
+  failed: number;
+}
+
+// Helper to count weekdays between two dates
+function countWeekdays(startDate: string, endDate: string): { total: number; weekdays: number; weekends: number } {
+  if (!startDate || !endDate) return { total: 0, weekdays: 0, weekends: 0 };
+  
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  if (start > end) return { total: 0, weekdays: 0, weekends: 0 };
+  
+  let weekdays = 0;
+  let weekends = 0;
+  const current = new Date(start);
+  
+  while (current <= end) {
+    const day = current.getDay();
+    if (day === 0 || day === 6) {
+      weekends++;
+    } else {
+      weekdays++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  
+  return { total: weekdays + weekends, weekdays, weekends };
+}
+
 export default function AdminDataControls() {
   const { user } = useAuth();
   const isAdmin = user?.email === "admin@czar.ing";
@@ -58,6 +95,18 @@ export default function AdminDataControls() {
   const [dryRun, setDryRun] = useState(true);
   const [recomputeLoading, setRecomputeLoading] = useState(false);
   const [recomputeResult, setRecomputeResult] = useState<BackfillResult | null>(null);
+  
+  // Progress state
+  const [backfillProgress, setBackfillProgress] = useState<BackfillProgress | null>(null);
+
+  // Preview estimates
+  const backfillPreview = useMemo(() => {
+    return countWeekdays(backfillStartDate, backfillEndDate);
+  }, [backfillStartDate, backfillEndDate]);
+
+  const recomputePreview = useMemo(() => {
+    return countWeekdays(recomputeStartDate, recomputeEndDate);
+  }, [recomputeStartDate, recomputeEndDate]);
 
   if (!isAdmin) {
     return null;
@@ -71,12 +120,22 @@ export default function AdminDataControls() {
 
     setBackfillLoading(true);
     setBackfillResult(null);
+    setBackfillProgress({ currentDate: "", processed: 0, total: backfillPreview.weekdays, created: 0, skipped: 0, failed: 0 });
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         throw new Error("Not authenticated");
       }
+
+      // Simulate progress updates while waiting for the response
+      const progressInterval = setInterval(() => {
+        setBackfillProgress(prev => {
+          if (!prev || prev.processed >= prev.total) return prev;
+          const newProcessed = Math.min(prev.processed + 1, prev.total - 1);
+          return { ...prev, processed: newProcessed };
+        });
+      }, 2000); // Update every 2 seconds to simulate progress
 
       const response = await supabase.functions.invoke("admin-backfill-psychology", {
         body: {
@@ -92,20 +151,34 @@ export default function AdminDataControls() {
         },
       });
 
+      clearInterval(progressInterval);
+
       if (response.error) {
         throw new Error(response.error.message);
       }
 
-      setBackfillResult(response.data as BackfillResult);
+      // Update progress to final state
+      const result = response.data as BackfillResult;
+      setBackfillProgress({
+        currentDate: "Complete",
+        processed: result.totalDates || 0,
+        total: result.totalDates || 0,
+        created: result.created || 0,
+        skipped: (result.skipped_existing || 0) + (result.skipped_insufficient || 0),
+        failed: result.failed || 0,
+      });
+
+      setBackfillResult(result);
       
-      if (response.data.created > 0) {
-        toast.success(`Created ${response.data.created} snapshots`);
+      if (result.created && result.created > 0) {
+        toast.success(`Created ${result.created} snapshots`);
       } else {
         toast.info("No new snapshots created");
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Backfill failed";
       toast.error(message);
+      setBackfillProgress(null);
     } finally {
       setBackfillLoading(false);
     }
@@ -246,6 +319,52 @@ export default function AdminDataControls() {
           </div>
         </div>
 
+        {/* Preview Counter */}
+        {backfillSymbol && backfillStartDate && backfillEndDate && backfillPreview.weekdays > 0 && !backfillLoading && !backfillResult && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <Calendar className="h-4 w-4 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              This action will create <span className="font-medium text-foreground">~{backfillPreview.weekdays}</span> new daily snapshots
+              {backfillPreview.weekends > 0 && (
+                <span className="text-muted-foreground/70"> (skipping {backfillPreview.weekends} weekend days)</span>
+              )}
+            </p>
+          </div>
+        )}
+
+        {/* Progress Display */}
+        {backfillLoading && backfillProgress && (
+          <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm font-medium">Processing snapshots...</span>
+              </div>
+              <span className="text-sm font-mono text-muted-foreground">
+                {backfillProgress.processed}/{backfillProgress.total}
+              </span>
+            </div>
+            <Progress 
+              value={(backfillProgress.processed / backfillProgress.total) * 100} 
+              className="h-2"
+            />
+            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-bullish" />
+                <span>Created: {backfillProgress.created}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                <span>Skipped: {backfillProgress.skipped}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-bearish" />
+                <span>Failed: {backfillProgress.failed}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-2">
           <Button
             onClick={handleBackfill}
@@ -379,6 +498,16 @@ export default function AdminDataControls() {
             Dry run (preview only, no changes)
           </Label>
         </div>
+
+        {/* Preview Counter for Recompute */}
+        {recomputeSymbol && recomputeStartDate && recomputeEndDate && recomputePreview.weekdays > 0 && !recomputeLoading && !recomputeResult && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <Calendar className="h-4 w-4 text-primary shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              This will scan <span className="font-medium text-foreground">~{recomputePreview.weekdays}</span> days for existing snapshots to recompute
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-2">
           <Button
