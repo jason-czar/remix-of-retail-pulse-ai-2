@@ -128,52 +128,119 @@ export default function AdminDataControls() {
         throw new Error("Not authenticated");
       }
 
-      // Simulate progress updates while waiting for the response
-      const progressInterval = setInterval(() => {
-        setBackfillProgress(prev => {
-          if (!prev || prev.processed >= prev.total) return prev;
-          const newProcessed = Math.min(prev.processed + 1, prev.total - 1);
-          return { ...prev, processed: newProcessed };
-        });
-      }, 2000); // Update every 2 seconds to simulate progress
-
-      const response = await supabase.functions.invoke("admin-backfill-psychology", {
-        body: {
+      // Use SSE streaming for real-time progress
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/admin-backfill-psychology`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
           action: "backfill",
           symbol: backfillSymbol.toUpperCase(),
           startDate: backfillStartDate,
           endDate: backfillEndDate,
           computeNcs,
           skipInsufficientData,
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        }),
       });
 
-      clearInterval(progressInterval);
-
-      if (response.error) {
-        throw new Error(response.error.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Request failed: ${response.status}`);
       }
 
-      // Update progress to final state
-      const result = response.data as BackfillResult;
-      setBackfillProgress({
-        currentDate: "Complete",
-        processed: result.totalDates || 0,
-        total: result.totalDates || 0,
-        created: result.created || 0,
-        skipped: (result.skipped_existing || 0) + (result.skipped_insufficient || 0),
-        failed: result.failed || 0,
-      });
+      // Handle SSE stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      setBackfillResult(result);
-      
-      if (result.created && result.created > 0) {
-        toast.success(`Created ${result.created} snapshots`);
-      } else {
-        toast.info("No new snapshots created");
+      if (!reader) {
+        throw new Error("No response body");
+      }
+
+      let finalResult: BackfillResult | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              switch (data.type) {
+                case "start":
+                  setBackfillProgress(prev => ({
+                    ...prev!,
+                    total: data.totalDates,
+                  }));
+                  break;
+
+                case "progress":
+                  setBackfillProgress({
+                    currentDate: data.currentDate,
+                    processed: data.processed,
+                    total: data.total,
+                    created: data.created,
+                    skipped: data.skipped,
+                    failed: data.failed,
+                  });
+                  break;
+
+                case "created":
+                  // Progress already updated, but we could show toast for each
+                  break;
+
+                case "skipped":
+                case "error":
+                  // Already tracked in progress updates
+                  break;
+
+                case "complete":
+                  finalResult = {
+                    success: data.success,
+                    action: data.action,
+                    symbol: data.symbol,
+                    dateRange: data.dateRange,
+                    totalDates: data.totalDates,
+                    created: data.created,
+                    skipped_existing: data.skipped_existing,
+                    skipped_insufficient: data.skipped_insufficient,
+                    failed: data.failed,
+                    errors: data.errors,
+                  };
+                  break;
+              }
+            } catch {
+              // Ignore parsing errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+      if (finalResult) {
+        setBackfillProgress({
+          currentDate: "Complete",
+          processed: finalResult.totalDates || 0,
+          total: finalResult.totalDates || 0,
+          created: finalResult.created || 0,
+          skipped: (finalResult.skipped_existing || 0) + (finalResult.skipped_insufficient || 0),
+          failed: finalResult.failed || 0,
+        });
+
+        setBackfillResult(finalResult);
+        
+        if (finalResult.created && finalResult.created > 0) {
+          toast.success(`Created ${finalResult.created} snapshots`);
+        } else {
+          toast.info("No new snapshots created");
+        }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Backfill failed";
