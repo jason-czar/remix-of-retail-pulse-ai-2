@@ -1,12 +1,13 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { stocktwitsApi, MessageCursor } from "@/lib/stocktwits-api";
 
-export function useTrending() {
+export function useTrending(enabled = true) {
   return useQuery({
     queryKey: ['stocktwits', 'trending'],
     queryFn: () => stocktwitsApi.getTrending(),
     refetchInterval: 60000, // Refresh every minute
     staleTime: 30000,
+    enabled, // Only fetch when enabled (dialog is open)
   });
 }
 
