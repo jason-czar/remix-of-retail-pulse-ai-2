@@ -933,7 +933,7 @@ function TimeSeriesNarrativeChart({
       </Collapsible>
 
       {/* Main content: Side Panel + Chart */}
-      <div className="flex gap-4 h-[calc(100%-60px)]">
+      <div className="flex md:gap-4 h-[calc(100%-60px)]">
         {/* Left Side Panel - Always visible on desktop */}
         <NarrativeSidePanel 
           data={panelData} 
@@ -946,7 +946,7 @@ function TimeSeriesNarrativeChart({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart 
               data={showPriceOverlay && priceLineData.length > 0 ? priceLineData : chartDataWithPrice}
-              margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
+              margin={{ top: 10, right: showPriceOverlay ? 50 : 15, left: 5, bottom: 10 }}
               onMouseMove={handleChartMouseMove}
               onMouseLeave={handleChartMouseLeave}
             >
@@ -1545,7 +1545,7 @@ function HourlyStackedNarrativeChart({
       </Collapsible>
 
       {/* Main content: Side Panel + Chart */}
-      <div className="flex gap-4 h-[calc(100%-60px)]">
+      <div className="flex md:gap-4 h-[calc(100%-60px)]">
         {/* Left Side Panel - Always visible on desktop */}
         <NarrativeSidePanel 
           data={panelData} 
@@ -1558,7 +1558,7 @@ function HourlyStackedNarrativeChart({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart 
               data={chartDataWithPrice}
-              margin={{ top: 10, right: showPriceOverlay ? 60 : 30, left: 0, bottom: 10 }}
+              margin={{ top: 10, right: showPriceOverlay ? 50 : 15, left: 5, bottom: 10 }}
               barCategoryGap={0}
               barGap={0}
               onMouseMove={handleChartMouseMove}
