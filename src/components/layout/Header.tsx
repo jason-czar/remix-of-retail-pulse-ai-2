@@ -49,7 +49,7 @@ export function Header() {
               Trending
             </Link>
             <Link to="/alerts" className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2">
-              <Bell className="h-4 w-4" />
+              
               Alerts
             </Link>
             <Link to="/api-docs" className="text-muted-foreground hover:text-foreground transition-colors">
