@@ -1,4 +1,5 @@
 import { Database, Cpu, BarChart, Send } from "lucide-react";
+import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
 
 const steps = [
   {
@@ -35,20 +36,22 @@ export function HowItWorksSection() {
       
       <div className="container mx-auto px-4 relative">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-2xl md:text-3xl font-display mb-4">
               How It Works
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               From raw social data to institutional-grade intelligence in four steps.
             </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
             {steps.map((step, index) => (
-              <StepCard key={step.number} {...step} isLast={index === steps.length - 1} />
+              <StaggerItem key={step.number}>
+                <StepCard {...step} isLast={index === steps.length - 1} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerContainer>
         </div>
       </div>
     </section>

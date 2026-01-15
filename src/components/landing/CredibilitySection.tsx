@@ -1,4 +1,5 @@
 import { Shield, Clock, Server, Code } from "lucide-react";
+import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
 
 const stats = [
   { icon: Clock, value: "10M+", label: "Messages processed daily" },
@@ -12,44 +13,48 @@ export function CredibilitySection() {
     <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
+          <ScrollReveal className="text-center mb-16">
             <h2 className="text-2xl md:text-3xl font-display mb-4">
               Built for Institutional Standards
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Enterprise-grade infrastructure designed to meet the demands of professional investors.
             </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
             {stats.map((stat) => (
-              <StatCard key={stat.label} {...stat} />
+              <StaggerItem key={stat.label}>
+                <StatCard {...stat} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerContainer>
 
           {/* Trust indicators */}
-          <div className="mt-16 glass-card p-8">
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                <h4 className="font-semibold mb-2">Data Quality</h4>
-                <p className="text-sm text-muted-foreground">
-                  AI-powered spam and bot filtering ensures only genuine retail sentiment is captured.
-                </p>
-              </div>
-              <div className="md:border-x md:border-border/50 md:px-8">
-                <h4 className="font-semibold mb-2">Compliance Ready</h4>
-                <p className="text-sm text-muted-foreground">
-                  SOC 2 Type II compliant infrastructure with enterprise security controls.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Flexible Integration</h4>
-                <p className="text-sm text-muted-foreground">
-                  REST API, webhooks, and dashboard access to fit your existing workflows.
-                </p>
+          <ScrollReveal delay={0.3}>
+            <div className="mt-16 glass-card p-8">
+              <div className="grid md:grid-cols-3 gap-8 text-center">
+                <div>
+                  <h4 className="font-semibold mb-2">Data Quality</h4>
+                  <p className="text-sm text-muted-foreground">
+                    AI-powered spam and bot filtering ensures only genuine retail sentiment is captured.
+                  </p>
+                </div>
+                <div className="md:border-x md:border-border/50 md:px-8">
+                  <h4 className="font-semibold mb-2">Compliance Ready</h4>
+                  <p className="text-sm text-muted-foreground">
+                    SOC 2 Type II compliant infrastructure with enterprise security controls.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Flexible Integration</h4>
+                  <p className="text-sm text-muted-foreground">
+                    REST API, webhooks, and dashboard access to fit your existing workflows.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>
