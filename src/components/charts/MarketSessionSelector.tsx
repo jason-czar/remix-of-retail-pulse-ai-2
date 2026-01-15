@@ -9,10 +9,10 @@ export interface SessionTimeRange {
 }
 
 export const SESSION_RANGES: Record<MarketSession, SessionTimeRange> = {
-  'all': { startHour: 4, endHour: 20, label: '4 AM - 8 PM' },
+  'all': { startHour: 4, endHour: 19, label: '4 AM - 7 PM' },
   'pre-market': { startHour: 4, endHour: 6, label: '4 AM - 7 AM' },
-  'regular': { startHour: 7, endHour: 16, label: '7 AM - 4 PM' },
-  'after-hours': { startHour: 16, endHour: 20, label: '4 PM - 8 PM' },
+  'regular': { startHour: 7, endHour: 15, label: '7 AM - 3 PM' },
+  'after-hours': { startHour: 15, endHour: 19, label: '3 PM - 7 PM' },
 };
 
 interface MarketSessionSelectorProps {
@@ -27,8 +27,8 @@ export function MarketSessionSelector({
   className = ""
 }: MarketSessionSelectorProps) {
   const sessions = [
-    { key: 'all' as const, icon: Clock, label: 'All', title: 'All Hours (4 AM - 8 PM)' },
-    { key: 'regular' as const, icon: Sun, label: 'Regular', title: 'Regular Hours (7 AM - 4 PM)' },
+    { key: 'all' as const, icon: Clock, label: 'All', title: 'All Hours (4 AM - 7 PM)' },
+    { key: 'regular' as const, icon: Sun, label: 'Regular', title: 'Regular Hours (7 AM - 3 PM)' },
   ];
 
   return (
