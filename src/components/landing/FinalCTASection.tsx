@@ -45,13 +45,13 @@ export function FinalCTASection() {
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link to="/signup">
-                    <Button size="lg" className="px-8 group">
+                    <Button variant="glass-primary" size="lg" className="px-8 group">
                       Request Access
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </Link>
                   <Link to="/dashboard">
-                    <Button variant="outline" size="lg" className="px-8 backdrop-blur-sm">
+                    <Button variant="glass-outline" size="lg" className="px-8">
                       Explore Demo
                     </Button>
                   </Link>
