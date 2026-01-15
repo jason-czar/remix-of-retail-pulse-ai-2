@@ -204,7 +204,7 @@ export default function SymbolPage() {
         <Separator className="my-6 md:my-8 glass-divider" />
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="mb-4">
+        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
