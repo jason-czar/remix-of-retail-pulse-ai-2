@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, BarChart3, Bell, Menu, Search, Zap, LogOut, Settings, Key } from "lucide-react";
+import { TrendingUp, BarChart3, Bell, Menu, Search, LogOut, Settings, Key } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -30,7 +30,7 @@ export function Header() {
           <Link to="/" className="flex items-center gap-2 group">
             <div className="relative">
               <div className="absolute inset-0 bg-primary/30 blur-xl group-hover:blur-2xl transition-all duration-300" />
-              <Zap className="h-8 w-8 text-primary relative drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]" />
+              
             </div>
             <span className="font-display text-xl">
               <span className="text-gradient">Sentiment</span>
