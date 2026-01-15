@@ -9,7 +9,7 @@ const stats = [
 
 export function CredibilitySection() {
   return (
-    <section className="py-20 lg:py-28 bg-secondary/30">
+    <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -28,7 +28,7 @@ export function CredibilitySection() {
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-16 pt-12 border-t border-border">
+          <div className="mt-16 glass-card p-8">
             <div className="grid md:grid-cols-3 gap-8 text-center">
               <div>
                 <h4 className="font-semibold mb-2">Data Quality</h4>
@@ -36,7 +36,7 @@ export function CredibilitySection() {
                   AI-powered spam and bot filtering ensures only genuine retail sentiment is captured.
                 </p>
               </div>
-              <div>
+              <div className="md:border-x md:border-border/50 md:px-8">
                 <h4 className="font-semibold mb-2">Compliance Ready</h4>
                 <p className="text-sm text-muted-foreground">
                   SOC 2 Type II compliant infrastructure with enterprise security controls.
@@ -66,11 +66,11 @@ function StatCard({
   label: string; 
 }) {
   return (
-    <div className="bg-card rounded-xl border border-border p-6 shadow-card text-center">
-      <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-4">
+    <div className="glass-card p-6 text-center hover:shadow-glow transition-all duration-300 group">
+      <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-4 group-hover:bg-primary/15 transition-colors">
         <Icon className="h-5 w-5 text-primary" />
       </div>
-      <div className="text-3xl font-display text-primary mb-1">{value}</div>
+      <div className="text-3xl font-display text-gradient mb-1">{value}</div>
       <div className="text-sm text-muted-foreground">{label}</div>
     </div>
   );

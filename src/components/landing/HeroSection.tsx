@@ -7,15 +7,15 @@ export function HeroSection() {
     <section className="relative py-20 lg:py-32">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          {/* Hero Card */}
-          <div className="relative bg-card rounded-2xl border border-border shadow-card p-8 md:p-12 lg:p-16 text-center">
-            {/* Subtle top accent */}
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+          {/* Hero Card with glass effect */}
+          <div className="relative glass-card p-8 md:p-12 lg:p-16 text-center">
+            {/* Subtle top accent glow */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-t-2xl" />
             
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-display leading-tight mb-6">
               We read the retail investor market,
               <br />
-              <span className="text-primary">so you can stay ahead of it.</span>
+              <span className="text-gradient">so you can stay ahead of it.</span>
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
@@ -31,7 +31,7 @@ export function HeroSection() {
                 </Button>
               </Link>
               <Link to="/symbol/NVDA">
-                <Button variant="outline" size="lg" className="px-8">
+                <Button variant="outline" size="lg" className="px-8 backdrop-blur-sm">
                   View Live Demo
                 </Button>
               </Link>

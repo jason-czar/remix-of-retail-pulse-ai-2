@@ -2,7 +2,7 @@ import { TrendingUp, MessageSquare, AlertTriangle } from "lucide-react";
 
 export function ProblemSection() {
   return (
-    <section className="py-20 lg:py-28 bg-secondary/30">
+    <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Problem Statement */}
@@ -51,7 +51,7 @@ function ChallengeCard({
   description: string;
 }) {
   return (
-    <div className="bg-card rounded-xl border border-border p-6 shadow-card">
+    <div className="glass-card p-6 hover:shadow-glow transition-all duration-300">
       <div className="inline-flex p-2.5 rounded-lg bg-primary/10 mb-4">
         <Icon className="h-5 w-5 text-primary" />
       </div>
