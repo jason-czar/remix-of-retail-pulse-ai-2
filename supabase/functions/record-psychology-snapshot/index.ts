@@ -132,12 +132,25 @@ interface Momentum {
   dominant_emotion_velocity: number;
 }
 
+// ============= NARRATIVE COHERENCE SCORE =============
+// Composite score measuring alignment/stability of retail narratives
+interface NarrativeCoherence {
+  score: number; // 0-100 (higher = more coherent message)
+  entropy: number; // 0-1 (lower = more concentrated on fewer narratives)
+  emotion_convergence: number; // 0-1 (higher = emotions are aligned)
+  velocity_stability: number; // 0-1 (higher = more stable, less erratic)
+  dominant_narrative_share: number; // % of attention on top narrative
+  risk_level: "low" | "moderate" | "high";
+  risk_drivers: string[];
+}
+
 interface ObservedState {
   narratives: NarrativeState[];
   emotions: EmotionState[];
   signals: Signals;
   concentration: Concentration;
   momentum: Momentum;
+  coherence?: NarrativeCoherence;
 }
 
 interface DataConfidence {
