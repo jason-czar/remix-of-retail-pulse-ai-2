@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 export function HeroSection() {
-  return <section className="relative pt-16 pb-12 sm:pt-20 sm:pb-16 lg:pt-28 lg:pb-20">
+  return <section className="relative pb-12 sm:pt-20 sm:pb-16 lg:pt-28 lg:pb-20 pt-[110px]">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Hero Card with glass effect */}
