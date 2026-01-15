@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLatestSnapshotWithOutcomes, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
+import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
 import { 
   FlaskConical, 
   TrendingUp, 
@@ -12,9 +13,6 @@ import {
   BarChart3, 
   ChevronDown, 
   ChevronUp,
-  Target,
-  Percent,
-  Activity,
   Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,33 +21,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, 
 
 interface NarrativeImpactHistorySectionProps {
   symbol: string;
-}
-
-function getConfidenceBadge(label: NarrativeOutcome["confidence_label"]) {
-  const config = {
-    high: {
-      bg: "bg-bullish/20",
-      text: "text-bullish",
-      border: "border-bullish/30",
-      label: "HIGH CONFIDENCE",
-      icon: Target,
-    },
-    moderate: {
-      bg: "bg-amber-500/20",
-      text: "text-amber-400",
-      border: "border-amber-500/30",
-      label: "MODERATE",
-      icon: Activity,
-    },
-    experimental: {
-      bg: "bg-purple-500/20",
-      text: "text-purple-400",
-      border: "border-purple-500/30",
-      label: "EXPERIMENTAL",
-      icon: FlaskConical,
-    },
-  };
-  return config[label];
 }
 
 function getPersistenceBadge(persistence: NarrativeOutcome["persistence"]) {
@@ -95,10 +66,8 @@ function NarrativeImpactCard({ outcome, isExpanded, onToggle }: {
   const { historical_outcomes, confidence_label, persistence, label, current_prevalence_pct, dominant_emotion } = outcome;
   const { episode_count, avg_price_move_5d, avg_price_move_10d, median_price_move_10d, win_rate_5d, win_rate_10d, p25_price_move_10d, p75_price_move_10d, max_drawdown_avg } = historical_outcomes;
   
-  const confidenceStyle = getConfidenceBadge(confidence_label);
   const persistenceStyle = getPersistenceBadge(persistence);
   const isExperimental = episode_count < 5;
-  const ConfidenceIcon = confidenceStyle.icon;
   
   const displayMove = median_price_move_10d ?? avg_price_move_10d;
   const MoveIcon = displayMove && displayMove > 0 ? TrendingUp : TrendingDown;
@@ -113,13 +82,10 @@ function NarrativeImpactCard({ outcome, isExpanded, onToggle }: {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h4 className="font-medium text-sm truncate">{label}</h4>
-              <Badge 
-                variant="outline" 
-                className={cn("text-[9px] shrink-0", confidenceStyle.bg, confidenceStyle.text, confidenceStyle.border)}
-              >
-                <ConfidenceIcon className="h-2.5 w-2.5 mr-1" />
-                {confidenceStyle.label}
-              </Badge>
+              <ConfidenceBadge 
+                level={confidence_label} 
+                tooltipContent={`Based on ${episode_count} historical episodes`}
+              />
               <Badge 
                 variant="outline" 
                 className={cn("text-[9px] shrink-0", persistenceStyle.bg, persistenceStyle.text, persistenceStyle.border)}
@@ -506,19 +472,13 @@ export function NarrativeImpactHistorySection({ symbol }: NarrativeImpactHistory
         </div>
         <div className="flex gap-2 text-xs">
           {highConfidenceCount > 0 && (
-            <Badge variant="outline" className="bg-bullish/20 text-bullish border-bullish/30">
-              {highConfidenceCount} High
-            </Badge>
+            <ConfidenceBadge level="high" showTooltip={false} count={highConfidenceCount} />
           )}
           {moderateCount > 0 && (
-            <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-              {moderateCount} Moderate
-            </Badge>
+            <ConfidenceBadge level="moderate" showTooltip={false} count={moderateCount} />
           )}
           {experimentalCount > 0 && (
-            <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-              {experimentalCount} Experimental
-            </Badge>
+            <ConfidenceBadge level="experimental" showTooltip={false} count={experimentalCount} />
           )}
         </div>
       </div>

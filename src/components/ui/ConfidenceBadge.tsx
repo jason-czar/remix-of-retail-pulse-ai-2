@@ -11,6 +11,7 @@ interface ConfidenceBadgeProps {
   tooltipContent?: string;
   className?: string;
   size?: "sm" | "md";
+  count?: number; // Optional count prefix (e.g., "3 High")
 }
 
 const CONFIDENCE_CONFIG: Record<ConfidenceLevel, {
@@ -64,6 +65,7 @@ export function ConfidenceBadge({
   tooltipContent,
   className,
   size = "sm",
+  count,
 }: ConfidenceBadgeProps) {
   const config = CONFIDENCE_CONFIG[level];
   const sizeClasses = size === "sm" ? "text-[10px]" : "text-xs";
@@ -80,6 +82,7 @@ export function ConfidenceBadge({
         className
       )}
     >
+      {count !== undefined && <span>{count}</span>}
       {config.label}
       {showTooltip && <Info className="h-2.5 w-2.5 opacity-70" />}
     </Badge>
