@@ -125,11 +125,12 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
   const hasInsufficientData = !ncsData || ncsData.length < MIN_SNAPSHOTS;
   
   // Calculate stats for context
-  const stats = ncsData && ncsData.length > 0 ? {
-    avg: Math.round(ncsData.reduce((sum, d) => sum + d.score, 0) / ncsData.length),
-    min: Math.min(...ncsData.map(d => d.score)),
-    max: Math.max(...ncsData.map(d => d.score)),
-    volatility: ncsData.length > 1 
+  const stats = ncsData && ncsData.length > 0 ? (() => {
+    const avg = Math.round(ncsData.reduce((sum, d) => sum + d.score, 0) / ncsData.length);
+    const min = Math.min(...ncsData.map(d => d.score));
+    const max = Math.max(...ncsData.map(d => d.score));
+    const range = max - min;
+    const volatility = ncsData.length > 1 
       ? Math.round(
           Math.sqrt(
             ncsData.reduce((sum, d, i, arr) => {
@@ -138,8 +139,87 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
             }, 0) / (ncsData.length - 1)
           )
         )
-      : 0,
-  } : null;
+      : 0;
+    
+    // Calculate trend direction (first half avg vs second half avg)
+    const midpoint = Math.floor(ncsData.length / 2);
+    const firstHalfAvg = ncsData.slice(0, midpoint).reduce((s, d) => s + d.score, 0) / midpoint;
+    const secondHalfAvg = ncsData.slice(midpoint).reduce((s, d) => s + d.score, 0) / (ncsData.length - midpoint);
+    const trendDelta = secondHalfAvg - firstHalfAvg;
+    
+    return { avg, min, max, range, volatility, trendDelta };
+  })() : null;
+  
+  // Derive qualitative interpretation from stats
+  function getInterpretation(s: typeof stats): { label: string; explanation: string } | null {
+    if (!s) return null;
+    
+    const normalizedVolatility = s.volatility / Math.max(s.avg, 1); // relative to mean
+    const normalizedRange = s.range / 100; // relative to max possible range
+    
+    // Thresholds (calibrated for 0-100 scale)
+    const isLowVolatility = normalizedVolatility < 0.15 && normalizedRange < 0.25;
+    const isHighVolatility = normalizedVolatility > 0.25 || normalizedRange > 0.40;
+    const isDecliningSharply = s.trendDelta < -8;
+    const isRisingSharply = s.trendDelta > 8;
+    
+    if (isLowVolatility && Math.abs(s.trendDelta) < 5) {
+      return { 
+        label: "Stabilizing", 
+        explanation: "Narrow variance and consistent levels over the period" 
+      };
+    }
+    
+    if (isDecliningSharply && isHighVolatility) {
+      return { 
+        label: "Fragmenting", 
+        explanation: "Widening dispersion with declining coherence" 
+      };
+    }
+    
+    if (isHighVolatility && !isDecliningSharply && !isRisingSharply) {
+      return { 
+        label: "Churning", 
+        explanation: "High volatility without directional resolution" 
+      };
+    }
+    
+    if (isRisingSharply && !isHighVolatility) {
+      return { 
+        label: "Consolidating", 
+        explanation: "Coherence strengthening with controlled variance" 
+      };
+    }
+    
+    if (isDecliningSharply && !isHighVolatility) {
+      return { 
+        label: "Weakening", 
+        explanation: "Steady decline in narrative alignment" 
+      };
+    }
+    
+    // Moderate cases
+    if (s.trendDelta > 3) {
+      return { 
+        label: "Gradually consolidating", 
+        explanation: "Modest improvement in coherence" 
+      };
+    }
+    
+    if (s.trendDelta < -3) {
+      return { 
+        label: "Gradually fragmenting", 
+        explanation: "Modest decline in narrative alignment" 
+      };
+    }
+    
+    return { 
+      label: "Mixed", 
+      explanation: "No clear pattern in coherence behavior" 
+    };
+  }
+  
+  const interpretation = getInterpretation(stats);
   
   return (
     <Card className="p-3 md:p-4 glass-card mt-4 border-border/30">
@@ -178,6 +258,18 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
         </div>
       ) : (
         <>
+          {/* Interpretation label */}
+          {interpretation && (
+            <div className="mb-3 pb-2 border-b border-border/30">
+              <div className="text-sm font-medium text-foreground">
+                {interpretation.label}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">
+                {interpretation.explanation}
+              </div>
+            </div>
+          )}
+          
           {/* Chart */}
           <div className="h-[100px] md:h-[120px] -mx-2">
             <ResponsiveContainer width="100%" height="100%">
