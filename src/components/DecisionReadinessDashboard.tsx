@@ -195,9 +195,9 @@ function LensReadinessCard({
   const TimingIcon = timing.icon;
 
   return (
-    <Card className="p-4 glass-card hover:bg-secondary/50 transition-colors">
-      {/* Main Content */}
-      <div>
+    <Card className="p-4 glass-card hover:bg-secondary/50 transition-colors h-full flex flex-col">
+      {/* Main Content - Fixed height container when collapsed */}
+      <div className={cn("flex-1", !isExpanded && "min-h-[200px] max-h-[200px] overflow-hidden")}>
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
