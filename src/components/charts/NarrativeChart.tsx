@@ -1464,6 +1464,8 @@ w-[120vw]
                     const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
                     if (!item?.isHourStart) return null;
                   }
+                  // Hide 7 AM label on mobile to prevent clipping
+                  if (isMobileDevice && payload.value === "7 AM") return null;
                   return <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
                           {payload.value}
                         </text>;
