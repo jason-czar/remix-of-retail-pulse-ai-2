@@ -195,13 +195,19 @@ export default function SymbolPage() {
           </div>
 
           <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-            >
+            <motion.div key={activeTab} initial={{
+            opacity: 0,
+            y: 8
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} exit={{
+            opacity: 0,
+            y: -8
+          }} transition={{
+            duration: 0.2,
+            ease: "easeInOut"
+          }}>
               <TabsContent value="narratives" forceMount={activeTab === 'narratives' ? true : undefined} className={activeTab !== 'narratives' ? 'hidden' : ''}>
                 <div className="-mx-4 md:mx-0">
                   <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
@@ -337,7 +343,7 @@ function TimeRangeSelector({
     '30D': '30D'
   };
   return <div className="inline-flex h-9 md:h-10 items-center justify-center rounded-full p-1 md:p-1.5 text-muted-foreground bg-muted/60 backdrop-blur-xl border border-border/40 shadow-sm dark:glass-tabs-list overflow-x-auto scrollbar-hide">
-      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap px-2.5 md:px-3.5 py-1.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", range === value ? "bg-background text-foreground shadow-md dark:glass-tabs-trigger-active" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")}>
+      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap md:px-3.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0 px-[11px] py-[4px]", range === value ? "bg-background text-foreground shadow-md dark:glass-tabs-trigger-active" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")}>
           {labels[range]}
         </button>)}
     </div>;
