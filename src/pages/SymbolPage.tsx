@@ -250,8 +250,10 @@ export default function SymbolPage() {
         {/* Narrative Coherence Score */}
         <div className="mb-8 md:mb-12">
           <h3 className="text-lg font-semibold mb-4">Narrative Coherence</h3>
-          <NarrativeCoherenceCard symbol={symbol} />
-          <NCSTrendChart symbol={symbol} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <NarrativeCoherenceCard symbol={symbol} />
+            <NCSTrendChart symbol={symbol} />
+          </div>
         </div>
 
         {/* Historical Episode Matcher */}
