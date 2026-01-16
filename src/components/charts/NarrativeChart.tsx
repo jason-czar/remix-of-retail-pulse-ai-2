@@ -501,6 +501,7 @@ function TimeSeriesNarrativeChart({
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [showWeekends, setShowWeekends] = useState(false);
   const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
+  const isMobileDevice = useIsMobile();
   const days = timeRange === '7D' ? 7 : 30;
   const {
     data: historyData,
@@ -922,8 +923,8 @@ function TimeSeriesNarrativeChart({
 
       {/* Main content: Side Panel + Chart */}
       <div className="flex md:gap-4 h-[calc(100%-60px)]">
-        {/* Left Side Panel - Always visible on desktop */}
-        <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />
+        {/* Left Side Panel - Only on desktop */}
+        {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
         
         {/* Chart - Takes remaining space */}
         <div className="flex-1 min-w-0">
@@ -941,19 +942,7 @@ function TimeSeriesNarrativeChart({
               <XAxis xAxisId="price" type="number" dataKey="x" domain={[0, chartDataWithPrice.length - 1]} hide={true} allowDataOverflow={true} />
               <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={filteredBarDomain} />
               {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={50} tickFormatter={value => `$${value.toFixed(0)}`} domain={priceDomain as [number, number]} />}
-              {/* Tooltip hidden on desktop (side panel shows info), visible on mobile */}
-              <Tooltip content={({
-              active,
-              payload,
-              label
-            }) => {
-              // On desktop, hide tooltip (side panel handles it)
-              // Check if we're on mobile by checking window width
-              if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-                return null;
-              }
-              return showPriceOverlay && priceLineData.length > 0 ? <HourlyPriceTooltip active={active} payload={payload} priceColor={priceLineColor} /> : <NarrativeStackedTooltip active={active} payload={payload} label={label} priceColor={priceLineColor} />;
-            }} />
+              {/* Tooltip hidden completely - side panel shows data on both desktop and mobile */}
               {/* Gap placeholder bars - shown with dashed pattern */}
               <Bar xAxisId="bar" yAxisId="left" dataKey="gapPlaceholder" data={chartDataWithPrice} stackId="narratives" radius={[4, 4, 0, 0]} isAnimationActive={false}>
                 {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`gap-${entryIdx}`} fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"} stroke={entry.isGap ? "hsl(38 92% 50%)" : "transparent"} strokeWidth={entry.isGap ? 1 : 0} strokeDasharray={entry.isGap ? "4 2" : "0"} />)}
@@ -978,6 +967,9 @@ function TimeSeriesNarrativeChart({
           </ResponsiveContainer>
         </div>
       </div>
+      
+      {/* Mobile Side Panel - Only on mobile */}
+      {isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />}
     </div>;
 }
 
@@ -1488,17 +1480,7 @@ function HourlyStackedNarrativeChart({
               }} />
                 <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={barDomain as [number, number | string]} />
                 {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={priceDomain as [number, number]} />}
-                {/* Tooltip hidden on desktop, visible on mobile */}
-                <Tooltip content={({
-                active,
-                payload,
-                label
-              }) => {
-                if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-                  return null;
-                }
-                return <NarrativeStackedTooltip active={active} payload={payload} label={label} priceColor={priceLineColor} />;
-              }} />
+                {/* Tooltip hidden completely - side panel shows data on both desktop and mobile */}
                 {Array.from({
                 length: MAX_SEGMENTS
               }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
