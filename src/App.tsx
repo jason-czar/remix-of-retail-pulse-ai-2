@@ -20,6 +20,7 @@ const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 const ApiDocsPage = lazy(() => import("./pages/ApiDocsPage"));
+const LearnMorePage = lazy(() => import("./pages/LearnMorePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
               <Route path="/api-docs" element={<ApiDocsPage />} />
+              <Route path="/learn-more" element={<LearnMorePage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
