@@ -141,73 +141,34 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Mobile: AI Summary + Decision Readiness BEFORE Charts */}
-        <div className="md:hidden">
-          {/* Decision Lens Selector - Horizontal scroll on mobile */}
-          <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide">
-            <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
-          </div>
-
-          {/* AI Summary - Reduced padding on mobile */}
-          <Card className="p-4 mb-6 glass-card">
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0 pl-[2px]">
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <h3 className="font-semibold text-sm">AI Sentiment Summary</h3>
-                  <Badge variant="outline" className="text-[10px]">
-                    {getLensDisplayName(decisionLens)}
-                  </Badge>
-                </div>
-                {lensSummaryLoading ? <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div> : <p className="text-sm text-muted-foreground leading-relaxed">
-                    <FormattedSummary text={summary} />
-                  </p>}
-              </div>
-            </div>
-          </Card>
-
-          {/* Decision Readiness Dashboard - Mobile position */}
-          <div className="mb-8 px-[3px]">
-            <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
-            <DecisionReadinessDashboard symbol={symbol} />
-          </div>
-
-          {/* Section divider */}
-          <Separator className="my-6 glass-divider" />
+        {/* Decision Lens Selector - Horizontal scroll on mobile */}
+        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
+          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
-        {/* Desktop: Original layout - Decision Lens + AI Summary */}
-        <div className="hidden md:block">
-          {/* Decision Lens Selector */}
-          <div className="mb-4">
-            <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
-          </div>
-
-          {/* AI Summary */}
-          <Card className="p-6 mb-6 glass-card">
-            <div className="flex items-start gap-4">
-              <div className="flex-1 min-w-0 pl-[2px]">
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <h3 className="font-semibold text-base">AI Sentiment Summary</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {getLensDisplayName(decisionLens)}
-                  </Badge>
-                </div>
-                {lensSummaryLoading ? <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div> : <p className="text-base text-muted-foreground leading-relaxed">
-                    <FormattedSummary text={summary} />
-                  </p>}
+        {/* AI Summary - Reduced padding on mobile */}
+        <Card className="p-4 md:p-6 mb-6 glass-card">
+          <div className="flex items-start gap-3 md:gap-4">
+            
+            <div className="flex-1 min-w-0 pl-[2px]">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
+                <Badge variant="outline" className="text-[10px] md:text-xs">
+                  {getLensDisplayName(decisionLens)}
+                </Badge>
               </div>
+              {lensSummaryLoading ? <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div> : <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  <FormattedSummary text={summary} />
+                </p>}
             </div>
-          </Card>
+          </div>
+        </Card>
 
-          {/* Section divider */}
-          <Separator className="my-8 glass-divider" />
-        </div>
+        {/* Section divider */}
+        <Separator className="my-6 md:my-8 glass-divider" />
 
         {/* Charts Section - Unified header with tabs and time range */}
         <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
@@ -280,8 +241,8 @@ export default function SymbolPage() {
           </AnimatePresence>
         </Tabs>
 
-        {/* Desktop: Decision Readiness Dashboard - after charts */}
-        <div className="hidden md:block mb-8 md:mb-12 px-[3px] mt-[65px]">
+        {/* Decision Readiness Dashboard */}
+        <div className="mb-8 md:mb-12 px-[3px] mt-[65px]">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
           <DecisionReadinessDashboard symbol={symbol} />
         </div>
