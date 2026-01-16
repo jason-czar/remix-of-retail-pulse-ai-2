@@ -750,8 +750,8 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
             />
           )}
           
-          {/* Chart - Takes remaining space with glass styling */}
-          <div className="flex-1 min-w-0 glass-chart">
+          {/* Chart - Takes remaining space */}
+          <div className="flex-1 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={chartDataWithPrice}
@@ -963,9 +963,7 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
         </div>
       </div>
       
-      {/* Chart with glass styling */}
-      <div className="glass-chart h-[calc(75%-16px)]">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="75%">
         <BarChart 
           data={chartData} 
           layout="vertical"
@@ -1034,7 +1032,6 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      </div>
       
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mt-4 justify-center">

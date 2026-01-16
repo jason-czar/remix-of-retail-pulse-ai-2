@@ -579,7 +579,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
   }
 
   return (
-    <div className="h-[300px] md:h-[400px] w-full glass-chart">
+    <div className="h-[300px] md:h-[400px] w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide w-full md:w-auto">
           {(isFromCache || isFromHistory) && (

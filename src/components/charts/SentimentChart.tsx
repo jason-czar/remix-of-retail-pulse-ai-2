@@ -394,8 +394,8 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H' }: Sentim
           isHovering={isHovering}
         />
         
-        {/* Chart with glass styling */}
-        <div className="flex-1 h-[300px] md:h-[400px] glass-chart">
+        {/* Chart */}
+        <div className="flex-1 h-[300px] md:h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={chartData} 
