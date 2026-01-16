@@ -369,8 +369,8 @@ function NarrativeSidePanel({
             {data.label}
           </span>
           {data.totalMessages > 0 && <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
-              <MessageSquare className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-amber-400")} />
-              <span className="text-amber-400 font-medium">{data.totalMessages.toLocaleString()}</span>
+              <MessageSquare className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} style={{ color: "#007BFF" }} />
+              <span className="font-medium" style={{ color: "#007BFF" }}>{data.totalMessages.toLocaleString()}</span>
               <span className={cn("text-muted-foreground", isMobile ? "text-[10px]" : "text-xs")}>msgs</span>
             </div>}
         </div>
@@ -391,12 +391,12 @@ function NarrativeSidePanel({
         {data.volumePercent > 0 && <div className={isMobile ? "mb-2" : "mb-3"}>
             <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
               <span className="text-muted-foreground">Relative Activity</span>
-              <span className={cn("font-medium", data.volumePercent >= 80 ? "text-amber-400" : data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground")}>
+              <span className={cn("font-medium", data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground")} style={data.volumePercent >= 80 ? { color: "#007BFF" } : undefined}>
                 {data.volumePercent.toFixed(0)}%
               </span>
             </div>
             <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
-              <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 80 ? "bg-amber-400" : data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{
+              <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{ backgroundColor: data.volumePercent >= 80 ? "#007BFF" : undefined,
             width: `${Math.min(data.volumePercent, 100)}%`
           }} />
             </div>
