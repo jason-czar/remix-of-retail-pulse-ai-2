@@ -1,4 +1,18 @@
-import { ComposedChart, BarChart, Bar, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine } from "recharts";
+import {
+  ComposedChart,
+  BarChart,
+  Bar,
+  Line,
+  Scatter,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  Rectangle,
+  ReferenceLine,
+} from "recharts";
 import { motion } from "framer-motion";
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { triggerHaptic } from "@/lib/haptics";
@@ -9,7 +23,17 @@ import { useNarrativeHistory } from "@/hooks/use-narrative-history";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
 import { alignPricesToHourSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
-import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, AlertTriangle, DollarSign, ChevronDown, Calendar } from "lucide-react";
+import {
+  AlertCircle,
+  RefreshCw,
+  Sparkles,
+  TrendingUp,
+  MessageSquare,
+  AlertTriangle,
+  DollarSign,
+  ChevronDown,
+  Calendar,
+} from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
@@ -19,7 +43,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { format } from "date-fns";
 import { detectMissingDates } from "@/lib/chart-gap-utils";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
-type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
+type TimeRange = "1H" | "6H" | "1D" | "24H" | "7D" | "30D";
 
 // Stock price line colors based on price vs previous close
 const PRICE_UP_COLOR = "#00C805"; // Green when above previous close
@@ -33,34 +57,44 @@ interface NarrativeChartProps {
 }
 
 // Color palette for stacked bar chart themes
-const THEME_COLORS = ["hsl(199 89% 48%)",
-// Blue
-"hsl(142 71% 45%)",
-// Green
-"hsl(262 83% 58%)",
-// Purple
-"hsl(24 95% 53%)",
-// Orange
-"hsl(340 75% 55%)",
-// Pink
-"hsl(47 96% 53%)",
-// Yellow
-"hsl(172 66% 50%)",
-// Teal
-"hsl(291 64% 42%)" // Violet
+const THEME_COLORS = [
+  "hsl(199 89% 48%)",
+  // Blue
+  "hsl(142 71% 45%)",
+  // Green
+  "hsl(262 83% 58%)",
+  // Purple
+  "hsl(24 95% 53%)",
+  // Orange
+  "hsl(340 75% 55%)",
+  // Pink
+  "hsl(47 96% 53%)",
+  // Yellow
+  "hsl(172 66% 50%)",
+  // Teal
+  "hsl(291 64% 42%)", // Violet
 ];
 
 // Color palette for narratives based on sentiment
 const getSentimentColor = (sentiment: string, index: number) => {
-  const bullishColors = ["hsl(142 71% 45%)",
-  // Green
-  "hsl(152 76% 40%)", "hsl(162 72% 42%)"];
-  const bearishColors = ["hsl(0 72% 51%)",
-  // Red
-  "hsl(10 78% 54%)", "hsl(20 75% 50%)"];
-  const neutralColors = ["hsl(199 89% 48%)",
-  // Blue
-  "hsl(215 80% 55%)", "hsl(230 75% 58%)"];
+  const bullishColors = [
+    "hsl(142 71% 45%)",
+    // Green
+    "hsl(152 76% 40%)",
+    "hsl(162 72% 42%)",
+  ];
+  const bearishColors = [
+    "hsl(0 72% 51%)",
+    // Red
+    "hsl(10 78% 54%)",
+    "hsl(20 75% 50%)",
+  ];
+  const neutralColors = [
+    "hsl(199 89% 48%)",
+    // Blue
+    "hsl(215 80% 55%)",
+    "hsl(230 75% 58%)",
+  ];
   const palette = sentiment === "bullish" ? bullishColors : sentiment === "bearish" ? bearishColors : neutralColors;
   return palette[index % palette.length];
 };
@@ -68,7 +102,7 @@ const getSentimentBadge = (sentiment: string) => {
   const styles = {
     bullish: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     bearish: "bg-red-500/20 text-red-400 border-red-500/30",
-    neutral: "bg-blue-500/20 text-blue-400 border-blue-500/30"
+    neutral: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   };
   return styles[sentiment as keyof typeof styles] || styles.neutral;
 };
@@ -79,7 +113,7 @@ const SENTIMENT_COLORS = {
   // Green
   bearish: "hsl(0 72% 51%)",
   // Red
-  neutral: "hsl(199 89% 48%)" // Blue
+  neutral: "hsl(199 89% 48%)", // Blue
 };
 
 // Max segments per day
@@ -89,17 +123,7 @@ const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 // Custom bar shape that expands width to cover full hour in 5-min view
 // Uses liquid glass effect with stroke border and inner highlight
 function WideBarShape(props: any) {
-  const {
-    x,
-    y,
-    width,
-    height,
-    fill,
-    radius,
-    payload,
-    is5MinView,
-    activeHour
-  } = props;
+  const { x, y, width, height, fill, radius, payload, is5MinView, activeHour } = props;
 
   // Determine opacity: 55% when this hour is hovered, 35% otherwise (liquid glass style)
   const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
@@ -109,8 +133,8 @@ function WideBarShape(props: any) {
 
   // Glass effect styles with smooth transitions
   const glassStyle = {
-    transition: 'fill-opacity 0.2s ease-out, stroke-opacity 0.2s ease-out',
-    filter: 'saturate(1.05)'
+    transition: "fill-opacity 0.2s ease-out, stroke-opacity 0.2s ease-out",
+    filter: "saturate(1.05)",
   };
 
   // In 5-min view, expand bar width to cover 12 slots (full hour)
@@ -121,94 +145,151 @@ function WideBarShape(props: any) {
     }
     // Expand width to cover 12 slots
     const expandedWidth = width * SLOTS_PER_HOUR;
-    return <g>
-        <Rectangle x={x} y={y} width={expandedWidth} height={height} fill={fill} fillOpacity={opacity} stroke={fill} strokeOpacity={isHourActive ? 0.7 : 0.45} strokeWidth={1} radius={radius} style={glassStyle} />
+    return (
+      <g>
+        <Rectangle
+          x={x}
+          y={y}
+          width={expandedWidth}
+          height={height}
+          fill={fill}
+          fillOpacity={opacity}
+          stroke={fill}
+          strokeOpacity={isHourActive ? 0.7 : 0.45}
+          strokeWidth={1}
+          radius={radius}
+          style={glassStyle}
+        />
         {/* Inner glass highlight */}
-        <Rectangle x={x + 1} y={y + 1} width={Math.max(0, expandedWidth - 2)} height={Math.max(0, Math.min(height * 0.12, 5))} fill="white" fillOpacity={0.1} radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined} style={{
-        pointerEvents: 'none'
-      }} />
-      </g>;
+        <Rectangle
+          x={x + 1}
+          y={y + 1}
+          width={Math.max(0, expandedWidth - 2)}
+          height={Math.max(0, Math.min(height * 0.12, 5))}
+          fill="white"
+          fillOpacity={0.1}
+          radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
+          style={{
+            pointerEvents: "none",
+          }}
+        />
+      </g>
+    );
   }
   if (height <= 0) return null;
 
   // Normal rendering for non-5-min views with glass effect
-  return <g>
-      <Rectangle x={x} y={y} width={width} height={height} fill={fill} fillOpacity={opacity} stroke={fill} strokeOpacity={isHourActive ? 0.7 : 0.45} strokeWidth={1} radius={radius} style={glassStyle} />
+  return (
+    <g>
+      <Rectangle
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        fillOpacity={opacity}
+        stroke={fill}
+        strokeOpacity={isHourActive ? 0.7 : 0.45}
+        strokeWidth={1}
+        radius={radius}
+        style={glassStyle}
+      />
       {/* Inner glass highlight */}
-      <Rectangle x={x + 1} y={y + 1} width={Math.max(0, width - 2)} height={Math.max(0, Math.min(height * 0.12, 5))} fill="white" fillOpacity={0.1} radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined} style={{
-      pointerEvents: 'none'
-    }} />
-    </g>;
+      <Rectangle
+        x={x + 1}
+        y={y + 1}
+        width={Math.max(0, width - 2)}
+        height={Math.max(0, Math.min(height * 0.12, 5))}
+        fill="white"
+        fillOpacity={0.1}
+        radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
+        style={{
+          pointerEvents: "none",
+        }}
+      />
+    </g>
+  );
 }
 
 // Custom tooltip for hourly price data on 7D/30D views
-function HourlyPriceTooltip({
-  active,
-  payload,
-  priceColor
-}: any) {
+function HourlyPriceTooltip({ active, payload, priceColor }: any) {
   if (!active || !payload || !payload.length) return null;
   const dataPoint = payload[0]?.payload;
   if (!dataPoint) return null;
-  return <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[160px]">
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[160px]">
       <div className="flex items-center justify-between mb-2">
         <span className="font-semibold text-card-foreground">{dataPoint.dateLabel}</span>
         <span className="text-xs text-muted-foreground">{dataPoint.timeLabel}</span>
       </div>
-      
-      {dataPoint.price != null && <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4" style={{
-        color: priceColor || '#00C805'
-      }} />
-          <span className="font-bold text-lg" style={{
-        color: priceColor || '#00C805'
-      }}>${dataPoint.price.toFixed(2)}</span>
-        </div>}
-    </div>;
+
+      {dataPoint.price != null && (
+        <div className="flex items-center gap-2">
+          <DollarSign
+            className="h-4 w-4"
+            style={{
+              color: priceColor || "#00C805",
+            }}
+          />
+          <span
+            className="font-bold text-lg"
+            style={{
+              color: priceColor || "#00C805",
+            }}
+          >
+            ${dataPoint.price.toFixed(2)}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Custom tooltip for independent daily/hourly view with volume indicator
-function NarrativeStackedTooltip({
-  active,
-  payload,
-  label,
-  priceColor
-}: any) {
+function NarrativeStackedTooltip({ active, payload, label, priceColor }: any) {
   if (!active || !payload || !payload.length) return null;
   const dataPoint = payload[0]?.payload;
 
   // Handle gap placeholders
   if (dataPoint?.isGap) {
-    return <div className="bg-card border border-dashed border-amber-500/50 rounded-lg p-3 shadow-xl min-w-[200px]">
+    return (
+      <div className="bg-card border border-dashed border-amber-500/50 rounded-lg p-3 shadow-xl min-w-[200px]">
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle className="h-4 w-4 text-amber-500" />
           <span className="font-semibold text-amber-500">{label}</span>
         </div>
-        <p className="text-sm text-muted-foreground">
-          No data available for this date.
-        </p>
-        <p className="text-xs text-amber-500/80 mt-2">
-          Click "Fill Gaps" to fetch historical data.
-        </p>
-      </div>;
+        <p className="text-sm text-muted-foreground">No data available for this date.</p>
+        <p className="text-xs text-amber-500/80 mt-2">Click "Fill Gaps" to fetch historical data.</p>
+      </div>
+    );
   }
 
   // Handle empty hours (no data yet - e.g., future hours in "Today" view)
   if (dataPoint?.isEmpty) {
-    return <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
+    return (
+      <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[180px]">
         <span className="font-semibold text-card-foreground">{label}</span>
-        <p className="text-sm text-muted-foreground mt-1">
-          No data available yet
-        </p>
-        {dataPoint.price != null && <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
-            <DollarSign className="h-3 w-3" style={{
-          color: priceColor || '#00C805'
-        }} />
-            <span className="font-semibold" style={{
-          color: priceColor || '#00C805'
-        }}>${dataPoint.price.toFixed(2)}</span>
-          </div>}
-      </div>;
+        <p className="text-sm text-muted-foreground mt-1">No data available yet</p>
+        {dataPoint.price != null && (
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
+            <DollarSign
+              className="h-3 w-3"
+              style={{
+                color: priceColor || "#00C805",
+              }}
+            />
+            <span
+              className="font-semibold"
+              style={{
+                color: priceColor || "#00C805",
+              }}
+            >
+              ${dataPoint.price.toFixed(2)}
+            </span>
+          </div>
+        )}
+      </div>
+    );
   }
 
   // Extract all segments from payload - use segment${i}Count for actual values (works on any slot)
@@ -227,7 +308,7 @@ function NarrativeStackedTooltip({
         segments.push({
           name,
           count,
-          sentiment
+          sentiment,
         });
       }
     }
@@ -235,55 +316,84 @@ function NarrativeStackedTooltip({
   const totalMessages = dataPoint?.totalMessages || 0;
   const volumePercent = dataPoint?.volumePercent || 0;
   const price = dataPoint?.price;
-  return <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[280px]">
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[280px]">
       <div className="flex items-center justify-between mb-2">
         <span className="font-semibold text-card-foreground">{label}</span>
-        {totalMessages > 0 && <div className="flex items-center gap-1.5 text-xs">
+        {totalMessages > 0 && (
+          <div className="flex items-center gap-1.5 text-xs">
             <MessageSquare className="h-3 w-3 text-amber-400" />
             <span className="text-amber-400 font-medium">{totalMessages.toLocaleString()}</span>
             <span className="text-muted-foreground">msgs</span>
-          </div>}
+          </div>
+        )}
       </div>
-      
+
       {/* Stock Price */}
-      {price != null && <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
-          <DollarSign className="h-4 w-4" style={{
-        color: priceColor || '#00C805'
-      }} />
-          <span className="font-bold text-lg" style={{
-        color: priceColor || '#00C805'
-      }}>${price.toFixed(2)}</span>
-        </div>}
-      
+      {price != null && (
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/50">
+          <DollarSign
+            className="h-4 w-4"
+            style={{
+              color: priceColor || "#00C805",
+            }}
+          />
+          <span
+            className="font-bold text-lg"
+            style={{
+              color: priceColor || "#00C805",
+            }}
+          >
+            ${price.toFixed(2)}
+          </span>
+        </div>
+      )}
+
       {/* Volume indicator bar */}
-      {volumePercent > 0 && <div className="mb-3">
+      {volumePercent > 0 && (
+        <div className="mb-3">
           <div className="flex items-center justify-between text-xs mb-1">
             <span className="text-muted-foreground">Relative Activity</span>
-            <span className={`font-medium ${volumePercent >= 80 ? 'text-amber-400' : volumePercent >= 50 ? 'text-primary' : 'text-muted-foreground'}`}>
+            <span
+              className={`font-medium ${volumePercent >= 80 ? "text-amber-400" : volumePercent >= 50 ? "text-primary" : "text-muted-foreground"}`}
+            >
               {volumePercent.toFixed(0)}%
             </span>
           </div>
           <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full transition-all ${volumePercent >= 80 ? 'bg-amber-400' : volumePercent >= 50 ? 'bg-primary' : 'bg-muted-foreground/50'}`} style={{
-          width: `${Math.min(volumePercent, 100)}%`
-        }} />
+            <div
+              className={`h-full rounded-full transition-all ${volumePercent >= 80 ? "bg-amber-400" : volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50"}`}
+              style={{
+                width: `${Math.min(volumePercent, 100)}%`,
+              }}
+            />
           </div>
-        </div>}
-      
-      {segments.length > 0 && <div className="space-y-1.5 pt-2 border-t border-border/50">
+        </div>
+      )}
+
+      {segments.length > 0 && (
+        <div className="space-y-1.5 pt-2 border-t border-border/50">
           <div className="text-xs text-muted-foreground mb-1">Top Narratives:</div>
-          {segments.map((segment, idx) => <div key={idx} className="flex items-center gap-2 text-sm">
-              <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{
-          backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral
-        }} />
+          {segments.map((segment, idx) => (
+            <div key={idx} className="flex items-center gap-2 text-sm">
+              <div
+                className="w-3 h-3 rounded-sm flex-shrink-0"
+                style={{
+                  backgroundColor:
+                    SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral,
+                }}
+              />
               <span className="text-card-foreground flex-1 truncate max-w-[160px]">{segment.name}</span>
               <span className="text-muted-foreground">{segment.count}</span>
               <span className={`text-xs px-1.5 py-0.5 rounded border ${getSentimentBadge(segment.sentiment)}`}>
                 {segment.sentiment}
               </span>
-            </div>)}
-        </div>}
-    </div>;
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Types for side panel data
@@ -306,7 +416,7 @@ function NarrativeSidePanel({
   data,
   priceColor,
   isHovering,
-  isMobile = false
+  isMobile = false,
 }: {
   data: SidePanelData | null;
   priceColor: string;
@@ -314,18 +424,26 @@ function NarrativeSidePanel({
   isMobile?: boolean;
 }) {
   // Base classes differ between mobile (condensed with margins) and desktop (fixed width)
-  const containerClasses = isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card" : "w-[312px] flex-shrink-0 p-5 glass-card";
+  const containerClasses = isMobile
+    ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card"
+    : "w-[312px] flex-shrink-0 p-5 glass-card";
   if (!data) {
-    return <div className={cn(isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[312px] flex-shrink-0 p-5", "glass-card flex items-center justify-center")}>
-        <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>
-          No data available
-        </p>
-      </div>;
+    return (
+      <div
+        className={cn(
+          isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[312px] flex-shrink-0 p-5",
+          "glass-card flex items-center justify-center",
+        )}
+      >
+        <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>No data available</p>
+      </div>
+    );
   }
 
   // Handle gap placeholders
   if (data.isGap) {
-    return <div className={cn(containerClasses, "!border-dashed !border-amber-500/50")}>
+    return (
+      <div className={cn(containerClasses, "!border-dashed !border-amber-500/50")}>
         <div className={cn("flex items-center gap-2", isMobile ? "mb-2" : "mb-3")}>
           <AlertTriangle className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-amber-500")} />
           <span className={cn("font-semibold text-amber-500", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
@@ -336,91 +454,174 @@ function NarrativeSidePanel({
         <p className={cn("text-amber-500/80", isMobile ? "text-xs mt-2" : "text-sm mt-3")}>
           Click "Fill Gaps" to fetch historical data.
         </p>
-      </div>;
+      </div>
+    );
   }
 
   // Handle empty hours
   if (data.isEmpty) {
-    return <div className={containerClasses}>
-        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
+    return (
+      <div className={containerClasses}>
+        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
+          {data.label}
+        </span>
         <p className={cn("text-muted-foreground", isMobile ? "text-sm mt-1" : "text-base mt-2")}>
           No data available yet
         </p>
-        {data.price != null && <div className={cn("flex items-center gap-2 border-t border-border/50 dark:border-white/10", isMobile ? "mt-2 pt-2" : "mt-3 pt-3")}>
-            <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{
-          color: priceColor
-        }} />
-            <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{
-          color: priceColor
-        }}>${data.price.toFixed(2)}</span>
-          </div>}
-        {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
-            <span className="text-sm text-muted-foreground italic">
-              Showing latest • Hover chart to explore
+        {data.price != null && (
+          <div
+            className={cn(
+              "flex items-center gap-2 border-t border-border/50 dark:border-white/10",
+              isMobile ? "mt-2 pt-2" : "mt-3 pt-3",
+            )}
+          >
+            <DollarSign
+              className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")}
+              style={{
+                color: priceColor,
+              }}
+            />
+            <span
+              className={cn("font-bold", isMobile ? "text-lg" : "text-xl")}
+              style={{
+                color: priceColor,
+              }}
+            >
+              ${data.price.toFixed(2)}
             </span>
-          </div>}
-      </div>;
+          </div>
+        )}
+        {!isHovering && !isMobile && (
+          <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+            <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
+          </div>
+        )}
+      </div>
+    );
   }
-  return <div className={cn(containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
+  return (
+    <div className={cn(containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
       {/* Time/Date Header */}
       <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
-        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
-        {data.totalMessages > 0 && <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
+        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
+          {data.label}
+        </span>
+        {data.totalMessages > 0 && (
+          <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
             <MessageSquare className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-amber-400")} />
             <span className="text-amber-400 font-medium">{data.totalMessages.toLocaleString()}</span>
             <span className={cn("text-muted-foreground", isMobile ? "text-[10px]" : "text-xs")}>msgs</span>
-          </div>}
+          </div>
+        )}
       </div>
-      
+
       {/* Stock Price */}
-      {data.price != null && <div className={cn("flex items-center gap-2 border-b border-border/50 dark:border-white/10", isMobile ? "mb-2 pb-2" : "mb-3 pb-3")}>
-          <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{
-        color: priceColor
-      }} />
-          <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{
-        color: priceColor
-      }}>
+      {data.price != null && (
+        <div
+          className={cn(
+            "flex items-center gap-2 border-b border-border/50 dark:border-white/10",
+            isMobile ? "mb-2 pb-2" : "mb-3 pb-3",
+          )}
+        >
+          <DollarSign
+            className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")}
+            style={{
+              color: priceColor,
+            }}
+          />
+          <span
+            className={cn("font-bold", isMobile ? "text-lg" : "text-xl")}
+            style={{
+              color: priceColor,
+            }}
+          >
             ${data.price.toFixed(2)}
           </span>
-        </div>}
-      
+        </div>
+      )}
+
       {/* Relative Activity Bar */}
-      {data.volumePercent > 0 && <div className={isMobile ? "mb-2" : "mb-3"}>
+      {data.volumePercent > 0 && (
+        <div className={isMobile ? "mb-2" : "mb-3"}>
           <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
             <span className="text-muted-foreground">Relative Activity</span>
-            <span className={cn("font-medium", data.volumePercent >= 80 ? "text-amber-400" : data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground")}>
+            <span
+              className={cn(
+                "font-medium",
+                data.volumePercent >= 80
+                  ? "text-amber-400"
+                  : data.volumePercent >= 50
+                    ? "text-primary"
+                    : "text-muted-foreground",
+              )}
+            >
               {data.volumePercent.toFixed(0)}%
             </span>
           </div>
           <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
-            <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 80 ? "bg-amber-400" : data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{
-          width: `${Math.min(data.volumePercent, 100)}%`
-        }} />
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                data.volumePercent >= 80
+                  ? "bg-amber-400"
+                  : data.volumePercent >= 50
+                    ? "bg-primary"
+                    : "bg-muted-foreground/50",
+              )}
+              style={{
+                width: `${Math.min(data.volumePercent, 100)}%`,
+              }}
+            />
           </div>
-        </div>}
-      
+        </div>
+      )}
+
       {/* Top Narratives */}
-      {data.segments.length > 0 && <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
+      {data.segments.length > 0 && (
+        <div
+          className={cn(
+            "border-t border-border/50 dark:border-white/10",
+            isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3",
+          )}
+        >
           <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Top Narratives:</div>
-          {data.segments.map((segment, idx) => <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
-              <div className={cn("rounded-sm flex-shrink-0", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} style={{
-          backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral
-        }} />
-              <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>{segment.name}</span>
-              <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>{segment.count}</span>
-              <span className={cn("px-1.5 py-0.5 rounded border", isMobile ? "text-[8px]" : "text-[10px]", getSentimentBadge(segment.sentiment))}>
+          {data.segments.map((segment, idx) => (
+            <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
+              <div
+                className={cn("rounded-sm flex-shrink-0", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")}
+                style={{
+                  backgroundColor:
+                    SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral,
+                }}
+              />
+              <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>
+                {segment.name}
+              </span>
+              <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>
+                {segment.count}
+              </span>
+              <span
+                className={cn(
+                  "px-1.5 py-0.5 rounded border",
+                  isMobile ? "text-[8px]" : "text-[10px]",
+                  getSentimentBadge(segment.sentiment),
+                )}
+              >
                 {segment.sentiment}
               </span>
-            </div>)}
-        </div>}
-      
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Default indicator - only on desktop */}
-      {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
-          <span className="text-sm text-muted-foreground italic">
-            Showing latest • Hover chart to explore
-          </span>
-        </div>}
-    </div>;
+      {!isHovering && !isMobile && (
+        <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+          <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Helper to extract segments from a data point
@@ -442,7 +643,7 @@ function extractSegmentsFromDataPoint(dataPoint: Record<string, any>): {
       segments.push({
         name,
         count,
-        sentiment
+        sentiment,
       });
     }
   }
@@ -450,39 +651,24 @@ function extractSegmentsFromDataPoint(dataPoint: Record<string, any>): {
 }
 
 // Time series stacked bar chart for 7D/30D - Independent daily view with price overlay
-function TimeSeriesNarrativeChart({
-  symbol,
-  timeRange
-}: {
-  symbol: string;
-  timeRange: '7D' | '30D';
-}) {
+function TimeSeriesNarrativeChart({ symbol, timeRange }: { symbol: string; timeRange: "7D" | "30D" }) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [showWeekends, setShowWeekends] = useState(false);
   const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
   const isMobileDevice = useIsMobile();
   const prevDataPointRef = useRef<string | null>(null);
-  const days = timeRange === '7D' ? 7 : 30;
-  const {
-    data: historyData,
-    isLoading,
-    error,
-    refetch,
-    isFetching
-  } = useNarrativeHistory(symbol, days, "daily");
+  const days = timeRange === "7D" ? 7 : 30;
+  const { data: historyData, isLoading, error, refetch, isFetching } = useNarrativeHistory(symbol, days, "daily");
 
   // Fetch stock price data with 1-hour intervals
-  const {
-    data: priceData,
-    isLoading: priceLoading
-  } = useStockPrice(symbol, timeRange, showPriceOverlay);
+  const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
 
   // Auto-backfill hook
   const {
     isBackfilling,
     status: backfillStatus,
     progress: backfillProgress,
-    checkAndFillGaps
+    checkAndFillGaps,
   } = useAutoBackfill(symbol, days);
 
   // Determine price line color based on current price vs previous close
@@ -501,45 +687,43 @@ function TimeSeriesNarrativeChart({
       });
     }
   }, [historyData?.data, isLoading, isFetching, checkAndFillGaps, refetch]);
-  const {
-    stackedChartData,
-    totalMessages,
-    gapCount,
-    barDomain
-  } = useMemo(() => {
+  const { stackedChartData, totalMessages, gapCount, barDomain } = useMemo(() => {
     if (!historyData?.data || historyData.data.length === 0) {
       return {
         stackedChartData: [],
         totalMessages: 0,
         gapCount: 0,
-        barDomain: [0, 100] as [number, number]
+        barDomain: [0, 100] as [number, number],
       };
     }
 
     // Group data by date
-    const byDate = new Map<string, {
-      date: string;
-      sortKey: string;
-      narratives: {
-        name: string;
-        count: number;
-        sentiment: string;
-      }[];
-      totalMessages: number;
-      isGap?: boolean;
-    }>();
-    historyData.data.forEach(point => {
+    const byDate = new Map<
+      string,
+      {
+        date: string;
+        sortKey: string;
+        narratives: {
+          name: string;
+          count: number;
+          sentiment: string;
+        }[];
+        totalMessages: number;
+        isGap?: boolean;
+      }
+    >();
+    historyData.data.forEach((point) => {
       // Use UTC date to avoid timezone issues causing duplicate labels
-      const sortKey = new Date(point.recorded_at).toISOString().split('T')[0];
-      const [year, month, day] = sortKey.split('-').map(Number);
+      const sortKey = new Date(point.recorded_at).toISOString().split("T")[0];
+      const [year, month, day] = sortKey.split("-").map(Number);
       const utcDate = new Date(Date.UTC(year, month - 1, day));
-      const dateKey = format(utcDate, 'MMM d');
+      const dateKey = format(utcDate, "MMM d");
       if (!byDate.has(sortKey)) {
         byDate.set(sortKey, {
           date: dateKey,
           sortKey,
           narratives: [],
-          totalMessages: 0
+          totalMessages: 0,
         });
       }
       const entry = byDate.get(sortKey)!;
@@ -548,14 +732,14 @@ function TimeSeriesNarrativeChart({
       // Accumulate narratives for this date
       if (point.narratives && Array.isArray(point.narratives)) {
         point.narratives.forEach((n: any) => {
-          const existing = entry.narratives.find(x => x.name === n.name);
+          const existing = entry.narratives.find((x) => x.name === n.name);
           if (existing) {
             existing.count += n.count || 0;
           } else {
             entry.narratives.push({
               name: n.name,
               count: n.count || 0,
-              sentiment: n.sentiment || 'neutral'
+              sentiment: n.sentiment || "neutral",
             });
           }
         });
@@ -567,83 +751,90 @@ function TimeSeriesNarrativeChart({
     const missingDates = detectMissingDates(existingDates, days);
 
     // Add gap placeholders to the map
-    missingDates.forEach(sortKey => {
-      const [year, month, day] = sortKey.split('-').map(Number);
+    missingDates.forEach((sortKey) => {
+      const [year, month, day] = sortKey.split("-").map(Number);
       const utcDate = new Date(Date.UTC(year, month - 1, day));
       byDate.set(sortKey, {
-        date: format(utcDate, 'MMM d'),
+        date: format(utcDate, "MMM d"),
         sortKey,
         narratives: [],
         totalMessages: 0,
-        isGap: true
+        isGap: true,
       });
     });
 
     // Find max message count for relative volume calculation (excluding gaps)
     const dateEntries = Array.from(byDate.values());
-    const maxMessages = Math.max(...dateEntries.filter(d => !d.isGap).map(d => d.totalMessages), 1);
+    const maxMessages = Math.max(...dateEntries.filter((d) => !d.isGap).map((d) => d.totalMessages), 1);
 
     // Process each date: sort by count and take top segments
-    const stackedChartData = dateEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey)).map(dayData => {
-      // Sort narratives by count descending and take top MAX_SEGMENTS
-      const topNarratives = dayData.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
+    const stackedChartData = dateEntries
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .map((dayData) => {
+        // Sort narratives by count descending and take top MAX_SEGMENTS
+        const topNarratives = dayData.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
 
-      // Build flattened data structure for Recharts
-      const flatData: Record<string, any> = {
-        date: dayData.date,
-        sortKey: dayData.sortKey,
-        totalMessages: dayData.totalMessages,
-        volumePercent: dayData.totalMessages / maxMessages * 100,
-        isGap: dayData.isGap || false
-      };
+        // Build flattened data structure for Recharts
+        const flatData: Record<string, any> = {
+          date: dayData.date,
+          sortKey: dayData.sortKey,
+          totalMessages: dayData.totalMessages,
+          volumePercent: (dayData.totalMessages / maxMessages) * 100,
+          isGap: dayData.isGap || false,
+        };
 
-      // For gaps, add a placeholder segment
-      if (dayData.isGap) {
-        flatData['gapPlaceholder'] = 1; // Small value for visual indicator
-        for (let i = 0; i < MAX_SEGMENTS; i++) {
-          flatData[`segment${i}`] = 0;
-          flatData[`segment${i}Name`] = '';
-          flatData[`segment${i}Sentiment`] = 'neutral';
+        // For gaps, add a placeholder segment
+        if (dayData.isGap) {
+          flatData["gapPlaceholder"] = 1; // Small value for visual indicator
+          for (let i = 0; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = "";
+            flatData[`segment${i}Sentiment`] = "neutral";
+          }
+        } else {
+          flatData["gapPlaceholder"] = 0;
+          topNarratives.forEach((n, idx) => {
+            flatData[`segment${idx}`] = n.count;
+            flatData[`segment${idx}Name`] = n.name;
+            flatData[`segment${idx}Sentiment`] = n.sentiment;
+          });
+
+          // Fill remaining segments with zeros
+          for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = "";
+            flatData[`segment${i}Sentiment`] = "neutral";
+          }
         }
-      } else {
-        flatData['gapPlaceholder'] = 0;
-        topNarratives.forEach((n, idx) => {
-          flatData[`segment${idx}`] = n.count;
-          flatData[`segment${idx}Name`] = n.name;
-          flatData[`segment${idx}Sentiment`] = n.sentiment;
-        });
-
-        // Fill remaining segments with zeros
-        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
-          flatData[`segment${i}`] = 0;
-          flatData[`segment${i}Name`] = '';
-          flatData[`segment${i}Sentiment`] = 'neutral';
-        }
-      }
-      return flatData;
-    });
+        return flatData;
+      });
     const totalMessages = historyData.data.reduce((sum, point) => sum + point.message_count, 0);
 
     // Calculate max stacked value for bar domain (double to make bars half height)
-    const maxStackedValue = Math.max(...stackedChartData.filter(d => !d.isGap).map(item => {
-      let sum = 0;
-      for (let i = 0; i < MAX_SEGMENTS; i++) {
-        sum += item[`segment${i}`] as number || 0;
-      }
-      return sum;
-    }), 1);
+    const maxStackedValue = Math.max(
+      ...stackedChartData
+        .filter((d) => !d.isGap)
+        .map((item) => {
+          let sum = 0;
+          for (let i = 0; i < MAX_SEGMENTS; i++) {
+            sum += (item[`segment${i}`] as number) || 0;
+          }
+          return sum;
+        }),
+      1,
+    );
     const barDomain: [number, number] = [0, maxStackedValue * 2];
     return {
       stackedChartData,
       totalMessages,
       gapCount: missingDates.length,
-      barDomain
+      barDomain,
     };
   }, [historyData]);
 
   // Helper to check if a date is a weekend
   const isWeekend = (sortKey: string) => {
-    const [year, month, day] = sortKey.split('-').map(Number);
+    const [year, month, day] = sortKey.split("-").map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
     const dayOfWeek = date.getUTCDay();
     return dayOfWeek === 0 || dayOfWeek === 6; // Sunday = 0, Saturday = 6
@@ -654,18 +845,23 @@ function TimeSeriesNarrativeChart({
     if (showWeekends) {
       return stackedChartData;
     }
-    return stackedChartData.filter(d => !isWeekend(d.sortKey));
+    return stackedChartData.filter((d) => !isWeekend(d.sortKey));
   }, [stackedChartData, showWeekends]);
 
   // Recalculate bar domain for filtered data
   const filteredBarDomain = useMemo(() => {
-    const maxStackedValue = Math.max(...filteredChartData.filter(d => !d.isGap).map(item => {
-      let sum = 0;
-      for (let i = 0; i < MAX_SEGMENTS; i++) {
-        sum += item[`segment${i}`] as number || 0;
-      }
-      return sum;
-    }), 1);
+    const maxStackedValue = Math.max(
+      ...filteredChartData
+        .filter((d) => !d.isGap)
+        .map((item) => {
+          let sum = 0;
+          for (let i = 0; i < MAX_SEGMENTS; i++) {
+            sum += (item[`segment${i}`] as number) || 0;
+          }
+          return sum;
+        }),
+      1,
+    );
     return [0, maxStackedValue * 2] as [number, number];
   }, [filteredChartData]);
 
@@ -676,7 +872,7 @@ function TimeSeriesNarrativeChart({
     }
 
     // Build hourly data points with positions that span across the daily bars
-    const sortedBarDates = filteredChartData.map(d => d.sortKey).sort();
+    const sortedBarDates = filteredChartData.map((d) => d.sortKey).sort();
     const startDate = sortedBarDates[0];
     const endDate = sortedBarDates[sortedBarDates.length - 1];
     if (!startDate || !endDate) return [];
@@ -688,32 +884,35 @@ function TimeSeriesNarrativeChart({
     });
 
     // Process hourly price points - filter weekends if not showing them
-    return priceData.prices.filter(p => {
-      const dateKey = new Date(p.timestamp).toISOString().split('T')[0];
-      if (!showWeekends && isWeekend(dateKey)) return false;
-      return dateKey >= startDate && dateKey <= endDate;
-    }).map(point => {
-      const date = new Date(point.timestamp);
-      const dateKey = date.toISOString().split('T')[0];
-      const hour = date.getHours();
+    return priceData.prices
+      .filter((p) => {
+        const dateKey = new Date(p.timestamp).toISOString().split("T")[0];
+        if (!showWeekends && isWeekend(dateKey)) return false;
+        return dateKey >= startDate && dateKey <= endDate;
+      })
+      .map((point) => {
+        const date = new Date(point.timestamp);
+        const dateKey = date.toISOString().split("T")[0];
+        const hour = date.getHours();
 
-      // Calculate x position: barIndex + (hour / 24) to interpolate within the day
-      const barIndex = dateToIndex.get(dateKey) ?? 0;
-      const xPosition = barIndex + hour / 24;
-      return {
-        x: xPosition,
-        price: point.price,
-        timestamp: point.timestamp,
-        dateLabel: date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric'
-        }),
-        timeLabel: date.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit'
-        })
-      };
-    }).sort((a, b) => a.x - b.x);
+        // Calculate x position: barIndex + (hour / 24) to interpolate within the day
+        const barIndex = dateToIndex.get(dateKey) ?? 0;
+        const xPosition = barIndex + hour / 24;
+        return {
+          x: xPosition,
+          price: point.price,
+          timestamp: point.timestamp,
+          dateLabel: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+          timeLabel: date.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+          }),
+        };
+      })
+      .sort((a, b) => a.x - b.x);
   }, [filteredChartData, priceData, showPriceOverlay, showWeekends]);
 
   // Chart data for bars (using filtered data)
@@ -724,16 +923,16 @@ function TimeSeriesNarrativeChart({
   // Calculate price domain for right Y-axis - tight padding to fill vertical space
   const priceDomain = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
-      return ['auto', 'auto'];
+      return ["auto", "auto"];
     }
-    const prices = priceData.prices.map(p => p.price);
+    const prices = priceData.prices.map((p) => p.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const range = maxPrice - minPrice;
     // Use 5% padding for 7D/30D views (slightly more than intraday)
-    const padding = Math.max(range * 0.05, 0.50);
+    const padding = Math.max(range * 0.05, 0.5);
     // Round to nearest $0.50 for cleaner axis labels
-    const roundTo = 0.50;
+    const roundTo = 0.5;
     return [Math.floor((minPrice - padding) / roundTo) * roundTo, Math.ceil((maxPrice + padding) / roundTo) * roundTo];
   }, [priceData, showPriceOverlay]);
 
@@ -744,7 +943,10 @@ function TimeSeriesNarrativeChart({
     }
 
     // Find most recent data point with messages (non-gap, has data)
-    const mostRecent = chartDataWithPrice.slice().reverse().find(item => !item.isGap && item.totalMessages > 0);
+    const mostRecent = chartDataWithPrice
+      .slice()
+      .reverse()
+      .find((item) => !item.isGap && item.totalMessages > 0);
     if (!mostRecent) return null;
     return {
       label: mostRecent.date,
@@ -752,51 +954,54 @@ function TimeSeriesNarrativeChart({
       price: mostRecent.price ?? null,
       volumePercent: mostRecent.volumePercent || 0,
       segments: extractSegmentsFromDataPoint(mostRecent),
-      isGap: mostRecent.isGap
+      isGap: mostRecent.isGap,
     };
   }, [hoveredData, chartDataWithPrice]);
 
   // Handle chart mouse events for side panel
-  const handleChartMouseMove = useCallback((state: any) => {
-    if (state?.activePayload?.[0]?.payload) {
-      const payload = state.activePayload[0].payload;
+  const handleChartMouseMove = useCallback(
+    (state: any) => {
+      if (state?.activePayload?.[0]?.payload) {
+        const payload = state.activePayload[0].payload;
 
-      // Trigger haptic feedback when moving to a new data point on mobile
-      const currentLabel = payload.date || payload.dateLabel || payload.timestamp?.toString() || '';
-      if (isMobileDevice && currentLabel !== prevDataPointRef.current) {
-        triggerHaptic('selection');
-        prevDataPointRef.current = currentLabel;
-      }
-
-      // For price line data, find corresponding bar data
-      if (payload.dateLabel !== undefined) {
-        // This is hourly price data - find matching date bar
-        const dateKey = new Date(payload.timestamp).toISOString().split('T')[0];
-        const matchingBar = chartDataWithPrice.find(d => d.sortKey === dateKey);
-        if (matchingBar) {
-          setHoveredData({
-            label: `${payload.dateLabel} ${payload.timeLabel}`,
-            totalMessages: matchingBar.totalMessages,
-            price: payload.price,
-            volumePercent: matchingBar.volumePercent || 0,
-            segments: extractSegmentsFromDataPoint(matchingBar),
-            isGap: matchingBar.isGap
-          });
+        // Trigger haptic feedback when moving to a new data point on mobile
+        const currentLabel = payload.date || payload.dateLabel || payload.timestamp?.toString() || "";
+        if (isMobileDevice && currentLabel !== prevDataPointRef.current) {
+          triggerHaptic("selection");
+          prevDataPointRef.current = currentLabel;
         }
-        return;
-      }
 
-      // Regular bar data
-      setHoveredData({
-        label: payload.date,
-        totalMessages: payload.totalMessages,
-        price: payload.price ?? null,
-        volumePercent: payload.volumePercent || 0,
-        segments: extractSegmentsFromDataPoint(payload),
-        isGap: payload.isGap
-      });
-    }
-  }, [chartDataWithPrice, isMobileDevice]);
+        // For price line data, find corresponding bar data
+        if (payload.dateLabel !== undefined) {
+          // This is hourly price data - find matching date bar
+          const dateKey = new Date(payload.timestamp).toISOString().split("T")[0];
+          const matchingBar = chartDataWithPrice.find((d) => d.sortKey === dateKey);
+          if (matchingBar) {
+            setHoveredData({
+              label: `${payload.dateLabel} ${payload.timeLabel}`,
+              totalMessages: matchingBar.totalMessages,
+              price: payload.price,
+              volumePercent: matchingBar.volumePercent || 0,
+              segments: extractSegmentsFromDataPoint(matchingBar),
+              isGap: matchingBar.isGap,
+            });
+          }
+          return;
+        }
+
+        // Regular bar data
+        setHoveredData({
+          label: payload.date,
+          totalMessages: payload.totalMessages,
+          price: payload.price ?? null,
+          volumePercent: payload.volumePercent || 0,
+          segments: extractSegmentsFromDataPoint(payload),
+          isGap: payload.isGap,
+        });
+      }
+    },
+    [chartDataWithPrice, isMobileDevice],
+  );
   const handleChartMouseLeave = useCallback(() => {
     setHoveredData(null);
     prevDataPointRef.current = null;
@@ -805,27 +1010,34 @@ function TimeSeriesNarrativeChart({
     return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
   }
   if (error) {
-    return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+    return (
+      <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-sm">Failed to load narrative history. Please try again.</p>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
-      </div>;
+      </div>
+    );
   }
   if (stackedChartData.length === 0) {
-    return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+    return (
+      <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <Sparkles className="h-8 w-8" />
         <p className="text-sm">No narrative history found for {symbol}. Data will accumulate over time.</p>
-      </div>;
+      </div>
+    );
   }
-  return <div className="h-[480px] md:h-[520px] w-full">
+  return (
+    <div className="h-[480px] md:h-[520px] w-full">
       {/* Backfill indicator */}
-      {isBackfilling && <div className="mb-3">
+      {isBackfilling && (
+        <div className="mb-3">
           <BackfillIndicator status={backfillStatus} progress={backfillProgress} />
-        </div>}
-      
+        </div>
+      )}
+
       {/* Header - Collapsible (collapsed by default, showing only arrow) */}
       <Collapsible defaultOpen={false} className="mb-1">
         <CollapsibleTrigger asChild>
@@ -840,22 +1052,25 @@ function TimeSeriesNarrativeChart({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Daily Narrative Breakdown</span>
-                  <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
-                    independent
-                  </span>
+                  <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">independent</span>
                   <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
                     {historyData?.data.length || 0} snapshots
                   </span>
-                  {gapCount > 0 && !isBackfilling && <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs flex items-center gap-1">
+                  {gapCount > 0 && !isBackfilling && (
+                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-xs flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
-                      {gapCount} gap{gapCount > 1 ? 's' : ''}
-                    </span>}
+                      {gapCount} gap{gapCount > 1 ? "s" : ""}
+                    </span>
+                  )}
                   <BackfillBadge isBackfilling={isBackfilling} />
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                  {totalMessages > 0 && <span className="flex items-center gap-1">
-                      <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
-                    </span>}
+                  {totalMessages > 0 && (
+                    <span className="flex items-center gap-1">
+                      <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total
+                      messages
+                    </span>
+                  )}
                   <span>{days} days • each bar shows that day's top narratives</span>
                 </div>
               </div>
@@ -863,26 +1078,42 @@ function TimeSeriesNarrativeChart({
             <div className="flex items-center gap-3">
               {/* Weekend Toggle */}
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" style={{
-                color: showWeekends ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'
-              }} />
+                <Calendar
+                  className="h-4 w-4"
+                  style={{
+                    color: showWeekends ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                  }}
+                />
                 <span className="text-xs text-muted-foreground">Weekends</span>
                 <Switch checked={showWeekends} onCheckedChange={setShowWeekends} />
               </div>
               {/* Price Toggle */}
               <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" style={{
-                color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))'
-              }} />
+                <DollarSign
+                  className="h-4 w-4"
+                  style={{
+                    color: showPriceOverlay ? priceLineColor : "hsl(var(--muted-foreground))",
+                  }}
+                />
                 <span className="text-xs text-muted-foreground">Price</span>
-                <Switch checked={showPriceOverlay} onCheckedChange={setShowPriceOverlay} style={{
-                backgroundColor: showPriceOverlay ? priceLineColor : undefined
-              }} />
+                <Switch
+                  checked={showPriceOverlay}
+                  onCheckedChange={setShowPriceOverlay}
+                  style={{
+                    backgroundColor: showPriceOverlay ? priceLineColor : undefined,
+                  }}
+                />
               </div>
               <FillGapsDialog symbol={symbol} onComplete={() => refetch()} />
-              <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching || isBackfilling} className="h-8 px-3 text-xs">
-                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-                {isFetching ? 'Refreshing...' : 'Refresh'}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refetch()}
+                disabled={isFetching || isBackfilling}
+                className="h-8 px-3 text-xs"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
+                {isFetching ? "Refreshing..." : "Refresh"}
               </Button>
             </div>
           </div>
@@ -892,95 +1123,187 @@ function TimeSeriesNarrativeChart({
       {/* Main content: Side Panel + Chart */}
       <div className="flex md:gap-4 h-[calc(100%-60px)]">
         {/* Left Side Panel - Only on desktop */}
-        {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
-        
+        {!isMobileDevice && (
+          <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />
+        )}
+
         {/* Chart - Takes remaining space */}
         <div className="flex-1 min-w-0">
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={showPriceOverlay && priceLineData.length > 0 ? priceLineData : chartDataWithPrice} margin={{
-            top: 10,
-            right: showPriceOverlay ? 50 : 15,
-            left: 5,
-            bottom: 10
-          }} onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
+            <ComposedChart
+              data={showPriceOverlay && priceLineData.length > 0 ? priceLineData : chartDataWithPrice}
+              margin={{
+                top: 10,
+                right: showPriceOverlay ? 50 : 15,
+                left: 5,
+                bottom: 10,
+              }}
+              onMouseMove={handleChartMouseMove}
+              onMouseLeave={handleChartMouseLeave}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" vertical={false} />
               {/* X-axis for bar labels */}
-              <XAxis xAxisId="bar" dataKey="date" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} ticks={chartDataWithPrice.map(d => d.date)} allowDuplicatedCategory={false} />
+              <XAxis
+                xAxisId="bar"
+                dataKey="date"
+                stroke="hsl(215 20% 55%)"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                ticks={chartDataWithPrice.map((d) => d.date)}
+                allowDuplicatedCategory={false}
+              />
               {/* Numeric X-axis for price line and hourly tooltip positioning */}
-              <XAxis xAxisId="price" type="number" dataKey="x" domain={[0, chartDataWithPrice.length - 1]} hide={true} allowDataOverflow={true} />
-              <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={filteredBarDomain} />
-              {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={50} tickFormatter={value => `$${value.toFixed(0)}`} domain={priceDomain as [number, number]} />}
+              <XAxis
+                xAxisId="price"
+                type="number"
+                dataKey="x"
+                domain={[0, chartDataWithPrice.length - 1]}
+                hide={true}
+                allowDataOverflow={true}
+              />
+              <YAxis
+                yAxisId="left"
+                stroke="hsl(215 20% 55%)"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                width={10}
+                tick={false}
+                domain={filteredBarDomain}
+              />
+              {showPriceOverlay && (
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke={priceLineColor}
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  width={50}
+                  tickFormatter={(value) => `$${value.toFixed(0)}`}
+                  domain={priceDomain as [number, number]}
+                />
+              )}
               {/* Tooltip hidden completely - side panel shows data on both desktop and mobile */}
               {/* Gap placeholder bars - shown with dashed pattern */}
-              <Bar xAxisId="bar" yAxisId="left" dataKey="gapPlaceholder" data={chartDataWithPrice} stackId="narratives" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-                {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`gap-${entryIdx}`} fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"} stroke={entry.isGap ? "hsl(38 92% 50%)" : "transparent"} strokeWidth={entry.isGap ? 1 : 0} strokeDasharray={entry.isGap ? "4 2" : "0"} />)}
+              <Bar
+                xAxisId="bar"
+                yAxisId="left"
+                dataKey="gapPlaceholder"
+                data={chartDataWithPrice}
+                stackId="narratives"
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={false}
+              >
+                {chartDataWithPrice.map((entry, entryIdx) => (
+                  <Cell
+                    key={`gap-${entryIdx}`}
+                    fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"}
+                    stroke={entry.isGap ? "hsl(38 92% 50%)" : "transparent"}
+                    strokeWidth={entry.isGap ? 1 : 0}
+                    strokeDasharray={entry.isGap ? "4 2" : "0"}
+                  />
+                ))}
               </Bar>
               {/* Render segment bars - each segment uses its own sentiment color */}
               {Array.from({
-              length: MAX_SEGMENTS
-            }).map((_, idx) => <Bar key={`segment${idx}`} xAxisId="bar" yAxisId="left" dataKey={`segment${idx}`} data={chartDataWithPrice} stackId="narratives" radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} isAnimationActive={false}>
-                  {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={entry.isGap ? "transparent" : SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} fillOpacity={0.25} />)}
-                </Bar>)}
+                length: MAX_SEGMENTS,
+              }).map((_, idx) => (
+                <Bar
+                  key={`segment${idx}`}
+                  xAxisId="bar"
+                  yAxisId="left"
+                  dataKey={`segment${idx}`}
+                  data={chartDataWithPrice}
+                  stackId="narratives"
+                  radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                  isAnimationActive={false}
+                >
+                  {chartDataWithPrice.map((entry, entryIdx) => (
+                    <Cell
+                      key={`cell-${entryIdx}`}
+                      fill={
+                        entry.isGap
+                          ? "transparent"
+                          : SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] ||
+                            SENTIMENT_COLORS.neutral
+                      }
+                      fillOpacity={0.25}
+                    />
+                  ))}
+                </Bar>
+              ))}
               {/* Hourly Price Line Overlay */}
-              {showPriceOverlay && priceLineData.length > 0 && <Line xAxisId="price" yAxisId="right" type="monotone" dataKey="price" stroke={priceLineColor} strokeWidth={2} dot={{
-              r: 2,
-              fill: priceLineColor
-            }} activeDot={{
-              r: 5,
-              stroke: priceLineColor,
-              strokeWidth: 2,
-              fill: 'hsl(var(--background))'
-            }} connectNulls={true} />}
+              {showPriceOverlay && priceLineData.length > 0 && (
+                <Line
+                  xAxisId="price"
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="price"
+                  stroke={priceLineColor}
+                  strokeWidth={2}
+                  dot={{
+                    r: 2,
+                    fill: priceLineColor,
+                  }}
+                  activeDot={{
+                    r: 5,
+                    stroke: priceLineColor,
+                    strokeWidth: 2,
+                    fill: "hsl(var(--background))",
+                  }}
+                  connectNulls={true}
+                />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>
-      
+
       {/* Mobile Side Panel - Only on mobile */}
-      {isMobileDevice && <motion.div initial={{
-      opacity: 0,
-      y: 20
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} transition={{
-      duration: 0.3,
-      ease: "easeOut"
-    }}>
-          <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
-        </motion.div>}
-    </div>;
+      {isMobileDevice && (
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.3,
+            ease: "easeOut",
+          }}
+        >
+          <NarrativeSidePanel
+            data={panelData}
+            priceColor={priceLineColor}
+            isHovering={hoveredData !== null}
+            isMobile={true}
+          />
+        </motion.div>
+      )}
+    </div>
+  );
 }
 
 // Hourly stacked bar chart for 1D/24H - Independent hourly view with live AI fallback
-function HourlyStackedNarrativeChart({
-  symbol,
-  timeRange
-}: {
-  symbol: string;
-  timeRange: '1D' | '24H';
-}) {
+function HourlyStackedNarrativeChart({ symbol, timeRange }: { symbol: string; timeRange: "1D" | "24H" }) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [activeHour, setActiveHour] = useState<number | null>(null);
-  const [marketSession, setMarketSession] = useState<MarketSession>('regular');
+  const [marketSession, setMarketSession] = useState<MarketSession>("regular");
   const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
   const isMobileDevice = useIsMobile();
 
   // Get session-specific hour range
-  const {
-    startHour: START_HOUR,
-    endHour: END_HOUR
-  } = SESSION_RANGES[marketSession];
+  const { startHour: START_HOUR, endHour: END_HOUR } = SESSION_RANGES[marketSession];
   const VISIBLE_HOURS = END_HOUR - START_HOUR + 1;
   const SLOTS_PER_HOUR = 12;
 
   // Calculate proper day boundaries in user's local timezone
-  const {
-    todayStart,
-    todayEnd,
-    twentyFourHoursAgo,
-    now
-  } = useMemo(() => {
+  const { todayStart, todayEnd, twentyFourHoursAgo, now } = useMemo(() => {
     const now = new Date();
     // Today: midnight to 11:59:59 PM in user's local timezone
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
@@ -991,7 +1314,7 @@ function HourlyStackedNarrativeChart({
       todayStart,
       todayEnd,
       twentyFourHoursAgo,
-      now
+      now,
     };
   }, []);
 
@@ -1002,14 +1325,11 @@ function HourlyStackedNarrativeChart({
     isLoading: historyLoading,
     error,
     refetch,
-    isFetching
+    isFetching,
   } = useNarrativeHistory(symbol, 3, "hourly");
 
   // Fetch stock price data
-  const {
-    data: priceData,
-    isLoading: priceLoading
-  } = useStockPrice(symbol, timeRange, showPriceOverlay);
+  const { data: priceData, isLoading: priceLoading } = useStockPrice(symbol, timeRange, showPriceOverlay);
 
   // Determine price line color based on current price vs previous close
   const priceLineColor = useMemo(() => {
@@ -1018,42 +1338,40 @@ function HourlyStackedNarrativeChart({
     }
     return priceData.currentPrice >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
   }, [priceData?.currentPrice, priceData?.previousClose]);
-  const {
-    stackedChartData,
-    totalMessages,
-    hasAnyData,
-    is5MinView
-  } = useMemo(() => {
+  const { stackedChartData, totalMessages, hasAnyData, is5MinView } = useMemo(() => {
     // For "Today" view (1D), use 5-minute slots for granular price line
     // but only put bar data at hour boundaries
-    if (timeRange === '1D') {
+    if (timeRange === "1D") {
       const TOTAL_SLOTS = VISIBLE_HOURS * SLOTS_PER_HOUR;
 
       // First, collect hourly narrative data
-      const hourlyNarratives: Map<number, {
-        narratives: {
-          name: string;
-          count: number;
-          sentiment: string;
-        }[];
-        totalMessages: number;
-      }> = new Map();
+      const hourlyNarratives: Map<
+        number,
+        {
+          narratives: {
+            name: string;
+            count: number;
+            sentiment: string;
+          }[];
+          totalMessages: number;
+        }
+      > = new Map();
 
       // Initialize hours based on selected session
       for (let h = START_HOUR; h <= END_HOUR; h++) {
         hourlyNarratives.set(h, {
           narratives: [],
-          totalMessages: 0
+          totalMessages: 0,
         });
       }
 
       // Fill in actual narrative data if available
       if (historyData?.data && historyData.data.length > 0) {
-        const filteredData = historyData.data.filter(point => {
+        const filteredData = historyData.data.filter((point) => {
           const pointDate = new Date(point.recorded_at);
           return pointDate.getTime() >= todayStart.getTime() && pointDate.getTime() <= todayEnd.getTime();
         });
-        filteredData.forEach(point => {
+        filteredData.forEach((point) => {
           const date = new Date(point.recorded_at);
           const hourIndex = date.getHours();
           const slot = hourlyNarratives.get(hourIndex);
@@ -1061,14 +1379,14 @@ function HourlyStackedNarrativeChart({
             slot.totalMessages += point.message_count;
             if (point.narratives && Array.isArray(point.narratives)) {
               point.narratives.forEach((n: any) => {
-                const existing = slot.narratives.find(x => x.name === n.name);
+                const existing = slot.narratives.find((x) => x.name === n.name);
                 if (existing) {
                   existing.count += n.count || 0;
                 } else {
                   slot.narratives.push({
                     name: n.name,
                     count: n.count || 0,
-                    sentiment: n.sentiment || 'neutral'
+                    sentiment: n.sentiment || "neutral",
                   });
                 }
               });
@@ -1079,7 +1397,7 @@ function HourlyStackedNarrativeChart({
 
       // Find max messages for relative volume
       const hourData = Array.from(hourlyNarratives.values());
-      const maxMessages = Math.max(...hourData.map(h => h.totalMessages), 1);
+      const maxMessages = Math.max(...hourData.map((h) => h.totalMessages), 1);
 
       // Build chart data slots
       const stackedChartData: Record<string, any>[] = [];
@@ -1088,7 +1406,7 @@ function HourlyStackedNarrativeChart({
         const isHourStart = slotIdx % SLOTS_PER_HOUR === 0;
 
         // Time label: show hour label at hour boundaries
-        const hourLabel = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+        const hourLabel = hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`;
 
         // Get the hour's narrative data (for tooltip on any slot within the hour)
         const hourNarr = hourlyNarratives.get(hour)!;
@@ -1100,8 +1418,8 @@ function HourlyStackedNarrativeChart({
           isHourStart,
           // Include hour data on ALL slots for tooltip display
           totalMessages: hourNarr.totalMessages,
-          volumePercent: hourNarr.totalMessages / maxMessages * 100,
-          isEmpty: hourNarr.totalMessages === 0
+          volumePercent: (hourNarr.totalMessages / maxMessages) * 100,
+          isEmpty: hourNarr.totalMessages === 0,
         };
 
         // Add narrative segment data to ALL slots (for tooltip)
@@ -1114,19 +1432,19 @@ function HourlyStackedNarrativeChart({
         });
         for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
           flatData[`segment${i}`] = 0;
-          flatData[`segment${i}Name`] = '';
-          flatData[`segment${i}Sentiment`] = 'neutral';
+          flatData[`segment${i}Name`] = "";
+          flatData[`segment${i}Sentiment`] = "neutral";
           flatData[`segment${i}Count`] = 0;
         }
         stackedChartData.push(flatData);
       }
       const totalMessages = hourData.reduce((sum, h) => sum + h.totalMessages, 0);
-      const hasAnyData = hourData.some(h => h.totalMessages > 0);
+      const hasAnyData = hourData.some((h) => h.totalMessages > 0);
       return {
         stackedChartData,
         totalMessages,
         hasAnyData,
-        is5MinView: true
+        is5MinView: true,
       };
     }
 
@@ -1136,31 +1454,34 @@ function HourlyStackedNarrativeChart({
         stackedChartData: [],
         totalMessages: 0,
         hasAnyData: false,
-        is5MinView: false
+        is5MinView: false,
       };
     }
-    const filteredData = historyData.data.filter(point => {
+    const filteredData = historyData.data.filter((point) => {
       const pointDate = new Date(point.recorded_at);
       return pointDate.getTime() >= twentyFourHoursAgo.getTime() && pointDate.getTime() <= now.getTime();
     });
 
     // Group data by hour
-    const byHour = new Map<string, {
-      hour: string;
-      sortKey: string;
-      hourIndex: number;
-      narratives: {
-        name: string;
-        count: number;
-        sentiment: string;
-      }[];
-      totalMessages: number;
-    }>();
-    filteredData.forEach(point => {
+    const byHour = new Map<
+      string,
+      {
+        hour: string;
+        sortKey: string;
+        hourIndex: number;
+        narratives: {
+          name: string;
+          count: number;
+          sentiment: string;
+        }[];
+        totalMessages: number;
+      }
+    >();
+    filteredData.forEach((point) => {
       const date = new Date(point.recorded_at);
       const hourKey = date.toLocaleTimeString(undefined, {
-        hour: 'numeric',
-        hour12: true
+        hour: "numeric",
+        hour12: true,
       });
       const sortKey = date.toISOString();
       const hourIndex = date.getHours();
@@ -1170,7 +1491,7 @@ function HourlyStackedNarrativeChart({
           sortKey,
           hourIndex,
           narratives: [],
-          totalMessages: 0
+          totalMessages: 0,
         });
       }
       const entry = byHour.get(sortKey)!;
@@ -1179,14 +1500,14 @@ function HourlyStackedNarrativeChart({
       // Accumulate narratives for this hour
       if (point.narratives && Array.isArray(point.narratives)) {
         point.narratives.forEach((n: any) => {
-          const existing = entry.narratives.find(x => x.name === n.name);
+          const existing = entry.narratives.find((x) => x.name === n.name);
           if (existing) {
             existing.count += n.count || 0;
           } else {
             entry.narratives.push({
               name: n.name,
               count: n.count || 0,
-              sentiment: n.sentiment || 'neutral'
+              sentiment: n.sentiment || "neutral",
             });
           }
         });
@@ -1195,43 +1516,56 @@ function HourlyStackedNarrativeChart({
 
     // Find max message count for relative volume calculation
     const hourEntries = Array.from(byHour.values());
-    const maxMessages = Math.max(...hourEntries.map(h => h.totalMessages), 1);
+    const maxMessages = Math.max(...hourEntries.map((h) => h.totalMessages), 1);
 
     // Process each hour: sort by count and take top segments
-    const stackedChartData = hourEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey)).map(hourData => {
-      // Sort narratives by count descending and take top MAX_SEGMENTS
-      const topNarratives = hourData.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
+    const stackedChartData = hourEntries
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .map((hourData) => {
+        // Sort narratives by count descending and take top MAX_SEGMENTS
+        const topNarratives = hourData.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
 
-      // Build flattened data structure for Recharts
-      const flatData: Record<string, any> = {
-        hour: hourData.hour,
-        sortKey: hourData.sortKey,
-        hourIndex: hourData.hourIndex,
-        totalMessages: hourData.totalMessages,
-        volumePercent: hourData.totalMessages / maxMessages * 100
-      };
-      topNarratives.forEach((n, idx) => {
-        flatData[`segment${idx}`] = n.count;
-        flatData[`segment${idx}Name`] = n.name;
-        flatData[`segment${idx}Sentiment`] = n.sentiment;
+        // Build flattened data structure for Recharts
+        const flatData: Record<string, any> = {
+          hour: hourData.hour,
+          sortKey: hourData.sortKey,
+          hourIndex: hourData.hourIndex,
+          totalMessages: hourData.totalMessages,
+          volumePercent: (hourData.totalMessages / maxMessages) * 100,
+        };
+        topNarratives.forEach((n, idx) => {
+          flatData[`segment${idx}`] = n.count;
+          flatData[`segment${idx}Name`] = n.name;
+          flatData[`segment${idx}Sentiment`] = n.sentiment;
+        });
+
+        // Fill remaining segments with zeros
+        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+          flatData[`segment${i}`] = 0;
+          flatData[`segment${i}Name`] = "";
+          flatData[`segment${i}Sentiment`] = "neutral";
+        }
+        return flatData;
       });
-
-      // Fill remaining segments with zeros
-      for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
-        flatData[`segment${i}`] = 0;
-        flatData[`segment${i}Name`] = '';
-        flatData[`segment${i}Sentiment`] = 'neutral';
-      }
-      return flatData;
-    });
     const totalMessages = filteredData.reduce((sum, point) => sum + point.message_count, 0);
     return {
       stackedChartData,
       totalMessages,
       hasAnyData: stackedChartData.length > 0,
-      is5MinView: false
+      is5MinView: false,
     };
-  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now, START_HOUR, END_HOUR, VISIBLE_HOURS, SLOTS_PER_HOUR]);
+  }, [
+    historyData,
+    timeRange,
+    todayStart,
+    todayEnd,
+    twentyFourHoursAgo,
+    now,
+    START_HOUR,
+    END_HOUR,
+    VISIBLE_HOURS,
+    SLOTS_PER_HOUR,
+  ]);
 
   // Merge price data into chart data
   const chartDataWithPrice = useMemo(() => {
@@ -1242,24 +1576,24 @@ function HourlyStackedNarrativeChart({
     // For 5-minute view (Today), use 5-minute slot alignment for granular price line
     if (is5MinView) {
       const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
-      return stackedChartData.map(item => {
+      return stackedChartData.map((item) => {
         const slotIndex = item.slotIndex;
         const pricePoint = priceBySlot.get(slotIndex);
         return {
           ...item,
-          price: pricePoint?.price ?? null
+          price: pricePoint?.price ?? null,
         };
       });
     }
 
     // Build hour-to-price map for other views
     const priceByHour = alignPricesToHourSlots(priceData.prices, timeRange);
-    return stackedChartData.map(item => {
+    return stackedChartData.map((item) => {
       const hourIndex = item.hourIndex;
       const pricePoint = priceByHour.get(hourIndex);
       return {
         ...item,
-        price: pricePoint?.price ?? null
+        price: pricePoint?.price ?? null,
       };
     });
   }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
@@ -1267,16 +1601,19 @@ function HourlyStackedNarrativeChart({
   // Calculate bar domain for left Y-axis (double max to make bars half height)
   const barDomain = useMemo(() => {
     if (!chartDataWithPrice || chartDataWithPrice.length === 0) {
-      return [0, 'auto'];
+      return [0, "auto"];
     }
     // Calculate max stacked value for each data point
-    const maxStackedValue = Math.max(...chartDataWithPrice.map(item => {
-      let sum = 0;
-      for (let i = 0; i < MAX_SEGMENTS; i++) {
-        sum += item[`segment${i}`] as number || 0;
-      }
-      return sum;
-    }), 1);
+    const maxStackedValue = Math.max(
+      ...chartDataWithPrice.map((item) => {
+        let sum = 0;
+        for (let i = 0; i < MAX_SEGMENTS; i++) {
+          sum += (item[`segment${i}`] as number) || 0;
+        }
+        return sum;
+      }),
+      1,
+    );
     // Double the max to make bars appear at half height
     return [0, maxStackedValue * 2];
   }, [chartDataWithPrice]);
@@ -1284,9 +1621,9 @@ function HourlyStackedNarrativeChart({
   // Calculate price domain for right Y-axis - tight padding to fill vertical space
   const priceDomain = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
-      return ['auto', 'auto'];
+      return ["auto", "auto"];
     }
-    const prices = priceData.prices.map(p => p.price);
+    const prices = priceData.prices.map((p) => p.price);
     let minPrice = Math.min(...prices);
     let maxPrice = Math.max(...prices);
 
@@ -1310,16 +1647,19 @@ function HourlyStackedNarrativeChart({
     }
 
     // Find most recent data point with messages
-    const mostRecent = chartDataWithPrice.slice().reverse().find(item => (item as any).totalMessages > 0 && !(item as any).isEmpty);
+    const mostRecent = chartDataWithPrice
+      .slice()
+      .reverse()
+      .find((item) => (item as any).totalMessages > 0 && !(item as any).isEmpty);
     if (!mostRecent) return null;
     const mr = mostRecent as Record<string, any>;
     return {
-      label: mr.time || mr.hour || '',
+      label: mr.time || mr.hour || "",
       totalMessages: mr.totalMessages || 0,
       price: mr.price ?? null,
       volumePercent: mr.volumePercent || 0,
       segments: extractSegmentsFromDataPoint(mr),
-      isEmpty: mr.isEmpty
+      isEmpty: mr.isEmpty,
     };
   }, [hoveredData, chartDataWithPrice]);
 
@@ -1340,7 +1680,7 @@ function HourlyStackedNarrativeChart({
         price: payload.price ?? null,
         volumePercent: payload.volumePercent || 0,
         segments: extractSegmentsFromDataPoint(payload),
-        isEmpty: payload.isEmpty
+        isEmpty: payload.isEmpty,
       });
     }
   }, []);
@@ -1352,7 +1692,7 @@ function HourlyStackedNarrativeChart({
   // Determine if we should fall back to live AI analysis
   // For "Today" view, always show the 24-hour skeleton even with no data
   // For "24H" view, fall back to live AI if no data
-  const shouldFallbackToLive = !historyLoading && timeRange === '24H' && !hasAnyData;
+  const shouldFallbackToLive = !historyLoading && timeRange === "24H" && !hasAnyData;
 
   // If no hourly data exists for 24H view, fall back to live AI analysis (same as 1H/6H views)
   if (shouldFallbackToLive) {
@@ -1362,202 +1702,309 @@ function HourlyStackedNarrativeChart({
     return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
   }
   if (error) {
-    return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+    return (
+      <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-sm">Failed to load narrative history. Please try again.</p>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
-      </div>;
+      </div>
+    );
   }
-  return <div className="w-full overflow-x-clip">
+  return (
+    <div className="w-full overflow-x-clip">
       {/* Main chart area with fixed height - wider on mobile via negative margins */}
-
-    
-       {/*  <div className="h-[380px] md:h-[520px] -mx-4 px-0 md:mx-0 md:px-0">   */}
-
-        
+      {/*  <div className="h-[380px] md:h-[520px] -mx-4 px-0 md:mx-0 md:px-0">   */}
       <div className="w-full overflow-x-clip">
         <div
           className="
             h-[380px] md:h-[520px]
-            w-[130vw] -mx-[15vw]
+            w-[120vw] -mx-[15vw]
             md:w-full md:mx-0
           "
         >
-
-        
-        {/* Header - Collapsible */}
-        <Collapsible defaultOpen={false} className="mb-2">
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-end p-1 cursor-pointer rounded transition-colors bg-[#292929]/0">
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-2">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <div>
+          {/* Header - Collapsible */}
+          <Collapsible defaultOpen={false} className="mb-2">
+            <CollapsibleTrigger asChild>
+              <div className="flex items-center justify-end p-1 cursor-pointer rounded transition-colors bg-[#292929]/0">
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+              </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Hourly Narrative Breakdown</span>
+                      <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">independent</span>
+                      <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
+                        {historyData?.data.length || 0} snapshots
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                      {totalMessages > 0 && (
+                        <span className="flex items-center gap-1">
+                          <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total
+                          messages
+                        </span>
+                      )}
+                      <span>
+                        {timeRange === "1D" ? "Today" : "Last 24h"} • each bar shows that hour's top narratives
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {timeRange === "1D" && (
+                    <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
+                  )}
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Hourly Narrative Breakdown</span>
-                    <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">
-                      independent
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
-                      {historyData?.data.length || 0} snapshots
-                    </span>
+                    <DollarSign
+                      className="h-4 w-4"
+                      style={{
+                        color: showPriceOverlay ? priceLineColor : "hsl(var(--muted-foreground))",
+                      }}
+                    />
+                    <span className="text-xs text-muted-foreground">Price</span>
+                    <Switch
+                      checked={showPriceOverlay}
+                      onCheckedChange={setShowPriceOverlay}
+                      style={{
+                        backgroundColor: showPriceOverlay ? priceLineColor : undefined,
+                      }}
+                    />
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                    {totalMessages > 0 && <span className="flex items-center gap-1">
-                        <span className="font-semibold text-primary">{totalMessages.toLocaleString()}</span> total messages
-                      </span>}
-                    <span>{timeRange === '1D' ? 'Today' : 'Last 24h'} • each bar shows that hour's top narratives</span>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => refetch()}
+                    disabled={isFetching}
+                    className="h-8 px-3 text-xs"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
+                    {isFetching ? "Refreshing..." : "Refresh"}
+                  </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                {timeRange === '1D' && <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />}
-                <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" style={{
-                  color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))'
-                }} />
-                  <span className="text-xs text-muted-foreground">Price</span>
-                  <Switch checked={showPriceOverlay} onCheckedChange={setShowPriceOverlay} style={{
-                  backgroundColor: showPriceOverlay ? priceLineColor : undefined
-                }} />
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="h-8 px-3 text-xs">
-                  <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-                  {isFetching ? 'Refreshing...' : 'Refresh'}
-                </Button>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+            </CollapsibleContent>
+          </Collapsible>
 
-        {/* Main content: Side Panel + Chart */}
-        <div className="flex md:gap-4 h-[calc(100%-60px)]">
-          {/* Left Side Panel - Only on desktop */}
-          {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
-          
-          {/* Chart - Takes remaining space */}
-          <div className="flex-1 min-w-0 pl-[43px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartDataWithPrice} margin={{
-              top: 10,
-              right: showPriceOverlay ? 50 : 15,
-              left: 5,
-              bottom: 10
-            }} barCategoryGap={0} barGap={0} onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
-                <XAxis dataKey="time" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} interval={is5MinView ? 11 : 0} tick={({
-                x,
-                y,
-                payload
-              }: {
-                x: number;
-                y: number;
-                payload: {
-                  index: number;
-                  value: string;
-                };
-              }) => {
-                if (is5MinView) {
-                  const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
-                  if (!item?.isHourStart) return null;
-                }
-                return <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
-                        {payload.value}
-                      </text>;
-              }} />
-                <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={barDomain as [number, number | string]} />
-                {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={priceDomain as [number, number]} />}
-                {/* Cursor line shows on hover - tooltip content hidden as side panel handles data display */}
-                <Tooltip content={() => null} cursor={{
-                stroke: 'hsl(var(--muted-foreground))',
-                strokeWidth: 1,
-                strokeOpacity: 0.5
-              }} />
-                {Array.from({
-                length: MAX_SEGMENTS
-              }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
-                    {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} />)}
-                  </Bar>)}
-                {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke={priceLineColor} strokeWidth={2} dot={false} activeDot={{
-                fill: priceLineColor,
-                strokeWidth: 2,
-                stroke: "#fff",
-                r: 5
-              }} connectNulls />}
-                {showPriceOverlay && is5MinView && priceData?.previousClose && <ReferenceLine yAxisId="right" y={priceData.previousClose} stroke="hsl(215 20% 65% / 0.5)" strokeDasharray="2 3" strokeWidth={1} />}
-              </ComposedChart>
-            </ResponsiveContainer>
+          {/* Main content: Side Panel + Chart */}
+          <div className="flex md:gap-4 h-[calc(100%-60px)]">
+            {/* Left Side Panel - Only on desktop */}
+            {!isMobileDevice && (
+              <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />
+            )}
+
+            {/* Chart - Takes remaining space */}
+            <div className="flex-1 min-w-0 pl-[43px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart
+                  data={chartDataWithPrice}
+                  margin={{
+                    top: 10,
+                    right: showPriceOverlay ? 50 : 15,
+                    left: 5,
+                    bottom: 10,
+                  }}
+                  barCategoryGap={0}
+                  barGap={0}
+                  onMouseMove={handleChartMouseMove}
+                  onMouseLeave={handleChartMouseLeave}
+                >
+                  <XAxis
+                    dataKey="time"
+                    stroke="hsl(215 20% 55%)"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    interval={is5MinView ? 11 : 0}
+                    tick={({
+                      x,
+                      y,
+                      payload,
+                    }: {
+                      x: number;
+                      y: number;
+                      payload: {
+                        index: number;
+                        value: string;
+                      };
+                    }) => {
+                      if (is5MinView) {
+                        const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
+                        if (!item?.isHourStart) return null;
+                      }
+                      return (
+                        <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                          {payload.value}
+                        </text>
+                      );
+                    }}
+                  />
+                  <YAxis
+                    yAxisId="left"
+                    stroke="hsl(215 20% 55%)"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    width={10}
+                    tick={false}
+                    domain={barDomain as [number, number | string]}
+                  />
+                  {showPriceOverlay && (
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke={priceLineColor}
+                      fontSize={11}
+                      tickLine={false}
+                      axisLine={false}
+                      width={10}
+                      tick={false}
+                      domain={priceDomain as [number, number]}
+                    />
+                  )}
+                  {/* Cursor line shows on hover - tooltip content hidden as side panel handles data display */}
+                  <Tooltip
+                    content={() => null}
+                    cursor={{
+                      stroke: "hsl(var(--muted-foreground))",
+                      strokeWidth: 1,
+                      strokeOpacity: 0.5,
+                    }}
+                  />
+                  {Array.from({
+                    length: MAX_SEGMENTS,
+                  }).map((_, idx) => (
+                    <Bar
+                      key={`segment${idx}`}
+                      yAxisId="left"
+                      dataKey={`segment${idx}`}
+                      stackId="narratives"
+                      shape={(props: any) => (
+                        <WideBarShape
+                          {...props}
+                          is5MinView={is5MinView}
+                          activeHour={activeHour}
+                          radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                        />
+                      )}
+                      activeBar={false}
+                    >
+                      {chartDataWithPrice.map((entry, entryIdx) => (
+                        <Cell
+                          key={`cell-${entryIdx}`}
+                          fill={
+                            SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] ||
+                            SENTIMENT_COLORS.neutral
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  ))}
+                  {showPriceOverlay && (
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="price"
+                      stroke={priceLineColor}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{
+                        fill: priceLineColor,
+                        strokeWidth: 2,
+                        stroke: "#fff",
+                        r: 5,
+                      }}
+                      connectNulls
+                    />
+                  )}
+                  {showPriceOverlay && is5MinView && priceData?.previousClose && (
+                    <ReferenceLine
+                      yAxisId="right"
+                      y={priceData.previousClose}
+                      stroke="hsl(215 20% 65% / 0.5)"
+                      strokeDasharray="2 3"
+                      strokeWidth={1}
+                    />
+                  )}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-        </div> {/* wide mobile container */}
-      </div>   {/* overflow-x-clip */}
-      
+        </div>{" "}
+        {/* wide mobile container */}
+      </div>{" "}
+      {/* overflow-x-clip */}
       {/* Mobile Side Panel - Only on mobile for Today view */}
-      {is5MinView && isMobileDevice && <motion.div initial={{
-      opacity: 0,
-      y: 20
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} transition={{
-      duration: 0.3,
-      ease: "easeOut"
-    }}>
-          <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
-        </motion.div>}
-    </div>;
+      {is5MinView && isMobileDevice && (
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.3,
+            ease: "easeOut",
+          }}
+        >
+          <NarrativeSidePanel
+            data={panelData}
+            priceColor={priceLineColor}
+            isHovering={hoveredData !== null}
+            isMobile={true}
+          />
+        </motion.div>
+      )}
+    </div>
+  );
 }
 
 // Horizontal bar chart for 1H/6H
-function HorizontalNarrativeChart({
-  symbol,
-  timeRange
-}: {
-  symbol: string;
-  timeRange: TimeRange;
-}) {
-  const {
-    data,
-    isLoading,
-    error,
-    forceRefresh,
-    isFetching
-  } = useNarrativeAnalysis(symbol, timeRange);
+function HorizontalNarrativeChart({ symbol, timeRange }: { symbol: string; timeRange: TimeRange }) {
+  const { data, isLoading, error, forceRefresh, isFetching } = useNarrativeAnalysis(symbol, timeRange);
   const chartData = useMemo(() => {
     if (!data?.narratives || data.narratives.length === 0) {
       return [];
     }
     return data.narratives.map((narrative: Narrative, index: number) => ({
       ...narrative,
-      fill: getSentimentColor(narrative.sentiment, index)
+      fill: getSentimentColor(narrative.sentiment, index),
     }));
   }, [data]);
   if (isLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
   }
   if (error) {
-    return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+    return (
+      <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <AlertCircle className="h-8 w-8 text-destructive" />
         <p className="text-sm">Failed to analyze narratives. Please try again.</p>
         <Button variant="outline" size="sm" onClick={forceRefresh}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
-      </div>;
+      </div>
+    );
   }
   if (chartData.length === 0) {
-    return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
+    return (
+      <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
         <Sparkles className="h-8 w-8" />
         <p className="text-sm">No narratives found for {symbol}. Try a different time range.</p>
-      </div>;
+      </div>
+    );
   }
-  return <div className="h-[480px] w-full">
+  return (
+    <div className="h-[480px] w-full">
       {/* Prominent metadata header */}
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
         <div className="flex items-center gap-3">
@@ -1565,76 +2012,105 @@ function HorizontalNarrativeChart({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">AI Narrative Analysis</span>
-              {data?.cached && <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs">cached</span>}
-              {data?.aggregated && <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
+              {data?.cached && (
+                <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-xs">cached</span>
+              )}
+              {data?.aggregated && (
+                <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
                   {data.snapshotCount} snapshots
-                </span>}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-              {data?.messageCount && data.messageCount > 0 && <span className="flex items-center gap-1">
-                  <span className="font-semibold text-primary">{data.messageCount.toLocaleString()}</span> messages analyzed
-                </span>}
-              {data?.timestamp && <span className="flex items-center gap-1">
+              {data?.messageCount && data.messageCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <span className="font-semibold text-primary">{data.messageCount.toLocaleString()}</span> messages
+                  analyzed
+                </span>
+              )}
+              {data?.timestamp && (
+                <span className="flex items-center gap-1">
                   Updated: {new Date(data.timestamp).toLocaleTimeString()}
-                </span>}
+                </span>
+              )}
             </div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={forceRefresh} disabled={isFetching} className="h-8 px-3 text-xs">
-          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-          {isFetching ? 'Refreshing...' : 'Refresh'}
+          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
+          {isFetching ? "Refreshing..." : "Refresh"}
         </Button>
       </div>
-      
+
       <ResponsiveContainer width="100%" height="90%">
-        <BarChart data={chartData} layout="vertical" margin={{
-        top: 10,
-        right: 30,
-        left: 20,
-        bottom: 10
-      }}>
+        <BarChart
+          data={chartData}
+          layout="vertical"
+          margin={{
+            top: 10,
+            right: 30,
+            left: 20,
+            bottom: 10,
+          }}
+        >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(217 33% 17%)" horizontal={false} />
           <XAxis type="number" stroke="hsl(215 20% 55%)" fontSize={12} tickLine={false} axisLine={false} />
-          <YAxis type="category" dataKey="name" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={220} tick={({
-          x,
-          y,
-          payload
-        }) => <g transform={`translate(${x},${y})`}>
+          <YAxis
+            type="category"
+            dataKey="name"
+            stroke="hsl(215 20% 55%)"
+            fontSize={11}
+            tickLine={false}
+            axisLine={false}
+            width={220}
+            tick={({ x, y, payload }) => (
+              <g transform={`translate(${x},${y})`}>
                 <text x={-5} y={0} dy={4} textAnchor="end" fill="hsl(210 40% 98%)" fontSize={11}>
                   {payload.value}
                 </text>
-              </g>} />
-          <Tooltip contentStyle={{
-          backgroundColor: "hsl(222 47% 8%)",
-          border: "1px solid hsl(217 33% 17%)",
-          borderRadius: "8px",
-          boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)"
-        }} labelStyle={{
-          color: "hsl(210 40% 98%)"
-        }} formatter={(value: number, name: string, props: any) => [<div key="tooltip" className="flex flex-col gap-1">
+              </g>
+            )}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "hsl(222 47% 8%)",
+              border: "1px solid hsl(217 33% 17%)",
+              borderRadius: "8px",
+              boxShadow: "0 4px 24px -4px hsl(0 0% 0% / 0.3)",
+            }}
+            labelStyle={{
+              color: "hsl(210 40% 98%)",
+            }}
+            formatter={(value: number, name: string, props: any) => [
+              <div key="tooltip" className="flex flex-col gap-1">
                 <span className="font-semibold">{value} mentions</span>
-                <span className={`text-xs px-2 py-0.5 rounded border inline-block w-fit ${getSentimentBadge(props.payload.sentiment)}`}>
+                <span
+                  className={`text-xs px-2 py-0.5 rounded border inline-block w-fit ${getSentimentBadge(props.payload.sentiment)}`}
+                >
                   {props.payload.sentiment}
                 </span>
-              </div>, ""]} />
+              </div>,
+              "",
+            ]}
+          />
           <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={40}>
-            {chartData.map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
+            {chartData.map((entry: any, index: number) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
+            ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>;
+    </div>
+  );
 }
-export function NarrativeChart({
-  symbol,
-  timeRange = '24H'
-}: NarrativeChartProps) {
+export function NarrativeChart({ symbol, timeRange = "24H" }: NarrativeChartProps) {
   // Use time series stacked bar chart for 7D and 30D
-  if (timeRange === '7D' || timeRange === '30D') {
+  if (timeRange === "7D" || timeRange === "30D") {
     return <TimeSeriesNarrativeChart symbol={symbol} timeRange={timeRange} />;
   }
 
   // Use hourly stacked bar chart for 1D and 24H
-  if (timeRange === '1D' || timeRange === '24H') {
+  if (timeRange === "1D" || timeRange === "24H") {
     return <HourlyStackedNarrativeChart symbol={symbol} timeRange={timeRange} />;
   }
 
