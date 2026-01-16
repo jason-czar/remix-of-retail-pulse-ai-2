@@ -121,67 +121,24 @@ function WideBarShape(props: any) {
     }
     // Expand width to cover 12 slots
     const expandedWidth = width * SLOTS_PER_HOUR;
-    return (
-      <g>
-        <Rectangle 
-          x={x} 
-          y={y} 
-          width={expandedWidth} 
-          height={height} 
-          fill={fill} 
-          fillOpacity={opacity} 
-          stroke={fill}
-          strokeOpacity={isHourActive ? 0.7 : 0.45}
-          strokeWidth={1}
-          radius={radius} 
-          style={glassStyle} 
-        />
+    return <g>
+        <Rectangle x={x} y={y} width={expandedWidth} height={height} fill={fill} fillOpacity={opacity} stroke={fill} strokeOpacity={isHourActive ? 0.7 : 0.45} strokeWidth={1} radius={radius} style={glassStyle} />
         {/* Inner glass highlight */}
-        <Rectangle
-          x={x + 1}
-          y={y + 1}
-          width={Math.max(0, expandedWidth - 2)}
-          height={Math.max(0, Math.min(height * 0.12, 5))}
-          fill="white"
-          fillOpacity={0.1}
-          radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
-          style={{ pointerEvents: 'none' }}
-        />
-      </g>
-    );
+        <Rectangle x={x + 1} y={y + 1} width={Math.max(0, expandedWidth - 2)} height={Math.max(0, Math.min(height * 0.12, 5))} fill="white" fillOpacity={0.1} radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined} style={{
+        pointerEvents: 'none'
+      }} />
+      </g>;
   }
-
   if (height <= 0) return null;
 
   // Normal rendering for non-5-min views with glass effect
-  return (
-    <g>
-      <Rectangle 
-        x={x} 
-        y={y} 
-        width={width} 
-        height={height} 
-        fill={fill} 
-        fillOpacity={opacity} 
-        stroke={fill}
-        strokeOpacity={isHourActive ? 0.7 : 0.45}
-        strokeWidth={1}
-        radius={radius} 
-        style={glassStyle} 
-      />
+  return <g>
+      <Rectangle x={x} y={y} width={width} height={height} fill={fill} fillOpacity={opacity} stroke={fill} strokeOpacity={isHourActive ? 0.7 : 0.45} strokeWidth={1} radius={radius} style={glassStyle} />
       {/* Inner glass highlight */}
-      <Rectangle
-        x={x + 1}
-        y={y + 1}
-        width={Math.max(0, width - 2)}
-        height={Math.max(0, Math.min(height * 0.12, 5))}
-        fill="white"
-        fillOpacity={0.1}
-        radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
-        style={{ pointerEvents: 'none' }}
-      />
-    </g>
-  );
+      <Rectangle x={x + 1} y={y + 1} width={Math.max(0, width - 2)} height={Math.max(0, Math.min(height * 0.12, 5))} fill="white" fillOpacity={0.1} radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined} style={{
+      pointerEvents: 'none'
+    }} />
+    </g>;
 }
 
 // Custom tooltip for hourly price data on 7D/30D views
@@ -357,10 +314,7 @@ function NarrativeSidePanel({
   isMobile?: boolean;
 }) {
   // Base classes differ between mobile (condensed with margins) and desktop (fixed width)
-  const containerClasses = isMobile 
-    ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card" 
-    : "w-[312px] flex-shrink-0 p-5 glass-card";
-  
+  const containerClasses = isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card" : "w-[312px] flex-shrink-0 p-5 glass-card";
   if (!data) {
     return <div className={cn(isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[312px] flex-shrink-0 p-5", "glass-card flex items-center justify-center")}>
         <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>
@@ -407,7 +361,6 @@ function NarrativeSidePanel({
           </div>}
       </div>;
   }
-  
   return <div className={cn(containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
       {/* Time/Date Header */}
       <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
@@ -807,7 +760,7 @@ function TimeSeriesNarrativeChart({
   const handleChartMouseMove = useCallback((state: any) => {
     if (state?.activePayload?.[0]?.payload) {
       const payload = state.activePayload[0].payload;
-      
+
       // Trigger haptic feedback when moving to a new data point on mobile
       const currentLabel = payload.date || payload.dateLabel || payload.timestamp?.toString() || '';
       if (isMobileDevice && currentLabel !== prevDataPointRef.current) {
@@ -984,15 +937,18 @@ function TimeSeriesNarrativeChart({
       </div>
       
       {/* Mobile Side Panel - Only on mobile */}
-      {isMobileDevice && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
+      {isMobileDevice && <motion.div initial={{
+      opacity: 0,
+      y: 20
+    }} animate={{
+      opacity: 1,
+      y: 0
+    }} transition={{
+      duration: 0.3,
+      ease: "easeOut"
+    }}>
           <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
-        </motion.div>
-      )}
+        </motion.div>}
     </div>;
 }
 
@@ -1473,7 +1429,7 @@ function HourlyStackedNarrativeChart({
           {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
           
           {/* Chart - Takes remaining space */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 pl-[43px]">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartDataWithPrice} margin={{
               top: 10,
@@ -1504,10 +1460,11 @@ function HourlyStackedNarrativeChart({
                 <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={barDomain as [number, number | string]} />
                 {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={priceDomain as [number, number]} />}
                 {/* Cursor line shows on hover - tooltip content hidden as side panel handles data display */}
-                <Tooltip 
-                  content={() => null}
-                  cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeOpacity: 0.5 }}
-                />
+                <Tooltip content={() => null} cursor={{
+                stroke: 'hsl(var(--muted-foreground))',
+                strokeWidth: 1,
+                strokeOpacity: 0.5
+              }} />
                 {Array.from({
                 length: MAX_SEGMENTS
               }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
@@ -1527,15 +1484,18 @@ function HourlyStackedNarrativeChart({
       </div>
       
       {/* Mobile Side Panel - Only on mobile for Today view */}
-      {is5MinView && isMobileDevice && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
+      {is5MinView && isMobileDevice && <motion.div initial={{
+      opacity: 0,
+      y: 20
+    }} animate={{
+      opacity: 1,
+      y: 0
+    }} transition={{
+      duration: 0.3,
+      ease: "easeOut"
+    }}>
           <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
-        </motion.div>
-      )}
+        </motion.div>}
     </div>;
 }
 
