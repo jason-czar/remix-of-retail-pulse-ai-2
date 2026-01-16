@@ -155,9 +155,9 @@ function EmotionSidePanel({
     prevDataRef.current = data;
   }, [data, isMobile]);
   
-  // Base classes differ between mobile (full width) and desktop (fixed width)
+  // Base classes differ between mobile (condensed with margins) and desktop (fixed width)
   const containerClasses = isMobile 
-    ? "w-full p-4 glass-card"
+    ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card"
     : "w-[280px] flex-shrink-0 p-5 glass-card";
   
   // Animation classes for mobile panel updates
@@ -168,10 +168,10 @@ function EmotionSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        isMobile ? "w-full p-4" : "w-[280px] flex-shrink-0 p-5",
+        isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[280px] flex-shrink-0 p-5",
         "glass-card flex items-center justify-center"
       )}>
-        <p className="text-base text-muted-foreground text-center">
+        <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>
           No data available
         </p>
       </div>
@@ -182,14 +182,14 @@ function EmotionSidePanel({
   if (data.isEmpty) {
     return (
       <div key={animationKey} className={cn(containerClasses, animationClasses, isMobile && "animate-[pulse_0.3s_ease-out]")}>
-        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
-        <p className="text-base text-muted-foreground mt-2">
+        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
+        <p className={cn("text-muted-foreground", isMobile ? "text-sm mt-1" : "text-base mt-2")}>
           No data available yet
         </p>
         {data.price != null && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50 dark:border-white/10">
-            <DollarSign className="h-5 w-5" style={{ color: priceColor }} />
-            <span className="font-bold text-xl" style={{ color: priceColor }}>${data.price.toFixed(2)}</span>
+          <div className={cn("flex items-center gap-2 border-t border-border/50 dark:border-white/10", isMobile ? "mt-2 pt-2" : "mt-3 pt-3")}>
+            <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{ color: priceColor }} />
+            <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{ color: priceColor }}>${data.price.toFixed(2)}</span>
           </div>
         )}
         {!isHovering && !isMobile && (
@@ -214,14 +214,15 @@ function EmotionSidePanel({
       )}
     >
       {/* Time Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
         <span className={cn(
-          "font-semibold text-lg text-card-foreground",
+          "font-semibold text-card-foreground",
+          isMobile ? "text-base" : "text-lg",
           isMobile && "transition-opacity duration-150"
         )}>{data.label}</span>
         {data.totalScore > 0 && (
-          <div className="flex items-center gap-1.5 text-sm">
-            <Brain className="h-4 w-4 text-primary" />
+          <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
+            <Brain className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-primary")} />
             <span className="text-primary font-medium">{data.totalScore}</span>
           </div>
         )}
@@ -230,11 +231,12 @@ function EmotionSidePanel({
       {/* Stock Price */}
       {data.price != null && (
         <div className={cn(
-          "flex items-center gap-2 mb-3 pb-3 border-b border-border/50 dark:border-white/10",
+          "flex items-center gap-2 border-b border-border/50 dark:border-white/10",
+          isMobile ? "mb-2 pb-2" : "mb-3 pb-3",
           isMobile && "transition-all duration-150"
         )}>
-          <DollarSign className="h-5 w-5" style={{ color: priceColor }} />
-          <span className="font-bold text-xl" style={{ color: priceColor }}>
+          <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{ color: priceColor }} />
+          <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{ color: priceColor }}>
             ${data.price.toFixed(2)}
           </span>
         </div>
@@ -242,8 +244,8 @@ function EmotionSidePanel({
       
       {/* Intensity Bar */}
       {data.intensityPercent > 0 && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between text-sm mb-1">
+        <div className={isMobile ? "mb-2" : "mb-3"}>
+          <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
             <span className="text-muted-foreground">Relative Intensity</span>
             <span className={cn(
               "font-medium transition-colors duration-150",
@@ -253,7 +255,7 @@ function EmotionSidePanel({
               {data.intensityPercent.toFixed(0)}%
             </span>
           </div>
-          <div className="h-2 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
             <div 
               className={cn(
                 "h-full rounded-full transition-all duration-200",
@@ -268,19 +270,20 @@ function EmotionSidePanel({
       
       {/* Emotion Breakdown */}
       {data.emotions.length > 0 && (
-        <div className="space-y-2.5 pt-3 border-t border-border/50 dark:border-white/10">
-          <div className="text-sm text-muted-foreground mb-2">Signal Emotions:</div>
+        <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
+          <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Signal Emotions:</div>
           {data.emotions.map((emotion, idx) => (
             <div key={idx} className={cn(
-              "flex items-center gap-2.5 text-base",
+              "flex items-center",
+              isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base",
               isMobile && "transition-all duration-150"
             )}>
               <div 
-                className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-colors duration-150" 
+                className={cn("rounded-sm flex-shrink-0 transition-colors duration-150", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} 
                 style={{ backgroundColor: emotion.color }}
               />
-              <span className="text-card-foreground flex-1 truncate text-sm">{emotion.name}</span>
-              <span className="text-muted-foreground text-sm font-medium">{emotion.score}</span>
+              <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>{emotion.name}</span>
+              <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>{emotion.score}</span>
             </div>
           ))}
         </div>
