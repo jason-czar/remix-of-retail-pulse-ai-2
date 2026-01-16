@@ -150,6 +150,7 @@ export default function SymbolPage() {
     </div>
   </div>
 </div>
+        </div>
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
         <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
