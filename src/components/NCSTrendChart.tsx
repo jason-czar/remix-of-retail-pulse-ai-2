@@ -222,7 +222,7 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
   const interpretation = getInterpretation(stats);
   
   return (
-    <Card className="p-3 md:p-4 glass-card mt-4 border-border/30">
+    <Card className="p-3 md:p-4 glass-card h-full flex flex-col border-border/30">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

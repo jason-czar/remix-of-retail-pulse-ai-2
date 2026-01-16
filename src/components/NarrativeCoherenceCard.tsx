@@ -167,7 +167,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
   const confidenceLevel = getConfidenceLevel(snapshot.data_confidence.score);
   
   return (
-    <Card className="p-4 md:p-5 glass-card">
+    <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="font-semibold text-sm md:text-base">Narrative Coherence</h3>
@@ -284,8 +284,8 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
         </div>
       )}
       
-      {/* Confidence drivers */}
-      <div className="pt-3 mt-3 border-t border-border/30">
+      {/* Confidence drivers - pushed to bottom */}
+      <div className="pt-3 mt-auto border-t border-border/30">
         <ConfidenceDrivers drivers={snapshot.data_confidence.drivers} />
       </div>
     </Card>
