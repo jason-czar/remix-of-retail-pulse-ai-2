@@ -1393,7 +1393,7 @@ function HourlyStackedNarrativeChart({
           <CollapsibleTrigger asChild>
             <div className="flex items-center justify-end p-1 cursor-pointer rounded transition-colors bg-[#292929]/0">
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-
+            </div>
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-2">
             <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
@@ -1495,9 +1495,8 @@ function HourlyStackedNarrativeChart({
             </ResponsiveContainer>
           </div>
         </div>
-          </div> {/* wide mobile container */}
-</div>   {/* overflow-x-clip */}
-      </div>
+        </div> {/* wide mobile container */}
+      </div>   {/* overflow-x-clip */}
       
       {/* Mobile Side Panel - Only on mobile for Today view */}
       {is5MinView && isMobileDevice && <motion.div initial={{
