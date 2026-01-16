@@ -355,11 +355,14 @@ function NarrativeSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
-  // Base classes differ between mobile (full width) and desktop (fixed width)
-  const containerClasses = isMobile ? "w-full p-4 glass-card" : "w-[312px] flex-shrink-0 p-5 glass-card";
+  // Base classes differ between mobile (condensed with margins) and desktop (fixed width)
+  const containerClasses = isMobile 
+    ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card" 
+    : "w-[312px] flex-shrink-0 p-5 glass-card";
+  
   if (!data) {
-    return <div className={cn(isMobile ? "w-full p-4" : "w-[312px] flex-shrink-0 p-5", "glass-card flex items-center justify-center")}>
-        <p className="text-base text-muted-foreground text-center">
+    return <div className={cn(isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[312px] flex-shrink-0 p-5", "glass-card flex items-center justify-center")}>
+        <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>
           No data available
         </p>
       </div>;
@@ -368,14 +371,14 @@ function NarrativeSidePanel({
   // Handle gap placeholders
   if (data.isGap) {
     return <div className={cn(containerClasses, "!border-dashed !border-amber-500/50")}>
-        <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle className="h-5 w-5 text-amber-500" />
-          <span className="font-semibold text-lg text-amber-500">{data.label}</span>
+        <div className={cn("flex items-center gap-2", isMobile ? "mb-2" : "mb-3")}>
+          <AlertTriangle className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-amber-500")} />
+          <span className={cn("font-semibold text-amber-500", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
         </div>
-        <p className="text-base text-muted-foreground">
+        <p className={cn("text-muted-foreground", isMobile ? "text-sm" : "text-base")}>
           No data available for this date.
         </p>
-        <p className="text-sm text-amber-500/80 mt-3">
+        <p className={cn("text-amber-500/80", isMobile ? "text-xs mt-2" : "text-sm mt-3")}>
           Click "Fill Gaps" to fetch historical data.
         </p>
       </div>;
@@ -384,15 +387,15 @@ function NarrativeSidePanel({
   // Handle empty hours
   if (data.isEmpty) {
     return <div className={containerClasses}>
-        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
-        <p className="text-base text-muted-foreground mt-2">
+        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
+        <p className={cn("text-muted-foreground", isMobile ? "text-sm mt-1" : "text-base mt-2")}>
           No data available yet
         </p>
-        {data.price != null && <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50 dark:border-white/10">
-            <DollarSign className="h-5 w-5" style={{
+        {data.price != null && <div className={cn("flex items-center gap-2 border-t border-border/50 dark:border-white/10", isMobile ? "mt-2 pt-2" : "mt-3 pt-3")}>
+            <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{
           color: priceColor
         }} />
-            <span className="font-bold text-xl" style={{
+            <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{
           color: priceColor
         }}>${data.price.toFixed(2)}</span>
           </div>}
@@ -403,23 +406,24 @@ function NarrativeSidePanel({
           </div>}
       </div>;
   }
+  
   return <div className={cn(containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
       {/* Time/Date Header */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
-        {data.totalMessages > 0 && <div className="flex items-center gap-1.5 text-sm">
-            <MessageSquare className="h-4 w-4 text-amber-400" />
+      <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
+        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
+        {data.totalMessages > 0 && <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
+            <MessageSquare className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-amber-400")} />
             <span className="text-amber-400 font-medium">{data.totalMessages.toLocaleString()}</span>
-            <span className="text-muted-foreground text-xs">msgs</span>
+            <span className={cn("text-muted-foreground", isMobile ? "text-[10px]" : "text-xs")}>msgs</span>
           </div>}
       </div>
       
       {/* Stock Price */}
-      {data.price != null && <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/50 dark:border-white/10">
-          <DollarSign className="h-5 w-5" style={{
+      {data.price != null && <div className={cn("flex items-center gap-2 border-b border-border/50 dark:border-white/10", isMobile ? "mb-2 pb-2" : "mb-3 pb-3")}>
+          <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{
         color: priceColor
       }} />
-          <span className="font-bold text-xl" style={{
+          <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{
         color: priceColor
       }}>
             ${data.price.toFixed(2)}
@@ -427,14 +431,14 @@ function NarrativeSidePanel({
         </div>}
       
       {/* Relative Activity Bar */}
-      {data.volumePercent > 0 && <div className="mb-3">
-          <div className="flex items-center justify-between text-sm mb-1">
+      {data.volumePercent > 0 && <div className={isMobile ? "mb-2" : "mb-3"}>
+          <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
             <span className="text-muted-foreground">Relative Activity</span>
             <span className={cn("font-medium", data.volumePercent >= 80 ? "text-amber-400" : data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground")}>
               {data.volumePercent.toFixed(0)}%
             </span>
           </div>
-          <div className="h-2 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
+          <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
             <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 80 ? "bg-amber-400" : data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{
           width: `${Math.min(data.volumePercent, 100)}%`
         }} />
@@ -442,15 +446,15 @@ function NarrativeSidePanel({
         </div>}
       
       {/* Top Narratives */}
-      {data.segments.length > 0 && <div className="space-y-2.5 pt-3 border-t border-border/50 dark:border-white/10">
-          <div className="text-sm text-muted-foreground mb-2">Top Narratives:</div>
-          {data.segments.map((segment, idx) => <div key={idx} className="flex items-center gap-2.5 text-base">
-              <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{
+      {data.segments.length > 0 && <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
+          <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Top Narratives:</div>
+          {data.segments.map((segment, idx) => <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
+              <div className={cn("rounded-sm flex-shrink-0", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} style={{
           backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral
         }} />
-              <span className="text-card-foreground flex-1 truncate text-sm">{segment.name}</span>
-              <span className="text-muted-foreground text-sm font-medium">{segment.count}</span>
-              <span className={cn("text-[10px] px-1.5 py-0.5 rounded border", getSentimentBadge(segment.sentiment))}>
+              <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>{segment.name}</span>
+              <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>{segment.count}</span>
+              <span className={cn("px-1.5 py-0.5 rounded border", isMobile ? "text-[8px]" : "text-[10px]", getSentimentBadge(segment.sentiment))}>
                 {segment.sentiment}
               </span>
             </div>)}
