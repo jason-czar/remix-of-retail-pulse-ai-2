@@ -5,7 +5,7 @@ const Tabs = TabsPrimitive.Root;
 const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>>(({
   className,
   ...props
-}, ref) => <TabsPrimitive.List ref={ref} className={cn("inline-flex h-11 items-center justify-center rounded-full p-1.5 text-muted-foreground bg-muted/60 backdrop-blur-xl border border-border/40 shadow-sm dark:glass-tabs-list py-[26px] px-[12px]", className)} {...props} />);
+}, ref) => <TabsPrimitive.List ref={ref} className={cn("inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground bg-muted/60 backdrop-blur-xl border border-border/40 shadow-sm dark:glass-tabs-list px-[12px] py-0 rounded-sm", className)} {...props} />);
 TabsList.displayName = TabsPrimitive.List.displayName;
 const TabsTrigger = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Trigger>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>>(({
   className,
