@@ -1373,13 +1373,27 @@ function HourlyStackedNarrativeChart({
   }
   return <div className="w-full overflow-x-clip">
       {/* Main chart area with fixed height - wider on mobile via negative margins */}
-      <div className="h-[380px] md:h-[520px] -mx-4 px-0 md:mx-0 md:px-0">
+
+    
+       {/*  <div className="h-[380px] md:h-[520px] -mx-4 px-0 md:mx-0 md:px-0">   */}
+
+        
+      <div className="w-full overflow-x-clip">
+        <div
+          className="
+            h-[380px] md:h-[520px]
+            w-[130vw] -mx-[15vw]
+            md:w-full md:mx-0
+          "
+        >
+
+        
         {/* Header - Collapsible */}
         <Collapsible defaultOpen={false} className="mb-2">
           <CollapsibleTrigger asChild>
             <div className="flex items-center justify-end p-1 cursor-pointer rounded transition-colors bg-[#292929]/0">
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-            </div>
+
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-2">
             <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
@@ -1481,6 +1495,8 @@ function HourlyStackedNarrativeChart({
             </ResponsiveContainer>
           </div>
         </div>
+          </div> {/* wide mobile container */}
+</div>   {/* overflow-x-clip */}
       </div>
       
       {/* Mobile Side Panel - Only on mobile for Today view */}
