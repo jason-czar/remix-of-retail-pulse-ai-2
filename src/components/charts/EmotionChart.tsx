@@ -11,7 +11,7 @@ import {
   Rectangle,
   ReferenceLine
 } from "recharts";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEmotionAnalysis, EmotionScore } from "@/hooks/use-emotion-analysis";
@@ -130,7 +130,7 @@ interface EmotionSidePanelData {
   isEmpty?: boolean;
 }
 
-// Persistent side panel component with liquid glass styling
+// Persistent side panel component with liquid glass styling and animation
 function EmotionSidePanel({ 
   data, 
   priceColor,
@@ -142,10 +142,27 @@ function EmotionSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
+  // Track data changes for animation
+  const [animationKey, setAnimationKey] = useState(0);
+  const prevDataRef = useRef<EmotionSidePanelData | null>(null);
+  
+  useEffect(() => {
+    // Trigger animation when data changes on mobile
+    if (isMobile && data && prevDataRef.current !== data && data.label !== prevDataRef.current?.label) {
+      setAnimationKey(prev => prev + 1);
+    }
+    prevDataRef.current = data;
+  }, [data, isMobile]);
+  
   // Base classes differ between mobile (full width) and desktop (fixed width)
   const containerClasses = isMobile 
     ? "w-full p-4 glass-card"
     : "w-[280px] flex-shrink-0 p-5 glass-card";
+  
+  // Animation classes for mobile panel updates
+  const animationClasses = isMobile 
+    ? "transition-all duration-200 ease-out" 
+    : "";
 
   if (!data) {
     return (
@@ -163,7 +180,7 @@ function EmotionSidePanel({
   // Handle empty slots
   if (data.isEmpty) {
     return (
-      <div className={containerClasses}>
+      <div key={animationKey} className={cn(containerClasses, animationClasses, isMobile && "animate-[pulse_0.3s_ease-out]")}>
         <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
         <p className="text-base text-muted-foreground mt-2">
           No data available yet
@@ -186,13 +203,21 @@ function EmotionSidePanel({
   }
   
   return (
-    <div className={cn(
-      containerClasses,
-      !isHovering && !isMobile && "ring-1 ring-primary/20"
-    )}>
+    <div 
+      key={animationKey}
+      className={cn(
+        containerClasses,
+        animationClasses,
+        !isHovering && !isMobile && "ring-1 ring-primary/20",
+        isMobile && isHovering && "animate-[pulse_0.3s_ease-out]"
+      )}
+    >
       {/* Time Header */}
       <div className="flex items-center justify-between mb-3">
-        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
+        <span className={cn(
+          "font-semibold text-lg text-card-foreground",
+          isMobile && "transition-opacity duration-150"
+        )}>{data.label}</span>
         {data.totalScore > 0 && (
           <div className="flex items-center gap-1.5 text-sm">
             <Brain className="h-4 w-4 text-primary" />
@@ -203,7 +228,10 @@ function EmotionSidePanel({
       
       {/* Stock Price */}
       {data.price != null && (
-        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/50 dark:border-white/10">
+        <div className={cn(
+          "flex items-center gap-2 mb-3 pb-3 border-b border-border/50 dark:border-white/10",
+          isMobile && "transition-all duration-150"
+        )}>
           <DollarSign className="h-5 w-5" style={{ color: priceColor }} />
           <span className="font-bold text-xl" style={{ color: priceColor }}>
             ${data.price.toFixed(2)}
@@ -217,7 +245,7 @@ function EmotionSidePanel({
           <div className="flex items-center justify-between text-sm mb-1">
             <span className="text-muted-foreground">Relative Intensity</span>
             <span className={cn(
-              "font-medium",
+              "font-medium transition-colors duration-150",
               data.intensityPercent >= 80 ? "text-amber-400" : 
               data.intensityPercent >= 50 ? "text-primary" : "text-muted-foreground"
             )}>
@@ -227,7 +255,7 @@ function EmotionSidePanel({
           <div className="h-2 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
             <div 
               className={cn(
-                "h-full rounded-full transition-all",
+                "h-full rounded-full transition-all duration-200",
                 data.intensityPercent >= 80 ? "bg-amber-400" : 
                 data.intensityPercent >= 50 ? "bg-primary" : "bg-muted-foreground/50"
               )}
@@ -242,9 +270,12 @@ function EmotionSidePanel({
         <div className="space-y-2.5 pt-3 border-t border-border/50 dark:border-white/10">
           <div className="text-sm text-muted-foreground mb-2">Signal Emotions:</div>
           {data.emotions.map((emotion, idx) => (
-            <div key={idx} className="flex items-center gap-2.5 text-base">
+            <div key={idx} className={cn(
+              "flex items-center gap-2.5 text-base",
+              isMobile && "transition-all duration-150"
+            )}>
               <div 
-                className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
+                className="w-3.5 h-3.5 rounded-sm flex-shrink-0 transition-colors duration-150" 
                 style={{ backgroundColor: emotion.color }}
               />
               <span className="text-card-foreground flex-1 truncate text-sm">{emotion.name}</span>
@@ -854,16 +885,12 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                     domain={priceDomain as [number, number]}
                   />
                 )}
-                {/* Tooltip hidden on desktop (side panel handles it), visible on mobile */}
-                <Tooltip 
-                  content={({ active, payload, label }) => {
-                    // On desktop, hide tooltip (side panel handles it)
-                    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-                      return null;
-                    }
-                    return <EmotionStackedTooltip active={active} payload={payload} label={label} priceColor={priceLineColor} />;
-                  }}
-                />
+                {/* Tooltip disabled - side panel handles data display on all screen sizes */}
+                {!isMobileDevice && (
+                  <Tooltip 
+                    content={() => null}
+                  />
+                )}
                 
                 {/* Stacked emotion bars */}
                 {DEFAULT_SIGNAL_EMOTIONS.map((emotion, idx) => (
