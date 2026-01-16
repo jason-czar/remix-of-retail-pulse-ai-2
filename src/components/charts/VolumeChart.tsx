@@ -36,15 +36,21 @@ const PRICE_DOWN_COLOR = "#FF6A26"; // Orange-red when below previous close
 const SLOTS_PER_HOUR = 12; // 5-minute slots per hour
 
 // Custom bar shape that expands width to cover full hour in 5-min view
+// Uses liquid glass effect with stroke border and inner highlight
 function WideBarShape(props: any) {
   const { x, y, width, height, fill, radius, payload, is5MinView, activeHour } = props;
   
-  // Determine opacity: 50% when this hour is hovered, 25% otherwise
+  // Determine opacity: 55% when this hour is hovered, 35% otherwise (liquid glass style)
   const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
-  const opacity = isHourActive ? 0.5 : 0.25;
+  const baseOpacity = 0.35;
+  const hoverOpacity = 0.55;
+  const opacity = isHourActive ? hoverOpacity : baseOpacity;
   
-  // Smooth transition style for opacity changes
-  const transitionStyle = { transition: 'fill-opacity 0.2s ease-out' };
+  // Glass effect styles with smooth transitions
+  const glassStyle = { 
+    transition: 'fill-opacity 0.2s ease-out, stroke-opacity 0.2s ease-out',
+    filter: 'saturate(1.05)'
+  };
   
   if (is5MinView) {
     if (!payload?.isHourStart || height === 0) {
@@ -52,30 +58,64 @@ function WideBarShape(props: any) {
     }
     const expandedWidth = width * SLOTS_PER_HOUR;
     return (
-      <Rectangle
-        x={x}
-        y={y}
-        width={expandedWidth}
-        height={height}
-        fill={fill}
-        fillOpacity={opacity}
-        radius={radius}
-        style={transitionStyle}
-      />
+      <g>
+        <Rectangle
+          x={x}
+          y={y}
+          width={expandedWidth}
+          height={height}
+          fill={fill}
+          fillOpacity={opacity}
+          stroke={fill}
+          strokeOpacity={isHourActive ? 0.7 : 0.45}
+          strokeWidth={1}
+          radius={radius}
+          style={glassStyle}
+        />
+        {/* Inner glass highlight */}
+        <Rectangle
+          x={x + 1}
+          y={y + 1}
+          width={Math.max(0, expandedWidth - 2)}
+          height={Math.max(0, Math.min(height * 0.12, 5))}
+          fill="white"
+          fillOpacity={0.1}
+          radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
+          style={{ pointerEvents: 'none' }}
+        />
+      </g>
     );
   }
   
+  if (height <= 0) return null;
+  
   return (
-    <Rectangle
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      fill={fill}
-      fillOpacity={opacity}
-      radius={radius}
-      style={transitionStyle}
-    />
+    <g>
+      <Rectangle
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        fillOpacity={opacity}
+        stroke={fill}
+        strokeOpacity={isHourActive ? 0.7 : 0.45}
+        strokeWidth={1}
+        radius={radius}
+        style={glassStyle}
+      />
+      {/* Inner glass highlight */}
+      <Rectangle
+        x={x + 1}
+        y={y + 1}
+        width={Math.max(0, width - 2)}
+        height={Math.max(0, Math.min(height * 0.12, 5))}
+        fill="white"
+        fillOpacity={0.1}
+        radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
+        style={{ pointerEvents: 'none' }}
+      />
+    </g>
   );
 }
 

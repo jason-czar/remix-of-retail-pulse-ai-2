@@ -267,11 +267,42 @@ function EmotionSidePanel({
 }
 
 // Custom bar shape that expands to fill hour width for 5-min view
+// Uses liquid glass effect with stroke border and inner highlight
 const WideBarShape = (props: any) => {
   const { x, y, width, height, fill, is5MinView, activeHour, radius } = props;
   
+  // Glass effect styles
+  const glassStyle = { 
+    transition: 'fill-opacity 0.2s ease-out, stroke-opacity 0.2s ease-out',
+    filter: 'saturate(1.05)'
+  };
+  
   if (!is5MinView || height <= 0) {
-    return <Rectangle {...props} fillOpacity={0.3} />;
+    // Non-5min view with glass effect
+    if (height <= 0) return null;
+    return (
+      <g>
+        <Rectangle 
+          {...props} 
+          fillOpacity={0.35}
+          stroke={fill}
+          strokeOpacity={0.45}
+          strokeWidth={1}
+          style={glassStyle}
+        />
+        {/* Inner glass highlight */}
+        <Rectangle
+          x={x + 1}
+          y={y + 1}
+          width={Math.max(0, width - 2)}
+          height={Math.max(0, Math.min(height * 0.12, 5))}
+          fill="white"
+          fillOpacity={0.1}
+          radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
+          style={{ pointerEvents: 'none' }}
+        />
+      </g>
+    );
   }
   
   const hourWidth = width * 12; // 12 5-minute slots per hour
@@ -280,18 +311,37 @@ const WideBarShape = (props: any) => {
   
   const hourIndex = Math.floor(props.index / 12);
   const isHovered = activeHour === hourIndex;
-  const opacity = isHovered ? 0.5 : 0.3;
+  const baseOpacity = 0.35;
+  const hoverOpacity = 0.55;
+  const opacity = isHovered ? hoverOpacity : baseOpacity;
   
   return (
-    <Rectangle
-      x={newX}
-      y={y}
-      width={hourWidth}
-      height={height}
-      fill={fill}
-      fillOpacity={opacity}
-      radius={radius}
-    />
+    <g>
+      <Rectangle
+        x={newX}
+        y={y}
+        width={hourWidth}
+        height={height}
+        fill={fill}
+        fillOpacity={opacity}
+        stroke={fill}
+        strokeOpacity={isHovered ? 0.7 : 0.45}
+        strokeWidth={1}
+        radius={radius}
+        style={glassStyle}
+      />
+      {/* Inner glass highlight */}
+      <Rectangle
+        x={newX + 1}
+        y={y + 1}
+        width={Math.max(0, hourWidth - 2)}
+        height={Math.max(0, Math.min(height * 0.12, 5))}
+        fill="white"
+        fillOpacity={0.1}
+        radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined}
+        style={{ pointerEvents: 'none' }}
+      />
+    </g>
   );
 };
 

@@ -11,6 +11,7 @@ import {
   ReferenceLine,
   Legend,
   Area,
+  Rectangle,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -200,7 +201,43 @@ export function SentimentHistoryChart({
                 dataKey="volume"
                 fill="url(#volumeGradient)"
                 radius={[2, 2, 0, 0]}
-                opacity={0.6}
+                shape={(props: any) => {
+                  const { x, y, width, height, fill, radius } = props;
+                  if (!height || height <= 0) return null;
+                  
+                  const glassStyle = { 
+                    transition: 'fill-opacity 0.2s ease-out',
+                    filter: 'saturate(1.05)'
+                  };
+                  
+                  return (
+                    <g>
+                      <Rectangle
+                        x={x}
+                        y={y}
+                        width={width}
+                        height={height}
+                        fill={fill}
+                        fillOpacity={0.45}
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeOpacity={0.3}
+                        strokeWidth={0.5}
+                        radius={radius}
+                        style={glassStyle}
+                      />
+                      <Rectangle
+                        x={x + 1}
+                        y={y + 1}
+                        width={Math.max(0, width - 2)}
+                        height={Math.max(0, Math.min(height * 0.15, 4))}
+                        fill="white"
+                        fillOpacity={0.08}
+                        radius={[2, 2, 0, 0]}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    </g>
+                  );
+                }}
               />
             )}
 
