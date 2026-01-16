@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
 import { Separator } from "@/components/ui/separator";
 import { Footer } from "@/components/layout/Footer";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -149,9 +148,7 @@ export default function SymbolPage() {
         {/* AI Summary - Reduced padding on mobile */}
         <Card className="p-4 md:p-6 mb-6 glass-card">
           <div className="flex items-start gap-3 md:gap-4">
-            <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
-              {lensSummaryLoading ? <Loader2 className="h-4 w-4 md:h-5 md:w-5 text-primary animate-spin" /> : <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-primary" />}
-            </div>
+            
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
@@ -186,11 +183,9 @@ export default function SymbolPage() {
               </TabsList>
             </div>
             {/* Desktop: TimeRangeSelector in header row */}
-            {activeTab !== 'momentum' && (
-              <div className="hidden md:block">
+            {activeTab !== 'momentum' && <div className="hidden md:block">
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-              </div>
-            )}
+              </div>}
           </div>
 
           <TabsContent value="narratives">
@@ -224,11 +219,9 @@ export default function SymbolPage() {
           </TabsContent>
 
           {/* Mobile: TimeRangeSelector below chart, centered and fit to content */}
-          {activeTab !== 'momentum' && (
-            <div className="flex justify-center mt-4 md:hidden">
+          {activeTab !== 'momentum' && <div className="flex justify-center mt-4 md:hidden">
               <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-            </div>
-          )}
+            </div>}
         </Tabs>
 
         {/* Decision Readiness Dashboard */}
