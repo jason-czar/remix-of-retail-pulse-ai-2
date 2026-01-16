@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
 
 const patterns = [
   {
@@ -50,24 +51,26 @@ export function IntelligencePatternsSection() {
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-14">
+          <ScrollReveal className="text-center mb-14">
             <h2 className="text-2xl md:text-3xl font-display mb-4">
               Intelligence Patterns
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Real strategic scenarios where retail sentiment intelligence revealed actionable foresight before market reaction.
             </p>
-          </div>
+          </ScrollReveal>
 
           {/* Cards Grid */}
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
+          <StaggerContainer className="grid md:grid-cols-2 gap-6 mb-12" staggerDelay={0.1}>
             {patterns.map((pattern) => (
-              <PatternCard key={pattern.title} {...pattern} />
+              <StaggerItem key={pattern.title}>
+                <PatternCard {...pattern} />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerContainer>
 
           {/* CTA */}
-          <div className="text-center">
+          <ScrollReveal className="text-center" delay={0.4}>
             <Link 
               to="/learn-more#intelligence-patterns" 
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
@@ -75,7 +78,7 @@ export function IntelligencePatternsSection() {
               Explore full intelligence patterns
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>
