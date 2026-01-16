@@ -104,7 +104,7 @@ export default function SymbolPage() {
       
       <main className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
-        <div className="flex flex-row items-start justify-between gap-4 mt-4 md:mt-6 mb-10 md:mb-14">
+        <div className="flex flex-row items-start justify-between gap-4 mt-4 mb-10 md:mb-14 md:mt-[57px]">
           {/* Left side: Symbol info */}
           <div className="flex-1">
             {statsLoading ? <div className="space-y-2">
