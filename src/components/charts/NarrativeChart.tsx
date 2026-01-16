@@ -1490,7 +1490,11 @@ function HourlyStackedNarrativeChart({
               }} />
                 <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={barDomain as [number, number | string]} />
                 {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={priceDomain as [number, number]} />}
-                {/* Tooltip hidden completely - side panel shows data on both desktop and mobile */}
+                {/* Cursor line shows on hover - tooltip content hidden as side panel handles data display */}
+                <Tooltip 
+                  content={() => null}
+                  cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeOpacity: 0.5 }}
+                />
                 {Array.from({
                 length: MAX_SEGMENTS
               }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
