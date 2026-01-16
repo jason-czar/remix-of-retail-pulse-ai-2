@@ -203,31 +203,31 @@ export default function SymbolPage() {
               transition={{ duration: 0.2, ease: "easeInOut" }}
             >
               <TabsContent value="narratives" forceMount={activeTab === 'narratives' ? true : undefined} className={activeTab !== 'narratives' ? 'hidden' : ''}>
-                <div className="-mx-8 md:mx-0">
+                <div className="-mx-4 md:mx-0">
                   <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
                 </div>
               </TabsContent>
 
               <TabsContent value="emotions" forceMount={activeTab === 'emotions' ? true : undefined} className={activeTab !== 'emotions' ? 'hidden' : ''}>
-                <div className="-mx-8 md:mx-0">
+                <div className="-mx-4 md:mx-0">
                   <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
                 </div>
               </TabsContent>
 
               <TabsContent value="sentiment" forceMount={activeTab === 'sentiment' ? true : undefined} className={activeTab !== 'sentiment' ? 'hidden' : ''}>
-                <div className="-mx-8 md:mx-0">
+                <div className="-mx-4 md:mx-0">
                   <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
                 </div>
               </TabsContent>
 
               <TabsContent value="momentum" forceMount={activeTab === 'momentum' ? true : undefined} className={activeTab !== 'momentum' ? 'hidden' : ''}>
-                <div className="-mx-8 md:mx-0">
+                <div className="-mx-4 md:mx-0">
                   <EmotionMomentumChart symbol={symbol} days={7} />
                 </div>
               </TabsContent>
 
               <TabsContent value="volume" forceMount={activeTab === 'volume' ? true : undefined} className={activeTab !== 'volume' ? 'hidden' : ''}>
-                <div className="-mx-8 md:mx-0">
+                <div className="-mx-4 md:mx-0">
                   <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
                 </div>
               </TabsContent>
