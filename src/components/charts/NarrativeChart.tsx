@@ -1,4 +1,5 @@
 import { ComposedChart, BarChart, Bar, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine } from "recharts";
+import { motion } from "framer-motion";
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { triggerHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -983,7 +984,15 @@ function TimeSeriesNarrativeChart({
       </div>
       
       {/* Mobile Side Panel - Only on mobile */}
-      {isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />}
+      {isMobileDevice && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
+        </motion.div>
+      )}
     </div>;
 }
 
@@ -1518,7 +1527,15 @@ function HourlyStackedNarrativeChart({
       </div>
       
       {/* Mobile Side Panel - Only on mobile for Today view */}
-      {is5MinView && isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />}
+      {is5MinView && isMobileDevice && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
+        </motion.div>
+      )}
     </div>;
 }
 
