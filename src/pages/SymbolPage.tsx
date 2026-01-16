@@ -104,7 +104,7 @@ export default function SymbolPage() {
       
       <main className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mt-4 md:mt-6 mb-10 md:mb-14">
+        <div className="flex flex-row items-start justify-between gap-4 mt-4 md:mt-6 mb-10 md:mb-14">
           {/* Left side: Symbol info */}
           <div className="flex-1">
             {statsLoading ? <div className="space-y-2">
@@ -126,8 +126,8 @@ export default function SymbolPage() {
               </div>}
           </div>
 
-          {/* Right side: Action buttons */}
-          <div className="flex gap-2 overflow-x-auto lg:overflow-visible pb-1 pr-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pr-0 lg:flex-nowrap scrollbar-hide shrink-0">
+          {/* Right side: Action buttons - stacked on mobile, row on desktop */}
+          <div className="flex flex-col lg:flex-row gap-2 lg:overflow-visible shrink-0">
             <FillTodayGapsButton symbol={symbol} onComplete={() => {
             queryClient.invalidateQueries({
               queryKey: ['narrative-history', symbol]
