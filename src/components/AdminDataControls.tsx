@@ -85,6 +85,81 @@ function countWeekdays(startDate: string, endDate: string): { total: number; wee
   return { total: weekdays + weekends, weekdays, weekends };
 }
 
+// ============= Refresh Psychology Snapshot Component =============
+function RefreshPsychologySnapshot() {
+  const [symbol, setSymbol] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (!symbol.trim()) {
+      toast.error("Please enter a symbol");
+      return;
+    }
+
+    setIsRefreshing(true);
+    try {
+      const { error } = await supabase.functions.invoke("record-psychology-snapshot", {
+        body: {
+          symbol: symbol.toUpperCase(),
+          periodType: "hourly",
+          forceRun: true
+        }
+      });
+      if (error) throw error;
+      toast.success(`Psychology snapshot refreshed for ${symbol.toUpperCase()}`);
+      setSymbol("");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Refresh failed: ${message}`);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <RefreshCw className="h-4 w-4 text-primary" />
+        <h3 className="font-medium">Refresh Psychology Snapshot</h3>
+      </div>
+      
+      <p className="text-sm text-muted-foreground">
+        Manually trigger an hourly psychology snapshot for a specific symbol. This forces a fresh analysis regardless of cache.
+      </p>
+
+      <div className="flex gap-3 items-end">
+        <div className="space-y-2 flex-1 max-w-xs">
+          <Label>Symbol</Label>
+          <Input
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+            placeholder="AAPL"
+            className="bg-secondary/50 uppercase"
+            onKeyDown={(e) => e.key === "Enter" && handleRefresh()}
+          />
+        </div>
+        <Button
+          onClick={handleRefresh}
+          disabled={isRefreshing || !symbol.trim()}
+          variant="outline"
+        >
+          {isRefreshing ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Refreshing...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh Snapshot
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDataControls() {
   const { user } = useAuth();
   const isAdmin = user?.email === "admin@czar.ing";
@@ -605,6 +680,11 @@ export default function AdminDataControls() {
           </div>
         )}
       </div>
+
+      <Separator className="my-6" />
+
+      {/* Section: Refresh Psychology Snapshot */}
+      <RefreshPsychologySnapshot />
 
       <Separator className="my-6" />
 
