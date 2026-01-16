@@ -242,7 +242,7 @@ export default function SymbolPage() {
         </Tabs>
 
         {/* Decision Readiness Dashboard */}
-        <div className="mb-8 md:mb-12 px-[3px] mt-[49px]">
+        <div className="mb-8 md:mb-12 px-[3px] mt-[65px]">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
           <DecisionReadinessDashboard symbol={symbol} />
         </div>
