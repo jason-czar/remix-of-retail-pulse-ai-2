@@ -360,12 +360,64 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
                   ];
                 }}
               />
-              <Bar dataKey="velocity" radius={[0, 4, 4, 0]} maxBarSize={30}>
+              <Bar 
+                dataKey="velocity" 
+                radius={[0, 4, 4, 0]} 
+                maxBarSize={30}
+                shape={(props: any) => {
+                  const { x, y, width, height, fill, radius } = props;
+                  const entry = velocityData[props.index];
+                  const isExtreme = entry?.isExtreme;
+                  const baseOpacity = 0.45;
+                  const extremeOpacity = 0.75;
+                  const opacity = isExtreme ? extremeOpacity : baseOpacity;
+                  
+                  if (width === 0 || height === 0) return null;
+                  
+                  // Handle negative width (bars going left from 0)
+                  const actualX = width < 0 ? x + width : x;
+                  const actualWidth = Math.abs(width);
+                  
+                  const glassStyle = { 
+                    transition: 'fill-opacity 0.2s ease-out',
+                    filter: 'saturate(1.05)'
+                  };
+                  
+                  return (
+                    <g>
+                      <rect
+                        x={actualX}
+                        y={y}
+                        width={actualWidth}
+                        height={height}
+                        fill={fill}
+                        fillOpacity={opacity}
+                        stroke={fill}
+                        strokeOpacity={isExtreme ? 0.8 : 0.5}
+                        strokeWidth={1}
+                        rx={4}
+                        ry={4}
+                        style={glassStyle}
+                      />
+                      {/* Inner glass highlight */}
+                      <rect
+                        x={actualX}
+                        y={y + 1}
+                        width={actualWidth}
+                        height={Math.max(0, Math.min(height * 0.2, 4))}
+                        fill="white"
+                        fillOpacity={0.08}
+                        rx={4}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    </g>
+                  );
+                }}
+              >
                 {velocityData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={getVelocityColor(entry.velocity)}
-                    opacity={entry.isExtreme ? 1 : 0.7}
                   />
                 ))}
               </Bar>
