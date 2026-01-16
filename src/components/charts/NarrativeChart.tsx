@@ -1720,10 +1720,11 @@ function HourlyStackedNarrativeChart({ symbol, timeRange }: { symbol: string; ti
       <div className="w-full overflow-x-clip">
         <div
           className="
-            h-[380px] md:h-[520px]
-            w-[120vw] -mx-[15vw]
-            md:w-full md:mx-0
-          "
+      h-[380px] md:h-[520px]
+      w-[120vw]
+      -ml-[6vw] -mr-[14vw]
+      md:w-full md:mx-0
+    "
         >
           {/* Header - Collapsible */}
           <Collapsible defaultOpen={false} className="mb-2">
