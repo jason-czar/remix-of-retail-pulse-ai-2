@@ -1449,7 +1449,7 @@ w-[120vw]
             {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
 
             {/* Chart - Takes remaining space */}
-            <div className="flex-1 min-w-0 pl-[23px]">
+            <div className="flex-1 min-w-0 pl-[27px] pr-[10px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={chartDataWithPrice} margin={{
                 top: 10,
