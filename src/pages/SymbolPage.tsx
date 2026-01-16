@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
@@ -188,35 +189,45 @@ export default function SymbolPage() {
               </div>}
           </div>
 
-          <TabsContent value="narratives">
-            <div className="-mx-4 md:mx-0">
-              <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </div>
-          </TabsContent>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+            >
+              <TabsContent value="narratives" forceMount={activeTab === 'narratives' ? true : undefined} className={activeTab !== 'narratives' ? 'hidden' : ''}>
+                <div className="-mx-4 md:mx-0">
+                  <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                </div>
+              </TabsContent>
 
-          <TabsContent value="emotions">
-            <div className="-mx-4 md:mx-0">
-              <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </div>
-          </TabsContent>
+              <TabsContent value="emotions" forceMount={activeTab === 'emotions' ? true : undefined} className={activeTab !== 'emotions' ? 'hidden' : ''}>
+                <div className="-mx-4 md:mx-0">
+                  <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                </div>
+              </TabsContent>
 
-          <TabsContent value="sentiment">
-            <div className="-mx-4 md:mx-0">
-              <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </div>
-          </TabsContent>
+              <TabsContent value="sentiment" forceMount={activeTab === 'sentiment' ? true : undefined} className={activeTab !== 'sentiment' ? 'hidden' : ''}>
+                <div className="-mx-4 md:mx-0">
+                  <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                </div>
+              </TabsContent>
 
-          <TabsContent value="momentum">
-            <div className="-mx-4 md:mx-0">
-              <EmotionMomentumChart symbol={symbol} days={7} />
-            </div>
-          </TabsContent>
+              <TabsContent value="momentum" forceMount={activeTab === 'momentum' ? true : undefined} className={activeTab !== 'momentum' ? 'hidden' : ''}>
+                <div className="-mx-4 md:mx-0">
+                  <EmotionMomentumChart symbol={symbol} days={7} />
+                </div>
+              </TabsContent>
 
-          <TabsContent value="volume">
-            <div className="-mx-4 md:mx-0">
-              <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </div>
-          </TabsContent>
+              <TabsContent value="volume" forceMount={activeTab === 'volume' ? true : undefined} className={activeTab !== 'volume' ? 'hidden' : ''}>
+                <div className="-mx-4 md:mx-0">
+                  <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                </div>
+              </TabsContent>
+            </motion.div>
+          </AnimatePresence>
 
           {/* Mobile: TimeRangeSelector below chart, centered and fit to content */}
           {activeTab !== 'momentum' && <div className="flex justify-center mt-4 md:hidden">
