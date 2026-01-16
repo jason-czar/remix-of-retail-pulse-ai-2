@@ -163,31 +163,31 @@ export default function SymbolPage() {
           </div>
 
           <TabsContent value="narratives">
-            <div className="-mx-2 md:mx-0 md:px-0">
+            <div className="-mx-4 md:mx-0">
               <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="emotions">
-            <div className="px-2 md:px-4">
+            <div className="-mx-4 md:mx-0">
               <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="sentiment">
-            <div className="px-2 md:px-4">
+            <div className="-mx-4 md:mx-0">
               <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
 
           <TabsContent value="momentum">
-            <div className="px-2 md:px-4">
+            <div className="-mx-4 md:mx-0">
               <EmotionMomentumChart symbol={symbol} days={7} />
             </div>
           </TabsContent>
 
           <TabsContent value="volume">
-            <div className="px-2 md:px-4">
+            <div className="-mx-4 md:mx-0">
               <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
             </div>
           </TabsContent>
