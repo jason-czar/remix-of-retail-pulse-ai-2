@@ -242,7 +242,7 @@ export default function SymbolPage() {
         </Tabs>
 
         {/* Decision Readiness Dashboard */}
-        <div className="mb-8 md:mb-12 px-[3px] mt-[65px]">
+        <div className="mb-8 md:mb-12 mt-[65px] px-0">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
           <DecisionReadinessDashboard symbol={symbol} />
         </div>
@@ -250,10 +250,8 @@ export default function SymbolPage() {
         {/* Narrative Coherence Score */}
         <div className="mb-8 md:mb-12">
           <h3 className="text-lg font-semibold mb-4">Narrative Coherence</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            <NarrativeCoherenceCard symbol={symbol} />
-            <NCSTrendChart symbol={symbol} />
-          </div>
+          <NarrativeCoherenceCard symbol={symbol} />
+          <NCSTrendChart symbol={symbol} />
         </div>
 
         {/* Historical Episode Matcher */}
