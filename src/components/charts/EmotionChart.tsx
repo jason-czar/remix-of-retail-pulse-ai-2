@@ -11,6 +11,7 @@ import {
   Rectangle,
   ReferenceLine
 } from "recharts";
+import { motion } from "framer-motion";
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { triggerHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -960,12 +961,18 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       
       {/* Mobile Side Panel - Only on mobile for Today view */}
       {is1DView && isMobileDevice && (
-        <EmotionSidePanel 
-          data={panelData} 
-          priceColor={priceLineColor}
-          isHovering={hoveredData !== null}
-          isMobile={true}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <EmotionSidePanel 
+            data={panelData} 
+            priceColor={priceLineColor}
+            isHovering={hoveredData !== null}
+            isMobile={true}
+          />
+        </motion.div>
       )}
     </div>
   );
