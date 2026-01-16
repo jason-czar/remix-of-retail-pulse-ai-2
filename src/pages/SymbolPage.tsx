@@ -149,7 +149,7 @@ export default function SymbolPage() {
         <Card className="p-4 md:p-6 mb-6 glass-card">
           <div className="flex items-start gap-3 md:gap-4">
             
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 pl-[2px]">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
                 <Badge variant="outline" className="text-[10px] md:text-xs">
