@@ -865,8 +865,8 @@ function TimeSeriesNarrativeChart({
         {/* Left Side Panel - Always visible on desktop */}
         <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />
         
-        {/* Chart - Takes remaining space */}
-        <div className="flex-1 min-w-0">
+        {/* Chart - Takes remaining space with glass styling */}
+        <div className="flex-1 min-w-0 glass-chart">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={showPriceOverlay && priceLineData.length > 0 ? priceLineData : chartDataWithPrice} margin={{
             top: 10,
@@ -1397,8 +1397,8 @@ function HourlyStackedNarrativeChart({
           {/* Left Side Panel - Only on desktop */}
           {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
           
-          {/* Chart - Takes remaining space */}
-          <div className="flex-1 min-w-0">
+          {/* Chart - Takes remaining space with glass styling */}
+          <div className="flex-1 min-w-0 glass-chart">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartDataWithPrice} margin={{
               top: 10,
@@ -1534,7 +1534,9 @@ function HorizontalNarrativeChart({
         </Button>
       </div>
       
-      <ResponsiveContainer width="100%" height="90%">
+      {/* Chart with glass styling */}
+      <div className="glass-chart h-[calc(100%-80px)]">
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical" margin={{
         top: 10,
         right: 30,
@@ -1570,6 +1572,7 @@ function HorizontalNarrativeChart({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>;
 }
 export function NarrativeChart({

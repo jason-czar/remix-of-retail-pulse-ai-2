@@ -285,8 +285,8 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
         </div>
       )}
 
-      {/* Charts */}
-      <div className="h-[350px]">
+      {/* Charts with glass styling */}
+      <div className="h-[350px] glass-chart">
         {viewMode === "velocity" ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart 
