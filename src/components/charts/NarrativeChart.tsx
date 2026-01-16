@@ -1090,8 +1090,8 @@ function HourlyStackedNarrativeChart({
         const hour = START_HOUR + Math.floor(slotIdx / SLOTS_PER_HOUR);
         const isHourStart = slotIdx % SLOTS_PER_HOUR === 0;
 
-        // Time label: show hour label at hour boundaries
-        const hourLabel = hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`;
+        // Time label: show hour label at hour boundaries (e.g., "8am", "12pm")
+        const hourLabel = hour === 0 ? "12am" : hour < 12 ? `${hour}am` : hour === 12 ? "12pm" : `${hour - 12}pm`;
 
         // Get the hour's narrative data (for tooltip on any slot within the hour)
         const hourNarr = hourlyNarratives.get(hour)!;
@@ -1464,8 +1464,8 @@ w-[120vw]
                     const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
                     if (!item?.isHourStart) return null;
                   }
-                  // Hide 7 AM label on mobile to prevent clipping
-                  if (isMobileDevice && payload.value === "7 AM") return null;
+                  // Hide 7am label on mobile to prevent clipping
+                  if (isMobileDevice && payload.value === "7am") return null;
                   return <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
                           {payload.value}
                         </text>;
