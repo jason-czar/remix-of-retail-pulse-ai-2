@@ -88,8 +88,8 @@ function SolutionCard({
 }) {
   return (
     <div className="glass-card p-6 hover:shadow-glow transition-all duration-300 group h-full">
-      <div className="flex items-start gap-4">
-        <div className="shrink-0 inline-flex p-3 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors">
+      <div className="flex flex-col md:flex-row md:items-start gap-4">
+        <div className="shrink-0 inline-flex p-3 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors w-fit">
           <Icon className="h-6 w-6 text-primary" />
         </div>
         <div>
