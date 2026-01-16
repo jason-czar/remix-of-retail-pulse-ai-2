@@ -127,7 +127,7 @@ export default function SymbolPage() {
           </div>
 
           {/* Right side: Action buttons */}
-          <div className="flex gap-2 overflow-x-auto lg:overflow-visible pb-1 pr-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pr-0 lg:flex-nowrap scrollbar-hide shrink-0">
+          <div className="flex gap-2 overflow-x-auto overflow-y-visible lg:overflow-visible pb-3 pr-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pr-0 lg:flex-nowrap scrollbar-hide shrink-0">
             <FillTodayGapsButton symbol={symbol} onComplete={() => {
             queryClient.invalidateQueries({
               queryKey: ['narrative-history', symbol]
@@ -142,7 +142,7 @@ export default function SymbolPage() {
         </div>
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
+        <div className="mb-4 -mx-4 px-4 pb-2 overflow-x-auto overflow-y-visible scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
