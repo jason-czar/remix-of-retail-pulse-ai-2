@@ -19,7 +19,6 @@ function cleanNarrativeIdSuffix(text: string): string {
   // Match trailing snake_case patterns that look like IDs (3+ words with underscores at the end)
   return text.replace(/\s+[a-z][a-z0-9]*(?:_[a-z0-9]+){2,}$/i, '').trim();
 }
-
 interface DecisionReadinessDashboardProps {
   symbol: string;
 }
@@ -479,7 +478,7 @@ function DashboardHeader({
   });
   return <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
-        <h2 className="text-lg font-semibold">Decision Readiness</h2>
+        
         <span className="text-xs text-muted-foreground flex items-center gap-1">
           <Clock className="h-3 w-3" />
           Updated {relativeTime}
