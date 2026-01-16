@@ -478,16 +478,11 @@ function DashboardHeader({
   });
   return <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
-        
         <span className="text-xs text-muted-foreground flex items-center gap-1">
           <Clock className="h-3 w-3" />
           Updated {relativeTime}
         </span>
       </div>
-      <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="flex items-center gap-2">
-        {isRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-        {isRefreshing ? "Refreshing..." : "Refresh"}
-      </Button>
     </div>;
 }
 
