@@ -1371,9 +1371,9 @@ function HourlyStackedNarrativeChart({
         </Button>
       </div>;
   }
-  return <div className="w-full">
-      {/* Main chart area with fixed height */}
-      <div className="h-[380px] md:h-[520px]">
+  return <div className="w-full overflow-x-clip">
+      {/* Main chart area with fixed height - wider on mobile via negative margins */}
+      <div className="h-[380px] md:h-[520px] -mx-4 px-0 md:mx-0 md:px-0">
         {/* Header - Collapsible */}
         <Collapsible defaultOpen={false} className="mb-2">
           <CollapsibleTrigger asChild>
