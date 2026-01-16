@@ -1335,6 +1335,9 @@ function HourlyStackedNarrativeChart({
     };
   }, [hoveredData, chartDataWithPrice]);
 
+  // Track previous hour for haptic feedback
+  const prevHourRef = useRef<number | null>(null);
+
   // Handle chart mouse events for side panel
   const handleChartMouseMove = useCallback((state: any) => {
     if (state?.activePayload?.[0]?.payload) {
@@ -1342,6 +1345,11 @@ function HourlyStackedNarrativeChart({
 
       // Update active hour for bar highlighting
       if (payload.hourIndex !== undefined) {
+        // Trigger haptic feedback when hour changes on mobile
+        if (isMobileDevice && prevHourRef.current !== payload.hourIndex) {
+          triggerHaptic('selection');
+        }
+        prevHourRef.current = payload.hourIndex;
         setActiveHour(payload.hourIndex);
       }
 
@@ -1355,7 +1363,7 @@ function HourlyStackedNarrativeChart({
         isEmpty: payload.isEmpty
       });
     }
-  }, []);
+  }, [isMobileDevice]);
   const handleChartMouseLeave = useCallback(() => {
     setActiveHour(null);
     setHoveredData(null);
