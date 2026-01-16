@@ -300,7 +300,7 @@ export default function ApiDocsPage() {
               API Documentation
             </h1>
             <p className="text-muted-foreground">
-              Integrate SentimentIQ data into your applications
+              Integrate Signals Street data into your applications
             </p>
           </div>
 

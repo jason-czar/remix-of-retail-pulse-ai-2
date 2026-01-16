@@ -39,7 +39,7 @@ export function FinalCTASection() {
                 </h2>
                 
                 <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-                  Join leading institutions using SentimentIQ to gain an edge in 
+                  Join leading institutions using Signals Street to gain an edge in 
                   understanding retail investor behavior and sentiment.
                 </p>
 
