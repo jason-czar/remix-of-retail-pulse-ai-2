@@ -1,5 +1,6 @@
 import { ComposedChart, BarChart, Bar, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine } from "recharts";
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState, useCallback, useRef } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
@@ -502,6 +503,7 @@ function TimeSeriesNarrativeChart({
   const [showWeekends, setShowWeekends] = useState(false);
   const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
   const isMobileDevice = useIsMobile();
+  const prevDataPointRef = useRef<string | null>(null);
   const days = timeRange === '7D' ? 7 : 30;
   const {
     data: historyData,
@@ -800,6 +802,13 @@ function TimeSeriesNarrativeChart({
   const handleChartMouseMove = useCallback((state: any) => {
     if (state?.activePayload?.[0]?.payload) {
       const payload = state.activePayload[0].payload;
+      
+      // Trigger haptic feedback when moving to a new data point on mobile
+      const currentLabel = payload.date || payload.dateLabel || payload.timestamp?.toString() || '';
+      if (isMobileDevice && currentLabel !== prevDataPointRef.current) {
+        triggerHaptic('selection');
+        prevDataPointRef.current = currentLabel;
+      }
 
       // For price line data, find corresponding bar data
       if (payload.dateLabel !== undefined) {
@@ -829,9 +838,10 @@ function TimeSeriesNarrativeChart({
         isGap: payload.isGap
       });
     }
-  }, [chartDataWithPrice]);
+  }, [chartDataWithPrice, isMobileDevice]);
   const handleChartMouseLeave = useCallback(() => {
     setHoveredData(null);
+    prevDataPointRef.current = null;
   }, []);
   if (isLoading) {
     return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
