@@ -29,11 +29,13 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
       <DialogContent 
         className={cn(
           "overflow-hidden p-0 gap-0",
-          // Liquid glass styling
-          "bg-white/92 dark:bg-[hsl(0_0%_20%/0.85)]",
-          "backdrop-blur-xl",
-          "border border-black/[0.08] dark:border-white/15",
-          "shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
+          // Light mode: clean white glass
+          "bg-white/95 backdrop-blur-xl",
+          "border border-black/[0.08]",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)]",
+          // Dark mode: dark glass
+          "dark:bg-[hsl(0_0%_18%/0.95)] dark:border-white/15",
+          "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
           "rounded-2xl"
         )}
       >
