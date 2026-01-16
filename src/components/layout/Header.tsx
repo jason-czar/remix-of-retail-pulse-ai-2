@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, BarChart3, Bell, Menu, Search, LogOut, Settings, Key } from "lucide-react";
+import { TrendingUp, BarChart3, Bell, Menu, Search, LogOut, Settings, Key, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -52,6 +52,9 @@ export function Header() {
               </Link>
               <Link to="/api-docs" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
                 API
+              </Link>
+              <Link to="/learn-more" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
+                Learn More
               </Link>
             </div>
           </nav>
@@ -137,6 +140,10 @@ export function Header() {
               </Link>
               <Link to="/api-docs" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all flex items-center gap-3 py-3 px-3 rounded-xl">
                 API Documentation
+              </Link>
+              <Link to="/learn-more" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all flex items-center gap-3 py-3 px-3 rounded-xl">
+                <BookOpen className="h-4 w-4" />
+                Learn More
               </Link>
               {user ? <div className="pt-4 mt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
                   <Link to="/settings" className="flex items-center gap-3 py-3 px-3 text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] rounded-xl transition-all">
