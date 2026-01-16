@@ -13,6 +13,13 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCircle2, XCircle, Clock, AlertTriangle, TrendingUp, TrendingDown, Minus, Shield, Target, Activity, Brain, Users, Rocket, RefreshCcw, RefreshCw, Loader2, Lightbulb, AlertCircle, Timer, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Clean narrative ID suffixes from text (e.g., "China tariff risk china_tariff_risk" -> "China tariff risk")
+function cleanNarrativeIdSuffix(text: string): string {
+  // Match trailing snake_case patterns that look like IDs (3+ words with underscores at the end)
+  return text.replace(/\s+[a-z][a-z0-9]*(?:_[a-z0-9]+){2,}$/i, '').trim();
+}
+
 interface DecisionReadinessDashboardProps {
   symbol: string;
 }
@@ -314,7 +321,7 @@ function LensReadinessCard({
                   </div>
                   <ul className="space-y-1">
                     {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[11px] text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-amber-500/50 before:rounded-full">
-                        {concern}
+                        {cleanNarrativeIdSuffix(concern)}
                       </li>)}
                   </ul>
                 </div>}
@@ -327,7 +334,7 @@ function LensReadinessCard({
                   </div>
                   <ul className="space-y-1">
                     {overlay.recommended_actions.slice(0, 4).map((action, idx) => <li key={idx} className="text-[11px] text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-primary/50 before:rounded-full">
-                        {action}
+                        {cleanNarrativeIdSuffix(action)}
                       </li>)}
                   </ul>
                 </div>}

@@ -1159,14 +1159,14 @@ CURRENT PERIOD OBSERVED STATE:
 Generate:
 1. DECISION OVERLAYS for each lens: earnings, ma, capital_allocation, leadership_change, strategic_pivot, product_launch, activist_risk, corporate_strategy
    - risk_score (0-100) - weighted by narrative persistence
-   - dominant_concerns (top 3 specific concerns - prefer structural narratives)
+   - dominant_concerns (top 3 specific concerns - prefer structural narratives). IMPORTANT: Write clean, human-readable sentences only. Do NOT append narrative IDs or internal identifiers to the text.
    - recommended_focus (top 3 areas to address)
-   - recommended_actions (3-5 specific actions - reference historical outcomes where available with confidence level)
+   - recommended_actions (3-5 specific actions - reference historical outcomes where available with confidence level). IMPORTANT: Write clean, human-readable sentences only. Do NOT append narrative IDs or internal identifiers to the text.
 
 2. DECISION READINESS for each lens:
    - readiness_score (0-100, 100 = market fully supportive) - penalize if only hourly data supports
-   - blocking_narratives (narrative IDs that resist this decision)
-   - supportive_narratives (narrative IDs that support)
+   - blocking_narratives (human-readable narrative labels, not IDs)
+   - supportive_narratives (human-readable narrative labels, not IDs)
    - recommended_timing: "proceed" | "delay" | "avoid"
    - recommended_delay (if delay, specify timeframe)
 
