@@ -12,6 +12,7 @@ import {
   ReferenceLine
 } from "recharts";
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { triggerHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEmotionAnalysis, EmotionScore } from "@/hooks/use-emotion-analysis";
@@ -679,6 +680,9 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
     };
   }, [hoveredData, chartDataWithPrice, extractEmotionsFromDataPoint, maxStackedValue]);
 
+  // Track previous data point for haptic feedback
+  const prevDataPointRef = useRef<string | null>(null);
+
   // Chart mouse handlers
   const handleChartMouseMove = useCallback((state: any) => {
     if (!state.activePayload?.[0]?.payload) {
@@ -686,6 +690,14 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
     }
     
     const payload = state.activePayload[0].payload;
+    
+    // Trigger haptic feedback when moving to a new data point on mobile
+    const currentLabel = payload.time || payload.timestamp?.toString() || '';
+    if (isMobileDevice && currentLabel !== prevDataPointRef.current) {
+      triggerHaptic('selection');
+      prevDataPointRef.current = currentLabel;
+    }
+    
     setActiveHour(payload.hourIndex);
     
     if (payload.isEmpty) {
@@ -711,11 +723,12 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       intensityPercent,
       emotions,
     });
-  }, [extractEmotionsFromDataPoint, maxStackedValue]);
+  }, [extractEmotionsFromDataPoint, maxStackedValue, isMobileDevice]);
 
   const handleChartMouseLeave = useCallback(() => {
     setHoveredData(null);
     setActiveHour(null);
+    prevDataPointRef.current = null;
   }, []);
 
   if (isLoading) {
