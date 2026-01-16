@@ -14,7 +14,7 @@ export function SolutionSection() {
               Our Solution
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              SentimentIQ transforms millions of retail investor conversations into 
+              Signals Street transforms millions of retail investor conversations into 
               actionable intelligence for institutional decision-makers.
             </p>
           </ScrollReveal>

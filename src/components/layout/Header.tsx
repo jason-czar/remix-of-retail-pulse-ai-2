@@ -33,8 +33,8 @@ export function Header() {
               
             </div>
             <span className="font-display text-xl">
-              <span className="text-gradient">Sentiment</span>
-              <span className="text-foreground font-semibold">IQ</span>
+              <span className="text-gradient">Signals</span>
+              <span className="text-foreground font-semibold">Street</span>
             </span>
           </Link>
 

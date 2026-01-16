@@ -134,7 +134,7 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    toast.success("Welcome to SentimentIQ!");
+    toast.success("Welcome to Signals Street!");
     navigate("/dashboard");
   };
 
