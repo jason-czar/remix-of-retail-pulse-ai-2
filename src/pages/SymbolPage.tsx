@@ -126,20 +126,30 @@ export default function SymbolPage() {
               </div>}
           </div>
 
-          {/* Right side: Action buttons */}
-          <div className="flex gap-2 overflow-x-auto lg:overflow-visible pb-1 pr-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pr-0 lg:flex-nowrap scrollbar-hide shrink-0">
-            <FillTodayGapsButton symbol={symbol} onComplete={() => {
-            queryClient.invalidateQueries({
-              queryKey: ['narrative-history', symbol]
-            });
-            queryClient.invalidateQueries({
-              queryKey: ['emotion-history', symbol]
-            });
-          }} />
-            <AddToWatchlistButton symbol={symbol} />
-            <SymbolAlertDialog symbol={symbol} />
-          </div>
-        </div>
+{/* Right side: Action buttons */}
+<div className="-mx-4 px-4 overflow-x-auto scrollbar-hide shrink-0">
+  <div className="flex gap-2 pb-1 pr-2 lg:pr-0 lg:flex-nowrap overflow-visible">
+    <FillTodayGapsButton
+      symbol={symbol}
+      onComplete={() => {
+        queryClient.invalidateQueries({
+          queryKey: ['narrative-history', symbol],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['emotion-history', symbol],
+        });
+      }}
+    />
+
+    <div className="filter drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] drop-shadow-[0_14px_36px_rgba(0,0,0,0.25)]">
+      <AddToWatchlistButton symbol={symbol} />
+    </div>
+
+    <div className="filter drop-shadow-[0_6px_18px_rgba(0,0,0,0.35)] drop-shadow-[0_14px_36px_rgba(0,0,0,0.25)]">
+      <SymbolAlertDialog symbol={symbol} />
+    </div>
+  </div>
+</div>
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
         <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
