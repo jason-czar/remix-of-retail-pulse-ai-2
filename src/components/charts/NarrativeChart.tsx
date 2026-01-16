@@ -361,7 +361,7 @@ function NarrativeSidePanel({
           </div>}
       </div>;
   }
-  return <div className={cn(containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
+  return <div className={cn("", containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
       {/* Time/Date Header */}
       <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
         <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
