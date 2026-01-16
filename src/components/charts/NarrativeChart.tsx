@@ -1721,8 +1721,8 @@ function HourlyStackedNarrativeChart({ symbol, timeRange }: { symbol: string; ti
         <div
           className="
       h-[380px] md:h-[520px]
-      w-[120vw]
-      -ml-[6vw] -mr-[14vw]
+w-[120vw]
+-ml-[8vw] -mr-[12vw]
       md:w-full md:mx-0
     "
         >
