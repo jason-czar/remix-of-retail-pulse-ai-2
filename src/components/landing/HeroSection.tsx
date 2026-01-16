@@ -68,9 +68,9 @@ export function HeroSection() {
                   View NVDA
                 </Button>
               </Link>
-              <Link to="/signup" className="shrink-0">
+              <Link to="/learn-more" className="shrink-0">
                 <Button variant="outline" size="lg" className="px-5 sm:px-8 rounded-full backdrop-blur-sm">
-                  Get Started
+                  Learn More
                 </Button>
               </Link>
             </motion.div>
