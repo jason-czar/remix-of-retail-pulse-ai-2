@@ -362,68 +362,70 @@ function NarrativeSidePanel({
       </div>;
   }
   return <div className={cn("", containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
-      {/* Time/Date Header */}
-      <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
-        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
-          {data.label}
-        </span>
-        {data.totalMessages > 0 && <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
-            <MessageSquare className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-amber-400")} />
-            <span className="text-amber-400 font-medium">{data.totalMessages.toLocaleString()}</span>
-            <span className={cn("text-muted-foreground", isMobile ? "text-[10px]" : "text-xs")}>msgs</span>
+      <div className="">
+        {/* Time/Date Header */}
+        <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
+          <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
+            {data.label}
+          </span>
+          {data.totalMessages > 0 && <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
+              <MessageSquare className={cn(isMobile ? "h-3 w-3" : "h-4 w-4", "text-amber-400")} />
+              <span className="text-amber-400 font-medium">{data.totalMessages.toLocaleString()}</span>
+              <span className={cn("text-muted-foreground", isMobile ? "text-[10px]" : "text-xs")}>msgs</span>
+            </div>}
+        </div>
+
+        {/* Stock Price */}
+        {data.price != null && <div className={cn("flex items-center gap-2 border-b border-border/50 dark:border-white/10", isMobile ? "mb-2 pb-2" : "mb-3 pb-3")}>
+            <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{
+          color: priceColor
+        }} />
+            <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{
+          color: priceColor
+        }}>
+              ${data.price.toFixed(2)}
+            </span>
+          </div>}
+
+        {/* Relative Activity Bar */}
+        {data.volumePercent > 0 && <div className={isMobile ? "mb-2" : "mb-3"}>
+            <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
+              <span className="text-muted-foreground">Relative Activity</span>
+              <span className={cn("font-medium", data.volumePercent >= 80 ? "text-amber-400" : data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground")}>
+                {data.volumePercent.toFixed(0)}%
+              </span>
+            </div>
+            <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
+              <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 80 ? "bg-amber-400" : data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{
+            width: `${Math.min(data.volumePercent, 100)}%`
+          }} />
+            </div>
+          </div>}
+
+        {/* Top Narratives */}
+        {data.segments.length > 0 && <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
+            <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Top Narratives:</div>
+            {data.segments.map((segment, idx) => <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
+                <div className={cn("rounded-sm flex-shrink-0", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} style={{
+            backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral
+          }} />
+                <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>
+                  {segment.name}
+                </span>
+                <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>
+                  {segment.count}
+                </span>
+                <span className={cn("px-1.5 py-0.5 rounded border", isMobile ? "text-[8px]" : "text-[10px]", getSentimentBadge(segment.sentiment))}>
+                  {segment.sentiment}
+                </span>
+              </div>)}
+          </div>}
+
+        {/* Default indicator - only on desktop */}
+        {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+            <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
           </div>}
       </div>
-
-      {/* Stock Price */}
-      {data.price != null && <div className={cn("flex items-center gap-2 border-b border-border/50 dark:border-white/10", isMobile ? "mb-2 pb-2" : "mb-3 pb-3")}>
-          <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{
-        color: priceColor
-      }} />
-          <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{
-        color: priceColor
-      }}>
-            ${data.price.toFixed(2)}
-          </span>
-        </div>}
-
-      {/* Relative Activity Bar */}
-      {data.volumePercent > 0 && <div className={isMobile ? "mb-2" : "mb-3"}>
-          <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
-            <span className="text-muted-foreground">Relative Activity</span>
-            <span className={cn("font-medium", data.volumePercent >= 80 ? "text-amber-400" : data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground")}>
-              {data.volumePercent.toFixed(0)}%
-            </span>
-          </div>
-          <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
-            <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 80 ? "bg-amber-400" : data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{
-          width: `${Math.min(data.volumePercent, 100)}%`
-        }} />
-          </div>
-        </div>}
-
-      {/* Top Narratives */}
-      {data.segments.length > 0 && <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
-          <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Top Narratives:</div>
-          {data.segments.map((segment, idx) => <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
-              <div className={cn("rounded-sm flex-shrink-0", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} style={{
-          backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral
-        }} />
-              <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>
-                {segment.name}
-              </span>
-              <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>
-                {segment.count}
-              </span>
-              <span className={cn("px-1.5 py-0.5 rounded border", isMobile ? "text-[8px]" : "text-[10px]", getSentimentBadge(segment.sentiment))}>
-                {segment.sentiment}
-              </span>
-            </div>)}
-        </div>}
-
-      {/* Default indicator - only on desktop */}
-      {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
-          <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
-        </div>}
     </div>;
 }
 
