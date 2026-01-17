@@ -15,7 +15,7 @@ const tiers = [
       "Data exports & API access",
       "Customer owns interpretation",
     ],
-    buyer: "Analyst, Manager, or Ops / IR",
+    buyer: "Analyst, Manager, or Ops / Investor Relations",
     accent: "from-blue-500/20 to-cyan-500/20",
     iconBg: "bg-blue-500/10",
     iconColor: "text-blue-500",
