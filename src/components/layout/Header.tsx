@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, BarChart3, Bell, Menu, Search, LogOut, Settings, Key, BookOpen } from "lucide-react";
+import { Menu, Search, LogOut, Settings, Key } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -126,23 +126,19 @@ export function Header() {
         {/* Mobile Menu */}
         {mobileMenuOpen && <div className="md:hidden py-4 border-t border-black/[0.06] dark:border-white/[0.06] animate-fade-in">
             <nav className="flex flex-col gap-1">
-              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all flex items-center gap-3 py-3 px-3 rounded-xl">
-                <BarChart3 className="h-4 w-4" />
+              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 Dashboard
               </Link>
-              <Link to="/trending" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all flex items-center gap-3 py-3 px-3 rounded-xl">
-                <TrendingUp className="h-4 w-4" />
+              <Link to="/trending" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 Trending
               </Link>
-              <Link to="/alerts" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all flex items-center gap-3 py-3 px-3 rounded-xl">
-                <Bell className="h-4 w-4" />
+              <Link to="/alerts" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 Alerts
               </Link>
-              <Link to="/api-docs" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all flex items-center gap-3 py-3 px-3 rounded-xl">
+              <Link to="/api-docs" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 API Documentation
               </Link>
-              <Link to="/learn-more" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all flex items-center gap-3 py-3 px-3 rounded-xl">
-                <BookOpen className="h-4 w-4" />
+              <Link to="/learn-more" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 Learn More
               </Link>
               {user ? <div className="pt-4 mt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
