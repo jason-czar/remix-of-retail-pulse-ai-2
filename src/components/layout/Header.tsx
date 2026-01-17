@@ -56,6 +56,9 @@ export function Header() {
               <Link to="/learn-more" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
                 Learn More
               </Link>
+              <Link to="/pricing" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
+                Pricing
+              </Link>
             </div>
           </nav>
 
@@ -140,6 +143,9 @@ export function Header() {
               </Link>
               <Link to="/learn-more" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 Learn More
+              </Link>
+              <Link to="/pricing" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
+                Pricing
               </Link>
               {user ? <div className="pt-4 mt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
                   <Link to="/settings" className="flex items-center gap-3 py-3 px-3 text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] rounded-xl transition-all">

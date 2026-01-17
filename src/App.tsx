@@ -21,6 +21,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 const ApiDocsPage = lazy(() => import("./pages/ApiDocsPage"));
 const LearnMorePage = lazy(() => import("./pages/LearnMorePage"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => (
               <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
               <Route path="/api-docs" element={<ApiDocsPage />} />
               <Route path="/learn-more" element={<LearnMorePage />} />
+              <Route path="/pricing" element={<PricingPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
