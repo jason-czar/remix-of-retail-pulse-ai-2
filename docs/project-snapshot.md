@@ -789,7 +789,7 @@ All endpoints are accessible at: `https://hteqootlqamsvkqgdtjw.supabase.co/funct
 | `/symbol/:symbol/messages` | `MessagesPage` | Yes* | Message stream |
 | `/settings` | `SettingsPage` | Yes | User settings, alerts, API keys |
 | `/settings/api-keys` | `SettingsPage` | Yes | API key management |
-| `/pricing` | `PricingPage` | No | Institutional pricing tiers with feature comparison |
+| `/pricing` | `PricingPage` | No | Institutional pricing tiers (Platform, Managed Intelligence, Executive/Board) with feature comparison table |
 | `/learn-more` | `LearnMorePage` | No | Educational content and case studies |
 
 ### Key Components per Page
