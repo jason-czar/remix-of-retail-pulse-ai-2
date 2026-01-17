@@ -1,6 +1,6 @@
-# Retail Sentiment Intelligence Platform - Project Snapshot
+# Signals Street - Project Snapshot
 
-**Generated:** 2026-01-15  
+**Generated:** 2026-01-17  
 **Version:** Production  
 **Status:** Active Development
 
@@ -10,7 +10,7 @@
 
 ### Description
 
-The Retail Sentiment Intelligence Platform is an institutional-grade market intelligence tool that provides real-time sentiment and narrative analysis from StockTwits social media data. The platform analyzes retail trader discussions to extract actionable insights including dominant narratives, emotional signals, market psychology indicators, and decision readiness scores across multiple time horizons.
+Signals Street is an institutional-grade market intelligence tool that provides real-time sentiment and narrative analysis from StockTwits social media data. The platform analyzes retail trader discussions to extract actionable insights including dominant narratives, emotional signals, market psychology indicators, and decision readiness scores across multiple time horizons.
 
 ### Primary Use Cases
 
@@ -779,7 +779,7 @@ All endpoints are accessible at: `https://hteqootlqamsvkqgdtjw.supabase.co/funct
 
 | Route | Component | Auth Required | Description |
 |-------|-----------|---------------|-------------|
-| `/` | `Index` | No | Landing page with hero, features, pricing |
+| `/` | `Index` | No | Landing page with hero, features |
 | `/login` | `LoginPage` | No | User authentication |
 | `/signup` | `SignupPage` | No | User registration |
 | `/onboarding` | `OnboardingPage` | No | New user setup flow |
@@ -789,6 +789,8 @@ All endpoints are accessible at: `https://hteqootlqamsvkqgdtjw.supabase.co/funct
 | `/symbol/:symbol/messages` | `MessagesPage` | Yes* | Message stream |
 | `/settings` | `SettingsPage` | Yes | User settings, alerts, API keys |
 | `/settings/api-keys` | `SettingsPage` | Yes | API key management |
+| `/pricing` | `PricingPage` | No | Institutional pricing tiers with feature comparison |
+| `/learn-more` | `LearnMorePage` | No | Educational content and case studies |
 
 ### Key Components per Page
 
