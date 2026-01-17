@@ -1,6 +1,6 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Check, Users, Briefcase, Crown } from "lucide-react";
+import { Check, X, Users, Briefcase, Crown } from "lucide-react";
 
 const tiers = [
   {
@@ -57,6 +57,38 @@ const tiers = [
     iconColor: "text-amber-500",
   },
 ];
+
+const comparisonFeatures = [
+  { category: "Access & Dashboards", features: [
+    { name: "Self-serve dashboards", platform: true, managed: true, executive: true },
+    { name: "Real-time alerts & notifications", platform: true, managed: true, executive: true },
+    { name: "Data exports", platform: true, managed: true, executive: true },
+    { name: "API access", platform: true, managed: true, executive: true },
+  ]},
+  { category: "Configuration & Setup", features: [
+    { name: "Full platform configuration", platform: false, managed: true, executive: true },
+    { name: "Custom dashboards & views", platform: false, managed: true, executive: true },
+  ]},
+  { category: "Intelligence & Insights", features: [
+    { name: "Ongoing monitoring", platform: false, managed: true, executive: true },
+    { name: "Insight briefs", platform: false, managed: true, executive: true },
+    { name: "Board-ready decks", platform: false, managed: false, executive: true },
+    { name: "Executive memos", platform: false, managed: false, executive: true },
+  ]},
+  { category: "Advisory & Support", features: [
+    { name: "Scenario analysis & modeling", platform: false, managed: false, executive: true },
+    { name: "On-call advisory support", platform: false, managed: false, executive: true },
+    { name: "Executive-level accountability", platform: false, managed: false, executive: true },
+  ]},
+];
+
+function FeatureCheck({ included }: { included: boolean }) {
+  return included ? (
+    <Check className="h-5 w-5 text-bullish mx-auto" />
+  ) : (
+    <X className="h-5 w-5 text-muted-foreground/40 mx-auto" />
+  );
+}
 
 export default function PricingPage() {
   return (
@@ -135,6 +167,64 @@ export default function PricingPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Comparison Table */}
+        <div className="mt-24 max-w-5xl mx-auto">
+          <h2 className="text-2xl md:text-3xl font-display text-center mb-8">
+            Feature <span className="text-gradient">Comparison</span>
+          </h2>
+          
+          <div className="rounded-2xl overflow-hidden
+            bg-white/92 dark:bg-[hsl(0_0%_20%/0.65)]
+            backdrop-blur-xl
+            border border-black/[0.08] dark:border-white/[0.15]
+            shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]
+          ">
+            {/* Table Header */}
+            <div className="grid grid-cols-4 gap-4 p-4 md:p-6 border-b border-black/[0.06] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02]">
+              <div className="font-medium text-muted-foreground">Features</div>
+              <div className="text-center">
+                <div className="font-display font-semibold text-blue-500">Platform</div>
+                <div className="text-xs text-muted-foreground">$2k–$3k/mo</div>
+              </div>
+              <div className="text-center">
+                <div className="font-display font-semibold text-primary">Managed</div>
+                <div className="text-xs text-muted-foreground">$5k–$10k/mo</div>
+              </div>
+              <div className="text-center">
+                <div className="font-display font-semibold text-amber-500">Executive</div>
+                <div className="text-xs text-muted-foreground">$15k–$25k/mo</div>
+              </div>
+            </div>
+
+            {/* Table Body */}
+            {comparisonFeatures.map((category, catIdx) => (
+              <div key={category.category}>
+                {/* Category Header */}
+                <div className="px-4 md:px-6 py-3 bg-black/[0.03] dark:bg-white/[0.03] border-b border-black/[0.04] dark:border-white/[0.04]">
+                  <span className="text-sm font-medium">{category.category}</span>
+                </div>
+                
+                {/* Features */}
+                {category.features.map((feature, idx) => (
+                  <div 
+                    key={feature.name}
+                    className={`grid grid-cols-4 gap-4 px-4 md:px-6 py-3 ${
+                      idx !== category.features.length - 1 || catIdx !== comparisonFeatures.length - 1
+                        ? "border-b border-black/[0.04] dark:border-white/[0.04]"
+                        : ""
+                    }`}
+                  >
+                    <div className="text-sm text-muted-foreground">{feature.name}</div>
+                    <div><FeatureCheck included={feature.platform} /></div>
+                    <div><FeatureCheck included={feature.managed} /></div>
+                    <div><FeatureCheck included={feature.executive} /></div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* CTA Section */}
