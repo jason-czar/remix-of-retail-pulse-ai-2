@@ -54,7 +54,7 @@ export function Header() {
                 API
               </Link>
               <Link to="/learn-more" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
-                Learn More
+                Learn 
               </Link>
               <Link to="/pricing" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
                 Pricing
