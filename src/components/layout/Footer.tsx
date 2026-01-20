@@ -9,7 +9,7 @@ export function Footer() {
             <Link to="/" className="flex items-center gap-2 mb-4">
               
               <span className="font-display text-lg">
-                <span className="text-gradient">Signals</span>
+                <span className="text-gradient">Derive</span>
                 <span className="text-foreground">Street</span>
               </span>
             </Link>
@@ -112,7 +112,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-border/50 pt-8 text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Signals Street. All rights reserved.
+          © {new Date().getFullYear()} Derive Street. All rights reserved.
         </div>
       </div>
     </footer>;

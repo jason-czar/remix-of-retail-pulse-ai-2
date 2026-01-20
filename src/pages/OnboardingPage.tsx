@@ -134,7 +134,7 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    toast.success("Welcome to Signals Street!");
+    toast.success("Welcome to Derive Street!");
     navigate("/dashboard");
   };
 
