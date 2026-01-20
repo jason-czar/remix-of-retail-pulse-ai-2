@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, LogOut, Settings, FileText } from "lucide-react";
+import { Menu, Search, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -96,7 +96,7 @@ export function Header() {
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/api-docs" className="flex items-center">
-                          <FileText className="mr-2 h-4 w-4" />
+                          
                           API
                         </Link>
                       </DropdownMenuItem>
