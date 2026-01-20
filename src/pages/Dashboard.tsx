@@ -255,7 +255,7 @@ function OverviewCard({
   change: number;
 }) {
   const ChangeIcon = change >= 0 ? ArrowUpRight : ArrowDownRight;
-  return <div className="p-4 rounded-lg bg-secondary/30">
+  return <Card className="p-4 glass-card">
       <div className="text-sm text-muted-foreground mb-2">{label}</div>
       <div className="flex items-center gap-2 mb-1">
         <span className="text-2xl font-display">{value}</span>
@@ -265,7 +265,7 @@ function OverviewCard({
         <ChangeIcon className="h-3 w-3" />
         {Math.abs(change)}% (24h)
       </div>
-    </div>;
+    </Card>;
 }
 function RealAlertItem({
   alert

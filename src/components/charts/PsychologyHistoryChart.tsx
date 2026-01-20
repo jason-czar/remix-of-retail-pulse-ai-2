@@ -102,7 +102,7 @@ export function PsychologyHistoryChart({ days = 30 }: PsychologyHistoryChartProp
 
   if (isLoading) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 glass-card">
         <div className="flex items-center gap-2 mb-4">
           <History className="h-5 w-5 text-accent" />
           <h3 className="text-lg font-semibold">Fear/Greed History</h3>
@@ -114,7 +114,7 @@ export function PsychologyHistoryChart({ days = 30 }: PsychologyHistoryChartProp
 
   if (!chartData || chartData.length === 0) {
     return (
-      <Card className="p-6">
+      <Card className="p-6 glass-card">
         <div className="flex items-center gap-2 mb-4">
           <History className="h-5 w-5 text-accent" />
           <h3 className="text-lg font-semibold">Fear/Greed History</h3>
@@ -133,7 +133,7 @@ export function PsychologyHistoryChart({ days = 30 }: PsychologyHistoryChartProp
   const trendColor = trend.direction === "rising" ? "text-bullish" : trend.direction === "falling" ? "text-bearish" : "text-muted-foreground";
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 glass-card">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <History className="h-5 w-5 text-accent" />
