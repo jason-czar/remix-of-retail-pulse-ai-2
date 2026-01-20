@@ -402,19 +402,19 @@ function OverviewCard({
           <TemporalAttributionBadge attribution={snapshot.interpretation.temporal_attribution} />
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-3">
-            {summary.dominant_emotion && <div>
+            {summary.dominant_emotion && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
                 <span className="text-muted-foreground">Dominant Emotion</span>
                 <p className="font-medium capitalize">{summary.dominant_emotion}</p>
               </div>}
-            {summary.primary_risk && <div>
+            {summary.primary_risk && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
                 <span className="text-muted-foreground">Primary Risk</span>
                 <p className="font-medium text-amber-500">{summary.primary_risk}</p>
               </div>}
-            {summary.action_bias && <div>
+            {summary.action_bias && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
                 <span className="text-muted-foreground">Action Bias</span>
                 <p className="font-medium">{summary.action_bias}</p>
               </div>}
-            {bestLens && <div>
+            {bestLens && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
                 <span className="text-muted-foreground">Best Lens</span>
                 <p className="font-medium">
                   {LENS_CONFIG[bestLens.key]?.label || bestLens.key} ({bestLens.score})
