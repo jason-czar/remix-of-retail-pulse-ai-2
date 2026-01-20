@@ -522,24 +522,18 @@
   }
 
   .dark .glass-panel {
-    background: linear-gradient(
-      180deg,
-      hsl(0 0% 100% / 0.06) 0%,
-      hsl(0 0% 100% / 0.02) 100%
-    );
+    /* Uses card color (0 0% 16%) with slight transparency for glass effect */
+    background: hsl(0 0% 18% / 0.95);
     border: 1px solid hsl(0 0% 100% / 0.1);
     box-shadow: 
-      0 8px 32px hsl(0 0% 0% / 0.35),
-      0 2px 8px hsl(0 0% 0% / 0.2),
-      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+      0 8px 32px hsl(0 0% 0% / 0.4),
+      0 2px 8px hsl(0 0% 0% / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.05);
   }
 
   :not(.dark) .glass-panel {
-    background: linear-gradient(
-      180deg,
-      hsl(0 0% 100% / 0.8) 0%,
-      hsl(0 0% 100% / 0.6) 100%
-    );
+    /* Uses white with high opacity for clean light mode */
+    background: hsl(0 0% 100% / 0.92);
     border: 1px solid hsl(0 0% 0% / 0.06);
     box-shadow: 
       0 4px 24px hsl(240 15% 50% / 0.08),
@@ -554,21 +548,15 @@
   }
 
   .dark .glass-section {
-    background: linear-gradient(
-      180deg,
-      hsl(0 0% 100% / 0.03) 0%,
-      hsl(0 0% 100% / 0.01) 100%
-    );
+    /* Slightly lighter than main background for section distinction */
+    background: hsl(0 0% 14%);
     border-top: 1px solid hsl(0 0% 100% / 0.05);
     border-bottom: 1px solid hsl(0 0% 100% / 0.05);
   }
 
   :not(.dark) .glass-section {
-    background: linear-gradient(
-      180deg,
-      hsl(0 0% 100% / 0.5) 0%,
-      hsl(240 18% 96% / 0.8) 100%
-    );
+    /* Light mode uses the background color (240 18% 96%) */
+    background: hsl(240 18% 97%);
     border-top: 1px solid hsl(0 0% 0% / 0.04);
     border-bottom: 1px solid hsl(0 0% 0% / 0.04);
   }
@@ -581,13 +569,14 @@
   }
 
   .dark .glass-inset {
-    background: hsl(0 0% 100% / 0.04);
+    /* Slightly lighter than panels for inner groupings */
+    background: hsl(0 0% 20% / 0.9);
     border: 1px solid hsl(0 0% 100% / 0.08);
     box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.04);
   }
 
   :not(.dark) .glass-inset {
-    background: hsl(0 0% 100% / 0.6);
+    background: hsl(0 0% 100% / 0.8);
     border: 1px solid hsl(0 0% 0% / 0.05);
     box-shadow: 
       inset 0 1px 0 hsl(0 0% 100% / 0.6),
@@ -619,25 +608,17 @@
   }
 
   .dark .glass-interactive:hover {
-    background: linear-gradient(
-      180deg,
-      hsl(0 0% 100% / 0.1) 0%,
-      hsl(0 0% 100% / 0.04) 100%
-    );
+    background: hsl(0 0% 22% / 0.98);
     border-color: hsl(0 0% 100% / 0.15);
     box-shadow: 
-      0 12px 40px hsl(0 0% 0% / 0.4),
-      0 4px 12px hsl(0 0% 0% / 0.25),
-      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+      0 12px 40px hsl(0 0% 0% / 0.5),
+      0 4px 12px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
     transform: translateY(-2px);
   }
 
   :not(.dark) .glass-interactive:hover {
-    background: linear-gradient(
-      180deg,
-      hsl(0 0% 100% / 0.95) 0%,
-      hsl(0 0% 100% / 0.75) 100%
-    );
+    background: hsl(0 0% 100%);
     border-color: hsl(0 0% 0% / 0.1);
     box-shadow: 
       0 8px 32px hsl(240 15% 50% / 0.12),
@@ -673,12 +654,12 @@
   }
 
   .dark .glass-list-item {
-    background: hsl(0 0% 100% / 0.03);
+    background: hsl(0 0% 18% / 0.8);
     border: 1px solid hsl(0 0% 100% / 0.06);
   }
 
   :not(.dark) .glass-list-item {
-    background: hsl(0 0% 100% / 0.5);
+    background: hsl(0 0% 100% / 0.7);
     border: 1px solid hsl(0 0% 0% / 0.04);
   }
 
