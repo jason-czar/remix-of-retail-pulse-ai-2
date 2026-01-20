@@ -1804,13 +1804,13 @@ w-[120vw]
                   {/* Single area fill between price line and previous close - gradient handles color transition */}
                   {showPriceOverlay && is5MinView && priceData?.previousClose && (
                     <>
-                      {/* Pre-market extension areas (rendered FIRST so they appear behind the main areas) */}
+                      {/* Pre-market extension areas - use same gradients as main fills for consistent shading */}
                       <Area 
                         yAxisId="right" 
                         type="monotone" 
                         dataKey="priceExtension" 
                         stroke="none"
-                        fill="url(#priceExtensionAboveGradient)"
+                        fill="url(#priceAboveGradient)"
                         baseValue={priceData.previousClose}
                         connectNulls={false}
                         isAnimationActive={false}
@@ -1820,7 +1820,7 @@ w-[120vw]
                         type="monotone" 
                         dataKey="priceExtension" 
                         stroke="none"
-                        fill="url(#priceExtensionBelowGradient)"
+                        fill="url(#priceBelowGradient)"
                         baseValue={priceData.previousClose}
                         connectNulls={false}
                         isAnimationActive={false}
@@ -1849,8 +1849,8 @@ w-[120vw]
                       />
                     </>
                   )}
-                  {/* Pre-market extension line (rendered before main line) */}
-                  {showPriceOverlay && is5MinView && <Line yAxisId="right" type="monotone" dataKey="priceExtension" stroke="url(#priceExtensionLineGradient)" strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />}
+                  {/* Pre-market extension line - same opacity as main line for consistent appearance */}
+                  {showPriceOverlay && is5MinView && <Line yAxisId="right" type="monotone" dataKey="priceExtension" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />}
                   {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={{
                   fill: priceLineColor,
                   strokeWidth: 2,
