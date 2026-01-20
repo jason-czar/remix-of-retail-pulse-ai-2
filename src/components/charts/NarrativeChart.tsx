@@ -920,7 +920,7 @@ function TimeSeriesNarrativeChart({
               <XAxis xAxisId="bar" dataKey="date" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} ticks={chartDataWithPrice.map(d => d.date)} allowDuplicatedCategory={false} />
               {/* Numeric X-axis for price line and hourly tooltip positioning */}
               <XAxis xAxisId="price" type="number" dataKey="x" domain={[0, chartDataWithPrice.length - 1]} hide={true} allowDataOverflow={true} />
-              <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={filteredBarDomain} />
+              <YAxis yAxisId="left" hide={true} domain={filteredBarDomain} />
               {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={50} tickFormatter={value => `$${value.toFixed(0)}`} domain={priceDomain as [number, number]} />}
               {/* Tooltip hidden completely - side panel shows data on both desktop and mobile */}
               {/* Gap placeholder bars - shown with dashed pattern */}
@@ -1487,8 +1487,8 @@ w-[120vw]
                           {payload.value}
                         </text>;
                 }} />
-                  <YAxis yAxisId="left" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={barDomain as [number, number | string]} />
-                  {showPriceOverlay && <YAxis yAxisId="right" orientation="right" stroke={priceLineColor} fontSize={11} tickLine={false} axisLine={false} width={10} tick={false} domain={priceDomain as [number, number]} />}
+                  <YAxis yAxisId="left" hide={true} domain={barDomain as [number, number | string]} />
+                  {showPriceOverlay && <YAxis yAxisId="right" hide={true} domain={priceDomain as [number, number]} />}
                   {/* Cursor line shows on hover - tooltip content hidden as side panel handles data display */}
                   <Tooltip content={() => null} cursor={{
                   stroke: "hsl(var(--muted-foreground))",
