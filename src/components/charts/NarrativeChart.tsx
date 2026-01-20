@@ -1337,12 +1337,24 @@ function HourlyStackedNarrativeChart({
         const slotIndex = item.slotIndex;
         const pricePoint = priceBySlot.get(slotIndex);
         const price = pricePoint?.price ?? null;
+        
+        // When price is null, set area values to null so connectNulls bridges smoothly
+        if (price === null) {
+          return {
+            ...item,
+            price: null,
+            priceAbove: null,
+            priceBelow: null,
+            previousClose
+          };
+        }
+        
         return {
           ...item,
           price,
           // For area fills: split price into above/below previousClose
-          priceAbove: price !== null && price >= previousClose ? price : previousClose,
-          priceBelow: price !== null && price < previousClose ? price : previousClose,
+          priceAbove: price >= previousClose ? price : previousClose,
+          priceBelow: price < previousClose ? price : previousClose,
           previousClose
         };
       });
@@ -1354,11 +1366,22 @@ function HourlyStackedNarrativeChart({
       const hourIndex = item.hourIndex;
       const pricePoint = priceByHour.get(hourIndex);
       const price = pricePoint?.price ?? null;
+      
+      if (price === null) {
+        return {
+          ...item,
+          price: null,
+          priceAbove: null,
+          priceBelow: null,
+          previousClose
+        };
+      }
+      
       return {
         ...item,
         price,
-        priceAbove: price !== null && price >= previousClose ? price : previousClose,
-        priceBelow: price !== null && price < previousClose ? price : previousClose,
+        priceAbove: price >= previousClose ? price : previousClose,
+        priceBelow: price < previousClose ? price : previousClose,
         previousClose
       };
     });
