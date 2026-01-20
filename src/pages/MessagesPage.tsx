@@ -248,7 +248,7 @@ export default function MessagesPage() {
             </Card>
           ) : (
             visibleMessages.map((message) => (
-              <Card key={message.id} className="p-4 hover:bg-secondary/30 transition-colors">
+              <div key={message.id} className="p-4 glass-list-item">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
                   <div className="flex-shrink-0">
@@ -318,7 +318,7 @@ export default function MessagesPage() {
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             ))
           )}
         </div>

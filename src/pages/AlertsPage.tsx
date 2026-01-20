@@ -69,7 +69,7 @@ function AlertTableRow({ alert }: { alert: Alert }) {
   };
 
   return (
-    <TableRow className="group">
+    <TableRow className="group glass-list-item">
       <TableCell>
         <div className="flex items-center gap-3">
           <div
