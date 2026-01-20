@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, Search, LogOut, Settings, Key } from "lucide-react";
+import { Menu, Search, LogOut, Settings, FileText } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -50,9 +50,11 @@ export function Header() {
               <Link to="/alerts" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
                 Alerts
               </Link>
-              <Link to="/api-docs" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
-                API
-              </Link>
+              {!user && (
+                <Link to="/api-docs" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
+                  API
+                </Link>
+              )}
               <Link to="/learn-more" className="px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all duration-200">
                 Learn 
               </Link>
@@ -95,9 +97,9 @@ export function Header() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/settings/api-keys" className="flex items-center">
-                          <Key className="mr-2 h-4 w-4" />
-                          API Keys
+                        <Link to="/api-docs" className="flex items-center">
+                          <FileText className="mr-2 h-4 w-4" />
+                          API
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-black/[0.06] dark:bg-white/[0.06]" />
@@ -138,9 +140,11 @@ export function Header() {
               <Link to="/alerts" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 Alerts
               </Link>
-              <Link to="/api-docs" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
-                API Documentation
-              </Link>
+              {!user && (
+                <Link to="/api-docs" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
+                  API Documentation
+                </Link>
+              )}
               <Link to="/learn-more" className="text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-all py-3 px-3 rounded-xl">
                 Learn More
               </Link>
