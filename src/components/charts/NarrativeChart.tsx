@@ -1378,9 +1378,11 @@ function HourlyStackedNarrativeChart({
         return {
           ...item,
           price,
-          // For area fills: split price into above/below previousClose
-          priceAbove: price >= previousClose ? price : previousClose,
-          priceBelow: price < previousClose ? price : previousClose,
+          // For area fills: both areas need the price value
+          // priceAbove fills from previousClose UP to price (when price > previousClose)
+          // priceBelow fills from previousClose DOWN to price (when price < previousClose)
+          priceAbove: price >= previousClose ? price : null,
+          priceBelow: price < previousClose ? price : null,
           previousClose
         };
       });
@@ -1406,8 +1408,8 @@ function HourlyStackedNarrativeChart({
       return {
         ...item,
         price,
-        priceAbove: price >= previousClose ? price : previousClose,
-        priceBelow: price < previousClose ? price : previousClose,
+        priceAbove: price >= previousClose ? price : null,
+        priceBelow: price < previousClose ? price : null,
         previousClose
       };
     });
