@@ -41,12 +41,12 @@
 
     --radius: 0.5rem;
 
-    /* Custom sentiment colors */
-    --bullish: 142 71% 40%;
+    /* Custom sentiment colors - matches chart SENTIMENT_COLORS */
+    --bullish: 142 71% 45%;
     --bullish-foreground: 142 71% 15%;
-    --bearish: 0 72% 50%;
+    --bearish: 0 72% 51%;
     --bearish-foreground: 0 72% 15%;
-    --neutral: 199 89% 42%;
+    --neutral: 199 89% 48%;
     --neutral-foreground: 199 89% 15%;
 
     /* Chart colors */
