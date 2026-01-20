@@ -1785,6 +1785,13 @@ w-[120vw]
                         <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
                       )}
                     </linearGradient>
+                    {/* Pre-market extension fill - single color based on opening price position */}
+                    {firstPriceData && (
+                      <linearGradient id="priceExtensionFillGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={firstPriceData.color} stopOpacity={0.3} />
+                        <stop offset="100%" stopColor={firstPriceData.color} stopOpacity={0.3} />
+                      </linearGradient>
+                    )}
                   </defs>
                   <XAxis dataKey="time" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} interval={is5MinView ? 11 : 0} tick={({
                   x,
@@ -1824,27 +1831,19 @@ w-[120vw]
                   {/* Single area fill between price line and previous close - gradient handles color transition */}
                   {showPriceOverlay && is5MinView && priceData?.previousClose && (
                     <>
-                      {/* Pre-market extension areas - use same gradients as main fills for consistent shading */}
-                      <Area 
-                        yAxisId="right" 
-                        type="monotone" 
-                        dataKey="priceExtension" 
-                        stroke="none"
-                        fill="url(#priceAboveGradient)"
-                        baseValue={priceData.previousClose}
-                        connectNulls={false}
-                        isAnimationActive={false}
-                      />
-                      <Area 
-                        yAxisId="right" 
-                        type="monotone" 
-                        dataKey="priceExtension" 
-                        stroke="none"
-                        fill="url(#priceBelowGradient)"
-                        baseValue={priceData.previousClose}
-                        connectNulls={false}
-                        isAnimationActive={false}
-                      />
+                      {/* Pre-market extension area - single color based on opening price position */}
+                      {firstPriceData && (
+                        <Area 
+                          yAxisId="right" 
+                          type="monotone" 
+                          dataKey="priceExtension" 
+                          stroke="none"
+                          fill="url(#priceExtensionFillGradient)"
+                          baseValue={priceData.previousClose}
+                          connectNulls={false}
+                          isAnimationActive={false}
+                        />
+                      )}
                       {/* Fill above previous close (green) - uses price data, gradient clips at baseline */}
                       <Area 
                         yAxisId="right" 
