@@ -1042,11 +1042,17 @@ function HourlyStackedNarrativeChart({
     if (!volumeData || volumeData.length === 0) return map;
     
     volumeData.forEach((item: any) => {
-      // Parse hour from time string (e.g., "8am", "12pm", "1pm")
+      // Parse hour from time string - handles both "HH:MM" (e.g., "15:00") and "8am/12pm" formats
       const timeStr = item.time?.toLowerCase() || "";
       let hour = 0;
       
-      if (timeStr.includes("am")) {
+      // Handle "HH:MM" format (e.g., "15:00", "09:00") from StockTwits analytics API
+      if (timeStr.includes(":")) {
+        const parts = timeStr.split(":");
+        hour = parseInt(parts[0], 10);
+      }
+      // Handle "8am", "12pm" format
+      else if (timeStr.includes("am")) {
         const num = parseInt(timeStr.replace("am", ""));
         hour = num === 12 ? 0 : num; // 12am = 0
       } else if (timeStr.includes("pm")) {
