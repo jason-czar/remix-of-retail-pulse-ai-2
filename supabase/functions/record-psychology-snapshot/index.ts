@@ -1210,7 +1210,17 @@ Generate:
                 dominant_emotion: { type: "string" },
                 action_bias: { type: "string" },
               },
-              required: ["earnings_overlay", "earnings_readiness", "corporate_strategy_overlay", "corporate_strategy_readiness", "one_liner", "primary_risk", "dominant_emotion", "action_bias"],
+              required: [
+                "earnings_overlay", "earnings_readiness",
+                "ma_overlay", "ma_readiness",
+                "capital_allocation_overlay", "capital_allocation_readiness",
+                "corporate_strategy_overlay", "corporate_strategy_readiness",
+                "leadership_change_overlay", "leadership_change_readiness",
+                "strategic_pivot_overlay", "strategic_pivot_readiness",
+                "product_launch_overlay", "product_launch_readiness",
+                "activist_risk_overlay", "activist_risk_readiness",
+                "one_liner", "primary_risk", "dominant_emotion", "action_bias"
+              ],
             },
           },
         },
