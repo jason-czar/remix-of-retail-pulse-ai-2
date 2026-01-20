@@ -1607,13 +1607,37 @@ w-[120vw]
               }} barCategoryGap={0} barGap={0} onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
                   {/* SVG Defs for gradient fills */}
                   <defs>
+                    {/* Gradient for fill above previous close - fades from line down to baseline */}
                     <linearGradient id="priceAboveGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.25} />
-                      <stop offset="100%" stopColor={PRICE_UP_COLOR} stopOpacity={0.05} />
+                      {priceGradientStops ? (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.25} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.08} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
+                          <stop offset="100%" stopColor="transparent" stopOpacity={0} />
+                        </>
+                      ) : (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.25} />
+                          <stop offset="100%" stopColor={PRICE_UP_COLOR} stopOpacity={0.05} />
+                        </>
+                      )}
                     </linearGradient>
+                    {/* Gradient for fill below previous close - fades from baseline down to line */}
                     <linearGradient id="priceBelowGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.05} />
-                      <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.25} />
+                      {priceGradientStops ? (
+                        <>
+                          <stop offset="0%" stopColor="transparent" stopOpacity={0} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.08} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.25} />
+                        </>
+                      ) : (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.05} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.25} />
+                        </>
+                      )}
                     </linearGradient>
                     {/* Dynamic gradient for price line - green above previous close, red below */}
                     <linearGradient id="priceLineGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1664,25 +1688,25 @@ w-[120vw]
                 }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
                       {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} />)}
                     </Bar>)}
-                  {/* Area fills from price line to previous close reference line */}
+                  {/* Single area fill between price line and previous close - gradient handles color transition */}
                   {showPriceOverlay && is5MinView && priceData?.previousClose && (
                     <>
-                      {/* Green fill for price above previous close */}
+                      {/* Fill above previous close (green) - uses price data, gradient clips at baseline */}
                       <Area 
                         yAxisId="right" 
                         type="monotone" 
-                        dataKey="priceAbove" 
+                        dataKey="price" 
                         stroke="none"
                         fill="url(#priceAboveGradient)"
                         baseValue={priceData.previousClose}
                         connectNulls
                         isAnimationActive={false}
                       />
-                      {/* Red/Orange fill for price below previous close */}
+                      {/* Fill below previous close (red) - uses price data, gradient clips at baseline */}
                       <Area 
                         yAxisId="right" 
                         type="monotone" 
-                        dataKey="priceBelow" 
+                        dataKey="price" 
                         stroke="none"
                         fill="url(#priceBelowGradient)"
                         baseValue={priceData.previousClose}
