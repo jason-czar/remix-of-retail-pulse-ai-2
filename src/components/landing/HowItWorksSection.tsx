@@ -45,9 +45,9 @@ export function HowItWorksSection() {
             </p>
           </ScrollReveal>
 
-          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
+          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch" staggerDelay={0.1}>
             {steps.map((step, index) => (
-              <StaggerItem key={step.number}>
+              <StaggerItem key={step.number} className="h-full">
                 <StepCard {...step} isLast={index === steps.length - 1} />
               </StaggerItem>
             ))}
