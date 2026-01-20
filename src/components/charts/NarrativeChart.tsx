@@ -1359,31 +1359,76 @@ function HourlyStackedNarrativeChart({
     // For 5-minute view (Today), use 5-minute slot alignment for granular price line
     if (is5MinView) {
       const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
+      
+      // Find the first slot that has actual price data to use for pre-market extension
+      let firstPriceSlotIndex: number | null = null;
+      let firstPrice: number | null = null;
+      
+      for (let i = 0; i < stackedChartData.length; i++) {
+        const slotIndex = stackedChartData[i].slotIndex;
+        const pricePoint = priceBySlot.get(slotIndex);
+        if (pricePoint?.price !== undefined) {
+          firstPriceSlotIndex = slotIndex;
+          firstPrice = pricePoint.price;
+          break;
+        }
+      }
+      
       return stackedChartData.map(item => {
         const slotIndex = item.slotIndex;
         const pricePoint = priceBySlot.get(slotIndex);
         const price = pricePoint?.price ?? null;
         
-        // When price is null, set area values to null so connectNulls bridges smoothly
+        // For slots BEFORE the first real price data, extend backwards with reduced opacity
+        // This handles the pre-market period (e.g., 8am-9:30am before market opens)
+        const isPreMarketExtension = firstPriceSlotIndex !== null && 
+                                     firstPrice !== null && 
+                                     slotIndex < firstPriceSlotIndex && 
+                                     price === null;
+        
+        if (isPreMarketExtension) {
+          // Use the first available price for the extension line
+          return {
+            ...item,
+            price: null, // Keep main price null so it doesn't render
+            priceExtension: firstPrice, // Separate data key for extension
+            priceAbove: null,
+            priceBelow: null,
+            priceExtensionAbove: firstPrice! >= previousClose ? firstPrice : null,
+            priceExtensionBelow: firstPrice! < previousClose ? firstPrice : null,
+            previousClose,
+            isPreMarketExtension: true
+          };
+        }
+        
+        // When price is null (gaps in data), set area values to null so connectNulls bridges smoothly
         if (price === null) {
           return {
             ...item,
             price: null,
+            priceExtension: null,
             priceAbove: null,
             priceBelow: null,
-            previousClose
+            priceExtensionAbove: null,
+            priceExtensionBelow: null,
+            previousClose,
+            isPreMarketExtension: false
           };
         }
         
         return {
           ...item,
           price,
+          priceExtension: null, // No extension for slots with real data
           // For area fills: both areas need the price value
           // priceAbove fills from previousClose UP to price (when price > previousClose)
           // priceBelow fills from previousClose DOWN to price (when price < previousClose)
           priceAbove: price >= previousClose ? price : null,
           priceBelow: price < previousClose ? price : null,
-          previousClose
+          priceExtensionAbove: null,
+          priceExtensionBelow: null,
+          previousClose,
+          isPreMarketExtension: false
         };
       });
     }
@@ -1399,18 +1444,22 @@ function HourlyStackedNarrativeChart({
         return {
           ...item,
           price: null,
+          priceExtension: null,
           priceAbove: null,
           priceBelow: null,
-          previousClose
+          previousClose,
+          isPreMarketExtension: false
         };
       }
       
       return {
         ...item,
         price,
+        priceExtension: null,
         priceAbove: price >= previousClose ? price : null,
         priceBelow: price < previousClose ? price : null,
-        previousClose
+        previousClose,
+        isPreMarketExtension: false
       };
     });
   }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
@@ -1639,6 +1688,37 @@ w-[120vw]
                         </>
                       )}
                     </linearGradient>
+                    {/* Pre-market extension gradients - 50% opacity of the main fills */}
+                    <linearGradient id="priceExtensionAboveGradient" x1="0" y1="0" x2="0" y2="1">
+                      {priceGradientStops ? (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.25} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.08} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
+                          <stop offset="100%" stopColor="transparent" stopOpacity={0} />
+                        </>
+                      ) : (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.25} />
+                          <stop offset="100%" stopColor={PRICE_UP_COLOR} stopOpacity={0.05} />
+                        </>
+                      )}
+                    </linearGradient>
+                    <linearGradient id="priceExtensionBelowGradient" x1="0" y1="0" x2="0" y2="1">
+                      {priceGradientStops ? (
+                        <>
+                          <stop offset="0%" stopColor="transparent" stopOpacity={0} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.08} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.25} />
+                        </>
+                      ) : (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.05} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.25} />
+                        </>
+                      )}
+                    </linearGradient>
                     {/* Dynamic gradient for price line - green above previous close, red below */}
                     <linearGradient id="priceLineGradient" x1="0" y1="0" x2="0" y2="1">
                       {priceGradientStops ? (
@@ -1650,6 +1730,19 @@ w-[120vw]
                         </>
                       ) : (
                         <stop offset="0%" stopColor={PRICE_UP_COLOR} />
+                      )}
+                    </linearGradient>
+                    {/* Pre-market extension line gradient - 50% opacity */}
+                    <linearGradient id="priceExtensionLineGradient" x1="0" y1="0" x2="0" y2="1">
+                      {priceGradientStops ? (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
+                        </>
+                      ) : (
+                        <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
                       )}
                     </linearGradient>
                   </defs>
@@ -1691,6 +1784,27 @@ w-[120vw]
                   {/* Single area fill between price line and previous close - gradient handles color transition */}
                   {showPriceOverlay && is5MinView && priceData?.previousClose && (
                     <>
+                      {/* Pre-market extension areas (rendered FIRST so they appear behind the main areas) */}
+                      <Area 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="priceExtension" 
+                        stroke="none"
+                        fill="url(#priceExtensionAboveGradient)"
+                        baseValue={priceData.previousClose}
+                        connectNulls={false}
+                        isAnimationActive={false}
+                      />
+                      <Area 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="priceExtension" 
+                        stroke="none"
+                        fill="url(#priceExtensionBelowGradient)"
+                        baseValue={priceData.previousClose}
+                        connectNulls={false}
+                        isAnimationActive={false}
+                      />
                       {/* Fill above previous close (green) - uses price data, gradient clips at baseline */}
                       <Area 
                         yAxisId="right" 
@@ -1715,6 +1829,8 @@ w-[120vw]
                       />
                     </>
                   )}
+                  {/* Pre-market extension line (rendered before main line) */}
+                  {showPriceOverlay && is5MinView && <Line yAxisId="right" type="monotone" dataKey="priceExtension" stroke="url(#priceExtensionLineGradient)" strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />}
                   {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={{
                   fill: priceLineColor,
                   strokeWidth: 2,
