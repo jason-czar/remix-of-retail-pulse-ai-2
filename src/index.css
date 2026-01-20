@@ -506,6 +506,107 @@
       inset 0 1px 0 hsl(0 0% 100% / 0.6);
   }
 
+  /* =========================================================
+     Glass Select — Dropdown triggers with Liquid Glass aesthetic
+     Matches glass-input for cohesive form styling
+     ========================================================= */
+  .glass-select-trigger {
+    @apply relative;
+    background: hsl(var(--secondary) / 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid hsl(var(--border) / 0.4);
+    border-radius: 0.5rem;
+    transition: 
+      background-color 200ms ease,
+      border-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .glass-select-trigger[data-state="open"] {
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 
+      0 0 0 3px hsl(var(--primary) / 0.1),
+      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+  }
+
+  .dark .glass-select-trigger {
+    background: hsl(0 0% 100% / 0.06);
+    border-color: hsl(0 0% 100% / 0.1);
+  }
+
+  .dark .glass-select-trigger:hover {
+    background: hsl(0 0% 100% / 0.08);
+    border-color: hsl(0 0% 100% / 0.15);
+  }
+
+  .dark .glass-select-trigger[data-state="open"] {
+    background: hsl(0 0% 100% / 0.08);
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 
+      0 0 0 3px hsl(var(--primary) / 0.15),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  }
+
+  :not(.dark) .glass-select-trigger {
+    background: hsl(0 0% 100% / 0.7);
+    border-color: hsl(var(--border) / 0.5);
+  }
+
+  :not(.dark) .glass-select-trigger:hover {
+    background: hsl(0 0% 100% / 0.85);
+    border-color: hsl(var(--border) / 0.7);
+  }
+
+  :not(.dark) .glass-select-trigger[data-state="open"] {
+    background: hsl(0 0% 100% / 0.9);
+    border-color: hsl(var(--primary) / 0.5);
+    box-shadow: 
+      0 0 0 3px hsl(var(--primary) / 0.1),
+      0 2px 8px hsl(240 15% 50% / 0.06),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+  }
+
+  /* Glass Select Content - dropdown panel */
+  .glass-select-content {
+    @apply relative overflow-hidden;
+    background: var(--gradient-glass);
+    backdrop-filter: blur(20px) saturate(150%);
+    border-radius: 0.75rem;
+  }
+
+  .dark .glass-select-content {
+    background: hsl(0 0% 16% / 0.95);
+    border: 1px solid hsl(0 0% 100% / 0.12);
+    box-shadow: 
+      0 12px 40px hsl(0 0% 0% / 0.5),
+      0 4px 12px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  }
+
+  :not(.dark) .glass-select-content {
+    background: hsl(0 0% 100% / 0.95);
+    border: 1px solid hsl(var(--border) / 0.4);
+    box-shadow: 
+      0 8px 32px hsl(240 15% 50% / 0.12),
+      0 2px 8px hsl(240 15% 50% / 0.06),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+  }
+
+  /* Glass Select Item - individual options */
+  .glass-select-item {
+    @apply relative;
+    border-radius: 0.375rem;
+    transition: background-color 150ms ease;
+  }
+
+  .dark .glass-select-item[data-highlighted] {
+    background: hsl(0 0% 100% / 0.08);
+  }
+
+  :not(.dark) .glass-select-item[data-highlighted] {
+    background: hsl(var(--secondary) / 0.6);
+  }
+
   /* Glass Tabs Enhancement */
   .glass-tabs-list {
     background: var(--gradient-glass);
