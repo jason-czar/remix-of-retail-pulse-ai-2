@@ -1,4 +1,4 @@
-import { ComposedChart, BarChart, Bar, Line, Area, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine, ReferenceArea } from "recharts";
+import { ComposedChart, BarChart, Bar, Line, Area, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine, ReferenceArea, Customized } from "recharts";
 import { motion } from "framer-motion";
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { triggerHaptic } from "@/lib/haptics";
@@ -1533,19 +1533,50 @@ function HourlyStackedNarrativeChart({
     const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
     const previousClose = priceData.previousClose ?? 0;
     
-    // Find the first slot with actual price data
+    // Find the first slot index with actual price data
     for (let i = 0; i < stackedChartData.length; i++) {
       const slotIndex = stackedChartData[i].slotIndex;
       const pricePoint = priceBySlot.get(slotIndex);
       if (pricePoint?.price !== undefined) {
         return {
           price: pricePoint.price,
-          color: pricePoint.price >= previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR
+          color: pricePoint.price >= previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR,
+          dataIndex: i // Track the index in chart data where price begins
         };
       }
     }
     return null;
   }, [priceData, showPriceOverlay, is5MinView, stackedChartData, START_HOUR, END_HOUR]);
+
+  // Custom component to render horizontal line from Y-axis to first price point
+  const FirstPriceExtensionLine = useCallback(({ yAxisMap, xAxisMap }: any) => {
+    if (!firstPriceData || !yAxisMap?.right || !xAxisMap) return null;
+    
+    const yAxis = yAxisMap.right;
+    const xAxis = Object.values(xAxisMap)[0] as any;
+    if (!yAxis || !xAxis) return null;
+    
+    // Calculate y position from price
+    const yScale = yAxis.scale;
+    const y = yScale ? yScale(firstPriceData.price) : null;
+    if (y === null || y === undefined) return null;
+    
+    // Calculate x position - from axis start to the first data point
+    const xStart = xAxis.x; // Left edge of chart area
+    const xEnd = xAxis.x + (xAxis.width * firstPriceData.dataIndex / stackedChartData.length);
+    
+    return (
+      <line
+        x1={xStart}
+        y1={y}
+        x2={xEnd}
+        y2={y}
+        stroke={firstPriceData.color}
+        strokeOpacity={0.6}
+        strokeWidth={2}
+      />
+    );
+  }, [firstPriceData, stackedChartData.length]);
 
   // Derive panel data (hovered or most recent with data)
   const panelData = useMemo((): SidePanelData | null => {
@@ -1844,8 +1875,8 @@ w-[120vw]
                   r: 5
                 }} connectNulls />}
                   {showPriceOverlay && is5MinView && priceData?.previousClose && <ReferenceLine yAxisId="right" y={priceData.previousClose} stroke="hsl(215 20% 65% / 0.5)" strokeDasharray="2 3" strokeWidth={1} />}
-                  {/* Horizontal line at first price extending to Y-axis edge */}
-                  {showPriceOverlay && is5MinView && firstPriceData && <ReferenceLine yAxisId="right" y={firstPriceData.price} stroke={firstPriceData.color} strokeOpacity={0.6} strokeWidth={2} />}
+                  {/* Horizontal line from Y-axis to first price point */}
+                  {showPriceOverlay && is5MinView && firstPriceData && <Customized component={FirstPriceExtensionLine} />}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
