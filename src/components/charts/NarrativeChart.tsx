@@ -1060,17 +1060,32 @@ function HourlyStackedNarrativeChart({
       }
 
       // Fill in actual narrative data if available
+      // IMPORTANT: message_count in DB is cumulative day-to-date, so we compute per-hour deltas
       if (historyData?.data && historyData.data.length > 0) {
         const filteredData = historyData.data.filter(point => {
           const pointDate = new Date(point.recorded_at);
           return pointDate.getTime() >= todayStart.getTime() && pointDate.getTime() <= todayEnd.getTime();
         });
-        filteredData.forEach(point => {
+        
+        // Sort by recorded_at to compute deltas correctly
+        const sortedData = [...filteredData].sort((a, b) => 
+          new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+        );
+        
+        // Track previous cumulative count to compute per-hour delta
+        let prevCumulativeCount = 0;
+        
+        sortedData.forEach(point => {
           const date = new Date(point.recorded_at);
           const hourIndex = date.getHours();
           const slot = hourlyNarratives.get(hourIndex);
           if (slot) {
-            slot.totalMessages += point.message_count;
+            // Compute per-hour message count as delta from previous snapshot
+            const hourlyDelta = Math.max(0, point.message_count - prevCumulativeCount);
+            slot.totalMessages += hourlyDelta;
+            prevCumulativeCount = point.message_count;
+            
+            // Narrative counts within each snapshot are already per-hour, not cumulative
             if (point.narratives && Array.isArray(point.narratives)) {
               point.narratives.forEach((n: any) => {
                 const existing = slot.narratives.find(x => x.name === n.name);
@@ -1155,8 +1170,17 @@ function HourlyStackedNarrativeChart({
       const pointDate = new Date(point.recorded_at);
       return pointDate.getTime() >= twentyFourHoursAgo.getTime() && pointDate.getTime() <= now.getTime();
     });
+    
+    // Sort by recorded_at to compute deltas correctly
+    const sortedData = [...filteredData].sort((a, b) => 
+      new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+    );
 
-    // Group data by hour
+    // Track previous cumulative count to compute per-hour deltas
+    // message_count in DB is cumulative day-to-date, so we compute per-hour deltas
+    let prevCumulativeCount = 0;
+
+    // Group data by hour with computed deltas
     const byHour = new Map<string, {
       hour: string;
       sortKey: string;
@@ -1168,7 +1192,8 @@ function HourlyStackedNarrativeChart({
       }[];
       totalMessages: number;
     }>();
-    filteredData.forEach(point => {
+    
+    sortedData.forEach(point => {
       const date = new Date(point.recorded_at);
       const hourKey = date.toLocaleTimeString(undefined, {
         hour: "numeric",
@@ -1176,6 +1201,11 @@ function HourlyStackedNarrativeChart({
       });
       const sortKey = date.toISOString();
       const hourIndex = date.getHours();
+      
+      // Compute per-hour message count as delta from previous snapshot
+      const hourlyDelta = Math.max(0, point.message_count - prevCumulativeCount);
+      prevCumulativeCount = point.message_count;
+      
       if (!byHour.has(sortKey)) {
         byHour.set(sortKey, {
           hour: hourKey,
@@ -1186,9 +1216,9 @@ function HourlyStackedNarrativeChart({
         });
       }
       const entry = byHour.get(sortKey)!;
-      entry.totalMessages += point.message_count;
+      entry.totalMessages += hourlyDelta;
 
-      // Accumulate narratives for this hour
+      // Narrative counts within each snapshot are already per-hour, not cumulative
       if (point.narratives && Array.isArray(point.narratives)) {
         point.narratives.forEach((n: any) => {
           const existing = entry.narratives.find(x => x.name === n.name);
@@ -1236,7 +1266,9 @@ function HourlyStackedNarrativeChart({
       }
       return flatData;
     });
-    const totalMessages = filteredData.reduce((sum, point) => sum + point.message_count, 0);
+    
+    // Compute total from deltas, not raw cumulative counts
+    const totalMessages = hourEntries.reduce((sum, h) => sum + h.totalMessages, 0);
     return {
       stackedChartData,
       totalMessages,
