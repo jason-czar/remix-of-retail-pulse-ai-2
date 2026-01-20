@@ -1561,9 +1561,11 @@ function HourlyStackedNarrativeChart({
     const y = yScale ? yScale(firstPriceData.price) : null;
     if (y === null || y === undefined) return null;
     
-    // Calculate x position - from axis start to the first data point
+    // Calculate x position - from axis start to the center of the first data point bar
     const xStart = xAxis.x; // Left edge of chart area
-    const xEnd = xAxis.x + (xAxis.width * firstPriceData.dataIndex / stackedChartData.length);
+    const barWidth = xAxis.width / stackedChartData.length;
+    // End at the center of the bar where the price point sits
+    const xEnd = xAxis.x + (barWidth * firstPriceData.dataIndex) + (barWidth / 2);
     
     return (
       <line
