@@ -1,4 +1,4 @@
-import { ComposedChart, BarChart, Bar, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine } from "recharts";
+import { ComposedChart, BarChart, Bar, Line, Area, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine, ReferenceArea } from "recharts";
 import { motion } from "framer-motion";
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import { triggerHaptic } from "@/lib/haptics";
@@ -1328,15 +1328,22 @@ function HourlyStackedNarrativeChart({
       return stackedChartData;
     }
 
+    const previousClose = priceData.previousClose ?? 0;
+
     // For 5-minute view (Today), use 5-minute slot alignment for granular price line
     if (is5MinView) {
       const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
       return stackedChartData.map(item => {
         const slotIndex = item.slotIndex;
         const pricePoint = priceBySlot.get(slotIndex);
+        const price = pricePoint?.price ?? null;
         return {
           ...item,
-          price: pricePoint?.price ?? null
+          price,
+          // For area fills: split price into above/below previousClose
+          priceAbove: price !== null && price >= previousClose ? price : previousClose,
+          priceBelow: price !== null && price < previousClose ? price : previousClose,
+          previousClose
         };
       });
     }
@@ -1346,9 +1353,13 @@ function HourlyStackedNarrativeChart({
     return stackedChartData.map(item => {
       const hourIndex = item.hourIndex;
       const pricePoint = priceByHour.get(hourIndex);
+      const price = pricePoint?.price ?? null;
       return {
         ...item,
-        price: pricePoint?.price ?? null
+        price,
+        priceAbove: price !== null && price >= previousClose ? price : previousClose,
+        priceBelow: price !== null && price < previousClose ? price : previousClose,
+        previousClose
       };
     });
   }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
@@ -1543,6 +1554,17 @@ w-[120vw]
                 left: 5,
                 bottom: 10
               }} barCategoryGap={0} barGap={0} onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
+                  {/* SVG Defs for gradient fills */}
+                  <defs>
+                    <linearGradient id="priceAboveGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.25} />
+                      <stop offset="100%" stopColor={PRICE_UP_COLOR} stopOpacity={0.05} />
+                    </linearGradient>
+                    <linearGradient id="priceBelowGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.05} />
+                      <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.25} />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="time" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} interval={is5MinView ? 11 : 0} tick={({
                   x,
                   y,
@@ -1578,6 +1600,33 @@ w-[120vw]
                 }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
                       {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} />)}
                     </Bar>)}
+                  {/* Area fills from price line to previous close reference line */}
+                  {showPriceOverlay && is5MinView && priceData?.previousClose && (
+                    <>
+                      {/* Green fill for price above previous close */}
+                      <Area 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="priceAbove" 
+                        stroke="none"
+                        fill="url(#priceAboveGradient)"
+                        baseValue={priceData.previousClose}
+                        connectNulls
+                        isAnimationActive={false}
+                      />
+                      {/* Red/Orange fill for price below previous close */}
+                      <Area 
+                        yAxisId="right" 
+                        type="monotone" 
+                        dataKey="priceBelow" 
+                        stroke="none"
+                        fill="url(#priceBelowGradient)"
+                        baseValue={priceData.previousClose}
+                        connectNulls
+                        isAnimationActive={false}
+                      />
+                    </>
+                  )}
                   {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke={priceLineColor} strokeWidth={2} dot={false} activeDot={{
                   fill: priceLineColor,
                   strokeWidth: 2,
