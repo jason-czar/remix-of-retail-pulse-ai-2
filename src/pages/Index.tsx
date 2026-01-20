@@ -8,10 +8,12 @@ import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { IntelligencePatternsSection } from "@/components/landing/IntelligencePatternsSection";
 import { CredibilitySection } from "@/components/landing/CredibilitySection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
+import { CursorLight } from "@/components/landing/CursorLight";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <CursorLight />
       <Header />
       <main>
         <HeroSection />
