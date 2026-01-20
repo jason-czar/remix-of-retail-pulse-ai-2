@@ -398,6 +398,46 @@
       inset 0 1px 0 hsl(0 0% 100% / 0.75);
   }
 
+  /* =========================================================
+     Glass List Item — Lighter variant for interactive rows
+     Used for: WatchlistItem, TrendingItem, AlertRow, MessageCard
+     ========================================================= */
+  .glass-list-item {
+    @apply relative overflow-hidden;
+    background: hsl(var(--secondary) / 0.35);
+    backdrop-filter: blur(12px) saturate(130%);
+    border-radius: 0.5rem;
+    transition: 
+      background-color 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .dark .glass-list-item {
+    background: hsl(0 0% 100% / 0.04);
+    border: 1px solid hsl(0 0% 100% / 0.06);
+  }
+
+  .dark .glass-list-item:hover {
+    background: hsl(0 0% 100% / 0.08);
+    border-color: hsl(0 0% 100% / 0.1);
+    box-shadow: 
+      0 4px 16px hsl(0 0% 0% / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  }
+
+  :not(.dark) .glass-list-item {
+    background: hsl(var(--secondary) / 0.4);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  :not(.dark) .glass-list-item:hover {
+    background: hsl(var(--secondary) / 0.6);
+    border-color: hsl(var(--border) / 0.5);
+    box-shadow: 
+      0 2px 8px hsl(240 15% 50% / 0.08),
+      inset 0 1px 0 hsl(0 0% 100% / 0.4);
+  }
+
   /* Glass Tabs Enhancement */
   .glass-tabs-list {
     background: var(--gradient-glass);
