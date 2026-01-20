@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNarrativeAnalysis, Narrative } from "@/hooks/use-narrative-analysis";
 import { useNarrativeHistory } from "@/hooks/use-narrative-history";
+import { useVolumeAnalytics } from "@/hooks/use-stocktwits";
 import { useAutoBackfill } from "@/hooks/use-auto-backfill";
 import { useStockPrice } from "@/hooks/use-stock-price";
 import { alignPricesToHourSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
@@ -1023,6 +1024,10 @@ function HourlyStackedNarrativeChart({
     isLoading: priceLoading
   } = useStockPrice(symbol, timeRange, showPriceOverlay);
 
+  // Fetch actual hourly volume from StockTwits analytics API
+  // This provides the REAL message count per hour (not the AI sample size)
+  const { data: volumeData } = useVolumeAnalytics(symbol, timeRange);
+
   // Determine price line color based on current price vs previous close
   const priceLineColor = useMemo(() => {
     if (!priceData?.currentPrice || !priceData?.previousClose) {
@@ -1030,6 +1035,31 @@ function HourlyStackedNarrativeChart({
     }
     return priceData.currentPrice >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
   }, [priceData?.currentPrice, priceData?.previousClose]);
+
+  // Build a map of hour -> actual message volume from the analytics API
+  const hourlyVolumeMap = useMemo(() => {
+    const map = new Map<number, number>();
+    if (!volumeData || volumeData.length === 0) return map;
+    
+    volumeData.forEach((item: any) => {
+      // Parse hour from time string (e.g., "8am", "12pm", "1pm")
+      const timeStr = item.time?.toLowerCase() || "";
+      let hour = 0;
+      
+      if (timeStr.includes("am")) {
+        const num = parseInt(timeStr.replace("am", ""));
+        hour = num === 12 ? 0 : num; // 12am = 0
+      } else if (timeStr.includes("pm")) {
+        const num = parseInt(timeStr.replace("pm", ""));
+        hour = num === 12 ? 12 : num + 12; // 12pm = 12, 1pm = 13, etc.
+      }
+      
+      map.set(hour, item.volume || 0);
+    });
+    
+    return map;
+  }, [volumeData]);
+
   const {
     stackedChartData,
     totalMessages,
@@ -1048,20 +1078,18 @@ function HourlyStackedNarrativeChart({
           count: number;
           sentiment: string;
         }[];
-        totalMessages: number;
+        hasNarrativeData: boolean;
       }> = new Map();
 
       // Initialize hours based on selected session
       for (let h = START_HOUR; h <= END_HOUR; h++) {
         hourlyNarratives.set(h, {
           narratives: [],
-          totalMessages: 0
+          hasNarrativeData: false
         });
       }
 
       // Fill in actual narrative data if available
-      // NOTE: message_count in narrative_history is the sample size per snapshot (e.g., 500),
-      // NOT a cumulative day-to-date total. Use it directly.
       if (historyData?.data && historyData.data.length > 0) {
         const filteredData = historyData.data.filter(point => {
           const pointDate = new Date(point.recorded_at);
@@ -1073,8 +1101,7 @@ function HourlyStackedNarrativeChart({
           const hourIndex = date.getHours();
           const slot = hourlyNarratives.get(hourIndex);
           if (slot) {
-            // Use message_count directly - it represents the sample size for this snapshot
-            slot.totalMessages += point.message_count;
+            slot.hasNarrativeData = true;
             
             // Aggregate narratives for this hour
             if (point.narratives && Array.isArray(point.narratives)) {
@@ -1095,9 +1122,15 @@ function HourlyStackedNarrativeChart({
         });
       }
 
-      // Find max messages for relative volume
-      const hourData = Array.from(hourlyNarratives.values());
-      const maxMessages = Math.max(...hourData.map(h => h.totalMessages), 1);
+      // Get actual hourly volumes from the analytics API
+      const hourlyVolumes: Map<number, number> = new Map();
+      for (let h = START_HOUR; h <= END_HOUR; h++) {
+        hourlyVolumes.set(h, hourlyVolumeMap.get(h) || 0);
+      }
+
+      // Find max volume for relative activity calculation
+      const volumeValues = Array.from(hourlyVolumes.values());
+      const maxVolume = Math.max(...volumeValues, 1);
 
       // Build chart data slots
       const stackedChartData: Record<string, any>[] = [];
@@ -1111,15 +1144,19 @@ function HourlyStackedNarrativeChart({
         // Get the hour's narrative data (for tooltip on any slot within the hour)
         const hourNarr = hourlyNarratives.get(hour)!;
         const topNarratives = hourNarr.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
+        
+        // Use ACTUAL volume from analytics API, not sample size from narrative_history
+        const actualVolume = hourlyVolumes.get(hour) || 0;
+        
         const flatData: Record<string, any> = {
           time: hourLabel,
           slotIndex: slotIdx,
           hourIndex: hour,
           isHourStart,
-          // Include hour data on ALL slots for tooltip display
-          totalMessages: hourNarr.totalMessages,
-          volumePercent: hourNarr.totalMessages / maxMessages * 100,
-          isEmpty: hourNarr.totalMessages === 0
+          // Use actual volume from analytics API for the side panel display
+          totalMessages: actualVolume,
+          volumePercent: actualVolume / maxVolume * 100,
+          isEmpty: !hourNarr.hasNarrativeData && actualVolume === 0
         };
 
         // Add narrative segment data to ALL slots (for tooltip)
@@ -1138,8 +1175,8 @@ function HourlyStackedNarrativeChart({
         }
         stackedChartData.push(flatData);
       }
-      const totalMessages = hourData.reduce((sum, h) => sum + h.totalMessages, 0);
-      const hasAnyData = hourData.some(h => h.totalMessages > 0);
+      const totalMessages = volumeValues.reduce((sum, v) => sum + v, 0);
+      const hasAnyData = Array.from(hourlyNarratives.values()).some(h => h.hasNarrativeData);
       return {
         stackedChartData,
         totalMessages,
@@ -1257,7 +1294,7 @@ function HourlyStackedNarrativeChart({
       hasAnyData: stackedChartData.length > 0,
       is5MinView: false
     };
-  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now, START_HOUR, END_HOUR, VISIBLE_HOURS, SLOTS_PER_HOUR]);
+  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now, START_HOUR, END_HOUR, VISIBLE_HOURS, SLOTS_PER_HOUR, hourlyVolumeMap]);
 
   // Merge price data into chart data
   const chartDataWithPrice = useMemo(() => {
