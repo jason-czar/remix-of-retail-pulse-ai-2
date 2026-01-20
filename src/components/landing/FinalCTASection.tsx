@@ -45,13 +45,13 @@ export function FinalCTASection() {
 
                 <div className="flex flex-row gap-3 sm:gap-4 justify-center">
                   <Link to="/symbol/NVDA">
-                    <Button size="lg" className="px-6 sm:px-8 rounded-full group">
+                    <Button size="lg" className="px-6 sm:px-8 rounded-full glass-button-primary group">
                       View NVDA
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </Link>
                   <Link to="/signup">
-                    <Button variant="outline" size="lg" className="px-6 sm:px-8 rounded-full backdrop-blur-sm">
+                    <Button variant="ghost" size="lg" className="px-6 sm:px-8 rounded-full glass-button-secondary">
                       Get Started
                     </Button>
                   </Link>
