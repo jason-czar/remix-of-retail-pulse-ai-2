@@ -23,7 +23,7 @@ export function Header() {
   const getInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
   };
-  return <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/30 dark:bg-background/30 border-b border-black/[0.08] dark:border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+  return <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/10 dark:bg-background/10 border-b border-black/[0.08] dark:border-white/[0.08] shadow-[0_4px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between relative">
           {/* Logo */}
