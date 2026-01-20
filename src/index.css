@@ -438,6 +438,66 @@
       inset 0 1px 0 hsl(0 0% 100% / 0.4);
   }
 
+  /* =========================================================
+     Glass Input — Readable input variant for glass surfaces
+     Maintains text clarity while fitting Liquid Glass aesthetic
+     ========================================================= */
+  .glass-input {
+    @apply relative;
+    background: hsl(0 0% 100% / 0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 0.5rem;
+    border: 1px solid hsl(var(--border) / 0.6);
+    transition: 
+      border-color 200ms ease,
+      box-shadow 200ms ease,
+      background-color 200ms ease;
+  }
+
+  .glass-input::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .glass-input:focus {
+    outline: none;
+    border-color: hsl(var(--ring));
+    box-shadow: 
+      0 0 0 3px hsl(var(--ring) / 0.15),
+      0 1px 2px hsl(0 0% 0% / 0.05);
+  }
+
+  .dark .glass-input {
+    background: hsl(0 0% 8% / 0.75);
+    border-color: hsl(0 0% 100% / 0.12);
+    color: hsl(var(--foreground));
+  }
+
+  .dark .glass-input::placeholder {
+    color: hsl(0 0% 50%);
+  }
+
+  .dark .glass-input:focus {
+    border-color: hsl(var(--ring));
+    box-shadow: 
+      0 0 0 3px hsl(var(--ring) / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.04);
+  }
+
+  :not(.dark) .glass-input {
+    box-shadow: 
+      inset 0 1px 2px hsl(0 0% 0% / 0.04),
+      0 1px 0 hsl(0 0% 100% / 0.8);
+  }
+
+  :not(.dark) .glass-input:hover:not(:focus) {
+    border-color: hsl(var(--border));
+  }
+
+  .dark .glass-input:hover:not(:focus) {
+    border-color: hsl(0 0% 100% / 0.18);
+    background: hsl(0 0% 10% / 0.8);
+  }
+
   /* Glass Tabs Enhancement */
   .glass-tabs-list {
     background: var(--gradient-glass);
