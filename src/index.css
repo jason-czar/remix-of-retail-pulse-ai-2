@@ -529,24 +529,24 @@
   }
 
   .dark .glass-panel {
+    /* Dark base with subtle transparency - NOT white overlay */
     background: linear-gradient(
       135deg,
-      hsl(0 0% 100% / 0.08) 0%,
-      hsl(0 0% 100% / 0.03) 100%
+      hsl(0 0% 16% / 0.95) 0%,
+      hsl(0 0% 14% / 0.9) 100%
     );
-    border: 1px solid hsl(0 0% 100% / 0.12);
+    border: 1px solid hsl(0 0% 100% / 0.08);
     box-shadow: 
-      0 8px 32px hsl(0 0% 0% / 0.5),
-      0 2px 8px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.1),
-      inset 0 -1px 0 hsl(0 0% 0% / 0.2);
+      0 8px 32px hsl(0 0% 0% / 0.6),
+      0 2px 8px hsl(0 0% 0% / 0.4),
+      inset 0 1px 0 hsl(0 0% 100% / 0.05);
   }
 
   :not(.dark) .glass-panel {
     background: linear-gradient(
       135deg,
-      hsl(0 0% 100% / 0.7) 0%,
-      hsl(0 0% 100% / 0.5) 100%
+      hsl(0 0% 100% / 0.75) 0%,
+      hsl(0 0% 100% / 0.55) 100%
     );
     border: 1px solid hsl(0 0% 100% / 0.8);
     box-shadow: 
@@ -564,13 +564,14 @@
   }
 
   .dark .glass-section {
-    background: hsl(0 0% 100% / 0.02);
-    border-top: 1px solid hsl(0 0% 100% / 0.06);
-    border-bottom: 1px solid hsl(0 0% 100% / 0.06);
+    /* Slightly lighter dark for section distinction */
+    background: hsl(0 0% 10% / 0.8);
+    border-top: 1px solid hsl(0 0% 100% / 0.04);
+    border-bottom: 1px solid hsl(0 0% 100% / 0.04);
   }
 
   :not(.dark) .glass-section {
-    background: hsl(240 20% 98% / 0.6);
+    background: hsl(240 20% 97% / 0.7);
     border-top: 1px solid hsl(0 0% 100% / 0.6);
     border-bottom: 1px solid hsl(220 20% 50% / 0.06);
   }
@@ -584,22 +585,23 @@
   }
 
   .dark .glass-inset {
+    /* Dark inset with slight depth */
     background: linear-gradient(
       135deg,
-      hsl(0 0% 100% / 0.06) 0%,
-      hsl(0 0% 100% / 0.02) 100%
+      hsl(0 0% 18% / 0.9) 0%,
+      hsl(0 0% 15% / 0.85) 100%
     );
-    border: 1px solid hsl(0 0% 100% / 0.1);
+    border: 1px solid hsl(0 0% 100% / 0.06);
     box-shadow: 
-      inset 0 1px 0 hsl(0 0% 100% / 0.06),
-      inset 0 -1px 0 hsl(0 0% 0% / 0.15);
+      inset 0 1px 0 hsl(0 0% 100% / 0.03),
+      inset 0 -1px 0 hsl(0 0% 0% / 0.2);
   }
 
   :not(.dark) .glass-inset {
     background: linear-gradient(
       135deg,
-      hsl(0 0% 100% / 0.6) 0%,
-      hsl(0 0% 100% / 0.4) 100%
+      hsl(0 0% 100% / 0.65) 0%,
+      hsl(0 0% 100% / 0.45) 100%
     );
     border: 1px solid hsl(0 0% 100% / 0.7);
     box-shadow: 
@@ -617,11 +619,11 @@
   }
 
   .dark .glass-badge {
-    background: hsl(var(--primary) / 0.18);
-    border: 1px solid hsl(var(--primary) / 0.25);
+    background: hsl(var(--primary) / 0.2);
+    border: 1px solid hsl(var(--primary) / 0.3);
     box-shadow: 
-      0 0 16px hsl(var(--primary) / 0.12),
-      inset 0 1px 0 hsl(var(--primary) / 0.15);
+      0 0 16px hsl(var(--primary) / 0.15),
+      inset 0 1px 0 hsl(var(--primary) / 0.1);
   }
 
   :not(.dark) .glass-badge {
@@ -641,23 +643,22 @@
   .dark .glass-interactive:hover {
     background: linear-gradient(
       135deg,
-      hsl(0 0% 100% / 0.12) 0%,
-      hsl(0 0% 100% / 0.05) 100%
+      hsl(0 0% 20% / 0.98) 0%,
+      hsl(0 0% 17% / 0.95) 100%
     );
-    border-color: hsl(0 0% 100% / 0.18);
+    border-color: hsl(0 0% 100% / 0.12);
     box-shadow: 
-      0 16px 48px hsl(0 0% 0% / 0.55),
-      0 6px 16px hsl(0 0% 0% / 0.35),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15),
-      inset 0 -1px 0 hsl(0 0% 0% / 0.25);
+      0 16px 48px hsl(0 0% 0% / 0.65),
+      0 6px 16px hsl(0 0% 0% / 0.45),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
     transform: translateY(-3px);
   }
 
   :not(.dark) .glass-interactive:hover {
     background: linear-gradient(
       135deg,
-      hsl(0 0% 100% / 0.85) 0%,
-      hsl(0 0% 100% / 0.65) 100%
+      hsl(0 0% 100% / 0.9) 0%,
+      hsl(0 0% 100% / 0.7) 100%
     );
     border-color: hsl(0 0% 100% / 0.9);
     box-shadow: 
@@ -677,11 +678,11 @@
   }
 
   .dark .glass-icon {
-    background: hsl(var(--primary) / 0.15);
-    border: 1px solid hsl(var(--primary) / 0.2);
+    background: hsl(var(--primary) / 0.18);
+    border: 1px solid hsl(var(--primary) / 0.25);
     box-shadow: 
-      0 0 20px hsl(var(--primary) / 0.1),
-      inset 0 1px 0 hsl(var(--primary) / 0.1);
+      0 0 20px hsl(var(--primary) / 0.12),
+      inset 0 1px 0 hsl(var(--primary) / 0.08);
   }
 
   :not(.dark) .glass-icon {
@@ -701,12 +702,12 @@
   }
 
   .dark .glass-list-item {
-    background: hsl(0 0% 100% / 0.04);
-    border: 1px solid hsl(0 0% 100% / 0.08);
+    background: hsl(0 0% 16% / 0.85);
+    border: 1px solid hsl(0 0% 100% / 0.05);
   }
 
   :not(.dark) .glass-list-item {
-    background: hsl(0 0% 100% / 0.5);
+    background: hsl(0 0% 100% / 0.55);
     border: 1px solid hsl(0 0% 100% / 0.6);
     box-shadow: 0 1px 4px hsl(220 20% 50% / 0.04);
   }
@@ -735,8 +736,8 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      hsl(0 0% 100% / 0.1) 20%,
-      hsl(0 0% 100% / 0.1) 80%,
+      hsl(0 0% 100% / 0.08) 20%,
+      hsl(0 0% 100% / 0.08) 80%,
       transparent 100%
     );
   }
