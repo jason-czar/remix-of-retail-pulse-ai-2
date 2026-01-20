@@ -513,4 +513,187 @@
     33% { transform: translate(5%, 3%) scale(1.05); }
     66% { transform: translate(-3%, -5%) scale(0.98); }
   }
+
+  /* Liquid Glass Panels - Theme-adaptive surfaces for content sections */
+  .glass-panel {
+    @apply relative overflow-hidden;
+    backdrop-filter: blur(24px);
+    border-radius: 1.25rem;
+  }
+
+  .dark .glass-panel {
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.06) 0%,
+      hsl(0 0% 100% / 0.02) 100%
+    );
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow: 
+      0 8px 32px hsl(0 0% 0% / 0.35),
+      0 2px 8px hsl(0 0% 0% / 0.2),
+      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  }
+
+  :not(.dark) .glass-panel {
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.8) 0%,
+      hsl(0 0% 100% / 0.6) 100%
+    );
+    border: 1px solid hsl(0 0% 0% / 0.06);
+    box-shadow: 
+      0 4px 24px hsl(240 15% 50% / 0.08),
+      0 1px 3px hsl(240 15% 50% / 0.04),
+      inset 0 1px 0 hsl(0 0% 100% / 0.8);
+  }
+
+  /* Liquid Glass Section - for page sections with subtle tint */
+  .glass-section {
+    @apply relative;
+    backdrop-filter: blur(16px);
+  }
+
+  .dark .glass-section {
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.03) 0%,
+      hsl(0 0% 100% / 0.01) 100%
+    );
+    border-top: 1px solid hsl(0 0% 100% / 0.05);
+    border-bottom: 1px solid hsl(0 0% 100% / 0.05);
+  }
+
+  :not(.dark) .glass-section {
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.5) 0%,
+      hsl(240 18% 96% / 0.8) 100%
+    );
+    border-top: 1px solid hsl(0 0% 0% / 0.04);
+    border-bottom: 1px solid hsl(0 0% 0% / 0.04);
+  }
+
+  /* Liquid Glass Inset Panel - for inner content groupings */
+  .glass-inset {
+    @apply relative overflow-hidden;
+    backdrop-filter: blur(12px);
+    border-radius: 0.75rem;
+  }
+
+  .dark .glass-inset {
+    background: hsl(0 0% 100% / 0.04);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.04);
+  }
+
+  :not(.dark) .glass-inset {
+    background: hsl(0 0% 100% / 0.6);
+    border: 1px solid hsl(0 0% 0% / 0.05);
+    box-shadow: 
+      inset 0 1px 0 hsl(0 0% 100% / 0.6),
+      0 1px 2px hsl(0 0% 0% / 0.04);
+  }
+
+  /* Liquid Glass Badge - for category badges and labels */
+  .glass-badge {
+    @apply relative;
+    backdrop-filter: blur(8px);
+    border-radius: 0.5rem;
+  }
+
+  .dark .glass-badge {
+    background: hsl(var(--primary) / 0.2);
+    border: 1px solid hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.15);
+  }
+
+  :not(.dark) .glass-badge {
+    background: hsl(var(--primary) / 0.12);
+    border: 1px solid hsl(var(--primary) / 0.2);
+    box-shadow: 0 1px 3px hsl(var(--primary) / 0.1);
+  }
+
+  /* Liquid Glass interactive hover - subtle depth on hover */
+  .glass-interactive {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .dark .glass-interactive:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.1) 0%,
+      hsl(0 0% 100% / 0.04) 100%
+    );
+    border-color: hsl(0 0% 100% / 0.15);
+    box-shadow: 
+      0 12px 40px hsl(0 0% 0% / 0.4),
+      0 4px 12px hsl(0 0% 0% / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+    transform: translateY(-2px);
+  }
+
+  :not(.dark) .glass-interactive:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.95) 0%,
+      hsl(0 0% 100% / 0.75) 100%
+    );
+    border-color: hsl(0 0% 0% / 0.1);
+    box-shadow: 
+      0 8px 32px hsl(240 15% 50% / 0.12),
+      0 2px 6px hsl(240 15% 50% / 0.06),
+      inset 0 1px 0 hsl(0 0% 100% / 0.9);
+    transform: translateY(-2px);
+  }
+
+  /* Glass icon container */
+  .glass-icon {
+    @apply flex items-center justify-center;
+    backdrop-filter: blur(8px);
+    border-radius: 0.75rem;
+  }
+
+  .dark .glass-icon {
+    background: hsl(var(--primary) / 0.15);
+    border: 1px solid hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 16px hsl(var(--primary) / 0.1);
+  }
+
+  :not(.dark) .glass-icon {
+    background: hsl(var(--primary) / 0.1);
+    border: 1px solid hsl(var(--primary) / 0.15);
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.08);
+  }
+
+  /* Glass list item - for inline list items */
+  .glass-list-item {
+    @apply relative;
+    backdrop-filter: blur(8px);
+    border-radius: 0.5rem;
+  }
+
+  .dark .glass-list-item {
+    background: hsl(0 0% 100% / 0.03);
+    border: 1px solid hsl(0 0% 100% / 0.06);
+  }
+
+  :not(.dark) .glass-list-item {
+    background: hsl(0 0% 100% / 0.5);
+    border: 1px solid hsl(0 0% 0% / 0.04);
+  }
+
+  /* Glass bullet point */
+  .glass-bullet {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .dark .glass-bullet {
+    background: hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.4);
+  }
+
+  :not(.dark) .glass-bullet {
+    background: hsl(var(--primary));
+    box-shadow: 0 0 6px hsl(var(--primary) / 0.3);
+  }
 }
