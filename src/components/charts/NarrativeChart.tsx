@@ -1276,12 +1276,12 @@ function HourlyStackedNarrativeChart({
     });
   }, [stackedChartData, priceData, showPriceOverlay, timeRange, is5MinView]);
 
-  // Calculate bar domain for left Y-axis (double max to make bars half height)
+  // Calculate bar domain for left Y-axis - absolute message counts, no normalization
   const barDomain = useMemo(() => {
     if (!chartDataWithPrice || chartDataWithPrice.length === 0) {
       return [0, "auto"];
     }
-    // Calculate max stacked value for each data point
+    // Calculate max stacked value for each data point (raw message counts)
     const maxStackedValue = Math.max(...chartDataWithPrice.map(item => {
       let sum = 0;
       for (let i = 0; i < MAX_SEGMENTS; i++) {
@@ -1289,8 +1289,8 @@ function HourlyStackedNarrativeChart({
       }
       return sum;
     }), 1);
-    // Double the max to make bars appear at half height
-    return [0, maxStackedValue * 2];
+    // Use actual max with small headroom for visual clarity (no normalization)
+    return [0, Math.ceil(maxStackedValue * 1.1)];
   }, [chartDataWithPrice]);
 
   // Calculate price domain for right Y-axis - tight padding to fill vertical space
