@@ -252,6 +252,7 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
       }
       
       // Fill in actual volume data if available
+      // IMPORTANT: message_count/daily_volume in DB is cumulative day-to-date, so we compute per-hour deltas
       const sourceData = cacheResult?.data || apiData || [];
       const volumes = sourceData.map((d: any) => d.volume || d.message_count || 0);
       const baseline = volumes.length > 0 
@@ -259,7 +260,17 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         : 5000;
       
       if (sourceData.length > 0) {
-        sourceData.forEach((item: any) => {
+        // Sort by recorded_at to compute deltas correctly
+        const sortedData = [...sourceData].sort((a: any, b: any) => {
+          const aTime = a.recorded_at ? new Date(a.recorded_at).getTime() : 0;
+          const bTime = b.recorded_at ? new Date(b.recorded_at).getTime() : 0;
+          return aTime - bTime;
+        });
+        
+        // Track previous cumulative count to compute per-hour delta
+        let prevCumulativeCount = 0;
+        
+        sortedData.forEach((item: any) => {
           let itemHour: number | null = null;
           
           if (item.recorded_at) {
@@ -289,8 +300,12 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           }
           
           if (itemHour !== null && itemHour >= 0 && itemHour < 24 && itemHour <= currentHour) {
-            const volume = item.volume || item.message_count || item.daily_volume || 0;
-            hourlyVolumes.set(itemHour, { volume, isEmpty: false });
+            const cumulativeVolume = item.volume || item.message_count || item.daily_volume || 0;
+            // Compute per-hour volume as delta from previous snapshot
+            const hourlyDelta = Math.max(0, cumulativeVolume - prevCumulativeCount);
+            prevCumulativeCount = cumulativeVolume;
+            
+            hourlyVolumes.set(itemHour, { volume: hourlyDelta, isEmpty: false });
           }
         });
       } else {
@@ -352,9 +367,20 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
         });
       }
       
-      // Merge data
+      // Merge data with cumulative-to-delta conversion
+      // IMPORTANT: message_count/daily_volume in DB is cumulative, so we compute per-hour deltas
       if (sourceData.length > 0) {
-        sourceData.forEach((item: any) => {
+        // Sort by recorded_at to compute deltas correctly
+        const sortedData = [...sourceData].sort((a: any, b: any) => {
+          const aTime = a.recorded_at ? new Date(a.recorded_at).getTime() : 0;
+          const bTime = b.recorded_at ? new Date(b.recorded_at).getTime() : 0;
+          return aTime - bTime;
+        });
+        
+        // Track previous cumulative count to compute per-hour delta
+        let prevCumulativeCount = 0;
+        
+        sortedData.forEach((item: any) => {
           let itemHour: number | null = null;
           
           if (item.recorded_at) {
@@ -380,11 +406,15 @@ export function VolumeChart({ symbol, start, end, timeRange = '24H' }: VolumeCha
           }
           
           if (itemHour !== null && itemHour >= 0 && itemHour < 24) {
-            const volume = item.volume || item.message_count || item.daily_volume || 0;
+            const cumulativeVolume = item.volume || item.message_count || item.daily_volume || 0;
+            // Compute per-hour volume as delta from previous snapshot
+            const hourlyDelta = Math.max(0, cumulativeVolume - prevCumulativeCount);
+            prevCumulativeCount = cumulativeVolume;
+            
             hourSlots[itemHour] = {
               ...hourSlots[itemHour],
-              volume,
-              isSpike: volume > baseline * 2,
+              volume: hourlyDelta,
+              isSpike: hourlyDelta > baseline * 2,
               isEmpty: false,
             };
           }
