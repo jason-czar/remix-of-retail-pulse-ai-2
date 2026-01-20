@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-
+import { Header } from "@/components/layout/Header";
 import { Zap, ArrowRight, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -46,10 +46,10 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      
-      
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 relative">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 relative">
         {/* Benefits Panel */}
         <div className="hidden md:flex flex-col justify-center">
           <h2 className="text-3xl font-display mb-6">
@@ -159,6 +159,7 @@ export default function SignupPage() {
             <a href="#" className="text-primary hover:underline">Privacy Policy</a>
           </p>
         </Card>
+        </div>
       </div>
     </div>
   );
