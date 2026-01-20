@@ -316,6 +316,15 @@
 }
 
 @layer components {
+  /* =========================================================
+     Cursor Light Effect — Apple-style Glass Refraction
+     Only active on landing page via CursorLight component
+     ========================================================= */
+  :root {
+    --cursor-x: 50%;
+    --cursor-y: 50%;
+  }
+
   .glass-card {
     @apply relative overflow-hidden;
     background: var(--gradient-glass) !important;
@@ -324,6 +333,38 @@
     transition: 
       box-shadow 300ms ease,
       background-color 300ms ease;
+  }
+
+  /* Cursor light overlay - subtle radial gradient following cursor */
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(
+      600px circle at var(--cursor-x) var(--cursor-y),
+      hsl(0 0% 100% / 0.08),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+
+  /* Only activate on hover-capable devices */
+  @media (hover: hover) and (pointer: fine) {
+    .glass-card:hover::before {
+      opacity: 1;
+    }
+  }
+
+  /* Dark mode: slightly dimmer for subtlety */
+  .dark .glass-card::before {
+    background: radial-gradient(
+      600px circle at var(--cursor-x) var(--cursor-y),
+      hsl(0 0% 100% / 0.06),
+      transparent 65%
+    );
   }
 
   .dark .glass-card {
