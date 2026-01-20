@@ -64,12 +64,12 @@ export function HeroSection() {
             ease: [0.25, 0.4, 0.25, 1]
           }}>
               <Link to="/symbol/NVDA" className="shrink-0">
-                <Button size="lg" className="px-5 sm:px-8 rounded-full group">
+                <Button size="lg" className="px-5 sm:px-8 rounded-full glass-button-primary">
                   View NVDA
                 </Button>
               </Link>
               <Link to="/learn-more" className="shrink-0">
-                <Button variant="outline" size="lg" className="px-5 sm:px-8 rounded-full backdrop-blur-sm">
+                <Button variant="ghost" size="lg" className="px-5 sm:px-8 rounded-full glass-button-secondary">
                   Learn More
                 </Button>
               </Link>
