@@ -255,7 +255,7 @@ function OverviewCard({
   change: number;
 }) {
   const ChangeIcon = change >= 0 ? ArrowUpRight : ArrowDownRight;
-  return <Card className="p-4 glass-card">
+  return <Card className="p-4 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
       <div className="text-sm text-muted-foreground mb-2">{label}</div>
       <div className="flex items-center gap-2 mb-1">
         <span className="text-2xl font-display">{value}</span>
