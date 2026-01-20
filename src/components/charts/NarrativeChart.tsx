@@ -1524,6 +1524,29 @@ function HourlyStackedNarrativeChart({
     return [Math.floor((minPrice - padding) / roundTo) * roundTo, Math.ceil((maxPrice + padding) / roundTo) * roundTo];
   }, [priceData, showPriceOverlay]);
 
+  // Calculate the first price point for the pre-market extension line
+  const firstPriceData = useMemo(() => {
+    if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0 || !is5MinView) {
+      return null;
+    }
+    
+    const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
+    const previousClose = priceData.previousClose ?? 0;
+    
+    // Find the first slot with actual price data
+    for (let i = 0; i < stackedChartData.length; i++) {
+      const slotIndex = stackedChartData[i].slotIndex;
+      const pricePoint = priceBySlot.get(slotIndex);
+      if (pricePoint?.price !== undefined) {
+        return {
+          price: pricePoint.price,
+          color: pricePoint.price >= previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR
+        };
+      }
+    }
+    return null;
+  }, [priceData, showPriceOverlay, is5MinView, stackedChartData, START_HOUR, END_HOUR]);
+
   // Derive panel data (hovered or most recent with data)
   const panelData = useMemo((): SidePanelData | null => {
     if (hoveredData) {
@@ -1821,6 +1844,8 @@ w-[120vw]
                   r: 5
                 }} connectNulls />}
                   {showPriceOverlay && is5MinView && priceData?.previousClose && <ReferenceLine yAxisId="right" y={priceData.previousClose} stroke="hsl(215 20% 65% / 0.5)" strokeDasharray="2 3" strokeWidth={1} />}
+                  {/* Horizontal line at first price extending to Y-axis edge */}
+                  {showPriceOverlay && is5MinView && firstPriceData && <ReferenceLine yAxisId="right" y={firstPriceData.price} stroke={firstPriceData.color} strokeOpacity={0.6} strokeWidth={2} />}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
