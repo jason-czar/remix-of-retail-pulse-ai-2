@@ -12,7 +12,7 @@ import { CursorLight } from "@/components/landing/CursorLight";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background cursor-light-enabled">
       <CursorLight />
       <Header />
       <main>

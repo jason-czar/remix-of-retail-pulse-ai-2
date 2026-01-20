@@ -335,8 +335,9 @@
       background-color 300ms ease;
   }
 
-  /* Cursor light overlay - subtle radial gradient following cursor */
-  .glass-card::before {
+  /* Cursor light overlay - subtle radial gradient following cursor
+     Only active when inside a .cursor-light-enabled container (landing page) */
+  .cursor-light-enabled .glass-card::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -353,13 +354,13 @@
 
   /* Only activate on hover-capable devices */
   @media (hover: hover) and (pointer: fine) {
-    .glass-card:hover::before {
+    .cursor-light-enabled .glass-card:hover::before {
       opacity: 1;
     }
   }
 
   /* Dark mode: slightly dimmer for subtlety */
-  .dark .glass-card::before {
+  .dark .cursor-light-enabled .glass-card::before {
     background: radial-gradient(
       600px circle at var(--cursor-x) var(--cursor-y),
       hsl(0 0% 100% / 0.06),
