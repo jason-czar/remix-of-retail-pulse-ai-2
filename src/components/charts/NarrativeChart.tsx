@@ -1611,15 +1611,15 @@ w-[120vw]
                     <linearGradient id="priceAboveGradient" x1="0" y1="0" x2="0" y2="1">
                       {priceGradientStops ? (
                         <>
-                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.33} />
-                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.1} />
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
                           <stop offset="100%" stopColor="transparent" stopOpacity={0} />
                         </>
                       ) : (
                         <>
-                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.33} />
-                          <stop offset="100%" stopColor={PRICE_UP_COLOR} stopOpacity={0.07} />
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
+                          <stop offset="100%" stopColor={PRICE_UP_COLOR} stopOpacity={0.1} />
                         </>
                       )}
                     </linearGradient>
@@ -1629,13 +1629,13 @@ w-[120vw]
                         <>
                           <stop offset="0%" stopColor="transparent" stopOpacity={0} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
-                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.1} />
-                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.33} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
                         </>
                       ) : (
                         <>
-                          <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.07} />
-                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.33} />
+                          <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.1} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
                         </>
                       )}
                     </linearGradient>
