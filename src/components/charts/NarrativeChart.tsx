@@ -1386,6 +1386,11 @@ function HourlyStackedNarrativeChart({
                                      slotIndex < firstPriceSlotIndex && 
                                      price === null;
         
+        // Also include the first real price slot in the extension to create seamless overlap
+        const isTransitionSlot = firstPriceSlotIndex !== null && 
+                                 firstPrice !== null && 
+                                 slotIndex === firstPriceSlotIndex;
+        
         if (isPreMarketExtension) {
           // Use the first available price for the extension line
           return {
@@ -1398,6 +1403,21 @@ function HourlyStackedNarrativeChart({
             priceExtensionBelow: firstPrice! < previousClose ? firstPrice : null,
             previousClose,
             isPreMarketExtension: true
+          };
+        }
+        
+        // At the transition slot, include BOTH extension and regular price to overlap fills
+        if (isTransitionSlot) {
+          return {
+            ...item,
+            price,
+            priceExtension: firstPrice, // Extension also has this value to overlap
+            priceAbove: price! >= previousClose ? price : null,
+            priceBelow: price! < previousClose ? price : null,
+            priceExtensionAbove: firstPrice! >= previousClose ? firstPrice : null,
+            priceExtensionBelow: firstPrice! < previousClose ? firstPrice : null,
+            previousClose,
+            isPreMarketExtension: false
           };
         }
         
