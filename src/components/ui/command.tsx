@@ -52,14 +52,25 @@ const CommandInput = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
   <div 
-    className="flex items-center border-b border-black/[0.06] dark:border-white/10 px-4 py-1" 
+    className={cn(
+      "flex items-center mx-3 mt-3 mb-2 px-3 rounded-lg",
+      // Light mode glass-input styling
+      "bg-[hsl(0_0%_100%/0.85)] border border-[hsl(var(--border)/0.6)]",
+      "shadow-[inset_0_1px_2px_hsl(0_0%_0%/0.04),0_1px_0_hsl(0_0%_100%/0.8)]",
+      // Dark mode glass-input styling
+      "dark:bg-[hsl(0_0%_8%/0.75)] dark:border-[hsl(0_0%_100%/0.12)]",
+      // Focus-within state
+      "focus-within:border-[hsl(var(--ring))] focus-within:shadow-[0_0_0_3px_hsl(var(--ring)/0.15),0_1px_2px_hsl(0_0%_0%/0.05)]",
+      "dark:focus-within:shadow-[0_0_0_3px_hsl(var(--ring)/0.25),inset_0_1px_0_hsl(0_0%_100%/0.04)]",
+      "transition-all duration-200"
+    )} 
     cmdk-input-wrapper=""
   >
     <Search className="mr-3 h-5 w-5 shrink-0 text-muted-foreground/70" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        "flex h-12 w-full bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-11 w-full bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
