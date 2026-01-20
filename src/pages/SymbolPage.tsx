@@ -363,7 +363,7 @@ function MessageCard({
   emotions: string[];
   time: string;
 }) {
-  return <div className="p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+  return <div className="p-4 glass-list-item">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="font-medium">@{user}</span>

@@ -213,7 +213,7 @@ function WatchlistItem({
 }) {
   const TrendIcon = trend === "bullish" ? TrendingUp : TrendingDown;
   const ChangeIcon = change >= 0 ? ArrowUpRight : ArrowDownRight;
-  return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors group">
+  return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-3 glass-list-item group">
       <div className="flex items-center gap-4">
         <div>
           <div className="font-mono font-semibold group-hover:text-primary transition-colors">
@@ -284,7 +284,7 @@ function RealAlertItem({
     }
     return "No threshold set";
   };
-  return <Link to={`/symbol/${alert.symbol}`} className="block p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
+  return <Link to={`/symbol/${alert.symbol}`} className="block p-3 glass-list-item">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded ${isEmotion ? "bg-accent/20 text-accent" : "bg-primary/20 text-primary"}`}>
@@ -315,7 +315,7 @@ function TrendingItem({
   trend: "bullish" | "bearish" | "neutral";
 }) {
   const TrendIcon = trend === "bullish" ? TrendingUp : TrendingDown;
-  return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/30 transition-colors group">
+  return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-2 glass-list-item group">
       <div className="flex items-center gap-3">
         <TrendIcon className={`h-4 w-4 ${trend === "bullish" ? "text-bullish" : "text-bearish"}`} />
         <span className="font-mono font-semibold group-hover:text-primary transition-colors">
