@@ -1199,8 +1199,12 @@ function HourlyStackedNarrativeChart({
       return pointDate.getTime() >= twentyFourHoursAgo.getTime() && pointDate.getTime() <= now.getTime();
     });
 
-    // NOTE: message_count in narrative_history is the sample size per snapshot (e.g., 500),
-    // NOT a cumulative day-to-date total. Use it directly.
+    // Build a map of hourIndex -> actual volume from analytics API for 24H view
+    // Note: For 24H rolling window, we use the same hourlyVolumeMap which has today's data
+    const hourlyVolumes24H: Map<number, number> = new Map();
+    for (let h = 0; h < 24; h++) {
+      hourlyVolumes24H.set(h, hourlyVolumeMap.get(h) || 0);
+    }
 
     // Group data by hour
     const byHour = new Map<string, {
@@ -1230,12 +1234,12 @@ function HourlyStackedNarrativeChart({
           sortKey,
           hourIndex,
           narratives: [],
-          totalMessages: 0
+          // Initialize with actual volume from analytics API
+          totalMessages: hourlyVolumes24H.get(hourIndex) || 0
         });
       }
       const entry = byHour.get(sortKey)!;
-      // Use message_count directly - it represents the sample size for this snapshot
-      entry.totalMessages += point.message_count;
+      // Don't accumulate message_count - we use actual volume from analytics API
 
       // Aggregate narratives for this hour
       if (point.narratives && Array.isArray(point.narratives)) {
@@ -1286,7 +1290,7 @@ function HourlyStackedNarrativeChart({
       return flatData;
     });
     
-    // Compute total from aggregated message counts
+    // Compute total from actual volumes
     const totalMessages = hourEntries.reduce((sum, h) => sum + h.totalMessages, 0);
     return {
       stackedChartData,
