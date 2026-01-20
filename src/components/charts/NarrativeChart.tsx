@@ -1576,6 +1576,7 @@ function HourlyStackedNarrativeChart({
         stroke={firstPriceData.color}
         strokeOpacity={0.6}
         strokeWidth={2}
+        strokeLinecap="round"
       />
     );
   }, [firstPriceData, stackedChartData.length]);
