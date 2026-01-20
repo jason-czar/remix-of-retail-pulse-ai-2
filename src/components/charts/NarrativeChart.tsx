@@ -24,7 +24,7 @@ type TimeRange = "1H" | "6H" | "1D" | "24H" | "7D" | "30D";
 
 // Stock price line colors based on price vs previous close
 const PRICE_UP_COLOR = "#00C805"; // Green when above previous close
-const PRICE_DOWN_COLOR = "#FF6A26"; // Orange-red when below previous close
+const PRICE_DOWN_COLOR = "#FF5000"; // Red-orange when below previous close
 
 interface NarrativeChartProps {
   symbol: string;
@@ -1029,12 +1029,38 @@ function HourlyStackedNarrativeChart({
   const { data: volumeData } = useVolumeAnalytics(symbol, timeRange);
 
   // Determine price line color based on current price vs previous close
+  // Used for UI elements like the toggle icon and side panel
   const priceLineColor = useMemo(() => {
     if (!priceData?.currentPrice || !priceData?.previousClose) {
       return PRICE_UP_COLOR; // Default to green
     }
     return priceData.currentPrice >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
   }, [priceData?.currentPrice, priceData?.previousClose]);
+
+  // Calculate gradient stops for dynamic price line coloring
+  // The line should be green above previousClose and red below it
+  const priceGradientStops = useMemo(() => {
+    if (!priceData?.prices || priceData.prices.length === 0 || priceData.previousClose == null) {
+      return null;
+    }
+    
+    const prices = priceData.prices.map(p => p.price);
+    const minPrice = Math.min(...prices, priceData.previousClose);
+    const maxPrice = Math.max(...prices, priceData.previousClose);
+    const range = maxPrice - minPrice;
+    
+    if (range === 0) return null;
+    
+    // Calculate where previousClose sits in the vertical range (0 = top, 1 = bottom)
+    // SVG gradients go from top (0%) to bottom (100%)
+    const previousClosePercent = ((maxPrice - priceData.previousClose) / range) * 100;
+    
+    return {
+      previousClosePercent,
+      hasDataAbove: prices.some(p => p > priceData.previousClose!),
+      hasDataBelow: prices.some(p => p < priceData.previousClose!)
+    };
+  }, [priceData?.prices, priceData?.previousClose]);
 
   // Build a map of hour -> actual message volume from the analytics API
   const hourlyVolumeMap = useMemo(() => {
@@ -1587,6 +1613,19 @@ w-[120vw]
                       <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.05} />
                       <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.25} />
                     </linearGradient>
+                    {/* Dynamic gradient for price line - green above previous close, red below */}
+                    <linearGradient id="priceLineGradient" x1="0" y1="0" x2="0" y2="1">
+                      {priceGradientStops ? (
+                        <>
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} />
+                        </>
+                      ) : (
+                        <stop offset="0%" stopColor={PRICE_UP_COLOR} />
+                      )}
+                    </linearGradient>
                   </defs>
                   <XAxis dataKey="time" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} interval={is5MinView ? 11 : 0} tick={({
                   x,
@@ -1650,7 +1689,7 @@ w-[120vw]
                       />
                     </>
                   )}
-                  {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke={priceLineColor} strokeWidth={2} dot={false} activeDot={{
+                  {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={{
                   fill: priceLineColor,
                   strokeWidth: 2,
                   stroke: "#fff",
