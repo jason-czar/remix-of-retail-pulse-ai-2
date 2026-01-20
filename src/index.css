@@ -564,14 +564,14 @@
   }
 
   .dark .glass-section {
-    /* Slightly lighter dark for section distinction */
-    background: hsl(0 0% 10% / 0.8);
+    /* Match app background #1F1F1F (hsl 0 0% 12%) for uniform dark sections */
+    background: hsl(0 0% 12%);
     border-top: 1px solid hsl(0 0% 100% / 0.04);
     border-bottom: 1px solid hsl(0 0% 100% / 0.04);
   }
 
   :not(.dark) .glass-section {
-    background: hsl(240 20% 97% / 0.7);
+    background: hsl(240 18% 96%);
     border-top: 1px solid hsl(0 0% 100% / 0.6);
     border-bottom: 1px solid hsl(220 20% 50% / 0.06);
   }
