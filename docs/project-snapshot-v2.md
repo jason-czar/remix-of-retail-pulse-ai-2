@@ -1,6 +1,6 @@
-# Signals Street — Project Snapshot v2
+# Derive Street — Project Snapshot v2
 
-**Generated:** 2026-01-19  
+**Generated:** 2026-01-20  
 **Type:** READ-ONLY documentation for external analysis  
 **Scope:** Complete technical overview of current system state
 
@@ -8,7 +8,7 @@
 
 ## 1. PROJECT OVERVIEW
 
-Signals Street is a market psychology analytics platform that extracts, quantifies, and visualizes retail investor sentiment from StockTwits social data. The system aggregates messages for tracked stock symbols, uses AI (via the Lovable API) to extract structured narrative themes and emotions, and presents this data through a multi-lens decision-readiness framework. The platform is explicitly **descriptive** (documenting what retail participants are saying) rather than **predictive** (making forward-looking claims).
+Derive Street is a market psychology analytics platform that extracts, quantifies, and visualizes retail investor sentiment from StockTwits social data. The system aggregates messages for tracked stock symbols, uses AI (via the Lovable API) to extract structured narrative themes and emotions, and presents this data through a multi-lens decision-readiness framework. The platform is explicitly **descriptive** (documenting what retail participants are saying) rather than **predictive** (making forward-looking claims).
 
 ### Primary Use Cases
 

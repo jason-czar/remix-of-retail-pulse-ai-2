@@ -56,7 +56,7 @@ export default function LoginPage() {
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Zap className="h-8 w-8 text-primary" />
           <span className="font-display text-2xl">
-            <span className="text-gradient">Signals</span>
+            <span className="text-gradient">Derive</span>
             <span className="text-foreground">Street</span>
           </span>
         </Link>

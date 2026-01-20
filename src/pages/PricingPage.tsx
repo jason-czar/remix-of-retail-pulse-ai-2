@@ -237,7 +237,7 @@ export default function PricingPage() {
               Schedule a consultation to explore which tier fits your organization's needs.
             </p>
             <a
-              href="mailto:contact@signalsstreet.com"
+              href="mailto:contact@derivestreet.com"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium shadow-[0_0_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_30px_hsl(var(--primary)/0.5)] transition-all duration-300"
             >
               Contact Sales

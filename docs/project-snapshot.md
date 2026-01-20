@@ -1,6 +1,6 @@
-# Signals Street - Project Snapshot
+# Derive Street - Project Snapshot
 
-**Generated:** 2026-01-17  
+**Generated:** 2026-01-20  
 **Version:** Production  
 **Status:** Active Development
 
@@ -10,7 +10,7 @@
 
 ### Description
 
-Signals Street is an institutional-grade market intelligence tool that provides real-time sentiment and narrative analysis from StockTwits social media data. The platform analyzes retail trader discussions to extract actionable insights including dominant narratives, emotional signals, market psychology indicators, and decision readiness scores across multiple time horizons.
+Derive Street is an institutional-grade market intelligence tool that provides real-time sentiment and narrative analysis from StockTwits social media data. The platform analyzes retail trader discussions to extract actionable insights including dominant narratives, emotional signals, market psychology indicators, and decision readiness scores across multiple time horizons.
 
 ### Primary Use Cases
 

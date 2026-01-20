@@ -205,7 +205,7 @@ const LearnMorePage = () => {
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
               Retail investor conversations increasingly influence short-term volatility, narrative momentum, 
-              deal reception, leadership credibility, and capital allocation outcomes. Signals Street exists 
+              deal reception, leadership credibility, and capital allocation outcomes. Derive Street exists 
               to translate those conversations into structured, decision-grade intelligence — not raw sentiment dashboards.
             </p>
           </div>
@@ -228,7 +228,7 @@ const LearnMorePage = () => {
                 investors tell themselves about what's happening and what it means.
               </p>
               <p className="text-foreground font-medium">
-                Signals Street captures that layer before it appears in price.
+                Derive Street captures that layer before it appears in price.
               </p>
             </div>
           </div>
@@ -274,7 +274,7 @@ const LearnMorePage = () => {
             </h2>
             <div className="space-y-6 text-muted-foreground leading-relaxed">
               <p>
-                Signals Street analyzes emotion composition — fear, greed, frustration, confidence — 
+                Derive Street analyzes emotion composition — fear, greed, frustration, confidence — 
                 and distinguishes conviction from sarcasm from low-signal chatter.
               </p>
               <div className="p-5 rounded-lg border border-border/30 bg-background my-8">
@@ -342,7 +342,7 @@ const LearnMorePage = () => {
             <div className="space-y-6 text-muted-foreground leading-relaxed">
               <p>
                 RetailCzar delivered this analysis manually through custom research and advisory engagements. 
-                Signals Street automates the same logic — continuously and objectively.
+                Derive Street automates the same logic — continuously and objectively.
               </p>
               <div className="grid sm:grid-cols-3 gap-4 my-8">
                 <div className="p-4 rounded-lg bg-background border border-border/30 text-center">
@@ -356,7 +356,7 @@ const LearnMorePage = () => {
                 </div>
               </div>
               <p className="text-foreground font-medium">
-                Signals Street is a real-time strategic sensing layer — always on.
+                Derive Street is a real-time strategic sensing layer — always on.
               </p>
             </div>
           </div>
@@ -427,7 +427,7 @@ const LearnMorePage = () => {
               </li>
             </ul>
             <p className="text-foreground font-medium">
-              Signals Street exists to provide clarity, foresight, and decision confidence — not noise.
+              Derive Street exists to provide clarity, foresight, and decision confidence — not noise.
             </p>
           </div>
         </section>
@@ -443,7 +443,7 @@ const LearnMorePage = () => {
               <span className="text-primary">They Need Foresight.</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Signals Street delivers structured intelligence from the fastest-moving investor segment 
+              Derive Street delivers structured intelligence from the fastest-moving investor segment 
               in the market — so decisions are informed before reactions occur.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

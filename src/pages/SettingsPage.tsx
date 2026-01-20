@@ -311,7 +311,7 @@ export default function SettingsPage() {
                 <div>
                   <h2 className="text-lg font-semibold">API Keys</h2>
                   <p className="text-sm text-muted-foreground">
-                    Manage your API keys for accessing the Signals Street API
+                    Manage your API keys for accessing the Derive Street API
                   </p>
                 </div>
               </div>
@@ -444,7 +444,7 @@ export default function SettingsPage() {
                 <div>
                   <Label className="text-base">Theme</Label>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Choose how Signals Street looks to you
+                    Choose how Derive Street looks to you
                   </p>
                   <ThemeSwitcher />
                 </div>
