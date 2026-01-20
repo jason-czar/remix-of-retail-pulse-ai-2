@@ -344,8 +344,8 @@ function TimeRangeSelector({
     '7D': '7D',
     '30D': '30D'
   };
-  return <div className="inline-flex h-9 md:h-10 items-center justify-center rounded-full p-1 md:p-1.5 text-muted-foreground glass-tabs-list overflow-x-auto scrollbar-hide px-[4px] py-0">
-      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap md:px-3.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0 px-[11px] py-[4px] border-0", range === value ? "bg-background text-foreground shadow-md dark:glass-tabs-trigger-active" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")}>
+  return <div className="inline-flex h-9 md:h-10 items-center justify-center rounded-full p-1 md:p-1.5 text-muted-foreground glass-tabs-list overflow-x-auto scrollbar-hide px-[4px] py-0 shadow-none">
+      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap md:px-3.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0 px-[11px] py-[4px]", range === value ? "bg-background text-foreground shadow-md dark:glass-tabs-trigger-active" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")}>
           {labels[range]}
         </button>)}
     </div>;
