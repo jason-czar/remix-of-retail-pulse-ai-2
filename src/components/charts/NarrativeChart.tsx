@@ -1154,6 +1154,9 @@ function HourlyStackedNarrativeChart({
         // Use ACTUAL volume from analytics API, not sample size from narrative_history
         const actualVolume = hourlyVolumes.get(hour) || 0;
         
+        // Calculate total sample count from narratives for proportional scaling
+        const totalSampleCount = topNarratives.reduce((sum, n) => sum + n.count, 0);
+        
         const flatData: Record<string, any> = {
           time: hourLabel,
           slotIndex: slotIdx,
@@ -1166,12 +1169,16 @@ function HourlyStackedNarrativeChart({
         };
 
         // Add narrative segment data to ALL slots (for tooltip)
+        // Scale segment heights proportionally to actual volume
         topNarratives.forEach((n, idx) => {
           flatData[`segment${idx}Name`] = n.name;
           flatData[`segment${idx}Sentiment`] = n.sentiment;
+          // Scale segment value: proportion of this narrative × actual volume
+          const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+          const scaledValue = Math.round(proportion * actualVolume);
           // Only set segment VALUE at hour start for bar rendering
-          flatData[`segment${idx}`] = isHourStart ? n.count : 0;
-          flatData[`segment${idx}Count`] = n.count; // Store actual count for tooltip
+          flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
+          flatData[`segment${idx}Count`] = n.count; // Store original count for tooltip
         });
         for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
           flatData[`segment${i}`] = 0;
@@ -1272,6 +1279,10 @@ function HourlyStackedNarrativeChart({
     const stackedChartData = hourEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey)).map(hourData => {
       // Sort narratives by count descending and take top MAX_SEGMENTS
       const topNarratives = hourData.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
+      
+      // Calculate total sample count from narratives for proportional scaling
+      const totalSampleCount = topNarratives.reduce((sum, n) => sum + n.count, 0);
+      const actualVolume = hourData.totalMessages;
 
       // Build flattened data structure for Recharts
       const flatData: Record<string, any> = {
@@ -1281,10 +1292,15 @@ function HourlyStackedNarrativeChart({
         totalMessages: hourData.totalMessages,
         volumePercent: hourData.totalMessages / maxMessages * 100
       };
+      
+      // Scale segment heights proportionally to actual volume
       topNarratives.forEach((n, idx) => {
-        flatData[`segment${idx}`] = n.count;
+        const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+        const scaledValue = Math.round(proportion * actualVolume);
+        flatData[`segment${idx}`] = scaledValue;
         flatData[`segment${idx}Name`] = n.name;
         flatData[`segment${idx}Sentiment`] = n.sentiment;
+        flatData[`segment${idx}Count`] = n.count; // Store original count for reference
       });
 
       // Fill remaining segments with zeros
