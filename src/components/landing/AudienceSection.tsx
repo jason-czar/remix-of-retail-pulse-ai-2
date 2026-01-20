@@ -94,7 +94,7 @@ function AudienceBlock({
         <p className="text-primary font-medium mb-4">{subtitle}</p>
         <p className="text-muted-foreground mb-6 leading-relaxed">{description}</p>
         <Link to={ctaLink}>
-          <Button variant="outline" className="group backdrop-blur-sm">
+          <Button variant="ghost" className="group glass-button-secondary">
             {cta}
             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Button>
