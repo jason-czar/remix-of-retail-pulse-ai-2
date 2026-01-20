@@ -107,7 +107,7 @@ const CaseStudiesSection = () => {
           {displayedStudies.map((study, index) => (
             <div
               key={index}
-              className="rounded-xl border border-border/50 bg-card/50 dark:bg-card/30 backdrop-blur-sm p-6 flex flex-col h-full hover:border-border transition-colors"
+              className="rounded-xl p-6 flex flex-col h-full glass-card"
             >
               {/* Category Badge */}
               <span className={`inline-flex self-start px-2.5 py-1 rounded-md text-xs font-medium text-primary-foreground ${study.categoryColor} mb-4`}>
