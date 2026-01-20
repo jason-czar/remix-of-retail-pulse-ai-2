@@ -100,7 +100,7 @@ export default function SignupPage() {
                 placeholder="John Doe"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                variant="glass"
+                className="bg-secondary/50"
                 required
               />
             </div>
@@ -113,7 +113,7 @@ export default function SignupPage() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                variant="glass"
+                className="bg-secondary/50"
                 required
               />
             </div>
@@ -126,7 +126,7 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                variant="glass"
+                className="bg-secondary/50"
                 required
               />
               <p className="text-xs text-muted-foreground">
