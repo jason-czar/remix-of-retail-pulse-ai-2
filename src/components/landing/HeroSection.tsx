@@ -6,7 +6,7 @@ export function HeroSection() {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto px-0">
           {/* Hero Card with glass effect */}
-          <motion.div className="relative glass-card p-8 md:p-12 lg:py-16 lg:px-12 text-center" initial={{
+          <motion.div className="relative glass-card p-8 md:p-12 lg:py-16 lg:px-12 text-center mx-[60px] my-0 py-[61px] px-[73px] pt-[70px] pb-[54px]" initial={{
           opacity: 0,
           y: 30,
           scale: 0.98
