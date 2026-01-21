@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,11 +52,8 @@ export default function Dashboard() {
     };
   });
   const isLoading = trendingLoading || watchlistLoading;
-  return <div className="min-h-screen bg-background">
-      
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+  return <SidebarLayout>
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -190,10 +186,8 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>;
+      </div>
+    </SidebarLayout>;
 }
 function formatVolume(volume: number): string {
   if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;

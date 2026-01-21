@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,10 +94,8 @@ export default function TrendingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
-      <main className="container mx-auto px-4 py-8">
+    <SidebarLayout>
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
@@ -303,9 +300,7 @@ export default function TrendingPage() {
             </div>
           )}
         </Card>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </SidebarLayout>
   );
 }
