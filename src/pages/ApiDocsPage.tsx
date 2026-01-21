@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
+import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -287,14 +289,13 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
 }
 
 export default function ApiDocsPage() {
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
+  const { user } = useAuth();
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
+  const content = (
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
             <h1 className="text-3xl font-display mb-2 flex items-center gap-3">
               <Code2 className="h-8 w-8 text-primary" />
               API Documentation
@@ -425,8 +426,18 @@ export default function ApiDocsPage() {
             use the REST API directly with any HTTP client.
           </p>
         </Card>
-      </main>
+      </div>
+  );
 
+  // Use SidebarLayout for authenticated users, Header/Footer for public
+  if (user) {
+    return <SidebarLayout>{content}</SidebarLayout>;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main>{content}</main>
       <Footer />
     </div>
   );
