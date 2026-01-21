@@ -42,7 +42,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         <AppSidebar />
         <SidebarInset className="flex flex-col">
           {/* Top bar with trigger, search, theme, and user */}
-          <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white/70 dark:bg-[hsl(0_0%_12%/0.75)] backdrop-blur-xl px-4">
+          <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-black/[0.04] dark:border-white/[0.04] bg-transparent px-4">
             <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors" />
             
             <div className="flex-1" />
