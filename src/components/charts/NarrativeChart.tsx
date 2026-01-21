@@ -1169,6 +1169,9 @@ function HourlyStackedNarrativeChart({
         });
       }
 
+      // Track actual message volumes from history (for fallback when analytics API doesn't have data)
+      const hourlyMessageCounts: Map<number, number> = new Map();
+      
       // Fill in actual narrative data if available
       if (historyData?.data && historyData.data.length > 0) {
         const filteredData = historyData.data.filter(point => {
@@ -1182,6 +1185,10 @@ function HourlyStackedNarrativeChart({
           const slot = hourlyNarratives.get(hourIndex);
           if (slot) {
             slot.hasNarrativeData = true;
+            
+            // Store the actual message count from history (this is the real volume, not AI sample size)
+            const currentCount = hourlyMessageCounts.get(hourIndex) || 0;
+            hourlyMessageCounts.set(hourIndex, currentCount + (point.message_count || 0));
             
             // Aggregate narratives for this hour
             if (point.narratives && Array.isArray(point.narratives)) {
@@ -1203,26 +1210,25 @@ function HourlyStackedNarrativeChart({
       }
 
       // Get actual hourly volumes from the analytics API
-      // Note: Analytics API only provides today's data, so for previous days we fall back to narrative sample counts
+      // Note: Analytics API only provides today's data, so for previous days we fall back to 
+      // message_count from narrative_history (the actual volume stored with each snapshot)
       const hourlyVolumes: Map<number, number> = new Map();
-      const hourlyNarrativeCounts: Map<number, number> = new Map(); // Fallback from narrative data
       
       for (let h = START_HOUR; h <= END_HOUR; h++) {
         const analyticsVolume = hourlyVolumeMap.get(h) || 0;
         hourlyVolumes.set(h, analyticsVolume);
-        
-        // Calculate total narrative sample count for this hour as fallback
-        const hourNarr = hourlyNarratives.get(h);
-        const narrativeTotal = hourNarr ? hourNarr.narratives.reduce((sum, n) => sum + n.count, 0) : 0;
-        hourlyNarrativeCounts.set(h, narrativeTotal);
       }
 
       // Check if we have any meaningful analytics volume data
       const totalAnalyticsVolume = Array.from(hourlyVolumes.values()).reduce((sum, v) => sum + v, 0);
-      const useNarrativeFallback = totalAnalyticsVolume === 0;
+      const totalHistoryVolume = Array.from(hourlyMessageCounts.values()).reduce((sum, v) => sum + v, 0);
+      
+      // Use history message counts as fallback when analytics API has no data for this day
+      // This happens when viewing previous trading days (weekends, pre-market)
+      const useHistoryFallback = totalAnalyticsVolume === 0 && totalHistoryVolume > 0;
       
       // Use whichever data source has values for max calculation
-      const effectiveVolumes = useNarrativeFallback ? hourlyNarrativeCounts : hourlyVolumes;
+      const effectiveVolumes = useHistoryFallback ? hourlyMessageCounts : hourlyVolumes;
       const volumeValues = Array.from(effectiveVolumes.values());
       const maxVolume = Math.max(...volumeValues, 1);
 
@@ -1239,10 +1245,10 @@ function HourlyStackedNarrativeChart({
         const hourNarr = hourlyNarratives.get(hour)!;
         const topNarratives = hourNarr.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
         
-        // Use analytics volume if available, otherwise fall back to narrative sample counts
+        // Use analytics volume if available, otherwise fall back to history message_count
         const analyticsVolume = hourlyVolumes.get(hour) || 0;
-        const narrativeVolume = hourlyNarrativeCounts.get(hour) || 0;
-        const effectiveVolume = useNarrativeFallback ? narrativeVolume : analyticsVolume;
+        const historyVolume = hourlyMessageCounts.get(hour) || 0;
+        const effectiveVolume = useHistoryFallback ? historyVolume : analyticsVolume;
         
         // Calculate total sample count from narratives for proportional scaling
         const totalSampleCount = topNarratives.reduce((sum, n) => sum + n.count, 0);
@@ -1264,11 +1270,13 @@ function HourlyStackedNarrativeChart({
           flatData[`segment${idx}Name`] = n.name;
           flatData[`segment${idx}Sentiment`] = n.sentiment;
           
-          // When using narrative fallback, use the raw narrative counts directly
+          // When using history fallback, scale segment values proportionally to history volume
           // Otherwise scale by the proportion of analytics volume
           let scaledValue: number;
-          if (useNarrativeFallback) {
-            scaledValue = n.count;
+          if (useHistoryFallback) {
+            // Scale proportionally to history message count for this hour
+            const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+            scaledValue = Math.round(proportion * historyVolume);
           } else {
             const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
             scaledValue = Math.round(proportion * analyticsVolume);
