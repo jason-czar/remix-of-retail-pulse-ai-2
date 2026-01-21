@@ -14,7 +14,12 @@ interface NCSTrendChartProps {
   symbol: string;
 }
 
-const MIN_SNAPSHOTS = 7;
+// Minimum snapshots required per range (accounting for weekends)
+const MIN_SNAPSHOTS: Record<NCSTimeRange, number> = {
+  "7D": 4,   // 7 days ≈ 5 trading days, require 4
+  "30D": 7,  // 30 days ≈ 21 trading days
+  "90D": 7,  // 90 days ≈ 63 trading days
+};
 
 const RANGE_OPTIONS: { value: NCSTimeRange; label: string }[] = [
   { value: "7D", label: "7D" },
@@ -122,7 +127,8 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
     return null;
   }
   
-  const hasInsufficientData = !ncsData || ncsData.length < MIN_SNAPSHOTS;
+  const minRequired = MIN_SNAPSHOTS[range];
+  const hasInsufficientData = !ncsData || ncsData.length < minRequired;
   
   // Calculate stats for context
   const stats = ncsData && ncsData.length > 0 ? (() => {
@@ -253,7 +259,7 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
         <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
           <AlertCircle className="h-4 w-4" />
           <span className="text-sm">
-            Insufficient history ({ncsData?.length ?? 0} of {MIN_SNAPSHOTS} snapshots required)
+            Insufficient history ({ncsData?.length ?? 0} of {minRequired} snapshots required)
           </span>
         </div>
       ) : (
