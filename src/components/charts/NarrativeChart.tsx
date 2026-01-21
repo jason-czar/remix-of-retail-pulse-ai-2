@@ -994,25 +994,64 @@ function HourlyStackedNarrativeChart({
   const SLOTS_PER_HOUR = 12;
 
   // Calculate proper day boundaries in user's local timezone
+  // On weekends or before market open, show the most recent trading day
   const {
     todayStart,
     todayEnd,
     twentyFourHoursAgo,
-    now
+    now,
+    displayDate
   } = useMemo(() => {
     const now = new Date();
-    // Today: midnight to 11:59:59 PM in user's local timezone
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    // 24H: rolling 24 hours
+    const currentHour = now.getHours();
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+    
+    // Determine if we should show the previous trading day:
+    // 1. It's a weekend (Saturday or Sunday)
+    // 2. It's before market open (before START_HOUR, typically 8am or 5am)
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isBeforeMarketOpen = currentHour < START_HOUR;
+    const showPreviousTradingDay = isWeekend || isBeforeMarketOpen;
+    
+    let targetDate = new Date(now);
+    
+    if (showPreviousTradingDay) {
+      // Go back to the most recent trading day
+      if (isWeekend) {
+        // Saturday: go back 1 day to Friday
+        // Sunday: go back 2 days to Friday
+        const daysToSubtract = dayOfWeek === 6 ? 1 : 2;
+        targetDate = new Date(now.getTime() - daysToSubtract * 24 * 60 * 60 * 1000);
+      } else if (isBeforeMarketOpen) {
+        // Before market open on a weekday - check if yesterday was a trading day
+        targetDate = new Date(now.getTime() - 24 * 60 * 60 * 1000); // Go back 1 day
+        const yesterdayDayOfWeek = targetDate.getDay();
+        
+        // If yesterday was Sunday, go back to Friday
+        if (yesterdayDayOfWeek === 0) {
+          targetDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+        }
+        // If yesterday was Saturday, go back to Friday
+        else if (yesterdayDayOfWeek === 6) {
+          targetDate = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        }
+      }
+    }
+    
+    // Set day boundaries based on target date
+    const todayStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
+    const todayEnd = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+    // 24H: rolling 24 hours (always from current time)
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
     return {
       todayStart,
       todayEnd,
       twentyFourHoursAgo,
-      now
+      now,
+      displayDate: targetDate
     };
-  }, []);
+  }, [START_HOUR]);
 
   // Fetch 3 days of data to ensure we capture the full local day regardless of timezone
   // (e.g., UTC-12 to UTC+14 covers ~26 hour spread from UTC midnight)
