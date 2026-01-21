@@ -2042,6 +2042,8 @@ w-[120vw]
                           baseValue={priceData.previousClose}
                           connectNulls={false}
                           isAnimationActive={false}
+                          dot={false}
+                          activeDot={false}
                         />
                       )}
                       {/* Fill above previous close (green) - uses price data, gradient clips at baseline */}
@@ -2054,6 +2056,8 @@ w-[120vw]
                         baseValue={priceData.previousClose}
                         connectNulls
                         isAnimationActive={false}
+                        dot={false}
+                        activeDot={false}
                       />
                       {/* Fill below previous close (red) - uses price data, gradient clips at baseline */}
                       <Area 
@@ -2065,6 +2069,8 @@ w-[120vw]
                         baseValue={priceData.previousClose}
                         connectNulls
                         isAnimationActive={false}
+                        dot={false}
+                        activeDot={false}
                       />
                     </>
                   )}
