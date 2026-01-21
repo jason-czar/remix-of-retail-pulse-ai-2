@@ -1712,7 +1712,7 @@ function HourlyStackedNarrativeChart({
     }
 
     return (
-      <g>
+      <g style={{ opacity: 1, transition: 'opacity 0.2s ease-out' }}>
         <line
           x1={x}
           y1={y1}
@@ -1721,6 +1721,7 @@ function HourlyStackedNarrativeChart({
           stroke="hsl(var(--muted-foreground))"
           strokeWidth={1}
           strokeOpacity={0.5}
+          style={{ transition: 'x1 0.05s ease-out, x2 0.05s ease-out' }}
         />
         {/* Dot on the price line */}
         {dotY !== null && (
@@ -1729,6 +1730,7 @@ function HourlyStackedNarrativeChart({
             cy={dotY}
             r={5}
             fill={dotColor}
+            style={{ transition: 'cx 0.05s ease-out, cy 0.05s ease-out, fill 0.15s ease-out' }}
           />
         )}
       </g>
