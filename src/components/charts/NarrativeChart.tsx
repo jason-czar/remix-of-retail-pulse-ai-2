@@ -1654,7 +1654,7 @@ function HourlyStackedNarrativeChart({
         x2={xEnd}
         y2={y}
         stroke={firstPriceData.color}
-        strokeOpacity={0.6}
+        strokeOpacity={0.5}
         strokeWidth={2}
         strokeLinecap="round"
       />
