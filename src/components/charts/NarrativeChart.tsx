@@ -1628,9 +1628,9 @@ function HourlyStackedNarrativeChart({
     return null;
   }, [priceData, showPriceOverlay, is5MinView, stackedChartData, START_HOUR, END_HOUR]);
 
-  // Custom component to render horizontal line from Y-axis to first price point with fill
+  // Custom component to render horizontal line from Y-axis to first price point
   const FirstPriceExtensionLine = useCallback(({ yAxisMap, xAxisMap }: any) => {
-    if (!firstPriceData || !yAxisMap?.right || !xAxisMap || !priceData?.previousClose) return null;
+    if (!firstPriceData || !yAxisMap?.right || !xAxisMap) return null;
     
     const yAxis = yAxisMap.right;
     const xAxis = Object.values(xAxisMap)[0] as any;
@@ -1638,9 +1638,8 @@ function HourlyStackedNarrativeChart({
     
     // Calculate y position from price
     const yScale = yAxis.scale;
-    const yPrice = yScale ? yScale(firstPriceData.price) : null;
-    const yPrevClose = yScale ? yScale(priceData.previousClose) : null;
-    if (yPrice === null || yPrice === undefined || yPrevClose === null || yPrevClose === undefined) return null;
+    const y = yScale ? yScale(firstPriceData.price) : null;
+    if (y === null || y === undefined) return null;
     
     // Calculate x position - from axis start to the center of the first data point bar
     const xStart = xAxis.x; // Left edge of chart area
@@ -1648,36 +1647,19 @@ function HourlyStackedNarrativeChart({
     // End at the center of the bar where the price point sits
     const xEnd = xAxis.x + (barWidth * firstPriceData.dataIndex) + (barWidth / 2);
     
-    // Calculate fill rectangle dimensions
-    const fillY = Math.min(yPrice, yPrevClose);
-    const fillHeight = Math.abs(yPrice - yPrevClose);
-    const fillWidth = xEnd - xStart;
-    
     return (
-      <g>
-        {/* Fill area between price extension line and previous close baseline */}
-        <rect
-          x={xStart}
-          y={fillY}
-          width={fillWidth}
-          height={fillHeight}
-          fill={firstPriceData.color}
-          fillOpacity={0.25}
-        />
-        {/* Extension line */}
-        <line
-          x1={xStart}
-          y1={yPrice}
-          x2={xEnd}
-          y2={yPrice}
-          stroke={firstPriceData.color}
-          strokeOpacity={0.6}
-          strokeWidth={2}
-          strokeLinecap="round"
-        />
-      </g>
+      <line
+        x1={xStart}
+        y1={y}
+        x2={xEnd}
+        y2={y}
+        stroke={firstPriceData.color}
+        strokeOpacity={0.6}
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
     );
-  }, [firstPriceData, stackedChartData.length, priceData?.previousClose]);
+  }, [firstPriceData, stackedChartData.length]);
 
   // Derive panel data (hovered or most recent with data)
   const panelData = useMemo((): SidePanelData | null => {
