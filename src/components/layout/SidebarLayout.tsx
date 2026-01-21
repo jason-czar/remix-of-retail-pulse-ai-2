@@ -1,11 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Footer } from "./Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Search, LogOut } from "lucide-react";
-import { useState } from "react";
 import { SearchCommand } from "@/components/SearchCommand";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +16,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface SidebarLayoutProps {
   children: ReactNode;
@@ -24,6 +24,15 @@ interface SidebarLayoutProps {
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -42,7 +51,12 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         <AppSidebar />
         <SidebarInset className="flex flex-col">
           {/* Top bar with trigger, search, theme, and user */}
-          <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-black/[0.04] dark:border-white/[0.04] bg-transparent px-4">
+          <header className={cn(
+            "sticky top-0 z-40 flex h-14 items-center gap-4 px-4 transition-all duration-300",
+            isScrolled 
+              ? "border-b border-black/[0.06] dark:border-white/[0.08] bg-white/60 dark:bg-[hsl(0_0%_8%/0.6)] backdrop-blur-xl" 
+              : "border-b border-transparent bg-transparent"
+          )}>
             <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors" />
             
             <div className="flex-1" />
