@@ -1678,8 +1678,12 @@ function HourlyStackedNarrativeChart({
   }, [firstPriceData, stackedChartData.length]);
 
   // Custom crosshair line that we can control via activeIndex - includes dot on price line
+  // Track whether the user is actively hovering over the chart
+  const isHoveringChart = hoveredData !== null;
+
   const CrosshairLine = useCallback(({ offset, xAxisMap, yAxisMap }: any) => {
-    if (activeIndex === null || activeIndex === undefined) return null;
+    // Only show crosshair when hovering over the chart
+    if (!isHoveringChart || activeIndex === null || activeIndex === undefined) return null;
     const xAxis = xAxisMap ? (Object.values(xAxisMap)[0] as any) : null;
     if (!xAxis || !offset || !chartDataWithPrice.length) return null;
 
@@ -1729,7 +1733,7 @@ function HourlyStackedNarrativeChart({
         )}
       </g>
     );
-  }, [activeIndex, chartDataWithPrice, showPriceOverlay, priceLineColor, priceData?.previousClose]);
+  }, [activeIndex, chartDataWithPrice, showPriceOverlay, priceLineColor, priceData?.previousClose, isHoveringChart]);
 
   // Derive panel data (hovered or most recent with data)
   const panelData = useMemo((): SidePanelData | null => {
