@@ -1662,6 +1662,32 @@ function HourlyStackedNarrativeChart({
     );
   }, [firstPriceData, stackedChartData.length]);
 
+  // Custom crosshair line that we can control via activeIndex
+  const CrosshairLine = useCallback(({ offset, xAxisMap }: any) => {
+    if (activeIndex === null || activeIndex === undefined) return null;
+    const xAxis = xAxisMap ? (Object.values(xAxisMap)[0] as any) : null;
+    if (!xAxis || !offset || !chartDataWithPrice.length) return null;
+
+    const barWidth = xAxis.width / chartDataWithPrice.length;
+    const clampedIndex = Math.max(0, Math.min(activeIndex, chartDataWithPrice.length - 1));
+    const x = xAxis.x + barWidth * clampedIndex + barWidth / 2;
+
+    const y1 = offset.top;
+    const y2 = offset.top + offset.height;
+
+    return (
+      <line
+        x1={x}
+        y1={y1}
+        x2={x}
+        y2={y2}
+        stroke="hsl(var(--muted-foreground))"
+        strokeWidth={1}
+        strokeOpacity={0.5}
+      />
+    );
+  }, [activeIndex, chartDataWithPrice.length]);
+
   // Derive panel data (hovered or most recent with data)
   const panelData = useMemo((): SidePanelData | null => {
     if (hoveredData) {
@@ -1941,15 +1967,10 @@ w-[120vw]
                 }} />
                   <YAxis yAxisId="left" hide={true} domain={barDomain as [number, number | string]} />
                   {showPriceOverlay && <YAxis yAxisId="right" hide={true} domain={priceDomain as [number, number]} />}
-                  {/* Cursor line shows on hover - tooltip content hidden as side panel handles data display */}
-                  {/* Use defaultIndex to show crosshair at the last price point by default */}
-                  <Tooltip 
-                    content={() => null} 
-                    cursor={{
-                      stroke: "hsl(var(--muted-foreground))",
-                      strokeWidth: 1,
-                      strokeOpacity: 0.5
-                    }}
+                  {/* Tooltip drives Recharts' activeTooltipIndex; we render our own crosshair for full control */}
+                  <Tooltip
+                    content={() => null}
+                    cursor={false}
                     defaultIndex={lastPricePointIndex ?? undefined}
                   />
                   {Array.from({
@@ -2008,6 +2029,8 @@ w-[120vw]
                   {showPriceOverlay && is5MinView && priceData?.previousClose && <ReferenceLine yAxisId="right" y={priceData.previousClose} stroke="hsl(215 20% 65% / 0.5)" strokeDasharray="2 3" strokeWidth={1} />}
                   {/* Horizontal line from Y-axis to first price point */}
                   {showPriceOverlay && is5MinView && firstPriceData && <Customized component={FirstPriceExtensionLine} />}
+                  {/* Controlled crosshair line (moves with cursor; resets on mouse leave) */}
+                  <Customized component={CrosshairLine} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
