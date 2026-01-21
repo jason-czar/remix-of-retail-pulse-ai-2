@@ -140,12 +140,42 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
       </Sheet>;
   }
   return <div ref={ref} className="group peer hidden text-sidebar-foreground md:block" data-state={state} data-collapsible={state === "collapsed" ? collapsible : ""} data-variant={variant} data-side={side}>
-      {/* This is what handles the sidebar gap on desktop */}
-      <div className={cn("relative h-svh w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear", "group-data-[collapsible=offcanvas]:w-0", "group-data-[side=right]:rotate-180", variant === "floating" || variant === "inset" ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]" : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]")} />
-      <div className={cn("fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex", side === "left" ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-    // Adjust the padding for floating and inset variants.
-    variant === "floating" || variant === "inset" ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]" : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l", className)} {...props}>
-        <div data-sidebar="sidebar" className="flex h-full w-full flex-col bg-transparent group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-white/[0.08] group-data-[variant=floating]:shadow-xl group-data-[variant=floating]:backdrop-blur-xl">
+      {/* This is what handles the sidebar gap on desktop - includes inset for floating effect */}
+      <div className={cn(
+        "relative h-svh bg-transparent transition-[width] duration-200 ease-linear",
+        // Add extra width to account for the floating inset
+        "w-[calc(var(--sidebar-width)_+_12px)]",
+        "group-data-[collapsible=offcanvas]:w-0",
+        "group-data-[side=right]:rotate-180",
+        "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_12px)]"
+      )} />
+      <div className={cn(
+        "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
+        // Floating inset from viewport edge
+        side === "left" 
+          ? "left-3 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" 
+          : "right-3 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+        // Vertical inset for floating appearance
+        "top-3 bottom-3 h-[calc(100svh_-_24px)]",
+        "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
+        className
+      )} {...props}>
+        <div 
+          data-sidebar="sidebar" 
+          className={cn(
+            "flex h-full w-full flex-col",
+            // Liquid Glass material
+            "bg-white/90 dark:bg-[hsl(0_0%_12%/0.75)]",
+            "backdrop-blur-2xl",
+            // Rounded corners - all corners for floating panel
+            "rounded-2xl",
+            // Border with subtle edge refraction
+            "border border-black/[0.06] dark:border-white/[0.12]",
+            // Soft shadow for floating depth
+            "shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.12),0_4px_16px_-4px_hsl(0_0%_0%/0.08)]",
+            "dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5),0_4px_20px_-4px_hsl(0_0%_0%/0.35)]"
+          )}
+        >
           {children}
         </div>
       </div>
