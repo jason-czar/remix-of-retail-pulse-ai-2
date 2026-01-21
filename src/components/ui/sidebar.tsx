@@ -163,7 +163,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
         <div 
           data-sidebar="sidebar" 
           className={cn(
-            "flex h-full w-full flex-col",
+            "flex h-full w-full flex-col relative overflow-hidden",
             // Liquid Glass material
             "bg-white/90 dark:bg-[hsl(0_0%_12%/0.75)]",
             "backdrop-blur-2xl",
@@ -171,9 +171,12 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
             "rounded-2xl",
             // Border with subtle edge refraction
             "border border-black/[0.06] dark:border-white/[0.12]",
-            // Soft shadow for floating depth
-            "shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.12),0_4px_16px_-4px_hsl(0_0%_0%/0.08)]",
-            "dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5),0_4px_20px_-4px_hsl(0_0%_0%/0.35)]"
+            // Soft shadow for floating depth + inner top highlight
+            "shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.12),0_4px_16px_-4px_hsl(0_0%_0%/0.08),inset_0_1px_0_0_hsl(0_0%_100%/0.5)]",
+            "dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5),0_4px_20px_-4px_hsl(0_0%_0%/0.35),inset_0_1px_0_0_hsl(0_0%_100%/0.08)]",
+            // Top edge glow pseudo-element via before
+            "before:absolute before:inset-x-0 before:top-0 before:h-24 before:bg-gradient-to-b before:from-white/40 before:to-transparent before:rounded-t-2xl before:pointer-events-none",
+            "dark:before:from-white/[0.06] dark:before:to-transparent"
           )}
         >
           {children}
