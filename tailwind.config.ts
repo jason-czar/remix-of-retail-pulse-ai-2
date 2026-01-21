@@ -210,7 +210,7 @@ export default {
 					transform: 'scaleX(1)',
 					opacity: '1'
 				}
-			}
+			},
 			'sidebar-expand': {
 				'0%': {
 					transform: 'scaleX(0.85)',
