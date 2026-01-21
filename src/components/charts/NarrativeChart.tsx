@@ -983,6 +983,7 @@ function HourlyStackedNarrativeChart({
   const [activeHour, setActiveHour] = useState<number | null>(null);
   const [marketSession, setMarketSession] = useState<MarketSession>("regular");
   const [hoveredData, setHoveredData] = useState<SidePanelData | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const isMobileDevice = useIsMobile();
 
   // Get session-specific hour range
@@ -1687,6 +1688,23 @@ function HourlyStackedNarrativeChart({
     };
   }, [hoveredData, chartDataWithPrice]);
 
+  // Initialize activeIndex to the last data point with price when data loads
+  const hasInitializedRef = useRef(false);
+  useEffect(() => {
+    if (chartDataWithPrice.length > 0 && !hasInitializedRef.current) {
+      // Find the last data point with price data (the rightmost point on the price line)
+      let lastPriceIndex = chartDataWithPrice.length - 1;
+      for (let i = chartDataWithPrice.length - 1; i >= 0; i--) {
+        if ((chartDataWithPrice[i] as any).price !== null && (chartDataWithPrice[i] as any).price !== undefined) {
+          lastPriceIndex = i;
+          break;
+        }
+      }
+      setActiveIndex(lastPriceIndex);
+      hasInitializedRef.current = true;
+    }
+  }, [chartDataWithPrice]);
+
   // Track previous hour for haptic feedback
   const prevHourRef = useRef<number | null>(null);
 
@@ -1694,6 +1712,11 @@ function HourlyStackedNarrativeChart({
   const handleChartMouseMove = useCallback((state: any) => {
     if (state?.activePayload?.[0]?.payload) {
       const payload = state.activePayload[0].payload;
+
+      // Update active index for crosshair positioning
+      if (state.activeTooltipIndex !== undefined) {
+        setActiveIndex(state.activeTooltipIndex);
+      }
 
       // Update active hour for bar highlighting
       if (payload.hourIndex !== undefined) {
@@ -1716,10 +1739,25 @@ function HourlyStackedNarrativeChart({
       });
     }
   }, [isMobileDevice]);
+  // Calculate the last price point index for crosshair default position
+  const lastPricePointIndex = useMemo(() => {
+    if (chartDataWithPrice.length === 0) return null;
+    for (let i = chartDataWithPrice.length - 1; i >= 0; i--) {
+      if ((chartDataWithPrice[i] as any).price !== null && (chartDataWithPrice[i] as any).price !== undefined) {
+        return i;
+      }
+    }
+    return chartDataWithPrice.length - 1;
+  }, [chartDataWithPrice]);
+
   const handleChartMouseLeave = useCallback(() => {
     setActiveHour(null);
     setHoveredData(null);
-  }, []);
+    // Reset to last data point with price when cursor leaves
+    if (lastPricePointIndex !== null) {
+      setActiveIndex(lastPricePointIndex);
+    }
+  }, [lastPricePointIndex]);
 
   // Determine if we should fall back to live AI analysis
   // For "Today" view, always show the 24-hour skeleton even with no data
@@ -1904,11 +1942,16 @@ w-[120vw]
                   <YAxis yAxisId="left" hide={true} domain={barDomain as [number, number | string]} />
                   {showPriceOverlay && <YAxis yAxisId="right" hide={true} domain={priceDomain as [number, number]} />}
                   {/* Cursor line shows on hover - tooltip content hidden as side panel handles data display */}
-                  <Tooltip content={() => null} cursor={{
-                  stroke: "hsl(var(--muted-foreground))",
-                  strokeWidth: 1,
-                  strokeOpacity: 0.5
-                }} />
+                  {/* Use defaultIndex to show crosshair at the last price point by default */}
+                  <Tooltip 
+                    content={() => null} 
+                    cursor={{
+                      stroke: "hsl(var(--muted-foreground))",
+                      strokeWidth: 1,
+                      strokeOpacity: 0.5
+                    }}
+                    defaultIndex={lastPricePointIndex ?? undefined}
+                  />
                   {Array.from({
                   length: MAX_SEGMENTS
                 }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
