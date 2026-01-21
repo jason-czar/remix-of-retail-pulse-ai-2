@@ -2026,7 +2026,8 @@ w-[120vw]
                     cursor={false}
                     defaultIndex={lastPricePointIndex ?? undefined}
                   />
-                  {Array.from({
+                  {/* Only render bars when data is ready - prevents placeholder bars during loading */}
+                  {!historyLoading && hasAnyData && Array.from({
                   length: MAX_SEGMENTS
                 }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
                       {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} />)}
