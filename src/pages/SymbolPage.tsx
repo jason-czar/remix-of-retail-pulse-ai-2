@@ -153,13 +153,8 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
-          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
-        </div>
-
         {/* AI Summary - Reduced padding on mobile */}
-        <Card className="p-4 md:p-6 mb-6 glass-card">
+        <Card className="p-4 md:p-6 mb-4 glass-card">
           <div className="flex items-start gap-3 md:gap-4">
             
             <div className="flex-1 min-w-0 pl-[2px]">
@@ -184,6 +179,11 @@ export default function SymbolPage() {
             </div>
           </div>
         </Card>
+
+        {/* Decision Lens Selector - Horizontal scroll on mobile */}
+        <div className="mb-6 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
+          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
+        </div>
 
         {/* Section divider */}
         <Separator className="my-6 md:my-8 glass-divider" />
