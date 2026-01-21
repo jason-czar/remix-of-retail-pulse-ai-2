@@ -9,45 +9,58 @@ import { useState } from "react";
 import { SearchCommand } from "@/components/SearchCommand";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 interface SidebarLayoutProps {
   children: ReactNode;
 }
-export function SidebarLayout({
-  children
-}: SidebarLayoutProps) {
+
+export function SidebarLayout({ children }: SidebarLayoutProps) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const {
-    user,
-    signOut
-  } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
+
   const getInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
   };
-  return <SidebarProvider defaultOpen={true}>
+
+  return (
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex flex-col">
           {/* Top bar with trigger, search, theme, and user */}
-          <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-black/[0.06] dark:border-white/[0.08] dark:bg-[hsl(0_0%_12%/0.75)] backdrop-blur-xl px-4 bg-white/0">
+          <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white/70 dark:bg-[hsl(0_0%_12%/0.75)] backdrop-blur-xl px-4">
             <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors" />
             
             <div className="flex-1" />
             
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-black/[0.05] dark:hover:bg-white/[0.08]" onClick={() => setSearchOpen(true)}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full hover:bg-black/[0.05] dark:hover:bg-white/[0.08]" 
+              onClick={() => setSearchOpen(true)}
+            >
               <Search className="h-5 w-5" />
             </Button>
             <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
             
             <ThemeToggle />
             
-            {user && <DropdownMenu>
+            {user && (
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-black/[0.05] dark:hover:bg-white/[0.08]">
                     <Avatar className="h-9 w-9 border-2 border-primary/40 shadow-[0_0_12px_hsl(var(--primary)/0.3)]">
@@ -68,7 +81,8 @@ export function SidebarLayout({
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>}
+              </DropdownMenu>
+            )}
           </header>
           
           {/* Main content */}
@@ -79,5 +93,6 @@ export function SidebarLayout({
           <Footer />
         </SidebarInset>
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 }
