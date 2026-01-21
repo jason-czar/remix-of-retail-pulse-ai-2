@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useDefaultWatchlist } from "@/hooks/use-watchlist";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -137,7 +138,15 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-black/[0.04] dark:border-white/[0.06]">
-        <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors mx-auto" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors mx-auto" />
+          </TooltipTrigger>
+          <TooltipContent side="right" className="flex items-center gap-2">
+            <span>Toggle sidebar</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-black/[0.06] dark:bg-white/[0.1] text-[10px]">⌘B</kbd>
+          </TooltipContent>
+        </Tooltip>
       </SidebarFooter>
     </Sidebar>
   );
