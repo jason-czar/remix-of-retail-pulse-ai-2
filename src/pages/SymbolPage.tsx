@@ -27,7 +27,7 @@ import { HistoricalEpisodeMatcher } from "@/components/HistoricalEpisodeMatcher"
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, MessageSquare, Clock, ExternalLink, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, MessageSquare, Clock, ExternalLink, Loader2, RefreshCw } from "lucide-react";
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 export default function SymbolPage() {
   const {
@@ -84,8 +84,19 @@ export default function SymbolPage() {
   } = useSymbolMessages(symbol, 10, start, end);
   const {
     data: lensSummaryData,
-    isLoading: lensSummaryLoading
+    isLoading: lensSummaryLoading,
+    isFetching: lensSummaryFetching,
+    refetch: refetchLensSummary
   } = useDecisionLensSummary(symbol, decisionLens);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const handleRegenerate = async () => {
+    setIsRegenerating(true);
+    // Invalidate the cache to force a fresh fetch
+    await queryClient.invalidateQueries({ queryKey: ['decision-lens-summary', symbol, decisionLens] });
+    await refetchLensSummary();
+    setIsRegenerating(false);
+  };
   const data = stats || {
     symbol,
     name: symbol,
@@ -151,13 +162,25 @@ export default function SymbolPage() {
           <div className="flex items-start gap-3 md:gap-4">
             
             <div className="flex-1 min-w-0 pl-[2px]">
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
-                <Badge variant="outline" className="text-[10px] md:text-xs">
-                  {getLensDisplayName(decisionLens)}
-                </Badge>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
+                  <Badge variant="outline" className="text-[10px] md:text-xs">
+                    {getLensDisplayName(decisionLens)}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRegenerate}
+                  disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching}
+                  className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className={cn("h-4 w-4", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                  <span className="sr-only">Regenerate</span>
+                </Button>
               </div>
-              {lensSummaryLoading ? <div className="space-y-2">
+              {lensSummaryLoading || isRegenerating ? <div className="space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
                 </div> : <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
