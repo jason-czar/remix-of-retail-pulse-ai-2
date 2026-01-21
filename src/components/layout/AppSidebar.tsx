@@ -137,7 +137,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-black/[0.04] dark:border-white/[0.06]">
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-start gap-2">
           <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors" />
           <div className={cn(
             "text-xs text-muted-foreground text-center py-1",
