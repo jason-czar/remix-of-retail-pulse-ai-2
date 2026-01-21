@@ -232,45 +232,48 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               </span>
             </div>
 
-            {/* Key Concerns */}
-            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertCircle className="h-4 w-4 text-warning" />
-                  <span className="text-sm font-medium">Key Concerns</span>
+            {/* Key Concerns and Recommended Actions - Side by Side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Key Concerns */}
+              {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertCircle className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium">Key Concerns</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {overlay.dominant_concerns.slice(0, 4).map((concern, idx) => (
+                      <li 
+                        key={idx} 
+                        className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-2 before:h-2 before:bg-warning/60 before:rounded-full"
+                      >
+                        {cleanNarrativeIdSuffix(concern)}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-2">
-                  {overlay.dominant_concerns.slice(0, 4).map((concern, idx) => (
-                    <li 
-                      key={idx} 
-                      className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-2 before:h-2 before:bg-warning/60 before:rounded-full"
-                    >
-                      {cleanNarrativeIdSuffix(concern)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              )}
 
-            {/* Recommended Actions */}
-            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Recommended Actions</span>
+              {/* Recommended Actions */}
+              {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Lightbulb className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Recommended Actions</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {overlay.recommended_actions.slice(0, 4).map((action, idx) => (
+                      <li 
+                        key={idx} 
+                        className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-2 before:h-2 before:bg-primary/60 before:rounded-full"
+                      >
+                        {cleanNarrativeIdSuffix(action)}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-2">
-                  {overlay.recommended_actions.slice(0, 4).map((action, idx) => (
-                    <li 
-                      key={idx} 
-                      className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-2 before:h-2 before:bg-primary/60 before:rounded-full"
-                    >
-                      {cleanNarrativeIdSuffix(action)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Confidence footer */}
             <div className="flex items-center justify-end gap-2 pt-2">
