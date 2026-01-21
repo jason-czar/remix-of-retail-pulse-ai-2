@@ -1733,8 +1733,6 @@ function HourlyStackedNarrativeChart({
             cy={dotY}
             r={5}
             fill={dotColor}
-            stroke="#fff"
-            strokeWidth={2}
           />
         )}
       </g>
