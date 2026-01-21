@@ -89,11 +89,12 @@ export default function SymbolPage() {
     refetch: refetchLensSummary
   } = useDecisionLensSummary(symbol, decisionLens);
   const [isRegenerating, setIsRegenerating] = useState(false);
-
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     // Invalidate the cache to force a fresh fetch
-    await queryClient.invalidateQueries({ queryKey: ['decision-lens-summary', symbol, decisionLens] });
+    await queryClient.invalidateQueries({
+      queryKey: ['decision-lens-summary', symbol, decisionLens]
+    });
     await refetchLensSummary();
     setIsRegenerating(false);
   };
@@ -109,7 +110,7 @@ export default function SymbolPage() {
   };
   const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens)} for ${symbol}...`;
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-[#1f1f1f]/0">
       
       <Header />
       
@@ -169,13 +170,7 @@ export default function SymbolPage() {
                     {getLensDisplayName(decisionLens)}
                   </Badge>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRegenerate}
-                  disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching}
-                  className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                >
+                <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-8 px-2 text-muted-foreground hover:text-foreground">
                   <RefreshCw className={cn("h-4 w-4", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
                   <span className="sr-only">Regenerate</span>
                 </Button>
