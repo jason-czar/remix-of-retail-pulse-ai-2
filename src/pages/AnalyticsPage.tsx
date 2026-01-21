@@ -220,7 +220,7 @@ export default function AnalyticsPage() {
   const isLoading = watchlistLoading || marketLoading || sentimentLoading || volumeLoading || psychologyLoading;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-transparent">
       <Header />
       
       <main className="container mx-auto px-4 py-8">
