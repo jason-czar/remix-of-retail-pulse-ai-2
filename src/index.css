@@ -150,8 +150,8 @@
     --gradient-glow: radial-gradient(ellipse at top, hsl(211 100% 50% / 0.15), transparent 50%);
     --gradient-glass: hsl(0 0% 12% / 0.55);
     
-    /* Ambient background gradient - dark mode: subtle cool graphite highlight from top-center */
-    --gradient-ambient: radial-gradient(ellipse 140% 60% at 50% -5%, hsl(220 8% 28%) 0%, hsl(220 6% 18% / 0.7) 30%, transparent 60%);
+    /* Ambient background gradient - dark mode: prominent cool graphite highlight from top-center for depth on large monitors */
+    --gradient-ambient: radial-gradient(ellipse 160% 70% at 50% -8%, hsl(220 10% 32%) 0%, hsl(220 8% 24% / 0.8) 25%, hsl(220 6% 18% / 0.5) 45%, transparent 70%);
 
     /* Shadows - neutral for depth */
     --shadow-glow: 0 0 40px -10px hsl(211 100% 50% / 0.3);
