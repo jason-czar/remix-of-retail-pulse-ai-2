@@ -68,6 +68,9 @@
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(240 18% 96%));
     --gradient-glow: radial-gradient(ellipse at top, hsl(211 100% 45% / 0.1), transparent 50%);
     --gradient-glass: hsl(0 0% 100% / 0.92);
+    
+    /* Ambient background gradient - light mode */
+    --gradient-ambient: radial-gradient(ellipse 120% 80% at 50% 0%, hsl(0 0% 100% / 0.7) 0%, hsl(240 18% 96% / 0) 60%);
 
     /* Shadows */
     --shadow-glow: 0 0 40px -10px hsl(211 100% 45% / 0.2);
@@ -146,6 +149,9 @@
     --gradient-card: linear-gradient(180deg, hsl(0 0% 18%), hsl(0 0% 14%));
     --gradient-glow: radial-gradient(ellipse at top, hsl(211 100% 50% / 0.15), transparent 50%);
     --gradient-glass: hsl(0 0% 12% / 0.55);
+    
+    /* Ambient background gradient - dark mode: subtle cool gray highlight from top-center */
+    --gradient-ambient: radial-gradient(ellipse 120% 80% at 50% 0%, hsl(220 10% 22% / 0.6) 0%, hsl(0 0% 12% / 0) 55%);
 
     /* Shadows - neutral for depth */
     --shadow-glow: 0 0 40px -10px hsl(211 100% 50% / 0.3);
@@ -177,6 +183,9 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: var(--gradient-ambient);
+    background-attachment: fixed;
+    background-size: 100% 100%;
   }
 
   html {
