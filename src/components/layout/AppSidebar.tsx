@@ -23,6 +23,7 @@ import {
   SidebarMenuSubButton,
   SidebarFooter,
   SidebarHeader,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useDefaultWatchlist } from "@/hooks/use-watchlist";
@@ -136,14 +137,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-black/[0.04] dark:border-white/[0.06]">
-        <div className={cn(
-          "text-xs text-muted-foreground text-center py-2",
-          collapsed && "sr-only"
-        )}>
-          <kbd className="px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.08] text-[10px] backdrop-blur-sm">⌘</kbd>
-          <kbd className="px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.08] text-[10px] ml-1 backdrop-blur-sm">B</kbd>
-          <span className="ml-2">to toggle</span>
-        </div>
+        <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors mx-auto" />
       </SidebarFooter>
     </Sidebar>
   );
