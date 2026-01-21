@@ -21,6 +21,15 @@ export interface StockPriceData {
 
 export type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
+export class StockPriceError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "StockPriceError";
+    this.status = status;
+  }
+}
+
 export async function fetchStockPrice(
   symbol: string,
   timeRange: TimeRange
@@ -40,7 +49,8 @@ export async function fetchStockPrice(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Failed to fetch stock price: ${response.status}`);
+    const message = errorData.error || `Failed to fetch stock price: ${response.status}`;
+    throw new StockPriceError(message, response.status);
   }
 
   return response.json();
