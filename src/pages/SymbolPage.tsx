@@ -28,7 +28,9 @@ import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, MessageSquare, Clock, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
+
 export default function SymbolPage() {
   const {
     symbol: paramSymbol
@@ -74,6 +76,7 @@ export default function SymbolPage() {
       end: now.toISOString()
     };
   }, [timeRange]);
+
   const {
     data: stats,
     isLoading: statsLoading
@@ -88,6 +91,7 @@ export default function SymbolPage() {
     isFetching: lensSummaryFetching,
     refetch: refetchLensSummary
   } = useDecisionLensSummary(symbol, decisionLens);
+
   const [isRegenerating, setIsRegenerating] = useState(false);
   const handleRegenerate = async () => {
     setIsRegenerating(true);
@@ -98,6 +102,7 @@ export default function SymbolPage() {
     await refetchLensSummary();
     setIsRegenerating(false);
   };
+
   const data = stats || {
     symbol,
     name: symbol,
@@ -108,8 +113,10 @@ export default function SymbolPage() {
     volumeChange: 0,
     badges: [] as string[]
   };
+
   const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens)} for ${symbol}...`;
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
+
   return <div className="min-h-screen bg-[#1f1f1f]/0">
       
       <Header />
@@ -153,43 +160,8 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
-          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
-        </div>
-
-        {/* AI Summary - Reduced padding on mobile */}
-        <Card className="p-4 md:p-6 mb-6 glass-card">
-          <div className="flex items-start gap-3 md:gap-4">
-            
-            <div className="flex-1 min-w-0 pl-[2px]">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
-                  <Badge variant="outline" className="text-[10px] md:text-xs">
-                    {getLensDisplayName(decisionLens)}
-                  </Badge>
-                </div>
-                <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-8 px-2 text-muted-foreground hover:text-foreground">
-                  <RefreshCw className={cn("h-4 w-4", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                  <span className="sr-only">Regenerate</span>
-                </Button>
-              </div>
-              {lensSummaryLoading || isRegenerating ? <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div> : <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  <FormattedSummary text={summary} />
-                </p>}
-            </div>
-          </div>
-        </Card>
-
-        {/* Section divider */}
-        <Separator className="my-6 md:my-8 glass-divider" />
-
         {/* Charts Section - Unified header with tabs and time range */}
-        <Tabs defaultValue="narratives" className="mt-6 md:mt-8 mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
+        <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
           {/* Mobile: TimeRangeSelector above tabs */}
           {activeTab !== 'momentum' && <div className="flex justify-center mb-3 md:hidden">
               <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
@@ -259,6 +231,41 @@ export default function SymbolPage() {
           </AnimatePresence>
         </Tabs>
 
+        {/* Section divider */}
+        <Separator className="my-6 md:my-8 glass-divider" />
+
+        {/* Decision Lens Selector - Horizontal scroll on mobile */}
+        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
+          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
+        </div>
+
+        {/* AI Summary - Reduced padding on mobile */}
+        <Card className="p-4 md:p-6 mb-6 glass-card">
+          <div className="flex items-start gap-3 md:gap-4">
+            
+            <div className="flex-1 min-w-0 pl-[2px]">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold text-sm md:text-base">AI Sentiment Summary</h3>
+                  <Badge variant="outline" className="text-[10px] md:text-xs">
+                    {getLensDisplayName(decisionLens)}
+                  </Badge>
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-8 px-2 text-muted-foreground hover:text-foreground">
+                  <RefreshCw className={cn("h-4 w-4", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                  <span className="sr-only">Regenerate</span>
+                </Button>
+              </div>
+              {lensSummaryLoading || isRegenerating ? <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div> : <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  <FormattedSummary text={summary} />
+                </p>}
+            </div>
+          </div>
+        </Card>
+
         {/* Decision Readiness Dashboard */}
         <div className="mb-8 md:mb-12 px-[3px] mt-[65px]">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
@@ -319,6 +326,7 @@ export default function SymbolPage() {
       <Footer />
     </div>;
 }
+
 function MetricCard({
   label,
   value,
@@ -347,6 +355,7 @@ function MetricCard({
         </div>}
     </Card>;
 }
+
 function TimeRangeSelector({
   value,
   onChange
@@ -368,6 +377,7 @@ function TimeRangeSelector({
         </button>)}
     </div>;
 }
+
 function MessageCard({
   user,
   content,
