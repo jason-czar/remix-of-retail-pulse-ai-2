@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Footer } from "./Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -43,6 +43,8 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         <SidebarInset className="flex flex-col">
           {/* Top bar with trigger, search, theme, and user */}
           <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-black/[0.04] dark:border-white/[0.04] bg-transparent px-4">
+            <SidebarTrigger className="h-8 w-8 hover:bg-black/[0.04] dark:hover:bg-white/[0.08] rounded-lg transition-colors" />
+            
             <div className="flex-1" />
             
             <Button 
