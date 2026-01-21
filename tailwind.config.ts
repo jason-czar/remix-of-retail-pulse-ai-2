@@ -211,6 +211,22 @@ export default {
 					opacity: '1'
 				}
 			}
+			'sidebar-expand': {
+				'0%': {
+					transform: 'scaleX(0.85)',
+					opacity: '0.8'
+				},
+				'50%': {
+					transform: 'scaleX(1.02)'
+				},
+				'75%': {
+					transform: 'scaleX(0.98)'
+				},
+				'100%': {
+					transform: 'scaleX(1)',
+					opacity: '1'
+				}
+			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
@@ -222,8 +238,12 @@ export default {
   			'slide-in-right': 'slide-in-right 0.3s ease-out',
   			glow: 'glow 2s ease-in-out infinite',
   			'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-  			'progress-fill': 'progress-fill 0.6s ease-out forwards'
-  		}
+  			'progress-fill': 'progress-fill 0.6s ease-out forwards',
+  			'sidebar-expand': 'sidebar-expand 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+  		},
+		transitionTimingFunction: {
+			'bounce-out': 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+		}
   	}
   },
   plugins: [require("tailwindcss-animate")],
