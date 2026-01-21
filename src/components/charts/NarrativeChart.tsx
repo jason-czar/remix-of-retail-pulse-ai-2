@@ -1233,6 +1233,13 @@ function HourlyStackedNarrativeChart({
       const volumeValues = Array.from(effectiveVolumes.values());
       const maxVolume = Math.max(...volumeValues, 1);
 
+      // Determine the current hour for filtering out future hours
+      // For "today" view showing current day: cap at current hour
+      // For previous trading days (weekends/pre-market): show all hours up to END_HOUR
+      const currentTime = new Date();
+      const isShowingCurrentDay = displayDate.toDateString() === currentTime.toDateString();
+      const currentHour = currentTime.getHours();
+
       // Build chart data slots
       const stackedChartData: Record<string, any>[] = [];
       for (let slotIdx = 0; slotIdx < TOTAL_SLOTS; slotIdx++) {
@@ -1242,13 +1249,17 @@ function HourlyStackedNarrativeChart({
         // Time label: show hour label at hour boundaries (e.g., "8am", "12pm")
         const hourLabel = hour === 0 ? "12am" : hour < 12 ? `${hour}am` : hour === 12 ? "12pm" : `${hour - 12}pm`;
 
+        // Check if this hour is in the future (only applies when showing current day)
+        const isFutureHour = isShowingCurrentDay && hour > currentHour;
+
         // Get the hour's narrative data (for tooltip on any slot within the hour)
         const hourNarr = hourlyNarratives.get(hour)!;
         const topNarratives = hourNarr.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
         
         // Use analytics volume if available, otherwise fall back to history message_count
-        const analyticsVolume = hourlyVolumes.get(hour) || 0;
-        const historyVolume = hourlyMessageCounts.get(hour) || 0;
+        // For future hours, always show 0 volume
+        const analyticsVolume = isFutureHour ? 0 : (hourlyVolumes.get(hour) || 0);
+        const historyVolume = isFutureHour ? 0 : (hourlyMessageCounts.get(hour) || 0);
         const effectiveVolume = useHistoryFallback ? historyVolume : analyticsVolume;
         
         // Calculate total sample count from narratives for proportional scaling
@@ -1260,38 +1271,50 @@ function HourlyStackedNarrativeChart({
           hourIndex: hour,
           isHourStart,
           // Use effective volume for display (analytics if available, narrative sample count otherwise)
+          // Future hours always show 0
           totalMessages: effectiveVolume,
           volumePercent: effectiveVolume / maxVolume * 100,
-          isEmpty: !hourNarr.hasNarrativeData && effectiveVolume === 0
+          isEmpty: isFutureHour || (!hourNarr.hasNarrativeData && effectiveVolume === 0),
+          isFutureHour
         };
 
         // Add narrative segment data to ALL slots (for tooltip)
         // Scale segment heights proportionally
-        topNarratives.forEach((n, idx) => {
-          flatData[`segment${idx}Name`] = n.name;
-          flatData[`segment${idx}Sentiment`] = n.sentiment;
-          
-          // When using history fallback, scale segment values proportionally to history volume
-          // Otherwise scale by the proportion of analytics volume
-          let scaledValue: number;
-          if (useHistoryFallback) {
-            // Scale proportionally to history message count for this hour
-            const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
-            scaledValue = Math.round(proportion * historyVolume);
-          } else {
-            const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
-            scaledValue = Math.round(proportion * analyticsVolume);
+        // For future hours, clear all segment data to avoid showing misleading tooltips
+        if (isFutureHour) {
+          for (let i = 0; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = "";
+            flatData[`segment${i}Sentiment`] = "neutral";
+            flatData[`segment${i}Count`] = 0;
           }
-          
-          // Only set segment VALUE at hour start for bar rendering
-          flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
-          flatData[`segment${idx}Count`] = n.count; // Store original count for tooltip
-        });
-        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
-          flatData[`segment${i}`] = 0;
-          flatData[`segment${i}Name`] = "";
-          flatData[`segment${i}Sentiment`] = "neutral";
-          flatData[`segment${i}Count`] = 0;
+        } else {
+          topNarratives.forEach((n, idx) => {
+            flatData[`segment${idx}Name`] = n.name;
+            flatData[`segment${idx}Sentiment`] = n.sentiment;
+            
+            // When using history fallback, scale segment values proportionally to history volume
+            // Otherwise scale by the proportion of analytics volume
+            let scaledValue: number;
+            if (useHistoryFallback) {
+              // Scale proportionally to history message count for this hour
+              const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+              scaledValue = Math.round(proportion * historyVolume);
+            } else {
+              const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+              scaledValue = Math.round(proportion * analyticsVolume);
+            }
+            
+            // Only set segment VALUE at hour start for bar rendering
+            flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
+            flatData[`segment${idx}Count`] = n.count; // Store original count for tooltip
+          });
+          for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = "";
+            flatData[`segment${i}Sentiment`] = "neutral";
+            flatData[`segment${i}Count`] = 0;
+          }
         }
         stackedChartData.push(flatData);
       }
@@ -1427,7 +1450,7 @@ function HourlyStackedNarrativeChart({
       hasAnyData: stackedChartData.length > 0,
       is5MinView: false
     };
-  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now, START_HOUR, END_HOUR, VISIBLE_HOURS, SLOTS_PER_HOUR, hourlyVolumeMap]);
+  }, [historyData, timeRange, todayStart, todayEnd, twentyFourHoursAgo, now, displayDate, START_HOUR, END_HOUR, VISIBLE_HOURS, SLOTS_PER_HOUR, hourlyVolumeMap]);
 
   // Merge price data into chart data
   const chartDataWithPrice = useMemo(() => {
