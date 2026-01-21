@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-export type DecisionLens = 'corporate-strategy' | 'earnings' | 'ma' | 'capital-allocation' | 'leadership-change' | 'strategic-pivot' | 'product-launch' | 'activist-risk';
+export type DecisionLens = 'summary' | 'corporate-strategy' | 'earnings' | 'ma' | 'capital-allocation' | 'leadership-change' | 'strategic-pivot' | 'product-launch' | 'activist-risk';
 interface DecisionLensSelectorProps {
   value: DecisionLens;
   onChange: (lens: DecisionLens) => void;
@@ -9,6 +9,9 @@ const lensOptions: {
   value: DecisionLens;
   label: string;
 }[] = [{
+  value: 'summary',
+  label: 'Summary'
+}, {
   value: 'corporate-strategy',
   label: 'Corporate Strategy Insights'
 }, {
@@ -45,10 +48,11 @@ export function DecisionLensSelector({
 }
 export function getLensDisplayName(lens: DecisionLens): string {
   const option = lensOptions.find(o => o.value === lens);
-  return option?.label || 'Corporate Strategy Insights';
+  return option?.label || 'Summary';
 }
 export function getLensPromptContext(lens: DecisionLens): string {
   const contexts: Record<DecisionLens, string> = {
+    'summary': 'Provide a holistic overview of retail sentiment. Identify the most significant themes, dominant emotions, and key narratives driving discussion. Highlight any notable consensus or divergence. Focus on what a decision-maker needs to know right now.',
     'corporate-strategy': 'Focus on overall corporate strategy, competitive positioning, long-term vision, and strategic direction. Highlight themes around market leadership, competitive advantages, and business model evolution.',
     'earnings': 'Focus on earnings performance, revenue growth, profitability metrics, guidance, and financial results. Highlight discussions about quarterly results, beats/misses, and forward guidance.',
     'ma': 'Focus on merger and acquisition activity, potential takeover targets, deal rumors, and consolidation themes. Highlight discussions about buyout speculation, merger synergies, and acquisition targets.',
