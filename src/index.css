@@ -48,6 +48,10 @@
     --bearish-foreground: 19 100% 15%;
     --neutral: 199 89% 48%;
     --neutral-foreground: 199 89% 15%;
+    
+    /* Warning/caution color - golden amber to complement red/green */
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 15%;
 
     /* Chart colors */
     --chart-1: 211 100% 45%;
@@ -129,6 +133,10 @@
     --bearish-foreground: 19 100% 95%;
     --neutral: 199 89% 48%;
     --neutral-foreground: 199 89% 95%;
+    
+    /* Warning/caution color - golden amber to complement red/green */
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 95%;
 
     /* Chart colors */
     --chart-1: 211 100% 50%;

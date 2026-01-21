@@ -98,17 +98,17 @@ function getTimingBadge(timing: DecisionReadiness["recommended_timing"]) {
 }
 function getReadinessColor(score: number): string {
   if (score >= 70) return "text-bullish";
-  if (score >= 40) return "text-amber-500";
+  if (score >= 40) return "text-warning";
   return "text-bearish";
 }
 function getProgressColor(score: number): string {
   if (score >= 70) return "bg-bullish";
-  if (score >= 40) return "bg-amber-500";
+  if (score >= 40) return "bg-warning";
   return "bg-bearish";
 }
 function getRiskColor(score: number): string {
   if (score >= 70) return "text-bearish";
-  if (score >= 40) return "text-amber-500";
+  if (score >= 40) return "text-warning";
   return "text-bullish";
 }
 
@@ -133,11 +133,11 @@ function TemporalAttributionBadge({
         {confidence_basis.timeframe_agreement === "high" && <Badge variant="outline" className="text-xs bg-bullish/10 text-bullish border-bullish/30">
             High agreement
           </Badge>}
-        {confidence_basis.timeframe_agreement === "low" && <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-400 border-amber-500/30">
+        {confidence_basis.timeframe_agreement === "low" && <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/30">
             Low agreement
           </Badge>}
       </div>
-      {confidence_basis.hourly_override_active && <div className="flex items-center gap-1 text-amber-400">
+      {confidence_basis.hourly_override_active && <div className="flex items-center gap-1 text-warning">
           <AlertTriangle className="h-3 w-3" />
           <span>{confidence_basis.override_reason}</span>
         </div>}
@@ -160,8 +160,8 @@ function NarrativePersistenceBadge({
       tooltip: `Present in ${p.monthly_presence_pct}% of monthly data - use for strategy`
     },
     "event-driven": {
-      bg: "bg-amber-500/20",
-      text: "text-amber-400",
+      bg: "bg-warning/20",
+      text: "text-warning",
       label: "event",
       tooltip: "Recent/temporary - use for timing only"
     },
@@ -233,9 +233,10 @@ function LensReadinessCard({
             </span>
           </div>
           <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-            <div className={`h-full transition-all ${getProgressColor(readiness.readiness_score)}`} style={{
-            width: `${readiness.readiness_score}%`
-          }} />
+            <div 
+              className={`h-full origin-left animate-progress-fill ${getProgressColor(readiness.readiness_score)}`} 
+              style={{ width: `${readiness.readiness_score}%` }} 
+            />
           </div>
         </div>
 
@@ -315,11 +316,11 @@ function LensReadinessCard({
               {/* Dominant Concerns */}
               {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <AlertCircle className="h-3 w-3 text-amber-500" />
+                    <AlertCircle className="h-3 w-3 text-warning" />
                     <span className="text-xs font-medium">Key Concerns</span>
                   </div>
                   <ul className="space-y-1">
-                    {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[11px] text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-amber-500/50 before:rounded-full">
+                    {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[11px] text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-warning/50 before:rounded-full">
                         {cleanNarrativeIdSuffix(concern)}
                       </li>)}
                   </ul>
@@ -408,7 +409,7 @@ function OverviewCard({
               </div>}
             {summary.primary_risk && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
                 <span className="text-muted-foreground">Primary Risk</span>
-                <p className="font-medium text-amber-500">{summary.primary_risk}</p>
+                <p className="font-medium text-warning">{summary.primary_risk}</p>
               </div>}
             {summary.action_bias && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
                 <span className="text-muted-foreground">Action Bias</span>
@@ -425,11 +426,11 @@ function OverviewCard({
           {/* Active Signals */}
           {activeSignals.length > 0 && <div className="mt-3 pt-3 border-t border-border/50">
               <div className="flex items-center gap-1.5 mb-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                <span className="text-xs font-medium text-amber-500">Active Signals</span>
+                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                <span className="text-xs font-medium text-warning">Active Signals</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {activeSignals.map((signal, idx) => <Badge key={idx} variant="outline" className="text-[10px] border-amber-500/30 text-amber-500 bg-amber-500/5 capitalize">
+                {activeSignals.map((signal, idx) => <Badge key={idx} variant="outline" className="text-[10px] border-warning/30 text-warning bg-warning/5 capitalize">
                     {signal}
                   </Badge>)}
               </div>
