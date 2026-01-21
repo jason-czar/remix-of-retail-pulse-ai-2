@@ -641,35 +641,29 @@
     background: hsl(0 0% 10% / 0.8);
   }
 
-  /* Glass Tabs Enhancement - Shared material for segmented pickers */
+  /* Glass Tabs Enhancement */
   .glass-tabs-list {
-    background: hsl(0 0% 100% / 0.72);
-    backdrop-filter: blur(20px) saturate(150%);
-    border: 1px solid hsl(0 0% 0% / 0.08);
-    border-radius: 9999px;
-    box-shadow: 
-      0 2px 8px hsl(0 0% 0% / 0.04),
-      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+    background: var(--gradient-glass);
+    backdrop-filter: blur(20px);
   }
 
   .dark .glass-tabs-list {
-    background: hsl(0 0% 12% / 0.45);
-    border: 1px solid hsl(0 0% 100% / 0.08);
+    background: var(--gradient-glass);
+    border: 1px solid hsl(0 0% 100% / 0.15);
     box-shadow: 
       0 8px 32px hsl(0 0% 0% / 0.4),
       0 2px 8px hsl(0 0% 5% / 0.2),
       inset 0 1px 0 hsl(0 0% 100% / 0.08);
   }
 
-  /* Glass Tabs Trigger - Active state for pills */
-  .glass-tabs-trigger-active {
-    background: hsl(var(--background));
-    border-radius: 9999px;
+  /* Active tab glow effect */
+  [data-state="active"].glass-tabs-trigger {
     box-shadow: 
       0 2px 8px hsl(0 0% 0% / 0.1),
       0 1px 2px hsl(0 0% 0% / 0.06);
   }
 
+  .dark [data-state="active"].glass-tabs-trigger,
   .dark .glass-tabs-trigger-active {
     background: linear-gradient(
       180deg,
@@ -680,11 +674,6 @@
     box-shadow: 
       0 4px 16px hsl(0 0% 0% / 0.5),
       inset 0 1px 0 hsl(0 0% 100% / 0.15);
-  }
-
-  /* Active tab glow effect - for Radix TabsTrigger data-state */
-  [data-state="active"].glass-tabs-trigger {
-    @apply glass-tabs-trigger-active;
   }
 
   /* Glass Popover - for dropdowns, selects, tooltips, context menus */

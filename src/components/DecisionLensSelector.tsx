@@ -37,24 +37,11 @@ export function DecisionLensSelector({
   value,
   onChange
 }: DecisionLensSelectorProps) {
-  return (
-    <div className="inline-flex items-center gap-1 py-1.5 px-[7px] overflow-x-auto md:mx-0 scrollbar-hide glass-tabs-list mx-[4px]">
-      {lensOptions.map(option => (
-        <button 
-          key={option.value} 
-          className={cn(
-            "inline-flex items-center justify-center whitespace-nowrap px-[10px] py-[7px] text-sm font-normal rounded-full transition-all duration-200 shrink-0",
-            value === option.value 
-              ? "glass-tabs-trigger-active text-foreground" 
-              : "text-muted-foreground hover:text-foreground/80"
-          )} 
-          onClick={() => onChange(option.value)}
-        >
+  return <div className="inline-flex items-center gap-1.5 rounded-full py-1.5 px-[10px] overflow-x-auto md:mx-0 scrollbar-hide bg-muted/60 backdrop-blur-xl border border-border/40 dark:glass-tabs-list mx-[4px] shadow-none">
+      {lensOptions.map(option => <button key={option.value} className={cn("inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", value === option.value ? "bg-background text-foreground shadow-md dark:shadow-[0_4px_16px_hsl(240_15%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.15)] dark:bg-[linear-gradient(180deg,hsl(0_0%_100%/0.12)_0%,hsl(0_0%_100%/0.06)_100%)] dark:border dark:border-white/12 dark:backdrop-blur-md" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")} onClick={() => onChange(option.value)}>
           {option.label}
-        </button>
-      ))}
-    </div>
-  );
+        </button>)}
+    </div>;
 }
 export function getLensDisplayName(lens: DecisionLens): string {
   const option = lensOptions.find(o => o.value === lens);
