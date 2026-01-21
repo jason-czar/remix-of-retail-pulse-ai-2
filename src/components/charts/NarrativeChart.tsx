@@ -1200,13 +1200,27 @@ function HourlyStackedNarrativeChart({
       }
 
       // Get actual hourly volumes from the analytics API
+      // Note: Analytics API only provides today's data, so for previous days we fall back to narrative sample counts
       const hourlyVolumes: Map<number, number> = new Map();
+      const hourlyNarrativeCounts: Map<number, number> = new Map(); // Fallback from narrative data
+      
       for (let h = START_HOUR; h <= END_HOUR; h++) {
-        hourlyVolumes.set(h, hourlyVolumeMap.get(h) || 0);
+        const analyticsVolume = hourlyVolumeMap.get(h) || 0;
+        hourlyVolumes.set(h, analyticsVolume);
+        
+        // Calculate total narrative sample count for this hour as fallback
+        const hourNarr = hourlyNarratives.get(h);
+        const narrativeTotal = hourNarr ? hourNarr.narratives.reduce((sum, n) => sum + n.count, 0) : 0;
+        hourlyNarrativeCounts.set(h, narrativeTotal);
       }
 
-      // Find max volume for relative activity calculation
-      const volumeValues = Array.from(hourlyVolumes.values());
+      // Check if we have any meaningful analytics volume data
+      const totalAnalyticsVolume = Array.from(hourlyVolumes.values()).reduce((sum, v) => sum + v, 0);
+      const useNarrativeFallback = totalAnalyticsVolume === 0;
+      
+      // Use whichever data source has values for max calculation
+      const effectiveVolumes = useNarrativeFallback ? hourlyNarrativeCounts : hourlyVolumes;
+      const volumeValues = Array.from(effectiveVolumes.values());
       const maxVolume = Math.max(...volumeValues, 1);
 
       // Build chart data slots
@@ -1222,8 +1236,10 @@ function HourlyStackedNarrativeChart({
         const hourNarr = hourlyNarratives.get(hour)!;
         const topNarratives = hourNarr.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
         
-        // Use ACTUAL volume from analytics API, not sample size from narrative_history
-        const actualVolume = hourlyVolumes.get(hour) || 0;
+        // Use analytics volume if available, otherwise fall back to narrative sample counts
+        const analyticsVolume = hourlyVolumes.get(hour) || 0;
+        const narrativeVolume = hourlyNarrativeCounts.get(hour) || 0;
+        const effectiveVolume = useNarrativeFallback ? narrativeVolume : analyticsVolume;
         
         // Calculate total sample count from narratives for proportional scaling
         const totalSampleCount = topNarratives.reduce((sum, n) => sum + n.count, 0);
@@ -1233,20 +1249,28 @@ function HourlyStackedNarrativeChart({
           slotIndex: slotIdx,
           hourIndex: hour,
           isHourStart,
-          // Use actual volume from analytics API for the side panel display
-          totalMessages: actualVolume,
-          volumePercent: actualVolume / maxVolume * 100,
-          isEmpty: !hourNarr.hasNarrativeData && actualVolume === 0
+          // Use effective volume for display (analytics if available, narrative sample count otherwise)
+          totalMessages: effectiveVolume,
+          volumePercent: effectiveVolume / maxVolume * 100,
+          isEmpty: !hourNarr.hasNarrativeData && effectiveVolume === 0
         };
 
         // Add narrative segment data to ALL slots (for tooltip)
-        // Scale segment heights proportionally to actual volume
+        // Scale segment heights proportionally
         topNarratives.forEach((n, idx) => {
           flatData[`segment${idx}Name`] = n.name;
           flatData[`segment${idx}Sentiment`] = n.sentiment;
-          // Scale segment value: proportion of this narrative × actual volume
-          const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
-          const scaledValue = Math.round(proportion * actualVolume);
+          
+          // When using narrative fallback, use the raw narrative counts directly
+          // Otherwise scale by the proportion of analytics volume
+          let scaledValue: number;
+          if (useNarrativeFallback) {
+            scaledValue = n.count;
+          } else {
+            const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+            scaledValue = Math.round(proportion * analyticsVolume);
+          }
+          
           // Only set segment VALUE at hour start for bar rendering
           flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
           flatData[`segment${idx}Count`] = n.count; // Store original count for tooltip
