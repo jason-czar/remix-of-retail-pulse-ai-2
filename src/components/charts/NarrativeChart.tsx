@@ -1071,7 +1071,10 @@ function HourlyStackedNarrativeChart({
 
   // Fetch actual hourly volume from StockTwits analytics API
   // This provides the REAL message count per hour (not the AI sample size)
-  const { data: volumeData } = useVolumeAnalytics(symbol, timeRange);
+  // For 1D view, pass the target date boundaries to fetch volume for that specific day
+  const volumeStartDate = timeRange === "1D" ? todayStart.toISOString() : undefined;
+  const volumeEndDate = timeRange === "1D" ? todayEnd.toISOString() : undefined;
+  const { data: volumeData } = useVolumeAnalytics(symbol, timeRange, volumeStartDate, volumeEndDate);
 
   // Determine price line color based on current price vs previous close
   // Used for UI elements like the toggle icon and side panel
