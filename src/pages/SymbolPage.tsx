@@ -18,6 +18,7 @@ import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
+import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { DecisionReadinessDashboard } from "@/components/DecisionReadinessDashboard";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
@@ -256,7 +257,8 @@ export default function SymbolPage() {
           </div>
         </Card>
 
-        {/* Decision Readiness Dashboard */}
+        {/* Lens-specific Readiness Card (only shown for non-summary lenses) */}
+        <LensReadinessCard symbol={symbol} lens={decisionLens} />
         <div className="mb-8 md:mb-12 px-[3px] mt-[65px]">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
           <DecisionReadinessDashboard symbol={symbol} />
