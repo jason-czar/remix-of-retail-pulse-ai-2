@@ -1685,8 +1685,8 @@ function HourlyStackedNarrativeChart({
     );
   }, [firstPriceData, stackedChartData.length]);
 
-  // Custom crosshair line that we can control via activeIndex
-  const CrosshairLine = useCallback(({ offset, xAxisMap }: any) => {
+  // Custom crosshair line that we can control via activeIndex - includes dot on price line
+  const CrosshairLine = useCallback(({ offset, xAxisMap, yAxisMap }: any) => {
     if (activeIndex === null || activeIndex === undefined) return null;
     const xAxis = xAxisMap ? (Object.values(xAxisMap)[0] as any) : null;
     if (!xAxis || !offset || !chartDataWithPrice.length) return null;
@@ -1698,18 +1698,48 @@ function HourlyStackedNarrativeChart({
     const y1 = offset.top;
     const y2 = offset.top + offset.height;
 
+    // Calculate the Y position for the dot on the price line
+    let dotY: number | null = null;
+    let dotColor = priceLineColor;
+    if (showPriceOverlay && yAxisMap?.right) {
+      const yAxis = yAxisMap.right;
+      const yScale = yAxis.scale;
+      const dataPoint = chartDataWithPrice[clampedIndex] as any;
+      const price = dataPoint?.price;
+      if (price !== null && price !== undefined && yScale) {
+        dotY = yScale(price);
+        // Determine dot color based on price vs previous close
+        if (priceData?.previousClose) {
+          dotColor = price >= priceData.previousClose ? PRICE_UP_COLOR : PRICE_DOWN_COLOR;
+        }
+      }
+    }
+
     return (
-      <line
-        x1={x}
-        y1={y1}
-        x2={x}
-        y2={y2}
-        stroke="hsl(var(--muted-foreground))"
-        strokeWidth={1}
-        strokeOpacity={0.5}
-      />
+      <g>
+        <line
+          x1={x}
+          y1={y1}
+          x2={x}
+          y2={y2}
+          stroke="hsl(var(--muted-foreground))"
+          strokeWidth={1}
+          strokeOpacity={0.5}
+        />
+        {/* Dot on the price line */}
+        {dotY !== null && (
+          <circle
+            cx={x}
+            cy={dotY}
+            r={5}
+            fill={dotColor}
+            stroke="#fff"
+            strokeWidth={2}
+          />
+        )}
+      </g>
     );
-  }, [activeIndex, chartDataWithPrice.length]);
+  }, [activeIndex, chartDataWithPrice, showPriceOverlay, priceLineColor, priceData?.previousClose]);
 
   // Derive panel data (hovered or most recent with data)
   const panelData = useMemo((): SidePanelData | null => {
@@ -2043,12 +2073,7 @@ w-[120vw]
                   )}
                   {/* Pre-market extension line - same opacity as main line for consistent appearance */}
                   {showPriceOverlay && is5MinView && <Line yAxisId="right" type="monotone" dataKey="priceExtension" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />}
-                  {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={{
-                  fill: priceLineColor,
-                  strokeWidth: 2,
-                  stroke: "#fff",
-                  r: 5
-                }} connectNulls />}
+                  {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={false} connectNulls />}
                   {showPriceOverlay && is5MinView && priceData?.previousClose && <ReferenceLine yAxisId="right" y={priceData.previousClose} stroke="hsl(215 20% 65% / 0.5)" strokeDasharray="2 3" strokeWidth={1} />}
                   {/* Horizontal line from Y-axis to first price point */}
                   {showPriceOverlay && is5MinView && firstPriceData && <Customized component={FirstPriceExtensionLine} />}
