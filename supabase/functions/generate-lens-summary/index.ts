@@ -179,10 +179,23 @@ ${messageTexts}`,
     }
 
     const aiData = await aiResponse.json();
-    const summary = (aiData.choices?.[0]?.message?.content || 
-      `Unable to generate ${lensName} insights for ${symbol.toUpperCase()} at this time.`).trim();
+    const rawSummary = aiData.choices?.[0]?.message?.content?.trim();
+    
+    // Only cache if we got a valid AI response
+    if (!rawSummary) {
+      console.error("AI returned empty response for", symbol, lens);
+      return new Response(
+        JSON.stringify({ 
+          summary: `Unable to generate ${lensName} insights for ${symbol.toUpperCase()} at this time.`,
+          cached: false, 
+          messageCount: messages.length,
+          error: true
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Cache the result (30 minute expiry)
+    // Cache the valid result (30 minute expiry)
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     await supabase
       .from("lens_summary_cache")
@@ -190,7 +203,7 @@ ${messageTexts}`,
         {
           symbol: symbol.toUpperCase(),
           lens,
-          summary,
+          summary: rawSummary,
           message_count: messages.length,
           expires_at: expiresAt,
         },
@@ -200,7 +213,7 @@ ${messageTexts}`,
     console.log(`Cached ${lensName} summary for ${symbol}`);
 
     return new Response(
-      JSON.stringify({ summary, cached: false, messageCount: messages.length }),
+      JSON.stringify({ summary: rawSummary, cached: false, messageCount: messages.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
