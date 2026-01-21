@@ -58,7 +58,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
             
             <ThemeToggle />
             
-            {user && (
+            {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full hover:bg-black/[0.05] dark:hover:bg-white/[0.08]">
@@ -81,6 +81,10 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : (
+              <Button variant="hero" size="sm" onClick={() => navigate("/login")} className="gap-2">
+                Sign In
+              </Button>
             )}
           </header>
           

@@ -2,12 +2,9 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Header } from "@/components/layout/Header";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Separator } from "@/components/ui/separator";
-import { Footer } from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -112,7 +109,6 @@ export default function SymbolPage() {
   };
   const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens)} for ${symbol}...`;
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
-  const { user } = useAuth();
 
   const content = (
     <div className="container mx-auto px-4 py-6 md:py-8">
@@ -318,18 +314,8 @@ export default function SymbolPage() {
       </div>
   );
 
-  // Use SidebarLayout for authenticated users, Header/Footer for public demo pages
-  if (user) {
-    return <SidebarLayout>{content}</SidebarLayout>;
-  }
-
-  return (
-    <div className="min-h-screen bg-[#1f1f1f]/0">
-      <Header />
-      <main>{content}</main>
-      <Footer />
-    </div>
-  );
+  // Always use SidebarLayout for symbol pages (both auth and non-auth users)
+  return <SidebarLayout>{content}</SidebarLayout>;
 }
 function MetricCard({
   label,
