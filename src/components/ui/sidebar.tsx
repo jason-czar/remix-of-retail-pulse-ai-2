@@ -151,8 +151,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
       )} />
       <div className={cn(
         "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] md:flex",
-        // Smooth transitions for expand/collapse
-        "transition-[left,right,width,opacity,transform] duration-300 ease-out",
+        // Smooth transitions with bounce easing for expand/collapse
+        "transition-[left,right,width,opacity,transform] duration-300 ease-bounce-out",
         // Floating inset from viewport edge
         side === "left" 
           ? "left-3 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" 
