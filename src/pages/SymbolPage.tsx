@@ -230,35 +230,45 @@ export default function SymbolPage() {
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
-        {/* AI Summary - Reduced padding on mobile */}
-        <Card className="p-4 md:p-6 mb-6 glass-card">
-          <div className="flex items-start gap-3 md:gap-4">
-            
-            <div className="flex-1 min-w-0 pl-[2px]">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
-                  <Badge variant="outline" className="text-[10px] md:text-xs">
-                    {getLensDisplayName(decisionLens)}
-                  </Badge>
+        {/* AI Summary with lens transition animation */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={decisionLens}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <Card className="p-4 md:p-6 mb-6 glass-card">
+              <div className="flex items-start gap-3 md:gap-4">
+                
+                <div className="flex-1 min-w-0 pl-[2px]">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
+                      <Badge variant="outline" className="text-[10px] md:text-xs">
+                        {getLensDisplayName(decisionLens)}
+                      </Badge>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-8 px-2 text-muted-foreground hover:text-foreground">
+                      <RefreshCw className={cn("h-4 w-4", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                      <span className="sr-only">Regenerate</span>
+                    </Button>
+                  </div>
+                  {lensSummaryLoading || isRegenerating ? <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div> : <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                      <FormattedSummary text={summary} />
+                    </p>}
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-8 px-2 text-muted-foreground hover:text-foreground">
-                  <RefreshCw className={cn("h-4 w-4", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                  <span className="sr-only">Regenerate</span>
-                </Button>
               </div>
-              {lensSummaryLoading || isRegenerating ? <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div> : <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  <FormattedSummary text={summary} />
-                </p>}
-            </div>
-          </div>
-        </Card>
+            </Card>
 
-        {/* Lens-specific Readiness Card (only shown for non-summary lenses) */}
-        <LensReadinessCard symbol={symbol} lens={decisionLens} />
+            {/* Lens-specific Readiness Card (only shown for non-summary lenses) */}
+            <LensReadinessCard symbol={symbol} lens={decisionLens} />
+          </motion.div>
+        </AnimatePresence>
         <div className="mb-8 md:mb-12 px-[3px] mt-[65px]">
           <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
           <DecisionReadinessDashboard symbol={symbol} />
