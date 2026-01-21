@@ -150,13 +150,16 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
         "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_12px)]"
       )} />
       <div className={cn(
-        "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
+        "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] md:flex",
+        // Smooth transitions for expand/collapse
+        "transition-[left,right,width,opacity,transform] duration-300 ease-out",
         // Floating inset from viewport edge
         side === "left" 
           ? "left-3 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" 
           : "right-3 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
         // Vertical inset for floating appearance
         "top-3 bottom-3 h-[calc(100svh_-_24px)]",
+        // Collapsed state: icon width with subtle scale
         "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
         className
       )} {...props}>
@@ -164,6 +167,8 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
           data-sidebar="sidebar" 
           className={cn(
             "flex h-full w-full flex-col relative overflow-hidden",
+            // Smooth content reveal transition
+            "transition-[opacity,transform] duration-300 ease-out",
             // Liquid Glass material
             "bg-white/90 dark:bg-[hsl(0_0%_12%/0.75)]",
             "backdrop-blur-2xl",
@@ -175,7 +180,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
             "shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.12),0_4px_16px_-4px_hsl(0_0%_0%/0.08),inset_0_1px_0_0_hsl(0_0%_100%/0.5)]",
             "dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5),0_4px_20px_-4px_hsl(0_0%_0%/0.35),inset_0_1px_0_0_hsl(0_0%_100%/0.08)]",
             // Top edge glow pseudo-element via before
-            "before:absolute before:inset-x-0 before:top-0 before:h-24 before:bg-gradient-to-b before:from-white/40 before:to-transparent before:rounded-t-2xl before:pointer-events-none",
+            "before:absolute before:inset-x-0 before:top-0 before:h-24 before:bg-gradient-to-b before:from-white/40 before:to-transparent before:rounded-t-2xl before:pointer-events-none before:transition-opacity before:duration-300",
             "dark:before:from-white/[0.06] dark:before:to-transparent"
           )}
         >
