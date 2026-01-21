@@ -758,7 +758,13 @@ function TimeSeriesNarrativeChart({
     }
 
     // Find most recent data point with messages (non-gap, has data)
-    const mostRecent = chartDataWithPrice.slice().reverse().find(item => !item.isGap && item.totalMessages > 0);
+    let mostRecent = chartDataWithPrice.slice().reverse().find(item => !item.isGap && item.totalMessages > 0);
+    
+    // If no valid points, fall back to the last data point (most recent date)
+    if (!mostRecent && chartDataWithPrice.length > 0) {
+      mostRecent = chartDataWithPrice[chartDataWithPrice.length - 1];
+    }
+    
     if (!mostRecent) return null;
     return {
       label: mostRecent.date,
@@ -1587,8 +1593,14 @@ function HourlyStackedNarrativeChart({
       return hoveredData;
     }
 
-    // Find most recent data point with messages
-    const mostRecent = chartDataWithPrice.slice().reverse().find(item => (item as any).totalMessages > 0 && !(item as any).isEmpty);
+    // Find most recent data point with messages (prioritize non-empty points)
+    let mostRecent = chartDataWithPrice.slice().reverse().find(item => (item as any).totalMessages > 0 && !(item as any).isEmpty);
+    
+    // If no non-empty points, fall back to the last data point (most recent time slot)
+    if (!mostRecent && chartDataWithPrice.length > 0) {
+      mostRecent = chartDataWithPrice[chartDataWithPrice.length - 1];
+    }
+    
     if (!mostRecent) return null;
     const mr = mostRecent as Record<string, any>;
     return {
