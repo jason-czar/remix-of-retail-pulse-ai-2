@@ -48,8 +48,11 @@ export function AppSidebar() {
   const isSymbolActive = location.pathname.startsWith("/symbol/");
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4">
+    <Sidebar 
+      collapsible="icon" 
+      className="border-r border-white/[0.08] dark:border-white/[0.08] bg-white/80 dark:bg-[hsl(0_0%_10%/0.85)] backdrop-blur-xl"
+    >
+      <SidebarHeader className="p-4 border-b border-black/[0.04] dark:border-white/[0.06]">
         <Link to="/" className="flex items-center gap-2 group">
           <span className={cn("font-display text-lg transition-opacity", collapsed && "sr-only")}>
             <span className="text-gradient">Derive</span>
@@ -132,13 +135,13 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="p-2 border-t border-black/[0.04] dark:border-white/[0.06]">
         <div className={cn(
           "text-xs text-muted-foreground text-center py-2",
           collapsed && "sr-only"
         )}>
-          <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px]">⌘</kbd>
-          <kbd className="px-1.5 py-0.5 rounded bg-muted text-[10px] ml-1">B</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.08] text-[10px] backdrop-blur-sm">⌘</kbd>
+          <kbd className="px-1.5 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.08] text-[10px] ml-1 backdrop-blur-sm">B</kbd>
           <span className="ml-2">to toggle</span>
         </div>
       </SidebarFooter>
