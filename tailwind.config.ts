@@ -90,6 +90,10 @@ export default {
   				DEFAULT: 'hsl(var(--neutral))',
   				foreground: 'hsl(var(--neutral-foreground))'
   			},
+  			warning: {
+  				DEFAULT: 'hsl(var(--warning))',
+  				foreground: 'hsl(var(--warning-foreground))'
+  			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
@@ -196,6 +200,16 @@ export default {
 				'50%': {
 					boxShadow: '0 0 60px hsl(211 100% 50% / 0.6)'
 				}
+			},
+			'progress-fill': {
+				'0%': {
+					transform: 'scaleX(0)',
+					opacity: '0.5'
+				},
+				'100%': {
+					transform: 'scaleX(1)',
+					opacity: '1'
+				}
 			}
   		},
   		animation: {
@@ -207,7 +221,8 @@ export default {
   			'scale-in': 'scale-in 0.3s ease-out',
   			'slide-in-right': 'slide-in-right 0.3s ease-out',
   			glow: 'glow 2s ease-in-out infinite',
-  			'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
+  			'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+  			'progress-fill': 'progress-fill 0.6s ease-out forwards'
   		}
   	}
   },
