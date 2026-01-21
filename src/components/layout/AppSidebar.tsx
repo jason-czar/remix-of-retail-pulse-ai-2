@@ -49,10 +49,7 @@ export function AppSidebar() {
   const isSymbolActive = location.pathname.startsWith("/symbol/");
 
   return (
-    <Sidebar 
-      collapsible="icon" 
-      className="border-r border-white/[0.08] dark:border-white/[0.08] bg-white/80 dark:bg-[hsl(0_0%_10%/0.85)] backdrop-blur-xl"
-    >
+    <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-black/[0.04] dark:border-white/[0.06]">
         <Link to="/" className="flex items-center gap-2 group">
           <span className={cn("font-display text-lg transition-opacity", collapsed && "sr-only")}>
