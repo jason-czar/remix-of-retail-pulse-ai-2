@@ -180,8 +180,11 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
             "shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.12),0_4px_16px_-4px_hsl(0_0%_0%/0.08),inset_0_1px_0_0_hsl(0_0%_100%/0.5)]",
             "dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5),0_4px_20px_-4px_hsl(0_0%_0%/0.35),inset_0_1px_0_0_hsl(0_0%_100%/0.08)]",
             // Top edge glow pseudo-element via before
-            "before:absolute before:inset-x-0 before:top-0 before:h-24 before:bg-gradient-to-b before:from-white/40 before:to-transparent before:rounded-t-2xl before:pointer-events-none before:transition-opacity before:duration-300",
-            "dark:before:from-white/[0.06] dark:before:to-transparent"
+            "before:absolute before:inset-x-0 before:top-0 before:h-24 before:bg-gradient-to-b before:from-white/40 before:to-transparent before:rounded-t-2xl before:pointer-events-none before:transition-opacity before:duration-300 before:z-10",
+            "dark:before:from-white/[0.06] dark:before:to-transparent",
+            // Bottom edge vignette via after
+            "after:absolute after:inset-x-0 after:bottom-0 after:h-20 after:bg-gradient-to-t after:from-black/[0.04] after:to-transparent after:rounded-b-2xl after:pointer-events-none after:z-10",
+            "dark:after:from-black/20 dark:after:to-transparent"
           )}
         >
           {children}
