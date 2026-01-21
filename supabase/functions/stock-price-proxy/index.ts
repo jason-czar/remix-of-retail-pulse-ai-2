@@ -11,7 +11,7 @@ const YAHOO_QUOTE_URL = "https://query1.finance.yahoo.com/v8/finance/chart";
 
 // In-memory cache for rate limit protection
 const memoryCache: Map<string, { data: PriceResponse; timestamp: number }> = new Map();
-const MEMORY_CACHE_TTL = 60 * 1000; // 1 minute in-memory cache
+const MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minute in-memory cache
 
 interface PricePoint {
   timestamp: string;
