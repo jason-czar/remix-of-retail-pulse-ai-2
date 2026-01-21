@@ -2029,8 +2029,8 @@ w-[120vw]
                     // Show tick if it's hour start OR if it's the final tick on desktop
                     if (!item?.isHourStart && !(isLastTick && !isMobileDevice)) return null;
                   }
-                  // Hide first time label on mobile/tablet to prevent clipping
-                  if (isMobileDevice && payload.index === 0) return null;
+                  // Hide first and last time label on mobile/tablet to prevent clipping
+                  if (isMobileDevice && (payload.index === 0 || isLastTick)) return null;
                   return <text x={x} y={y + 12} textAnchor="middle" fill="#999999" fillOpacity={0.5} fontSize={11}>
                           {payload.value}
                         </text>;
