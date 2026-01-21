@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 type DecisionLens = 
+  | 'summary'
   | 'corporate-strategy'
   | 'earnings'
   | 'ma'
@@ -18,6 +19,7 @@ type DecisionLens =
 
 function getLensPromptContext(lens: DecisionLens): string {
   const contexts: Record<DecisionLens, string> = {
+    'summary': 'Provide a holistic overview of retail sentiment. Identify the most significant themes, dominant emotions, and key narratives driving discussion. Highlight any notable consensus or divergence. Focus on what a decision-maker needs to know right now.',
     'corporate-strategy': 'Focus on overall corporate strategy, competitive positioning, long-term vision, and strategic direction. Highlight themes around market leadership, competitive advantages, and business model evolution.',
     'earnings': 'Focus on earnings performance, revenue growth, profitability metrics, guidance, and financial results. Highlight discussions about quarterly results, beats/misses, and forward guidance.',
     'ma': 'Focus on merger and acquisition activity, potential takeover targets, deal rumors, and consolidation themes. Highlight discussions about buyout speculation, merger synergies, and acquisition targets.',
@@ -32,6 +34,7 @@ function getLensPromptContext(lens: DecisionLens): string {
 
 function getLensDisplayName(lens: DecisionLens): string {
   const names: Record<DecisionLens, string> = {
+    'summary': 'Summary',
     'corporate-strategy': 'Corporate Strategy Insights',
     'earnings': 'Earnings',
     'ma': 'M&A',

@@ -39,7 +39,7 @@ export default function SymbolPage() {
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
   const [timeRange, setTimeRange] = useState<TimeRange>('1D');
   const [activeTab, setActiveTab] = useState<string>('narratives');
-  const [decisionLens, setDecisionLens] = useState<DecisionLens>('corporate-strategy');
+  const [decisionLens, setDecisionLens] = useState<DecisionLens>('summary');
   const queryClient = useQueryClient();
 
   // Calculate date range based on selection (timezone-aware)
