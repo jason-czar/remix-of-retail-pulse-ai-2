@@ -53,34 +53,29 @@ const THEME_COLORS = ["hsl(199 89% 48%)",
 
 // Color palette for narratives based on sentiment
 const getSentimentColor = (sentiment: string, index: number) => {
-  const bullishColors = ["hsl(142 71% 45%)",
-  // Green
-  "hsl(152 76% 40%)", "hsl(162 72% 42%)"];
-  const bearishColors = ["hsl(0 72% 51%)",
-  // Red
-  "hsl(10 78% 54%)", "hsl(20 75% 50%)"];
-  const neutralColors = ["hsl(199 89% 48%)",
-  // Blue
-  "hsl(215 80% 55%)", "hsl(230 75% 58%)"];
+  const bullishColors = ["#00C805", // Primary green
+  "hsl(122 100% 35%)", "hsl(122 100% 30%)"];
+  const bearishColors = ["#FF5000", // Primary orange/red
+  "hsl(19 100% 45%)", "hsl(19 100% 40%)"];
+  const neutralColors = ["#0DA2E7", // Primary blue
+  "hsl(199 85% 45%)", "hsl(199 80% 40%)"];
   const palette = sentiment === "bullish" ? bullishColors : sentiment === "bearish" ? bearishColors : neutralColors;
   return palette[index % palette.length];
 };
 const getSentimentBadge = (sentiment: string) => {
   const styles = {
-    bullish: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-    bearish: "bg-red-500/20 text-red-400 border-red-500/30",
-    neutral: "bg-blue-500/20 text-blue-400 border-blue-500/30"
+    bullish: "bg-[#00C805]/20 text-[#00C805] border-[#00C805]/30",
+    bearish: "bg-[#FF5000]/20 text-[#FF5000] border-[#FF5000]/30",
+    neutral: "bg-[#0DA2E7]/20 text-[#0DA2E7] border-[#0DA2E7]/30"
   };
   return styles[sentiment as keyof typeof styles] || styles.neutral;
 };
 
 // Sentiment colors
 const SENTIMENT_COLORS = {
-  bullish: "hsl(142 71% 45%)",
-  // Green
-  bearish: "hsl(0 72% 51%)",
-  // Red
-  neutral: "hsl(199 89% 48%)" // Blue
+  bullish: "#00C805", // Green
+  bearish: "#FF5000", // Orange/Red
+  neutral: "#0DA2E7" // Blue
 };
 
 // Max segments per day
