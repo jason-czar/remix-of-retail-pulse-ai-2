@@ -941,15 +941,7 @@ function TimeSeriesNarrativeChart({
                   {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={entry.isGap ? "transparent" : SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} fillOpacity={0.25} />)}
                 </Bar>)}
               {/* Hourly Price Line Overlay */}
-              {showPriceOverlay && priceLineData.length > 0 && <Line xAxisId="price" yAxisId="right" type="monotone" dataKey="price" stroke={priceLineColor} strokeWidth={2} dot={{
-              r: 2,
-              fill: priceLineColor
-            }} activeDot={{
-              r: 5,
-              stroke: priceLineColor,
-              strokeWidth: 2,
-              fill: "hsl(var(--background))"
-            }} connectNulls={true} />}
+              {showPriceOverlay && priceLineData.length > 0 && <Line xAxisId="price" yAxisId="right" type="monotone" dataKey="price" stroke={priceLineColor} strokeWidth={2} dot={false} activeDot={false} connectNulls={true} />}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
