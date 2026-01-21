@@ -1305,6 +1305,30 @@ function HourlyStackedNarrativeChart({
         }
         stackedChartData.push(flatData);
       }
+      
+      // Add a closing slot for the final X-axis label (e.g., "3pm" for market close)
+      const closingHour = END_HOUR + 1;
+      const closingHourLabel = closingHour === 0 ? "12am" : closingHour < 12 ? `${closingHour}am` : closingHour === 12 ? "12pm" : `${closingHour - 12}pm`;
+      const closingSlot: Record<string, any> = {
+        time: closingHourLabel,
+        slotIndex: TOTAL_SLOTS,
+        hourIndex: closingHour,
+        isHourStart: true,
+        isClosingSlot: true,
+        totalMessages: 0,
+        volumePercent: 0,
+        isEmpty: true,
+        isFutureHour: true
+      };
+      // Zero out all segments for the closing slot
+      for (let i = 0; i < MAX_SEGMENTS; i++) {
+        closingSlot[`segment${i}`] = 0;
+        closingSlot[`segment${i}Name`] = "";
+        closingSlot[`segment${i}Sentiment`] = "neutral";
+        closingSlot[`segment${i}Count`] = 0;
+      }
+      stackedChartData.push(closingSlot);
+      
       const totalMessages = volumeValues.reduce((sum, v) => sum + v, 0);
       const hasAnyData = Array.from(hourlyNarratives.values()).some(h => h.hasNarrativeData);
       return {
@@ -1999,9 +2023,11 @@ w-[120vw]
                     value: string;
                   };
                 }) => {
+                  const isLastTick = payload.index === chartDataWithPrice.length - 1;
                   if (is5MinView) {
                     const item = chartDataWithPrice[payload.index] as Record<string, any> | undefined;
-                    if (!item?.isHourStart) return null;
+                    // Show tick if it's hour start OR if it's the final tick on desktop
+                    if (!item?.isHourStart && !(isLastTick && !isMobileDevice)) return null;
                   }
                   // Hide first time label on mobile/tablet to prevent clipping
                   if (isMobileDevice && payload.index === 0) return null;
