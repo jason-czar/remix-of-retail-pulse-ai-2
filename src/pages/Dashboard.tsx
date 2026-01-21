@@ -74,10 +74,12 @@ export default function Dashboard() {
               </kbd>
             </Button>
             <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
-            <Button variant="outline">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Analytics
-            </Button>
+            <Link to="/analytics">
+              <Button variant="outline">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Analytics
+              </Button>
+            </Link>
           </div>
         </div>
 
