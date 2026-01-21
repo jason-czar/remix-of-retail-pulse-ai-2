@@ -2031,7 +2031,7 @@ w-[120vw]
                   }
                   // Hide first time label on mobile/tablet to prevent clipping
                   if (isMobileDevice && payload.index === 0) return null;
-                  return <text x={x} y={y + 12} textAnchor="middle" fill="hsl(215 20% 55%)" fontSize={11}>
+                  return <text x={x} y={y + 12} textAnchor="middle" fill="#999999" fillOpacity={0.5} fontSize={11}>
                           {payload.value}
                         </text>;
                 }} />
