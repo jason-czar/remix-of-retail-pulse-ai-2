@@ -1265,33 +1265,61 @@ function HourlyStackedNarrativeChart({
           isEmpty: !hourNarr.hasNarrativeData && effectiveVolume === 0
         };
 
-        // Add narrative segment data to ALL slots (for tooltip)
-        // Scale segment heights proportionally
-        topNarratives.forEach((n, idx) => {
-          flatData[`segment${idx}Name`] = n.name;
-          flatData[`segment${idx}Sentiment`] = n.sentiment;
-          
-          // When using history fallback, scale segment values proportionally to history volume
-          // Otherwise scale by the proportion of analytics volume
-          let scaledValue: number;
-          if (useHistoryFallback) {
-            // Scale proportionally to history message count for this hour
-            const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
-            scaledValue = Math.round(proportion * historyVolume);
-          } else {
-            const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
-            scaledValue = Math.round(proportion * analyticsVolume);
+        // Check if this is the current hour (for showing growing bars)
+        const currentHour = now.getHours();
+        const isCurrentHour = hour === currentHour;
+        
+        // For the current hour with messages but no narrative data yet, 
+        // create a placeholder segment so the bar is visible and grows
+        if (isCurrentHour && effectiveVolume > 0 && topNarratives.length === 0 && isHourStart) {
+          // Show a neutral placeholder bar representing unanalyzed messages
+          flatData[`segment0`] = effectiveVolume; // Use actual volume for height
+          flatData[`segment0Name`] = "Pending Analysis";
+          flatData[`segment0Sentiment`] = "neutral";
+          flatData[`segment0Count`] = effectiveVolume;
+          // Fill remaining segments with zeros
+          for (let i = 1; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = "";
+            flatData[`segment${i}Sentiment`] = "neutral";
+            flatData[`segment${i}Count`] = 0;
           }
-          
-          // Only set segment VALUE at hour start for bar rendering
-          flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
-          flatData[`segment${idx}Count`] = n.count; // Store original count for tooltip
-        });
-        for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
-          flatData[`segment${i}`] = 0;
-          flatData[`segment${i}Name`] = "";
-          flatData[`segment${i}Sentiment`] = "neutral";
-          flatData[`segment${i}Count`] = 0;
+        } else {
+          // Add narrative segment data to ALL slots (for tooltip)
+          // Scale segment heights proportionally
+          topNarratives.forEach((n, idx) => {
+            flatData[`segment${idx}Name`] = n.name;
+            flatData[`segment${idx}Sentiment`] = n.sentiment;
+            
+            // When using history fallback, scale segment values proportionally to history volume
+            // Otherwise scale by the proportion of analytics volume
+            let scaledValue: number;
+            if (useHistoryFallback) {
+              // Scale proportionally to history message count for this hour
+              const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+              scaledValue = Math.round(proportion * historyVolume);
+            } else {
+              const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+              scaledValue = Math.round(proportion * analyticsVolume);
+            }
+            
+            // For the current hour with minimal data, ensure a minimum visible bar height
+            // This allows the bar to "grow" as more messages are recorded
+            if (isCurrentHour && effectiveVolume > 0 && scaledValue === 0 && n.count > 0) {
+              // Give it a minimum scaled value so it's visible (at least 1, or 2% of maxVolume)
+              scaledValue = Math.max(1, Math.ceil(maxVolume * 0.02));
+            }
+            
+            // Only set segment VALUE at hour start for bar rendering
+            flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
+            flatData[`segment${idx}Count`] = n.count; // Store original count for tooltip
+          });
+          for (let i = topNarratives.length; i < MAX_SEGMENTS; i++) {
+            flatData[`segment${i}`] = 0;
+            flatData[`segment${i}Name`] = "";
+            flatData[`segment${i}Sentiment`] = "neutral";
+            flatData[`segment${i}Count`] = 0;
+          }
         }
         stackedChartData.push(flatData);
       }
