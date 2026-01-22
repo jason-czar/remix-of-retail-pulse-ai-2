@@ -96,8 +96,7 @@ function WideBarShape(props: any) {
     radius,
     payload,
     is5MinView,
-    activeHour,
-    isTopSegment = false
+    activeHour
   } = props;
 
   // Determine opacity: 55% when this hour is hovered, 35% otherwise (liquid glass style)
@@ -112,10 +111,6 @@ function WideBarShape(props: any) {
     filter: "saturate(1.05)"
   };
 
-  // Gradient fade for top segment
-  const gradientId = `topFade-${Math.round(x)}-${Math.round(y)}`;
-  const fadeHeight = Math.min(height * 0.4, 28); // Fade covers top 40% or max 28px
-
   // In 5-min view, expand bar width to cover 12 slots (full hour)
   // Only render for hour-start slots
   if (is5MinView) {
@@ -125,119 +120,23 @@ function WideBarShape(props: any) {
     // Expand width to cover 12 slots
     const expandedWidth = width * SLOTS_PER_HOUR;
     return <g>
-        {isTopSegment && (
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="white" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="white" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        )}
         <Rectangle x={x} y={y} width={expandedWidth} height={height} fill={fill} fillOpacity={opacity} stroke={fill} strokeOpacity={isHourActive ? 0.7 : 0.45} strokeWidth={1} radius={radius} style={glassStyle} />
         {/* Inner glass highlight */}
         <Rectangle x={x + 1} y={y + 1} width={Math.max(0, expandedWidth - 2)} height={Math.max(0, Math.min(height * 0.12, 5))} fill="white" fillOpacity={0.1} radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined} style={{
         pointerEvents: "none"
       }} />
-        {/* Top fade overlay for softer transition to price line */}
-        {isTopSegment && fadeHeight > 0 && (
-          <rect
-            x={x}
-            y={y}
-            width={expandedWidth}
-            height={fadeHeight}
-            fill={`url(#${gradientId})`}
-            rx={radius ? radius[0] : 0}
-            ry={radius ? radius[1] : 0}
-            style={{ pointerEvents: "none" }}
-          />
-        )}
       </g>;
   }
   if (height <= 0) return null;
 
   // Normal rendering for non-5-min views with glass effect
   return <g>
-      {isTopSegment && (
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-      )}
       <Rectangle x={x} y={y} width={width} height={height} fill={fill} fillOpacity={opacity} stroke={fill} strokeOpacity={isHourActive ? 0.7 : 0.45} strokeWidth={1} radius={radius} style={glassStyle} />
       {/* Inner glass highlight */}
       <Rectangle x={x + 1} y={y + 1} width={Math.max(0, width - 2)} height={Math.max(0, Math.min(height * 0.12, 5))} fill="white" fillOpacity={0.1} radius={radius ? [Math.max(0, radius[0] - 1), Math.max(0, radius[1] - 1), 0, 0] : undefined} style={{
       pointerEvents: "none"
     }} />
-      {/* Top fade overlay for softer transition to price line */}
-      {isTopSegment && fadeHeight > 0 && (
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={fadeHeight}
-          fill={`url(#${gradientId})`}
-          rx={radius ? radius[0] : 0}
-          ry={radius ? radius[1] : 0}
-          style={{ pointerEvents: "none" }}
-        />
-      )}
     </g>;
-}
-
-// Simple bar shape for 7D/30D time series view with top gradient fade
-function TimeSeriesBarShape(props: any) {
-  const {
-    x,
-    y,
-    width,
-    height,
-    fill,
-    radius,
-    isTopSegment = false,
-    isGap = false
-  } = props;
-
-  if (height <= 0 || isGap) return null;
-
-  const gradientId = `tsFade-${Math.round(x)}-${Math.round(y)}`;
-  const fadeHeight = Math.min(height * 0.4, 24);
-
-  return (
-    <g>
-      {isTopSegment && (
-        <defs>
-          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="white" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-      )}
-      <Rectangle
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={fill}
-        fillOpacity={0.25}
-        radius={radius}
-      />
-      {/* Top fade overlay */}
-      {isTopSegment && fadeHeight > 0 && (
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={fadeHeight}
-          fill={`url(#${gradientId})`}
-          rx={Array.isArray(radius) ? radius[0] : radius || 0}
-          ry={Array.isArray(radius) ? radius[1] : radius || 0}
-          style={{ pointerEvents: "none" }}
-        />
-      )}
-    </g>
-  );
 }
 
 // Custom tooltip for hourly price data on 7D/30D views
@@ -1032,10 +931,10 @@ function TimeSeriesNarrativeChart({
               <Bar xAxisId="bar" yAxisId="left" dataKey="gapPlaceholder" data={chartDataWithPrice} stackId="narratives" radius={[4, 4, 0, 0]} isAnimationActive={false}>
                 {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`gap-${entryIdx}`} fill={entry.isGap ? "hsl(38 92% 50% / 0.3)" : "transparent"} stroke={entry.isGap ? "hsl(38 92% 50%)" : "transparent"} strokeWidth={entry.isGap ? 1 : 0} strokeDasharray={entry.isGap ? "4 2" : "0"} />)}
               </Bar>
-              {/* Render segment bars - each segment uses its own sentiment color with top fade */}
+              {/* Render segment bars - each segment uses its own sentiment color */}
               {Array.from({
               length: MAX_SEGMENTS
-            }).map((_, idx) => <Bar key={`segment${idx}`} xAxisId="bar" yAxisId="left" dataKey={`segment${idx}`} data={chartDataWithPrice} stackId="narratives" radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} isAnimationActive={false} shape={(props: any) => <TimeSeriesBarShape {...props} isTopSegment={idx === MAX_SEGMENTS - 1} isGap={props.payload?.isGap} fill={props.payload?.isGap ? "transparent" : SENTIMENT_COLORS[props.payload?.[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} />}>
+            }).map((_, idx) => <Bar key={`segment${idx}`} xAxisId="bar" yAxisId="left" dataKey={`segment${idx}`} data={chartDataWithPrice} stackId="narratives" radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} isAnimationActive={false}>
                   {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={entry.isGap ? "transparent" : SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} fillOpacity={0.25} />)}
                 </Bar>)}
               {/* Hourly Price Line Overlay */}
@@ -2170,7 +2069,7 @@ w-[120vw]
                   {/* Only render bars when data is ready - prevents placeholder bars during loading */}
                   {!historyLoading && hasAnyData && Array.from({
                   length: MAX_SEGMENTS
-                }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} isTopSegment={idx === MAX_SEGMENTS - 1} />} activeBar={false}>
+                }).map((_, idx) => <Bar key={`segment${idx}`} yAxisId="left" dataKey={`segment${idx}`} stackId="narratives" shape={(props: any) => <WideBarShape {...props} is5MinView={is5MinView} activeHour={activeHour} radius={idx === MAX_SEGMENTS - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />} activeBar={false}>
                       {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} />)}
                     </Bar>)}
                   {/* Single area fill between price line and previous close - gradient handles color transition */}
