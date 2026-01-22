@@ -322,9 +322,9 @@ const WideBarShape = (props: any) => {
       <g>
         <Rectangle 
           {...props} 
-          fillOpacity={0.1}
+          fillOpacity={0.06}
           stroke={fill}
-          strokeOpacity={0.2}
+          strokeOpacity={0.15}
           strokeWidth={1}
           style={glassStyle}
         />
@@ -349,8 +349,8 @@ const WideBarShape = (props: any) => {
   
   const hourIndex = Math.floor(props.index / 12);
   const isHovered = activeHour === hourIndex;
-  const baseOpacity = 0.1;
-  const hoverOpacity = 0.35;
+  const baseOpacity = 0.06;
+  const hoverOpacity = 0.3;
   const opacity = isHovered ? hoverOpacity : baseOpacity;
   
   return (
@@ -363,7 +363,7 @@ const WideBarShape = (props: any) => {
         fill={fill}
         fillOpacity={opacity}
         stroke={fill}
-        strokeOpacity={isHovered ? 0.45 : 0.2}
+        strokeOpacity={isHovered ? 0.4 : 0.15}
         strokeWidth={1}
         radius={radius}
         style={glassStyle}
