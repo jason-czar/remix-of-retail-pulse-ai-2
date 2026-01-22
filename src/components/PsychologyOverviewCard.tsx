@@ -78,8 +78,8 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
   };
 
   return (
-    <Card className="p-4 md:p-5 glass-card h-full border-primary/10">
-      <div className="flex flex-col h-full">
+    <Card className="p-4 md:p-5 glass-card border-primary/10">
+      <div className="flex flex-col">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <h3 className="font-semibold text-sm md:text-base">Psychology Overview</h3>
           <Badge variant="outline" className="text-[10px]">
@@ -143,7 +143,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
         </div>
 
         {/* Bottom row - 3 tiles */}
-        <div className="grid grid-cols-3 gap-3 flex-1">
+        <div className="grid grid-cols-3 gap-3">
           {/* Sentiment Score tile */}
           <motion.div 
             className="glass-tile p-4 flex flex-col"

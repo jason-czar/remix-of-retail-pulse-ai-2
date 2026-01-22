@@ -226,7 +226,7 @@ export default function SymbolPage() {
           duration: 0.3,
           ease: "easeOut"
         }}>
-              <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
+              <Card className="p-4 md:p-5 glass-card flex flex-col">
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
