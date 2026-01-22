@@ -11,6 +11,8 @@ import {
   Rectangle,
   ReferenceLine
 } from "recharts";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { triggerHaptic } from "@/lib/haptics";
@@ -749,93 +751,103 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       {/* Main chart area with fixed height */}
       <div className="h-[280px] md:h-[480px]">
         {/* Header - Stacked on mobile */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
-              <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
-                {historyData?.data && historyData.data.length > 0 && (
-                  <span className="px-1.5 md:px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] md:text-xs">
-                    {historyData.data.length} snapshots
-                  </span>
-                )}
+        <Collapsible defaultOpen={false}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4">
+            <div className="flex items-center gap-2 md:gap-3 flex-1">
+              <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
+                <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
-              <p className="text-xs md:text-sm text-muted-foreground hidden md:block">
-                Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
-              </p>
-            </div>
-            
-            {/* Mini emotion breakdown - hidden on mobile */}
-            {dominantEmotionData && (
-              <div className="hidden lg:flex ml-4 pl-4 border-l border-border/50 items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-3 h-3 rounded-full animate-pulse" 
-                    style={{ backgroundColor: dominantEmotionData.color }}
-                  />
-                  <span className="text-sm font-medium" style={{ color: dominantEmotionData.color }}>
-                    {dominantEmotionData.emotion}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {dominantEmotionData.intensity}% dominant
-                  </span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
+                  {historyData?.data && historyData.data.length > 0 && (
+                    <span className="px-1.5 md:px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] md:text-xs">
+                      {historyData.data.length} snapshots
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-1">
-                  {dominantEmotionData.topEmotions.slice(1).map((e, i) => (
+                <p className="text-xs md:text-sm text-muted-foreground hidden md:block">
+                  Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
+                </p>
+              </div>
+              
+              {/* Mini emotion breakdown - hidden on mobile */}
+              {dominantEmotionData && (
+                <div className="hidden lg:flex ml-4 pl-4 border-l border-border/50 items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div 
-                      key={e.name}
-                      className="w-2 h-2 rounded-full opacity-60" 
-                      style={{ backgroundColor: e.color }}
-                      title={`${e.name}: ${e.score}`}
+                      className="w-3 h-3 rounded-full animate-pulse" 
+                      style={{ backgroundColor: dominantEmotionData.color }}
                     />
-                  ))}
+                    <span className="text-sm font-medium" style={{ color: dominantEmotionData.color }}>
+                      {dominantEmotionData.emotion}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {dominantEmotionData.intensity}% dominant
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {dominantEmotionData.topEmotions.slice(1).map((e, i) => (
+                      <div 
+                        key={e.name}
+                        className="w-2 h-2 rounded-full opacity-60" 
+                        style={{ backgroundColor: e.color }}
+                        title={`${e.name}: ${e.score}`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
-            {is1DView && (
-              <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
-            )}
-            
-            {showPriceToggle && (
-              <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
-                <Switch
-                  checked={showPriceOverlay}
-                  onCheckedChange={setShowPriceOverlay}
-                  className="data-[state=checked]:bg-primary"
-                  style={showPriceOverlay ? { backgroundColor: priceLineColor } : undefined}
-                />
-              </div>
-            )}
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="h-7 md:h-8 px-2 md:px-3 text-[10px] md:text-xs shrink-0"
-            >
-              <RefreshCw className={`h-3 w-3 md:h-3.5 md:w-3.5 mr-1 md:mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Legend - More compact on mobile */}
-        <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
-          {DEFAULT_SIGNAL_EMOTIONS.map(emotion => (
-            <div key={emotion} className="flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded bg-card/50 border border-border text-[10px] md:text-xs">
-              <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-sm" style={{ backgroundColor: EMOTION_COLORS[emotion] }} />
-              <span>{emotion}</span>
+              )}
             </div>
-          ))}
-        </div>
+            
+            <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+              {is1DView && (
+                <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
+              )}
+              
+              {showPriceToggle && (
+                <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                  <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
+                  <Switch
+                    checked={showPriceOverlay}
+                    onCheckedChange={setShowPriceOverlay}
+                    className="data-[state=checked]:bg-primary"
+                    style={showPriceOverlay ? { backgroundColor: priceLineColor } : undefined}
+                  />
+                </div>
+              )}
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="h-7 md:h-8 px-2 md:px-3 text-[10px] md:text-xs shrink-0"
+              >
+                <RefreshCw className={`h-3 w-3 md:h-3.5 md:w-3.5 mr-1 md:mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
+              
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 md:h-8 px-1.5 md:px-2 shrink-0 group">
+                  <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+          </div>
+
+          {/* Legend - Collapsible content */}
+          <CollapsibleContent>
+            <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
+              {DEFAULT_SIGNAL_EMOTIONS.map(emotion => (
+                <div key={emotion} className="flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded bg-card/50 border border-border text-[10px] md:text-xs">
+                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-sm" style={{ backgroundColor: EMOTION_COLORS[emotion] }} />
+                  <span>{emotion}</span>
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Main content: Side Panel + Chart */}
         <div className="flex gap-4 h-[calc(100%-100px)]">
