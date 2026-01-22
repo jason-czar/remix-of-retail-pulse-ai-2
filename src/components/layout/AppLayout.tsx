@@ -6,7 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   DashboardSkeleton, 
   SymbolPageSkeleton, 
-  AnalyticsSkeleton 
+  AnalyticsSkeleton,
+  TrendingSkeleton,
+  AlertsSkeleton
 } from "@/components/skeletons";
 
 // Generic fallback skeleton for routes without specific skeletons
@@ -58,6 +60,16 @@ function RouteSkeletonLoader({ pathname }: { pathname: string }) {
   // Analytics page
   if (pathname === "/analytics") {
     return <AnalyticsSkeleton />;
+  }
+  
+  // Trending page
+  if (pathname === "/trending") {
+    return <TrendingSkeleton />;
+  }
+  
+  // Alerts page
+  if (pathname === "/alerts") {
+    return <AlertsSkeleton />;
   }
   
   // Fallback to generic skeleton
