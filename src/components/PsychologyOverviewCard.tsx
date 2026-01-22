@@ -110,7 +110,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
           {summary.dominant_emotion && (
             <motion.div 
-              className="glass-tile-inverted p-4 flex flex-col"
+              className="glass-tile p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 }}
@@ -123,7 +123,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           )}
           {summary.primary_risk && (
             <motion.div 
-              className="glass-tile-inverted p-4 flex flex-col"
+              className="glass-tile p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
@@ -136,7 +136,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           )}
           {summary.action_bias && (
             <motion.div 
-              className="glass-tile-inverted p-4 flex flex-col"
+              className="glass-tile p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 }}
@@ -149,7 +149,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           )}
           {bestLens && (
             <motion.div 
-              className="glass-tile-inverted p-4 flex flex-col"
+              className="glass-tile p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
