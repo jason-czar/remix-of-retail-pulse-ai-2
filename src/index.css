@@ -49,9 +49,9 @@
     --neutral: 199 89% 48%;
     --neutral-foreground: 199 89% 15%;
     
-    /* Warning/caution color - golden amber to complement red/green */
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 15%;
+    /* Warning/caution color - lime accent #CCFF00 */
+    --warning: 72 100% 50%;
+    --warning-foreground: 72 100% 15%;
 
     /* Chart colors */
     --chart-1: 211 100% 45%;
@@ -134,9 +134,9 @@
     --neutral: 199 89% 48%;
     --neutral-foreground: 199 89% 95%;
     
-    /* Warning/caution color - golden amber to complement red/green */
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 95%;
+    /* Warning/caution color - lime accent #CCFF00 */
+    --warning: 72 100% 50%;
+    --warning-foreground: 72 100% 95%;
 
     /* Chart colors */
     --chart-1: 211 100% 50%;
