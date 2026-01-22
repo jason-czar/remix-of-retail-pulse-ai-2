@@ -289,7 +289,10 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
                   interval="preserveStartEnd"
                 />
                 <YAxis 
-                  domain={[0, 100]}
+                  domain={[
+                    (dataMin: number) => Math.max(0, Math.floor(dataMin - (stats?.range || 10) * 0.3)),
+                    (dataMax: number) => Math.min(100, Math.ceil(dataMax + (stats?.range || 10) * 0.3))
+                  ]}
                   tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
                   axisLine={false}
                   tickLine={false}
