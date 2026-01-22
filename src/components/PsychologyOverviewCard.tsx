@@ -2,22 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
-import { AlertTriangle, TrendingUp, Target, Activity, Brain, Users, RefreshCcw, Rocket, Shield } from "lucide-react";
+import { useSymbolStats } from "@/hooks/use-stocktwits";
+import { useSentimentHistory } from "@/hooks/use-sentiment-history";
+import { AlertTriangle, TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { motion } from "framer-motion";
-const LENS_CONFIG: Record<string, {
-  label: string;
-  icon: React.ElementType;
-  color: string;
-}> = {
-  earnings: { label: "Earnings", icon: TrendingUp, color: "text-chart-1" },
-  ma: { label: "M&A", icon: Target, color: "text-chart-2" },
-  capital_allocation: { label: "Capital Allocation", icon: Activity, color: "text-chart-3" },
-  corporate_strategy: { label: "Corporate Strategy", icon: Brain, color: "text-chart-4" },
-  leadership_change: { label: "Leadership", icon: Users, color: "text-chart-5" },
-  strategic_pivot: { label: "Strategic Pivot", icon: RefreshCcw, color: "text-primary" },
-  product_launch: { label: "Product Launch", icon: Rocket, color: "text-bullish" },
-  activist_risk: { label: "Activist Risk", icon: Shield, color: "text-warning" },
-};
 
 interface PsychologyOverviewCardProps {
   symbol: string;
@@ -25,6 +13,8 @@ interface PsychologyOverviewCardProps {
 
 export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) {
   const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol);
+  const { data: symbolStats } = useSymbolStats(symbol);
+  const { data: sentimentHistory } = useSentimentHistory(symbol, 7);
 
   if (isLoading) {
     return (
@@ -38,6 +28,9 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           <Skeleton className="h-4 w-3/4" />
           <div className="grid grid-cols-2 gap-3">
             <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-16 w-full" />
@@ -58,19 +51,31 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
   const { interpretation, data_confidence, observed_state } = snapshot;
   const summary = interpretation.snapshot_summary;
 
-  // Get the highest readiness lens
-  const readinessEntries = Object.entries(interpretation.decision_readiness);
-  const bestLens = readinessEntries.reduce((best, [key, val]) => {
-    if (!best || val.readiness_score > best.score) {
-      return { key, score: val.readiness_score, timing: val.recommended_timing };
-    }
-    return best;
-  }, null as { key: string; score: number; timing: string } | null);
-
   // Count active signals
   const activeSignals = Object.entries(observed_state.signals)
     .filter(([_, signal]) => signal.active)
     .map(([key]) => key.replace(/_/g, " "));
+
+  // Sentiment change helpers
+  const sentimentChange = symbolStats?.sentimentChange || 0;
+  const sentimentIsPositive = sentimentChange >= 0;
+  
+  // Volume change helpers
+  const volumeChange = symbolStats?.volumeChange || 0;
+  const volumeIsPositive = volumeChange >= 0;
+
+  // 7D Trend helper
+  const trendDirection = sentimentHistory?.momentum?.direction;
+  const getTrendLabel = () => {
+    if (trendDirection === 'bullish') return 'Rising';
+    if (trendDirection === 'bearish') return 'Falling';
+    return 'Stable';
+  };
+  const getTrendIcon = () => {
+    if (trendDirection === 'bullish') return <TrendingUp className="h-4 w-4 text-bullish" />;
+    if (trendDirection === 'bearish') return <TrendingDown className="h-4 w-4 text-bearish" />;
+    return <Minus className="h-4 w-4 text-muted-foreground" />;
+  };
 
   return (
     <Card className="p-4 md:p-5 glass-card h-full border-primary/10">
@@ -107,7 +112,8 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+        {/* Top row - 2 tiles */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
           {summary.dominant_emotion && (
             <motion.div 
               className="glass-tile p-4 flex flex-col"
@@ -134,34 +140,78 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <p className="text-sm font-medium">{summary.primary_risk}</p>
             </motion.div>
           )}
-          {summary.action_bias && (
-            <motion.div 
-              className="glass-tile p-4 flex flex-col"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.15 }}
-            >
-              <span className="text-xs text-muted-foreground mb-1.5">
-                Action Bias
+        </div>
+
+        {/* Bottom row - 3 tiles */}
+        <div className="grid grid-cols-3 gap-3 flex-1">
+          {/* Sentiment Score tile */}
+          <motion.div 
+            className="glass-tile p-4 flex flex-col"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+          >
+            <span className="text-xs text-muted-foreground mb-1.5">
+              Sentiment Score
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{symbolStats?.sentiment ?? '--'}</span>
+              {sentimentIsPositive ? (
+                <TrendingUp className="h-4 w-4 text-bullish" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-bearish" />
+              )}
+            </div>
+            <div className="flex items-center gap-1 mt-1">
+              {sentimentIsPositive ? (
+                <ArrowUpRight className="h-3 w-3 text-bullish" />
+              ) : (
+                <ArrowDownRight className="h-3 w-3 text-bearish" />
+              )}
+              <span className={`text-xs ${sentimentIsPositive ? 'text-bullish' : 'text-bearish'}`}>
+                {Math.abs(sentimentChange).toFixed(1)}%
               </span>
-              <p className="text-sm font-medium">{summary.action_bias}</p>
-            </motion.div>
-          )}
-          {bestLens && (
-            <motion.div 
-              className="glass-tile p-4 flex flex-col"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-            >
-              <span className="text-xs text-muted-foreground mb-1.5">
-                Best Lens
+            </div>
+          </motion.div>
+
+          {/* Message Volume tile */}
+          <motion.div 
+            className="glass-tile p-4 flex flex-col"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <span className="text-xs text-muted-foreground mb-1.5">
+              Message Volume
+            </span>
+            <span className="text-sm font-medium">{symbolStats?.volume ?? '--'}</span>
+            <div className="flex items-center gap-1 mt-1">
+              {volumeIsPositive ? (
+                <ArrowUpRight className="h-3 w-3 text-bullish" />
+              ) : (
+                <ArrowDownRight className="h-3 w-3 text-bearish" />
+              )}
+              <span className={`text-xs ${volumeIsPositive ? 'text-bullish' : 'text-bearish'}`}>
+                {Math.abs(volumeChange).toFixed(0)}% (24h)
               </span>
-              <p className="text-sm font-medium">
-                {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary dark:text-primary">({bestLens.score})</span>
-              </p>
-            </motion.div>
-          )}
+            </div>
+          </motion.div>
+
+          {/* 7D Trend tile */}
+          <motion.div 
+            className="glass-tile p-4 flex flex-col"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
+          >
+            <span className="text-xs text-muted-foreground mb-1.5">
+              7D Trend
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{getTrendLabel()}</span>
+              {getTrendIcon()}
+            </div>
+          </motion.div>
         </div>
       </div>
     </Card>
