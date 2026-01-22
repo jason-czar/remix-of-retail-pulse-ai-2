@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
@@ -52,6 +52,8 @@ interface Profile {
 export default function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "api-keys";
   const [profile, setProfile] = useState<Profile | null>(null);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -226,7 +228,7 @@ export default function SettingsPage() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-display mb-8">Settings</h1>
 
-        <Tabs defaultValue="api-keys" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
