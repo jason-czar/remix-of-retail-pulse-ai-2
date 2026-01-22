@@ -350,8 +350,16 @@ function isWeekday(): boolean {
   return day >= 1 && day <= 5;
 }
 
+// Sanitize text to remove non-ASCII characters and clean up
+function sanitizeText(text: string): string {
+  return text
+    .replace(/[^\x00-\x7F]/g, "") // Remove non-ASCII characters
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .trim();
+}
+
 function normalizeNarrativeId(name: string): string {
-  return name
+  return sanitizeText(name)
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "")
     .split(/\s+/)
@@ -684,8 +692,8 @@ ${messageTexts}`,
       const currentChange = n.prevalence_pct - priorPrevalence;
       
       return {
-        id: n.id || normalizeNarrativeId(n.label),
-        label: n.label,
+        id: sanitizeText(n.id) || normalizeNarrativeId(n.label),
+        label: sanitizeText(n.label),
         prevalence_pct: Math.round(n.prevalence_pct * 10) / 10,
         change_vs_prior: Math.round(currentChange * 10) / 10,
         velocity: calculateVelocity(currentChange, priorChange),

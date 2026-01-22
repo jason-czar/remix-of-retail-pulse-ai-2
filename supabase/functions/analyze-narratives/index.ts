@@ -55,9 +55,17 @@ function getDateRange(timeRange: string): { start: string; end: string; limit: n
   };
 }
 
+// Sanitize text to remove non-ASCII characters and clean up
+function sanitizeText(text: string): string {
+  return text
+    .replace(/[^\x00-\x7F]/g, "") // Remove non-ASCII characters
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .trim();
+}
+
 // Normalize narrative names for aggregation
 function normalizeNarrativeName(name: string): string {
-  return name
+  return sanitizeText(name)
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "")
     .split(/\s+/)
@@ -388,9 +396,13 @@ ${messageTexts}`,
       }
     }
 
-    // Ensure we have at least some narratives, sort by count
+    // Sanitize and ensure we have at least some narratives, sort by count
     narratives = narratives
       .filter((n: Narrative) => n.name && n.count > 0)
+      .map((n: Narrative) => ({
+        ...n,
+        name: sanitizeText(n.name), // Clean non-ASCII from narrative names
+      }))
       .sort((a: Narrative, b: Narrative) => b.count - a.count)
       .slice(0, 8);
 
