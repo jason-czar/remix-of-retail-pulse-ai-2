@@ -22,8 +22,6 @@ interface MessagesSidebarProps {
   symbol: string;
   messages: Message[];
   isLoading: boolean;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
 }
 
 function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Omit<Message, 'id' | 'emotions'> & { searchTerm?: string }) {
@@ -65,7 +63,8 @@ function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Om
   );
 }
 
-export function MessagesSidebar({ symbol, messages, isLoading, isOpen, onOpenChange }: MessagesSidebarProps) {
+export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebarProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter messages based on search term
@@ -90,7 +89,7 @@ export function MessagesSidebar({ symbol, messages, isLoading, isOpen, onOpenCha
     <>
       {/* Toggle Button - Always visible on right edge */}
       <button
-        onClick={() => onOpenChange(!isOpen)}
+        onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "fixed right-0 top-1/2 -translate-y-1/2 z-50",
           "h-24 w-6 flex items-center justify-center",
@@ -232,7 +231,7 @@ export function MessagesSidebar({ symbol, messages, isLoading, isOpen, onOpenCha
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => onOpenChange(false)}
+            onClick={() => setIsOpen(false)}
             className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm md:hidden"
           />
         )}
