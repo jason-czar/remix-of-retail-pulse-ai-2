@@ -140,15 +140,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
       </Sheet>;
   }
   return <div ref={ref} className="group peer hidden text-sidebar-foreground md:block" data-state={state} data-collapsible={state === "collapsed" ? collapsible : ""} data-variant={variant} data-side={side}>
-      {/* This is what handles the sidebar gap on desktop - includes inset for floating effect */}
-      <div className={cn(
-        "relative h-svh bg-transparent transition-[width] duration-200 ease-linear",
-        // Add extra width to account for the floating inset
-        "w-[calc(var(--sidebar-width)_+_12px)]",
-        "group-data-[collapsible=offcanvas]:w-0",
-        "group-data-[side=right]:rotate-180",
-        "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_12px)]"
-      )} />
+      {/* Sidebar as pure overlay - no gap div to push content */}
       <div className={cn(
         "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] md:flex",
         // Smooth transitions with bounce easing for expand/collapse

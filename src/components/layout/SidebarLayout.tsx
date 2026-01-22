@@ -52,12 +52,15 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     );
   }
 
-  // Desktop: Use sidebar navigation
+  // Desktop: Use sidebar navigation with overlay sidebar (doesn't push content)
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex flex-col w-full relative">
+        {/* Sidebar as fixed overlay */}
         <AppSidebar />
-        <SidebarInset className="flex flex-col">
+        
+        {/* Main content always centered */}
+        <div className="flex-1 flex flex-col w-full">
           {/* Top bar with search, theme, and user */}
           <header className="sticky top-0 z-40 flex h-14 items-center gap-4 bg-transparent px-4">
             
@@ -111,7 +114,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           </main>
           
           <Footer />
-        </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );
