@@ -262,10 +262,14 @@ export default function SymbolPage() {
                   <Skeleton className="h-4 w-3/4" />
                 </div>
               ) : (
-                <div className="flex-1 max-h-80 overflow-y-auto scrollbar-thin">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    <FormattedSummary text={summary} />
-                  </p>
+                <div className="relative flex-1">
+                  <div className="max-h-80 overflow-y-auto scrollbar-thin lg:scrollbar-none">
+                    <p className="text-sm text-muted-foreground leading-relaxed pb-6">
+                      <FormattedSummary text={summary} />
+                    </p>
+                  </div>
+                  {/* Bottom fade gradient to indicate more content */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card via-card/80 to-transparent hidden lg:block" />
                 </div>
               )}
             </Card>
