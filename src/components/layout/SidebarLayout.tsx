@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
+import { CompactFooter } from "./CompactFooter";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Search, LogOut } from "lucide-react";
@@ -113,7 +114,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
             {children}
           </main>
           
-          <Footer />
+          <CompactFooter />
         </div>
       </div>
     </SidebarProvider>
