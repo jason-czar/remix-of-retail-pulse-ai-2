@@ -220,7 +220,7 @@ export default function SymbolPage() {
       }} transition={{
         duration: 0.25,
         ease: "easeOut"
-      }} className={cn("grid grid-cols-1 gap-4 lg:gap-6", decisionLens === 'summary' ? "lg:grid-cols-2" : "lg:grid-cols-[7fr_13fr]")}>
+      }} className={cn("grid grid-cols-1 gap-4 lg:gap-6", decisionLens === 'summary' ? "lg:grid-cols-[4fr_6fr]" : "lg:grid-cols-[7fr_13fr]")}>
             {/* Intelligence Summary Card */}
             <motion.div layout transition={{
           duration: 0.3,
