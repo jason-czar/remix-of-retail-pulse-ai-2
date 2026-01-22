@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -224,11 +223,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <SidebarLayout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-display mb-8">Settings</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-display mb-8">Settings</h1>
 
-        <Tabs defaultValue={defaultTab} className="space-y-6">
+      <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -495,6 +493,5 @@ export default function SettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </SidebarLayout>
   );
 }

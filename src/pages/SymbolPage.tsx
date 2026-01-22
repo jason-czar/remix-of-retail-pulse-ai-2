@@ -2,7 +2,6 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,7 +110,10 @@ export default function SymbolPage() {
   };
   const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens)} for ${symbol}...`;
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
-  const content = <div className="container mx-auto px-4 py-6 md:py-8">
+  
+  return (
+    <>
+      <div className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
         <div className="flex flex-row items-start justify-between gap-4 mb-4 md:mb-6 md:mt-[23px] mt-[15px]">
           {/* Left side: Symbol info */}
@@ -279,12 +281,12 @@ export default function SymbolPage() {
         <div className="mb-8 md:mb-12">
           <NarrativeImpactHistorySection symbol={symbol} />
         </div>
-      </div>;
-
-  // Always use SidebarLayout for symbol pages (both auth and non-auth users)
-  return <SidebarLayout rightSidebar={<MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />}>
-      {content}
-    </SidebarLayout>;
+      </div>
+      
+      {/* Right sidebar - rendered directly as part of page content */}
+      <MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />
+    </>
+  );
 }
 function MetricCard({
   label,

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 
 // Lazy load all non-landing pages to reduce initial bundle size
@@ -27,7 +28,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-// Minimal loading fallback
+// Minimal loading fallback for pages outside the app layout
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -42,12 +43,17 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/onboarding" element={<OnboardingPage />} />
+          <Routes>
+            {/* Public routes without sidebar layout */}
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
+            <Route path="/signup" element={<Suspense fallback={<PageLoader />}><SignupPage /></Suspense>} />
+            <Route path="/onboarding" element={<Suspense fallback={<PageLoader />}><OnboardingPage /></Suspense>} />
+            <Route path="/learn-more" element={<Suspense fallback={<PageLoader />}><LearnMorePage /></Suspense>} />
+            <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><PricingPage /></Suspense>} />
+            
+            {/* Routes with persistent sidebar layout */}
+            <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/trending" element={<ProtectedRoute><TrendingPage /></ProtectedRoute>} />
               <Route path="/symbol/AAPL" element={<SymbolPage />} />
@@ -61,12 +67,11 @@ const App = () => (
               <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
               <Route path="/api-docs" element={<ApiDocsPage />} />
-              <Route path="/learn-more" element={<LearnMorePage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+            </Route>
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFound /></Suspense>} />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
       </TooltipProvider>

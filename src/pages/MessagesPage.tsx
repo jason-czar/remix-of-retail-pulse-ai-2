@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,10 +78,10 @@ export default function MessagesPage() {
   };
 
   return (
-    <SidebarLayout>
+    <>
       <div className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
-        <Link 
+        <Link
           to={`/symbol/${symbol}`}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
@@ -333,6 +332,6 @@ export default function MessagesPage() {
           </div>
         )}
       </div>
-    </SidebarLayout>
+    </>
   );
 }
