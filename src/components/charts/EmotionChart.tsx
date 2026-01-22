@@ -3,6 +3,7 @@ import {
   BarChart,
   Bar,
   Line,
+  Area,
   XAxis, 
   YAxis, 
   Tooltip, 
@@ -929,6 +930,40 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                   />
                 ))}
                 
+                {/* Price Area Fill Above Previous Close (Green) */}
+                {showPriceOverlay && is5MinView && priceData?.previousClose && (
+                  <Area 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke="none"
+                    fill={PRICE_UP_COLOR}
+                    fillOpacity={0.35}
+                    baseValue={priceData.previousClose}
+                    connectNulls
+                    isAnimationActive={false}
+                    dot={false}
+                    activeDot={false}
+                  />
+                )}
+                
+                {/* Price Area Fill Below Previous Close (Red) */}
+                {showPriceOverlay && is5MinView && priceData?.previousClose && (
+                  <Area 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke="none"
+                    fill={PRICE_DOWN_COLOR}
+                    fillOpacity={0.35}
+                    baseValue={priceData.previousClose}
+                    connectNulls
+                    isAnimationActive={false}
+                    dot={false}
+                    activeDot={false}
+                  />
+                )}
+                
                 {/* Price Line Overlay */}
                 {showPriceOverlay && (
                   <Line
@@ -938,7 +973,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                     stroke={priceLineColor}
                     strokeWidth={2}
                     dot={false}
-                    activeDot={{ fill: priceLineColor, strokeWidth: 2, stroke: "#fff", r: 5 }}
+                    activeDot={false}
                     connectNulls
                   />
                 )}
