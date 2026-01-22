@@ -20,7 +20,7 @@ import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
 import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
-import { DecisionReadinessDashboard } from "@/components/DecisionReadinessDashboard";
+
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
 import { NCSTrendChart } from "@/components/NCSTrendChart";
@@ -280,10 +280,6 @@ export default function SymbolPage() {
             </div>
           </motion.div>
         </AnimatePresence>
-        <div className="mb-8 md:mb-12 px-[3px] mt-[65px]">
-          <h3 className="text-lg font-semibold mb-4">Decision Readiness</h3>
-          <DecisionReadinessDashboard symbol={symbol} />
-        </div>
 
         {/* Narrative Coherence Score */}
         <div className="mb-8 md:mb-12">
