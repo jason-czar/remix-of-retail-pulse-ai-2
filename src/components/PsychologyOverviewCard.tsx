@@ -86,31 +86,47 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{summary.one_liner}</p>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs flex-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
           {summary.dominant_emotion && (
-            <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-              <span className="text-muted-foreground">Dominant Emotion</span>
-              <p className="font-medium capitalize mt-0.5">{summary.dominant_emotion}</p>
+            <div className="flex flex-col">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+                Dominant Emotion
+              </span>
+              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06] flex-1">
+                <p className="text-sm font-medium capitalize">{summary.dominant_emotion}</p>
+              </div>
             </div>
           )}
           {summary.primary_risk && (
-            <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-              <span className="text-muted-foreground">Primary Risk</span>
-              <p className="font-medium text-warning mt-0.5">{summary.primary_risk}</p>
+            <div className="flex flex-col">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+                Primary Risk
+              </span>
+              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-warning/20 dark:border-warning/20 flex-1">
+                <p className="text-sm font-medium text-warning">{summary.primary_risk}</p>
+              </div>
             </div>
           )}
           {summary.action_bias && (
-            <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-              <span className="text-muted-foreground">Action Bias</span>
-              <p className="font-medium mt-0.5">{summary.action_bias}</p>
+            <div className="flex flex-col">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+                Action Bias
+              </span>
+              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06] flex-1">
+                <p className="text-sm font-medium">{summary.action_bias}</p>
+              </div>
             </div>
           )}
           {bestLens && (
-            <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-              <span className="text-muted-foreground">Best Lens</span>
-              <p className="font-medium mt-0.5">
-                {LENS_CONFIG[bestLens.key]?.label || bestLens.key} ({bestLens.score})
-              </p>
+            <div className="flex flex-col">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+                Best Lens
+              </span>
+              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06] flex-1">
+                <p className="text-sm font-medium">
+                  {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary">({bestLens.score})</span>
+                </p>
+              </div>
             </div>
           )}
         </div>
