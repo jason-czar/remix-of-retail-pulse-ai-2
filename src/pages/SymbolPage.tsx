@@ -111,9 +111,7 @@ export default function SymbolPage() {
   };
   const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens)} for ${symbol}...`;
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
-
-  const content = (
-    <div className="container mx-auto px-4 py-6 md:py-8">
+  const content = <div className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
         <div className="flex flex-row items-start justify-between gap-4 mb-10 md:mb-14 md:mt-[57px] mt-[38px]">
           {/* Left side: Symbol info */}
@@ -140,13 +138,13 @@ export default function SymbolPage() {
           {/* Right side: Action buttons - stacked on mobile, row on desktop */}
           <div className="flex flex-col lg:flex-row gap-2 lg:overflow-visible shrink-0">
             <FillTodayGapsButton symbol={symbol} onComplete={() => {
-            queryClient.invalidateQueries({
-              queryKey: ['narrative-history', symbol]
-            });
-            queryClient.invalidateQueries({
-              queryKey: ['emotion-history', symbol]
-            });
-          }} />
+          queryClient.invalidateQueries({
+            queryKey: ['narrative-history', symbol]
+          });
+          queryClient.invalidateQueries({
+            queryKey: ['emotion-history', symbol]
+          });
+        }} />
             <AddToWatchlistButton symbol={symbol} />
             <SymbolAlertDialog symbol={symbol} />
           </div>
@@ -178,18 +176,18 @@ export default function SymbolPage() {
 
           <AnimatePresence mode="wait">
             <motion.div key={activeTab} initial={{
-            opacity: 0,
-            y: 8
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} exit={{
-            opacity: 0,
-            y: -8
-          }} transition={{
-            duration: 0.2,
-            ease: "easeInOut"
-          }}>
+          opacity: 0,
+          y: 8
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} exit={{
+          opacity: 0,
+          y: -8
+        }} transition={{
+          duration: 0.2,
+          ease: "easeInOut"
+        }}>
               <TabsContent value="narratives" forceMount={activeTab === 'narratives' ? true : undefined} className={activeTab !== 'narratives' ? 'hidden' : ''}>
                 <div className="-mx-4 md:mx-0">
                   <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
@@ -227,25 +225,30 @@ export default function SymbolPage() {
         <Separator className="my-6 md:my-8 glass-divider" />
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="mb-4 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible">
+        <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-[31px]">
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
         {/* AI Summary + Readiness Card Side-by-Side with lens transition animation */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={decisionLens}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className={cn(
-              "grid grid-cols-1 gap-4 lg:gap-6",
-              decisionLens === 'summary' ? "lg:grid-cols-2" : "lg:grid-cols-[7fr_13fr]"
-            )}
-          >
+          <motion.div key={decisionLens} initial={{
+        opacity: 0,
+        y: 10
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} exit={{
+        opacity: 0,
+        y: -10
+      }} transition={{
+        duration: 0.25,
+        ease: "easeOut"
+      }} className={cn("grid grid-cols-1 gap-4 lg:gap-6", decisionLens === 'summary' ? "lg:grid-cols-2" : "lg:grid-cols-[7fr_13fr]")}>
             {/* Intelligence Summary Card */}
-            <motion.div layout transition={{ duration: 0.3, ease: "easeOut" }}>
+            <motion.div layout transition={{
+          duration: 0.3,
+          ease: "easeOut"
+        }}>
               <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -259,29 +262,24 @@ export default function SymbolPage() {
                     <span className="sr-only">Regenerate</span>
                   </Button>
                 </div>
-                {lensSummaryLoading || isRegenerating ? (
-                  <div className="space-y-2 flex-1">
+                {lensSummaryLoading || isRegenerating ? <div className="space-y-2 flex-1">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ) : (
-                  <div className="flex-1 max-h-80 overflow-y-auto scrollbar-thin">
+                  </div> : <div className="flex-1 max-h-80 overflow-y-auto scrollbar-thin">
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       <FormattedSummary text={summary} />
                     </p>
-                  </div>
-                )}
+                  </div>}
               </Card>
             </motion.div>
 
             {/* Right side: Readiness Card (non-summary) or Psychology Overview (summary) */}
-            <motion.div layout transition={{ duration: 0.3, ease: "easeOut" }}>
-              {decisionLens === 'summary' ? (
-                <PsychologyOverviewCard symbol={symbol} />
-              ) : (
-                <LensReadinessCard symbol={symbol} lens={decisionLens} />
-              )}
+            <motion.div layout transition={{
+          duration: 0.3,
+          ease: "easeOut"
+        }}>
+              {decisionLens === 'summary' ? <PsychologyOverviewCard symbol={symbol} /> : <LensReadinessCard symbol={symbol} lens={decisionLens} />}
             </motion.div>
           </motion.div>
         </AnimatePresence>
@@ -309,25 +307,20 @@ export default function SymbolPage() {
         {/* Key Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
           {statsLoading ? Array.from({
-          length: 4
-        }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />) : <>
+        length: 4
+      }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />) : <>
               <MetricCard label="Sentiment Score" value={data.sentiment} change={data.sentimentChange} icon={TrendIcon} trend={data.trend} />
               <MetricCard label="Message Volume" value={data.volume} change={data.volumeChange} suffix=" (24h)" />
               <MetricCard label="1H Change" value={`${data.sentimentChange > 0 ? "+" : ""}${data.sentimentChange}%`} trend={data.sentimentChange >= 0 ? "bullish" : "bearish"} />
               <MetricCard label="7D Trend" value={data.trend === 'bullish' ? 'Strengthening' : data.trend === 'bearish' ? 'Weakening' : 'Stable'} trend={data.trend} />
             </>}
         </div>
-      </div>
-  );
+      </div>;
 
   // Always use SidebarLayout for symbol pages (both auth and non-auth users)
-  return (
-    <SidebarLayout 
-      rightSidebar={<MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />}
-    >
+  return <SidebarLayout rightSidebar={<MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />}>
       {content}
-    </SidebarLayout>
-  );
+    </SidebarLayout>;
 }
 function MetricCard({
   label,
