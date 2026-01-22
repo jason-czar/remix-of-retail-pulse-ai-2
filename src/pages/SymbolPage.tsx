@@ -239,7 +239,10 @@ export default function SymbolPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4 lg:gap-6"
+            className={cn(
+              "grid grid-cols-1 gap-4 lg:gap-6",
+              decisionLens === 'summary' ? "lg:grid-cols-2" : "lg:grid-cols-[2fr_3fr]"
+            )}
           >
             {/* Intelligence Summary Card */}
             <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
