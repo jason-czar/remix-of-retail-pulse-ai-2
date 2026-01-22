@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNCSHistory, NCSTimeRange, NCSDataPoint } from "@/hooks/use-ncs-history";
 import { ConfidenceBadge, getConfidenceLevel } from "@/components/ui/ConfidenceBadge";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, ReferenceLine, Dot } from "recharts";
+import { LineChart, Line, Area, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, ReferenceLine, Dot, ComposedChart } from "recharts";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Activity, AlertCircle } from "lucide-react";
@@ -279,7 +279,13 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
           {/* Chart */}
           <div className="h-[100px] md:h-[120px] -mx-2">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={ncsData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <ComposedChart data={ncsData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="ncsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <XAxis 
                   dataKey="date" 
                   tickFormatter={(date) => format(parseISO(date), "M/d")}
@@ -301,6 +307,12 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
                 />
                 <ReferenceLine y={50} stroke="hsl(var(--border))" strokeDasharray="3 3" />
                 <RechartsTooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="score"
+                  fill="url(#ncsGradient)"
+                  stroke="none"
+                />
                 <Line
                   type="monotone"
                   dataKey="score"
@@ -309,7 +321,7 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
                   dot={false}
                   activeDot={{ r: 4, stroke: "hsl(var(--primary))", strokeWidth: 2, fill: "hsl(var(--background))" }}
                 />
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
           
