@@ -41,7 +41,7 @@ export default function SignupPage() {
       toast.error(error.message);
     } else {
       toast.success("Welcome to DeriveStreet!");
-      navigate("/dashboard");
+      navigate("/symbol/NVDA");
     }
   };
 
