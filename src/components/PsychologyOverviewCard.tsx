@@ -86,7 +86,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           <p className="text-sm text-muted-foreground mb-4 leading-relaxed">{summary.one_liner}</p>
         )}
 
-        <div className="grid grid-cols-2 gap-3 text-xs flex-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs flex-1">
           {summary.dominant_emotion && (
             <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
               <span className="text-muted-foreground">Dominant Emotion</span>
