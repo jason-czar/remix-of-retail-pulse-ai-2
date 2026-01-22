@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TourStep {
   title: string;
@@ -51,6 +52,7 @@ interface SpotlightRect {
 }
 
 export function WelcomeTour() {
+  const { user, loading: authLoading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [spotlightRect, setSpotlightRect] = useState<SpotlightRect | null>(null);
@@ -128,12 +130,16 @@ export function WelcomeTour() {
   }, [currentStep]);
 
   useEffect(() => {
+    // Only show tour for authenticated users who haven't completed it
+    if (authLoading) return;
+    if (!user) return;
+    
     const hasCompletedTour = localStorage.getItem(TOUR_STORAGE_KEY);
     if (!hasCompletedTour) {
       const timer = setTimeout(() => setIsOpen(true), 800);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [user, authLoading]);
 
   useEffect(() => {
     if (isOpen) {
