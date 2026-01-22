@@ -131,34 +131,34 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
   const TimingIcon = timing.icon;
 
   return (
-    <Card className="p-3 md:p-4 glass-card h-full border-primary/10">
+    <Card className="p-4 md:p-5 glass-card h-full border-primary/10">
       {/* Header with lens name and timing badge */}
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-semibold text-xs md:text-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-semibold text-sm md:text-base">
           {getLensDisplayName(lens)} Readiness
         </h4>
           <Badge 
             variant={timing.variant} 
-            className={cn("text-[10px] px-2 py-0.5", timing.bgClass)}
+            className={cn("text-xs px-2.5 py-0.5", timing.bgClass)}
           >
-            <TimingIcon className="h-2.5 w-2.5 mr-1" />
+            <TimingIcon className="h-3 w-3 mr-1" />
             {timing.label}
           </Badge>
         </div>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {/* Left Column: Readiness Score + Narratives */}
-          <div className="space-y-2.5">
+          <div className="space-y-4">
             {/* Readiness Score with progress bar */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-muted-foreground">Readiness Score</span>
-                <span className={cn("text-lg font-display", getReadinessColor(readiness.readiness_score))}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-muted-foreground">Readiness Score</span>
+                <span className={cn("text-xl font-display", getReadinessColor(readiness.readiness_score))}>
                   {readiness.readiness_score}
                 </span>
               </div>
-              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50">
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary/50">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${readiness.readiness_score}%` }}
@@ -169,20 +169,20 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
             </div>
 
             {/* Blocking and Supportive narratives - compact */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* Blocking Narratives */}
               {readiness.blocking_narratives.length > 0 && (
-                <div className="p-2 rounded-lg bg-bearish/5 border border-bearish/20">
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <TrendingDown className="h-3 w-3 text-bearish" />
-                    <span className="text-[10px] font-medium text-bearish">Blocking</span>
+                <div className="p-3 rounded-lg bg-bearish/5 border border-bearish/20">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <TrendingDown className="h-3.5 w-3.5 text-bearish" />
+                    <span className="text-xs font-medium text-bearish">Blocking</span>
                   </div>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
                       <Badge 
                         key={idx} 
                         variant="outline" 
-                        className="text-[9px] border-bearish/40 text-bearish bg-bearish/10 px-1.5 py-0"
+                        className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0"
                       >
                         {narrative}
                       </Badge>
@@ -193,17 +193,17 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
 
               {/* Supportive Narratives */}
               {readiness.supportive_narratives.length > 0 && (
-                <div className="p-2 rounded-lg bg-bullish/5 border border-bullish/20">
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <TrendingUp className="h-3 w-3 text-bullish" />
-                    <span className="text-[10px] font-medium text-bullish">Supportive</span>
+                <div className="p-3 rounded-lg bg-bullish/5 border border-bullish/20">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <TrendingUp className="h-3.5 w-3.5 text-bullish" />
+                    <span className="text-xs font-medium text-bullish">Supportive</span>
                   </div>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => (
                       <Badge 
                         key={idx} 
                         variant="outline" 
-                        className="text-[9px] border-bullish/40 text-bullish bg-bullish/10 px-1.5 py-0"
+                        className="text-[10px] border-bullish/40 text-bullish bg-bullish/10 px-2 py-0"
                       >
                         {narrative}
                       </Badge>
@@ -215,7 +215,7 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
 
             {/* Delay recommendation */}
             {readiness.recommended_delay && readiness.recommended_delay !== "None" && (
-              <p className="text-[10px] text-muted-foreground italic">
+              <p className="text-xs text-muted-foreground italic">
                 Recommended delay: {readiness.recommended_delay}
               </p>
             )}
@@ -223,11 +223,11 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
 
           {/* Right Column: Risk, Concerns, Actions */}
           {overlay && (
-            <div className="md:border-l md:border-border/40 md:pl-4 space-y-2.5">
+            <div className="md:border-l md:border-border/40 md:pl-6 space-y-4">
               {/* Risk Score - inline header */}
               <div className="flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground">Risk Score</span>
-                <span className={cn("text-base font-medium", getRiskColor(overlay.risk_score))}>
+                <span className="text-xs text-muted-foreground">Risk Score</span>
+                <span className={cn("text-lg font-medium", getRiskColor(overlay.risk_score))}>
                   {overlay.risk_score}/100
                 </span>
               </div>
@@ -235,15 +235,15 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               {/* Key Concerns - compact */}
               {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <AlertCircle className="h-3 w-3 text-warning" />
-                    <span className="text-[10px] font-medium">Key Concerns</span>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <AlertCircle className="h-3.5 w-3.5 text-warning" />
+                    <span className="text-xs font-medium">Key Concerns</span>
                   </div>
-                  <ul className="space-y-1">
+                  <ul className="space-y-1.5">
                     {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
                       <li 
                         key={idx} 
-                        className="text-[10px] leading-tight text-muted-foreground pl-2.5 relative before:absolute before:left-0 before:top-[5px] before:w-1 before:h-1 before:bg-warning/60 before:rounded-full"
+                        className="text-xs text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full"
                       >
                         {cleanNarrativeIdSuffix(concern)}
                       </li>
@@ -255,15 +255,15 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               {/* Recommended Actions - compact */}
               {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <Lightbulb className="h-3 w-3 text-primary" />
-                    <span className="text-[10px] font-medium">Recommended Actions</span>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Lightbulb className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-medium">Recommended Actions</span>
                   </div>
-                  <ul className="space-y-1">
+                  <ul className="space-y-1.5">
                     {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
                       <li 
                         key={idx} 
-                        className="text-[10px] leading-tight text-muted-foreground pl-2.5 relative before:absolute before:left-0 before:top-[5px] before:w-1 before:h-1 before:bg-primary/60 before:rounded-full"
+                        className="text-xs text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full"
                       >
                         {cleanNarrativeIdSuffix(action)}
                       </li>
@@ -273,9 +273,9 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               )}
 
               {/* Confidence footer */}
-              <div className="flex items-center justify-end gap-1 pt-0.5">
-                <span className="text-[9px] text-muted-foreground">Confidence:</span>
-                <span className="text-[9px] font-medium">
+              <div className="flex items-center justify-end gap-1.5 pt-1">
+                <span className="text-[10px] text-muted-foreground">Confidence:</span>
+                <span className="text-[10px] font-medium">
                   {Math.round(overlay.confidence * 100)}%
                 </span>
               </div>
