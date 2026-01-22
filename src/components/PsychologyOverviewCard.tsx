@@ -88,8 +88,8 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
 
         {/* Active Signals */}
         {activeSignals.length > 0 && (
-          <div className="mb-4 pb-3 border-b border-border/50">
-            <div className="flex items-center gap-1.5 mb-2">
+          <div className="mb-4 pb-3 border-b border-border/50 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
               <AlertTriangle className="h-3.5 w-3.5 text-warning" />
               <span className="text-xs font-medium text-warning">Active Signals</span>
             </div>
