@@ -20,7 +20,7 @@ import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
 import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
-
+import { MessagesSidebar } from "@/components/layout/MessagesSidebar";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
 import { NCSTrendChart } from "@/components/NCSTrendChart";
@@ -28,7 +28,7 @@ import { HistoricalEpisodeMatcher } from "@/components/HistoricalEpisodeMatcher"
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, MessageSquare, Clock, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw } from "lucide-react";
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 export default function SymbolPage() {
   const {
@@ -300,24 +300,6 @@ export default function SymbolPage() {
           <NarrativeImpactHistorySection symbol={symbol} />
         </div>
 
-        {/* Representative Messages */}
-        <Card className="p-6 glass-card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold">Representative Messages</h3>
-            <Link to={`/symbol/${symbol}/messages`}>
-              <Button variant="ghost" size="sm">
-                View All
-                <ExternalLink className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          
-          <div className="space-y-4">
-            {messagesLoading ? Array.from({
-            length: 3
-          }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />) : messages.length > 0 ? messages.slice(0, 5).map(msg => <MessageCard key={msg.id} {...msg} />) : <p className="text-muted-foreground text-sm">No messages available for this symbol.</p>}
-          </div>
-        </Card>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
@@ -334,7 +316,12 @@ export default function SymbolPage() {
   );
 
   // Always use SidebarLayout for symbol pages (both auth and non-auth users)
-  return <SidebarLayout>{content}</SidebarLayout>;
+  return (
+    <SidebarLayout>
+      {content}
+      <MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />
+    </SidebarLayout>
+  );
 }
 function MetricCard({
   label,
@@ -383,40 +370,6 @@ function TimeRangeSelector({
       {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap md:px-3.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0 px-[11px] py-[4px] border-0", range === value ? "bg-background text-foreground shadow-md dark:glass-tabs-trigger-active" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")}>
           {labels[range]}
         </button>)}
-    </div>;
-}
-function MessageCard({
-  user,
-  content,
-  sentiment,
-  emotions,
-  time
-}: {
-  user: string;
-  content: string;
-  sentiment: string;
-  emotions: string[];
-  time: string;
-}) {
-  return <div className="p-4 glass-list-item">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">@{user}</span>
-          <Badge variant={sentiment === "bullish" ? "bullish" : sentiment === "bearish" ? "bearish" : "neutral"} className="text-xs">
-            {sentiment}
-          </Badge>
-        </div>
-        <span className="text-sm text-muted-foreground flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {time}
-        </span>
-      </div>
-      <p className="text-sm mb-2">{content}</p>
-      <div className="flex gap-2">
-        {emotions.map(emotion => <Badge key={emotion} variant="outline" className="text-xs capitalize">
-            {emotion}
-          </Badge>)}
-      </div>
     </div>;
 }
 
