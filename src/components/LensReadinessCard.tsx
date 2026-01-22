@@ -219,6 +219,16 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
                 Recommended delay: {readiness.recommended_delay}
               </p>
             )}
+
+            {/* Confidence footer - at bottom of left column */}
+            {overlay && (
+              <div className="flex items-center gap-1.5 pt-2 mt-auto">
+                <span className="text-xs text-muted-foreground">Confidence:</span>
+                <span className="text-xs font-medium">
+                  {Math.round(overlay.confidence * 100)}%
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Right Column: Risk, Concerns, Actions (65%) */}
@@ -271,14 +281,6 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
                   </ul>
                 </div>
               )}
-
-              {/* Confidence footer */}
-              <div className="flex items-center justify-start gap-1.5 pt-2">
-                <span className="text-xs text-muted-foreground">Confidence:</span>
-                <span className="text-xs font-medium">
-                  {Math.round(overlay.confidence * 100)}%
-                </span>
-              </div>
             </div>
         )}
       </div>
