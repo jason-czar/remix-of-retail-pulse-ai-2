@@ -173,46 +173,29 @@ export default function SymbolPage() {
               </div>}
           </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{
-          opacity: 0,
-          y: 8
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} exit={{
-          opacity: 0,
-          y: -8
-        }} transition={{
-          duration: 0.2,
-          ease: "easeInOut"
-        }}>
-              <TabsContent value="narratives" forceMount={activeTab === 'narratives' ? true : undefined} className={activeTab !== 'narratives' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-                </div>
-              </TabsContent>
+          <TabsContent value="narratives" className="mt-0">
+            <div className="-mx-4 md:mx-0">
+              <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+            </div>
+          </TabsContent>
 
-              <TabsContent value="emotions" forceMount={activeTab === 'emotions' ? true : undefined} className={activeTab !== 'emotions' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-                </div>
-              </TabsContent>
+          <TabsContent value="emotions" className="mt-0">
+            <div className="-mx-4 md:mx-0">
+              <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+            </div>
+          </TabsContent>
 
-              <TabsContent value="sentiment" forceMount={activeTab === 'sentiment' ? true : undefined} className={activeTab !== 'sentiment' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-                </div>
-              </TabsContent>
+          <TabsContent value="sentiment" className="mt-0">
+            <div className="-mx-4 md:mx-0">
+              <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+            </div>
+          </TabsContent>
 
-              <TabsContent value="momentum" forceMount={activeTab === 'momentum' ? true : undefined} className={activeTab !== 'momentum' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <EmotionMomentumChart symbol={symbol} days={7} />
-                </div>
-              </TabsContent>
-
-            </motion.div>
-          </AnimatePresence>
+          <TabsContent value="momentum" className="mt-0">
+            <div className="-mx-4 md:mx-0">
+              <EmotionMomentumChart symbol={symbol} days={7} />
+            </div>
+          </TabsContent>
         </Tabs>
 
         {/* Section divider */}
