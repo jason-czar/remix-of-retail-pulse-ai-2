@@ -163,7 +163,7 @@ export function LensReadinessCard({
                 </div>}
 
               {/* Blocking Narratives */}
-              {readiness.blocking_narratives.length > 0 && <div className="p-3 rounded-lg bg-bearish/5 border border-bearish/20">
+              {readiness.blocking_narratives.length > 0 && <div className="p-3 rounded-lg border border-bearish/20 bg-transparent">
                   <div className="flex items-center gap-1.5 mb-2">
                     <TrendingDown className="h-3.5 w-3.5 text-bearish" />
                     <span className="text-xs font-medium text-bearish">Blocking</span>
