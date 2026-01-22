@@ -6,7 +6,7 @@ import { X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 interface TourStep {
   title: string;
   description: string;
-  selector?: string; // CSS selector for highlighting
+  selector?: string;
   position?: "center" | "below" | "above" | "left" | "right";
 }
 
@@ -54,7 +54,7 @@ export function WelcomeTour() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [spotlightRect, setSpotlightRect] = useState<SpotlightRect | null>(null);
-  const [cardPosition, setCardPosition] = useState<{ top: number; left: number } | null>(null);
+  const [cardStyle, setCardStyle] = useState<React.CSSProperties>({});
 
   const updateSpotlight = useCallback(() => {
     const step = tourSteps[currentStep];
@@ -63,58 +63,73 @@ export function WelcomeTour() {
       if (element) {
         const rect = element.getBoundingClientRect();
         const padding = 8;
+        
+        // Use viewport-relative positions (no scroll offset for fixed positioning)
         setSpotlightRect({
-          top: rect.top - padding + window.scrollY,
+          top: rect.top - padding,
           left: rect.left - padding,
           width: rect.width + padding * 2,
           height: rect.height + padding * 2,
         });
 
-        // Calculate card position based on step position preference
+        // Calculate card position
         const cardWidth = 360;
-        const cardHeight = 280;
-        const margin = 16;
-        let top = 0;
-        let left = 0;
+        const cardHeight = 260;
+        const margin = 20;
+
+        let style: React.CSSProperties = {};
 
         switch (step.position) {
           case "below":
-            top = rect.bottom + margin + window.scrollY;
-            left = Math.max(margin, Math.min(rect.left + rect.width / 2 - cardWidth / 2, window.innerWidth - cardWidth - margin));
+            style = {
+              top: `${rect.bottom + margin}px`,
+              left: `${Math.max(margin, Math.min(rect.left + rect.width / 2 - cardWidth / 2, window.innerWidth - cardWidth - margin))}px`,
+            };
             break;
           case "above":
-            top = rect.top - cardHeight - margin + window.scrollY;
-            left = Math.max(margin, Math.min(rect.left + rect.width / 2 - cardWidth / 2, window.innerWidth - cardWidth - margin));
+            style = {
+              top: `${rect.top - cardHeight - margin}px`,
+              left: `${Math.max(margin, Math.min(rect.left + rect.width / 2 - cardWidth / 2, window.innerWidth - cardWidth - margin))}px`,
+            };
             break;
           case "right":
-            top = Math.max(margin, rect.top + rect.height / 2 - cardHeight / 2 + window.scrollY);
-            left = Math.min(rect.right + margin, window.innerWidth - cardWidth - margin);
+            style = {
+              top: `${Math.max(margin, Math.min(rect.top + rect.height / 2 - cardHeight / 2, window.innerHeight - cardHeight - margin))}px`,
+              left: `${Math.min(rect.right + margin, window.innerWidth - cardWidth - margin)}px`,
+            };
             break;
           case "left":
-            top = Math.max(margin, rect.top + rect.height / 2 - cardHeight / 2 + window.scrollY);
-            left = Math.max(margin, rect.left - cardWidth - margin);
+            style = {
+              top: `${Math.max(margin, rect.top + rect.height / 2 - cardHeight / 2)}px`,
+              left: `${Math.max(margin, rect.left - cardWidth - margin)}px`,
+            };
             break;
           default:
-            top = window.innerHeight / 2 - cardHeight / 2 + window.scrollY;
-            left = window.innerWidth / 2 - cardWidth / 2;
+            style = {
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+            };
         }
 
-        setCardPosition({ top, left });
+        setCardStyle(style);
 
         // Scroll element into view if needed
         element.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     } else {
       setSpotlightRect(null);
-      setCardPosition(null);
+      setCardStyle({
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+      });
     }
   }, [currentStep]);
 
   useEffect(() => {
-    // Check if user has already completed the tour
     const hasCompletedTour = localStorage.getItem(TOUR_STORAGE_KEY);
     if (!hasCompletedTour) {
-      // Small delay to let the page render first
       const timer = setTimeout(() => setIsOpen(true), 800);
       return () => clearTimeout(timer);
     }
@@ -122,9 +137,15 @@ export function WelcomeTour() {
 
   useEffect(() => {
     if (isOpen) {
-      updateSpotlight();
+      // Delay to allow scroll to complete
+      const timer = setTimeout(updateSpotlight, 100);
       window.addEventListener("resize", updateSpotlight);
-      return () => window.removeEventListener("resize", updateSpotlight);
+      window.addEventListener("scroll", updateSpotlight);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("resize", updateSpotlight);
+        window.removeEventListener("scroll", updateSpotlight);
+      };
     }
   }, [isOpen, currentStep, updateSpotlight]);
 
@@ -159,63 +180,45 @@ export function WelcomeTour() {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* SVG Spotlight Overlay */}
+          {/* Dark overlay with cutout */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 pointer-events-none"
-            style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%" }}
+            className="fixed inset-0 z-50"
+            style={{ pointerEvents: "none" }}
           >
-            <svg
-              className="absolute inset-0 w-full h-full"
-              style={{ minHeight: document.body.scrollHeight }}
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <mask id="spotlight-mask">
-                  <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                  {spotlightRect && (
-                    <motion.rect
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      x={spotlightRect.left}
-                      y={spotlightRect.top}
-                      width={spotlightRect.width}
-                      height={spotlightRect.height}
-                      rx="12"
-                      fill="black"
-                    />
-                  )}
-                </mask>
-              </defs>
-              <rect
-                x="0"
-                y="0"
-                width="100%"
-                height="100%"
-                fill="rgba(0, 0, 0, 0.7)"
-                mask="url(#spotlight-mask)"
-                className="pointer-events-auto"
-                onClick={handleSkip}
-              />
-            </svg>
+            {/* Background overlay */}
+            <div 
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              style={{ pointerEvents: "auto" }}
+              onClick={handleSkip}
+            />
 
-            {/* Spotlight ring glow */}
+            {/* Spotlight cutout */}
             {spotlightRect && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="absolute rounded-xl pointer-events-none"
-                style={{
-                  top: spotlightRect.top,
-                  left: spotlightRect.left,
-                  width: spotlightRect.width,
-                  height: spotlightRect.height,
-                  boxShadow: "0 0 0 2px hsl(var(--primary)), 0 0 20px 4px hsl(var(--primary) / 0.3)",
-                }}
-              />
+              <>
+                {/* Clear area for the highlighted element */}
+                <motion.div
+                  key={`spotlight-${currentStep}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="absolute bg-transparent rounded-xl"
+                  style={{
+                    top: spotlightRect.top,
+                    left: spotlightRect.left,
+                    width: spotlightRect.width,
+                    height: spotlightRect.height,
+                    boxShadow: `
+                      0 0 0 9999px rgba(0, 0, 0, 0.7),
+                      0 0 0 2px hsl(var(--primary)),
+                      0 0 30px 8px hsl(var(--primary) / 0.4)
+                    `,
+                    pointerEvents: "none",
+                  }}
+                />
+              </>
             )}
           </motion.div>
 
@@ -225,13 +228,9 @@ export function WelcomeTour() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed z-50 w-[90vw] max-w-[360px] pointer-events-auto"
-            style={
-              cardPosition
-                ? { top: cardPosition.top, left: cardPosition.left }
-                : { left: "50%", top: "50%", transform: "translate(-50%, -50%)" }
-            }
+            transition={{ type: "spring", damping: 25, stiffness: 300, delay: 0.1 }}
+            className="fixed z-50 w-[90vw] max-w-[360px]"
+            style={cardStyle}
           >
             <div className="glass-card p-5 rounded-2xl border border-white/20 shadow-2xl backdrop-blur-xl bg-background/95">
               {/* Close button */}
