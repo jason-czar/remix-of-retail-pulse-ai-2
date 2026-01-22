@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.admin-backfill-psychology]
 verify_jwt = false
+
+[functions.cleanup-narrative-data]
+verify_jwt = false

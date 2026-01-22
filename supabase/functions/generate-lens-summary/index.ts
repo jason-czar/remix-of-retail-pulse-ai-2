@@ -6,6 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Sanitize text by removing non-ASCII characters and normalizing whitespace
+function sanitizeText(text: string): string {
+  return text
+    .replace(/[^\x00-\x7F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 type DecisionLens = 
   | 'summary'
   | 'corporate-strategy'
@@ -198,6 +206,10 @@ ${messageTexts}`,
       );
     }
 
+    // Sanitize AI-generated summary to remove non-ASCII characters
+    const sanitizedSummary = sanitizeText(rawSummary);
+    console.log(`Sanitized summary for ${symbol} ${lens}: removed ${rawSummary.length - sanitizedSummary.length} chars`);
+
     // Cache the valid result (30 minute expiry)
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     await supabase
@@ -206,7 +218,7 @@ ${messageTexts}`,
         {
           symbol: symbol.toUpperCase(),
           lens,
-          summary: rawSummary,
+          summary: sanitizedSummary,
           message_count: messages.length,
           expires_at: expiresAt,
         },
@@ -216,7 +228,7 @@ ${messageTexts}`,
     console.log(`Cached ${lensName} summary for ${symbol}`);
 
     return new Response(
-      JSON.stringify({ summary: rawSummary, cached: false, messageCount: messages.length }),
+      JSON.stringify({ summary: sanitizedSummary, cached: false, messageCount: messages.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
