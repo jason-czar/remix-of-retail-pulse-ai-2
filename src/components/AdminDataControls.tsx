@@ -19,7 +19,8 @@ import {
   Info,
   Calendar,
   Square,
-  SkipForward
+  SkipForward,
+  Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -57,6 +58,18 @@ interface EventLogEntry {
   status: "created" | "skipped" | "failed" | "processing";
   reason?: string;
   timestamp: Date;
+}
+
+interface CleanupTableResult {
+  scanned: number;
+  updated: number;
+  errors: number;
+}
+
+interface CleanupResult {
+  results: Record<string, CleanupTableResult>;
+  dryRun: boolean;
+  message: string;
 }
 
 // Helper to count weekdays between two dates
@@ -814,6 +827,182 @@ export default function AdminDataControls() {
           </div>
         )}
       </div>
+
+      <Separator className="my-6" />
+
+      {/* Section 4: Cleanup Narrative Data */}
+      <CleanupNarrativeData />
     </Card>
+  );
+}
+
+// ============= Cleanup Narrative Data Component =============
+function CleanupNarrativeData() {
+  const [dryRun, setDryRun] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<CleanupResult | null>(null);
+  const [selectedTables, setSelectedTables] = useState({
+    psychology_snapshots: true,
+    narrative_cache: true,
+    lens_summary_cache: true,
+  });
+
+  const handleCleanup = async () => {
+    const tables = Object.entries(selectedTables)
+      .filter(([, selected]) => selected)
+      .map(([table]) => table);
+
+    if (tables.length === 0) {
+      toast.error("Please select at least one table to clean");
+      return;
+    }
+
+    setIsLoading(true);
+    setResult(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await supabase.functions.invoke("cleanup-narrative-data", {
+        body: { tables, dryRun, batchSize: 100 },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      setResult(response.data as CleanupResult);
+
+      const totalUpdated = Object.values(response.data.results as Record<string, CleanupTableResult>)
+        .reduce((sum, r) => sum + r.updated, 0);
+
+      if (dryRun) {
+        toast.info(`Dry run: ${totalUpdated} records would be sanitized`);
+      } else if (totalUpdated > 0) {
+        toast.success(`Sanitized ${totalUpdated} records`);
+      } else {
+        toast.info("No records needed sanitization");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Cleanup failed";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleTable = (table: keyof typeof selectedTables) => {
+    setSelectedTables(prev => ({ ...prev, [table]: !prev[table] }));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <h3 className="font-medium">Cleanup Narrative Data</h3>
+      </div>
+
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+        <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        <p className="text-sm text-muted-foreground">
+          Sanitizes text data by removing non-ASCII characters from narrative labels, summaries, and interpretation text.
+          This cleans up any encoding issues in existing data.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <Label>Tables to clean</Label>
+        <div className="flex flex-wrap gap-4">
+          {Object.entries(selectedTables).map(([table, selected]) => (
+            <div key={table} className="flex items-center gap-2">
+              <Switch
+                id={`cleanup-${table}`}
+                checked={selected}
+                onCheckedChange={() => toggleTable(table as keyof typeof selectedTables)}
+              />
+              <Label htmlFor={`cleanup-${table}`} className="text-sm cursor-pointer font-mono">
+                {table}
+              </Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Switch
+          id="cleanup-dry-run"
+          checked={dryRun}
+          onCheckedChange={setDryRun}
+        />
+        <Label htmlFor="cleanup-dry-run" className="text-sm cursor-pointer">
+          Dry run (preview only, no changes)
+        </Label>
+      </div>
+
+      <div className="flex gap-2">
+        <Button
+          onClick={handleCleanup}
+          disabled={isLoading || !Object.values(selectedTables).some(Boolean)}
+          variant={dryRun ? "outline" : "hero"}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {dryRun ? "Scanning..." : "Cleaning..."}
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 mr-2" />
+              {dryRun ? "Preview Cleanup" : "Run Cleanup"}
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Cleanup Result */}
+      {result && (
+        <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+          <div className="flex items-center gap-2">
+            {result.dryRun ? (
+              <Info className="h-4 w-4 text-primary" />
+            ) : (
+              <CheckCircle2 className="h-4 w-4 text-bullish" />
+            )}
+            <span className="font-medium">
+              {result.dryRun ? "Dry Run Preview" : "Cleanup Complete"}
+            </span>
+          </div>
+          
+          <div className="space-y-2">
+            {Object.entries(result.results).map(([table, tableResult]) => (
+              <div key={table} className="flex items-center justify-between text-sm p-2 rounded bg-background/50">
+                <span className="font-mono text-muted-foreground">{table}</span>
+                <div className="flex items-center gap-4">
+                  <span>
+                    <span className="text-muted-foreground">Scanned:</span>{" "}
+                    <span className="font-mono">{tableResult.scanned}</span>
+                  </span>
+                  <span>
+                    <span className="text-muted-foreground">{result.dryRun ? "Would update:" : "Updated:"}</span>{" "}
+                    <span className={`font-mono ${tableResult.updated > 0 ? "text-bullish" : ""}`}>
+                      {tableResult.updated}
+                    </span>
+                  </span>
+                  {tableResult.errors > 0 && (
+                    <span>
+                      <span className="text-muted-foreground">Errors:</span>{" "}
+                      <span className="font-mono text-bearish">{tableResult.errors}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
