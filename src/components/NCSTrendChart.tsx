@@ -306,8 +306,8 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
                   dataKey="score"
                   stroke="hsl(var(--primary))"
                   strokeWidth={1.5}
-                  dot={<CustomDot />}
-                  activeDot={{ r: 5, stroke: "hsl(var(--primary))", strokeWidth: 2, fill: "hsl(var(--background))" }}
+                  dot={false}
+                  activeDot={{ r: 4, stroke: "hsl(var(--primary))", strokeWidth: 2, fill: "hsl(var(--background))" }}
                 />
               </LineChart>
             </ResponsiveContainer>
