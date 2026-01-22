@@ -146,10 +146,10 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
           </Badge>
         </div>
 
-        {/* Two-column layout - 30/70 split */}
-        <div className="grid grid-cols-1 md:grid-cols-10 gap-4 md:gap-6">
-          {/* Left Column: Readiness Score + Narratives (3/10 = 30%) */}
-          <div className="md:col-span-3 space-y-4">
+        {/* Two-column layout - 35/65 split */}
+        <div className="grid grid-cols-1 md:grid-cols-[35%_65%] gap-4 md:gap-6">
+          {/* Left Column: Readiness Score + Narratives (35%) */}
+          <div className="space-y-4">
             {/* Readiness Score with progress bar */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -221,9 +221,9 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
             )}
           </div>
 
-          {/* Right Column: Risk, Concerns, Actions (7/10 = 70%) */}
+          {/* Right Column: Risk, Concerns, Actions (65%) */}
           {overlay && (
-            <div className="md:col-span-7 md:border-l md:border-border/40 md:pl-6 space-y-4">
+            <div className="md:border-l md:border-border/40 md:pl-6 space-y-4">
               {/* Risk Score - inline header */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">Risk Score</span>
