@@ -222,11 +222,21 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
 
             {/* Confidence footer - at bottom of left column */}
             {overlay && (
-              <div className="flex items-center gap-1.5 pt-2 mt-auto">
-                <span className="text-xs text-muted-foreground">Confidence:</span>
-                <span className="text-xs font-medium">
-                  {Math.round(overlay.confidence * 100)}%
-                </span>
+              <div className="pt-3 mt-auto">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground">Confidence</span>
+                  <span className="text-xs font-medium">
+                    {Math.round(overlay.confidence * 100)}%
+                  </span>
+                </div>
+                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${overlay.confidence * 100}%` }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="h-full rounded-full bg-primary/70"
+                  />
+                </div>
               </div>
             )}
           </div>
