@@ -830,6 +830,61 @@
   }
 
   /* =========================================================
+     Glass Tile — Standard theme-matching glass for metric tiles
+     Light mode: light translucent glass
+     Dark mode: dark translucent glass
+     ========================================================= */
+  .glass-tile {
+    @apply relative overflow-hidden;
+    border-radius: 0.5rem;
+    backdrop-filter: blur(12px) saturate(140%);
+    transition: 
+      background-color 200ms ease,
+      box-shadow 200ms ease,
+      border-color 200ms ease;
+  }
+
+  /* Light mode: Light glass tiles */
+  :not(.dark) .glass-tile {
+    background: hsl(0 0% 100% / 0.85);
+    border: 1px solid hsl(0 0% 0% / 0.08);
+    color: hsl(var(--foreground));
+    box-shadow: 
+      0 4px 16px hsl(0 0% 0% / 0.06),
+      0 1px 3px hsl(0 0% 0% / 0.04),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+  }
+
+  :not(.dark) .glass-tile:hover {
+    background: hsl(0 0% 100% / 0.92);
+    border-color: hsl(0 0% 0% / 0.12);
+    box-shadow: 
+      0 6px 20px hsl(0 0% 0% / 0.08),
+      0 2px 6px hsl(0 0% 0% / 0.05),
+      inset 0 1px 0 hsl(0 0% 100% / 0.7);
+  }
+
+  /* Dark mode: Dark glass tiles */
+  .dark .glass-tile {
+    background: hsl(0 0% 18% / 0.7);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    color: hsl(var(--foreground));
+    box-shadow: 
+      0 4px 16px hsl(0 0% 0% / 0.3),
+      0 1px 3px hsl(0 0% 0% / 0.2),
+      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  }
+
+  .dark .glass-tile:hover {
+    background: hsl(0 0% 20% / 0.8);
+    border-color: hsl(0 0% 100% / 0.15);
+    box-shadow: 
+      0 6px 20px hsl(0 0% 0% / 0.4),
+      0 2px 6px hsl(0 0% 0% / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  }
+
+  /* =========================================================
      Glass Tile Inverted — Opposite-theme glass for metric tiles
      Light mode: dark translucent glass
      Dark mode: light translucent glass
