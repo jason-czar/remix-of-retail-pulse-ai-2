@@ -752,14 +752,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
       <div className="h-[354px] md:h-[554px]">
         {/* Header - Collapsible */}
         <Collapsible defaultOpen={false}>
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
-                <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              </div>
-              <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
-            </div>
-            
+          <div className="flex items-center justify-end mb-3 md:mb-4">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm" className="h-7 md:h-8 px-1.5 md:px-2 shrink-0 group">
                 <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -771,8 +764,12 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
           <CollapsibleContent>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4 pb-3 border-b border-border/30">
               <div className="flex items-center gap-2 md:gap-3 flex-1">
+                <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
+                  <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
                     {historyData?.data && historyData.data.length > 0 && (
                       <span className="px-1.5 md:px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] md:text-xs">
                         {historyData.data.length} snapshots
