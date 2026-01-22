@@ -113,7 +113,7 @@ export default function SymbolPage() {
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
   const content = <div className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
-        <div className="flex flex-row items-start justify-between gap-4 mb-10 md:mb-14 md:mt-[57px] mt-[38px]">
+        <div className="flex flex-row items-start justify-between gap-4 mb-4 md:mb-6 md:mt-[23px] mt-[15px]">
           {/* Left side: Symbol info */}
           <div className="flex-1">
             {statsLoading ? <div className="space-y-2">
