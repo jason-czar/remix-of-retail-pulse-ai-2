@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SentimentChart } from "@/components/charts/SentimentChart";
 import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
@@ -245,11 +246,11 @@ export default function SymbolPage() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
-                  </div> : <div className="flex-1 max-h-80 overflow-y-auto scrollbar-thin">
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                  </div> : <ScrollArea className="flex-1 max-h-80">
+                    <p className="text-sm text-muted-foreground leading-relaxed pr-3">
                       <FormattedSummary text={summary} />
                     </p>
-                  </div>}
+                  </ScrollArea>}
               </Card>
             </motion.div>
 
