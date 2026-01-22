@@ -246,11 +246,15 @@ export default function SymbolPage() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
-                  </div> : <ScrollArea className="flex-1 max-h-80">
-                    <p className="text-sm text-muted-foreground leading-relaxed pr-3">
-                      <FormattedSummary text={summary} />
-                    </p>
-                  </ScrollArea>}
+                  </div> : (
+                    <div className="flex-1 max-h-80">
+                      <ScrollArea className="h-full">
+                        <p className="text-sm text-muted-foreground leading-relaxed pr-3">
+                          <FormattedSummary text={summary} />
+                        </p>
+                      </ScrollArea>
+                    </div>
+                  )}
               </Card>
             </motion.div>
 
