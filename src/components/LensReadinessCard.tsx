@@ -226,8 +226,8 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
             <div className="md:border-l md:border-border/40 md:pl-6 space-y-4 min-w-0">
               {/* Risk Score - inline header */}
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Risk Score</span>
-                <span className={cn("text-lg font-medium", getRiskColor(overlay.risk_score))}>
+                <span className="text-sm text-muted-foreground">Risk Score</span>
+                <span className={cn("text-xl font-semibold", getRiskColor(overlay.risk_score))}>
                   {overlay.risk_score}/100
                 </span>
               </div>
@@ -235,15 +235,15 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               {/* Key Concerns - compact */}
               {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <AlertCircle className="h-3.5 w-3.5 text-warning" />
-                    <span className="text-xs font-medium">Key Concerns</span>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <AlertCircle className="h-4 w-4 text-warning" />
+                    <span className="text-sm font-medium">Key Concerns</span>
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
                       <li 
                         key={idx} 
-                        className="text-xs text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full"
+                        className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full"
                       >
                         {cleanNarrativeIdSuffix(concern)}
                       </li>
@@ -255,15 +255,15 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               {/* Recommended Actions - compact */}
               {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Lightbulb className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-xs font-medium">Recommended Actions</span>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Lightbulb className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Recommended Actions</span>
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
                       <li 
                         key={idx} 
-                        className="text-xs text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full"
+                        className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full"
                       >
                         {cleanNarrativeIdSuffix(action)}
                       </li>
@@ -273,9 +273,9 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               )}
 
               {/* Confidence footer */}
-              <div className="flex items-center justify-end gap-1.5 pt-1">
-                <span className="text-[10px] text-muted-foreground">Confidence:</span>
-                <span className="text-[10px] font-medium">
+              <div className="flex items-center justify-end gap-1.5 pt-2">
+                <span className="text-xs text-muted-foreground">Confidence:</span>
+                <span className="text-xs font-medium">
                   {Math.round(overlay.confidence * 100)}%
                 </span>
               </div>
