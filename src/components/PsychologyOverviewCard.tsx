@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { AlertTriangle, TrendingUp, Target, Activity, Brain, Users, RefreshCcw, Rocket, Shield } from "lucide-react";
-
+import { motion } from "framer-motion";
 const LENS_CONFIG: Record<string, {
   label: string;
   icon: React.ElementType;
@@ -88,37 +88,57 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
           {summary.dominant_emotion && (
-            <div className="flex flex-col">
+            <motion.div 
+              className="flex flex-col"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+            >
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Dominant Emotion
               </span>
               <div className="glass-tile-inverted tile-emotion p-3 flex-1">
                 <p className="text-sm font-medium capitalize">{summary.dominant_emotion}</p>
               </div>
-            </div>
+            </motion.div>
           )}
           {summary.primary_risk && (
-            <div className="flex flex-col">
+            <motion.div 
+              className="flex flex-col"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Primary Risk
               </span>
               <div className="glass-tile-inverted tile-risk p-3 flex-1">
                 <p className="text-sm font-medium">{summary.primary_risk}</p>
               </div>
-            </div>
+            </motion.div>
           )}
           {summary.action_bias && (
-            <div className="flex flex-col">
+            <motion.div 
+              className="flex flex-col"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+            >
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Action Bias
               </span>
               <div className="glass-tile-inverted tile-action p-3 flex-1">
                 <p className="text-sm font-medium">{summary.action_bias}</p>
               </div>
-            </div>
+            </motion.div>
           )}
           {bestLens && (
-            <div className="flex flex-col">
+            <motion.div 
+              className="flex flex-col"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Best Lens
               </span>
@@ -127,7 +147,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
                   {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary dark:text-primary">({bestLens.score})</span>
                 </p>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
