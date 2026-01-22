@@ -161,22 +161,19 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
             "flex h-full w-full flex-col relative overflow-hidden",
             // Smooth content reveal transition
             "transition-[opacity,transform] duration-300 ease-out",
-            // Liquid Glass material
-            "bg-white/90 dark:bg-[hsl(0_0%_12%/0.75)]",
-            "backdrop-blur-2xl",
+            // Liquid Glass material - matched to Messages Sidebar
+            "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
+            "backdrop-blur-[28px] backdrop-saturate-[160%]",
             // Rounded corners - all corners for floating panel
             "rounded-2xl",
             // Border with subtle edge refraction
-            "border border-black/[0.06] dark:border-white/[0.12]",
-            // Soft shadow for floating depth + inner top highlight
-            "shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.12),0_4px_16px_-4px_hsl(0_0%_0%/0.08),inset_0_1px_0_0_hsl(0_0%_100%/0.5)]",
-            "dark:shadow-[0_8px_40px_-8px_hsl(0_0%_0%/0.5),0_4px_20px_-4px_hsl(0_0%_0%/0.35),inset_0_1px_0_0_hsl(0_0%_100%/0.08)]",
-            // Top edge glow pseudo-element via before
-            "before:absolute before:inset-x-0 before:top-0 before:h-24 before:bg-gradient-to-b before:from-white/40 before:to-transparent before:rounded-t-2xl before:pointer-events-none before:transition-opacity before:duration-300 before:z-10",
-            "dark:before:from-white/[0.06] dark:before:to-transparent",
-            // Bottom edge vignette via after
-            "after:absolute after:inset-x-0 after:bottom-0 after:h-20 after:bg-gradient-to-t after:from-black/[0.04] after:to-transparent after:rounded-b-2xl after:pointer-events-none after:z-10",
-            "dark:after:from-black/20 dark:after:to-transparent"
+            "border border-black/[0.08] dark:border-white/[0.1]",
+            // Simplified shadow matching Messages Sidebar
+            "shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]",
+            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
+            // Subtle top highlight line
+            "before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:pointer-events-none before:z-10",
+            "dark:before:via-white/20"
           )}
         >
           {children}
