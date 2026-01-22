@@ -155,7 +155,7 @@ export default function SymbolPage() {
         </div>
 
         {/* Charts Section - Unified header with tabs and time range */}
-        <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
+        <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)} data-tour="chart-tabs">
           {/* Mobile: TimeRangeSelector above tabs */}
           {activeTab !== 'momentum' && <div className="flex justify-center mb-3 md:hidden">
               <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
@@ -206,7 +206,7 @@ export default function SymbolPage() {
         <Separator className="my-6 md:my-8 glass-divider" />
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-[31px]">
+        <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-[31px]" data-tour="decision-lens">
           <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
         </div>
 
@@ -230,7 +230,7 @@ export default function SymbolPage() {
           duration: 0.3,
           ease: "easeOut"
         }}>
-              <Card className="p-4 md:p-5 glass-card flex flex-col">
+              <Card className="p-4 md:p-5 glass-card flex flex-col" data-tour="intelligence-summary">
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
