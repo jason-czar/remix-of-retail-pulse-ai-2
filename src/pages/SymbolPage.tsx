@@ -238,10 +238,10 @@ export default function SymbolPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6"
           >
             {/* Intelligence Summary Card */}
-            <Card className="p-4 md:p-5 glass-card h-full flex flex-col lg:col-span-2">
+            <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
@@ -270,7 +270,7 @@ export default function SymbolPage() {
             </Card>
 
             {/* Lens-specific Readiness Card (only shown for non-summary lenses) */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <LensReadinessCard symbol={symbol} lens={decisionLens} />
             </div>
           </motion.div>
