@@ -22,8 +22,12 @@ const LENS_KEY_MAP: Record<string, string> = {
   'product-launch': 'product_launch',
   'activist-risk': 'activist_risk'
 };
-function cleanNarrativeIdSuffix(text: string): string {
-  return text.replace(/\s+[a-z][a-z0-9]*(?:_[a-z0-9]+){2,}$/i, '').trim();
+function cleanNarrativeText(text: string): string {
+  // Remove trailing technical IDs (e.g., "narrative_abc_123")
+  let cleaned = text.replace(/\s+[a-z][a-z0-9]*(?:_[a-z0-9]+){2,}$/i, '');
+  // Remove non-ASCII characters (Chinese, special symbols, etc.)
+  cleaned = cleaned.replace(/[^\x00-\x7F]/g, '');
+  return cleaned.trim();
 }
 function getTimingBadge(timing: DecisionReadiness["recommended_timing"]) {
   switch (timing) {
@@ -157,7 +161,7 @@ export function LensReadinessCard({
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-[10px] border-bullish/40 text-bullish bg-bullish/10 px-2 py-0">
-                        {narrative}
+                        {cleanNarrativeText(narrative)}
                       </Badge>)}
                   </div>
                 </div>}
@@ -170,7 +174,7 @@ export function LensReadinessCard({
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0">
-                        {narrative}
+                        {cleanNarrativeText(narrative)}
                       </Badge>)}
                   </div>
                 </div>}
@@ -220,7 +224,7 @@ export function LensReadinessCard({
                   </div>
                   <ul className="space-y-1.5">
                     {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
-                        {cleanNarrativeIdSuffix(concern)}
+                        {cleanNarrativeText(concern)}
                       </li>)}
                   </ul>
                 </div>}
@@ -233,7 +237,7 @@ export function LensReadinessCard({
                   </div>
                   <ul className="space-y-1.5">
                     {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
-                        {cleanNarrativeIdSuffix(action)}
+                        {cleanNarrativeText(action)}
                       </li>)}
                   </ul>
                 </div>}
