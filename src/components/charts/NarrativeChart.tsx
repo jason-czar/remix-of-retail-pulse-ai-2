@@ -1,6 +1,8 @@
 import { ComposedChart, BarChart, Bar, Line, Area, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Rectangle, ReferenceLine, ReferenceArea, Customized } from "recharts";
 import { motion } from "framer-motion";
 import { useMemo, useEffect, useState, useCallback, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { triggerHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -1064,6 +1066,38 @@ function HourlyStackedNarrativeChart({
   const volumeEndDate = timeRange === "1D" ? todayEnd.toISOString() : undefined;
   const { data: volumeData } = useVolumeAnalytics(symbol, timeRange, volumeStartDate, volumeEndDate);
 
+  // Fetch actual volume history from database for past days
+  // The volume_history table stores hourly_distribution with real message counts
+  const targetDateStr = displayDate.toISOString().split('T')[0];
+  const { data: volumeHistoryData } = useQuery({
+    queryKey: ['volume-history-hourly', symbol, targetDateStr],
+    queryFn: async () => {
+      // Get the latest volume_history record for the target date
+      const startOfDay = new Date(displayDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(displayDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      const { data, error } = await supabase
+        .from('volume_history')
+        .select('hourly_distribution, daily_volume, recorded_at')
+        .eq('symbol', symbol)
+        .gte('recorded_at', startOfDay.toISOString())
+        .lte('recorded_at', endOfDay.toISOString())
+        .order('recorded_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Failed to fetch volume history:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!symbol && timeRange === "1D",
+    staleTime: 60000,
+  });
+
   // Determine price line color based on current price vs previous close
   // Used for UI elements like the toggle icon and side panel
   const priceLineColor = useMemo(() => {
@@ -1098,35 +1132,51 @@ function HourlyStackedNarrativeChart({
     };
   }, [priceData?.prices, priceData?.previousClose]);
 
-  // Build a map of hour -> actual message volume from the analytics API
+  // Build a map of hour -> actual message volume
+  // Prefer volume_history from database (has real hourly counts) over analytics API
   const hourlyVolumeMap = useMemo(() => {
     const map = new Map<number, number>();
-    if (!volumeData || volumeData.length === 0) return map;
     
-    volumeData.forEach((item: any) => {
-      // Parse hour from time string - handles both "HH:MM" (e.g., "15:00") and "8am/12pm" formats
-      const timeStr = item.time?.toLowerCase() || "";
-      let hour = 0;
-      
-      // Handle "HH:MM" format (e.g., "15:00", "09:00") from StockTwits analytics API
-      if (timeStr.includes(":")) {
-        const parts = timeStr.split(":");
-        hour = parseInt(parts[0], 10);
-      }
-      // Handle "8am", "12pm" format
-      else if (timeStr.includes("am")) {
-        const num = parseInt(timeStr.replace("am", ""));
-        hour = num === 12 ? 0 : num; // 12am = 0
-      } else if (timeStr.includes("pm")) {
-        const num = parseInt(timeStr.replace("pm", ""));
-        hour = num === 12 ? 12 : num + 12; // 12pm = 12, 1pm = 13, etc.
-      }
-      
-      map.set(hour, item.volume || 0);
-    });
+    // First, try to use volume_history from database (most accurate)
+    if (volumeHistoryData?.hourly_distribution && Array.isArray(volumeHistoryData.hourly_distribution)) {
+      volumeHistoryData.hourly_distribution.forEach((item: any) => {
+        // Parse hour from "HH:MM" format (e.g., "09:00", "14:00")
+        const hourStr = item.hour || "";
+        if (hourStr.includes(":")) {
+          const hour = parseInt(hourStr.split(":")[0], 10);
+          map.set(hour, item.count || 0);
+        }
+      });
+      if (map.size > 0) return map;
+    }
+    
+    // Fallback to analytics API data (only has current day data)
+    if (volumeData && volumeData.length > 0) {
+      volumeData.forEach((item: any) => {
+        // Parse hour from time string - handles both "HH:MM" (e.g., "15:00") and "8am/12pm" formats
+        const timeStr = item.time?.toLowerCase() || "";
+        let hour = 0;
+        
+        // Handle "HH:MM" format (e.g., "15:00", "09:00") from StockTwits analytics API
+        if (timeStr.includes(":")) {
+          const parts = timeStr.split(":");
+          hour = parseInt(parts[0], 10);
+        }
+        // Handle "8am", "12pm" format
+        else if (timeStr.includes("am")) {
+          const num = parseInt(timeStr.replace("am", ""));
+          hour = num === 12 ? 0 : num; // 12am = 0
+        } else if (timeStr.includes("pm")) {
+          const num = parseInt(timeStr.replace("pm", ""));
+          hour = num === 12 ? 12 : num + 12; // 12pm = 12, 1pm = 13, etc.
+        }
+        
+        map.set(hour, item.volume || 0);
+      });
+    }
     
     return map;
-  }, [volumeData]);
+  }, [volumeData, volumeHistoryData]);
 
   const {
     stackedChartData,
@@ -1157,9 +1207,6 @@ function HourlyStackedNarrativeChart({
         });
       }
 
-      // Track actual message volumes from history (for fallback when analytics API doesn't have data)
-      const hourlyMessageCounts: Map<number, number> = new Map();
-      
       // Fill in actual narrative data if available
       if (historyData?.data && historyData.data.length > 0) {
         const filteredData = historyData.data.filter(point => {
@@ -1173,10 +1220,6 @@ function HourlyStackedNarrativeChart({
           const slot = hourlyNarratives.get(hourIndex);
           if (slot) {
             slot.hasNarrativeData = true;
-            
-            // Store the actual message count from history (this is the real volume, not AI sample size)
-            const currentCount = hourlyMessageCounts.get(hourIndex) || 0;
-            hourlyMessageCounts.set(hourIndex, currentCount + (point.message_count || 0));
             
             // Aggregate narratives for this hour
             if (point.narratives && Array.isArray(point.narratives)) {
@@ -1197,34 +1240,18 @@ function HourlyStackedNarrativeChart({
         });
       }
 
-      // Get actual hourly volumes from the analytics API
-      // Note: Analytics API only provides today's data, so for previous days we fall back to 
-      // message_count from narrative_history (the actual volume stored with each snapshot)
+      // Get actual hourly volumes from hourlyVolumeMap
+      // This map now prefers volume_history (has real counts) over analytics API
       const hourlyVolumes: Map<number, number> = new Map();
       
       for (let h = START_HOUR; h <= END_HOUR; h++) {
-        const analyticsVolume = hourlyVolumeMap.get(h) || 0;
-        hourlyVolumes.set(h, analyticsVolume);
+        const volume = hourlyVolumeMap.get(h) || 0;
+        hourlyVolumes.set(h, volume);
       }
 
-      // Check if we have any meaningful analytics volume data
-      const totalAnalyticsVolume = Array.from(hourlyVolumes.values()).reduce((sum, v) => sum + v, 0);
-      const totalHistoryVolume = Array.from(hourlyMessageCounts.values()).reduce((sum, v) => sum + v, 0);
-      
-      // Determine if we're viewing a past day (analytics API only returns current day data)
-      const nowForComparison = new Date();
-      const isShowingPastDay = displayDate.toDateString() !== nowForComparison.toDateString();
-      
-      // Use history message counts as fallback when:
-      // 1. Analytics API has no data for this day
-      // 2. We're viewing a previous trading day (weekends, pre-market) - analytics only returns current day
-      // 3. Analytics volume is suspiciously low compared to history (stale/wrong day data)
-      const analyticsIsStale = isShowingPastDay || (totalHistoryVolume > 0 && totalAnalyticsVolume < totalHistoryVolume * 0.1);
-      const useHistoryFallback = (totalAnalyticsVolume === 0 && totalHistoryVolume > 0) || analyticsIsStale;
-      
-      // Use whichever data source has values for max calculation
-      const effectiveVolumes = useHistoryFallback ? hourlyMessageCounts : hourlyVolumes;
-      const volumeValues = Array.from(effectiveVolumes.values());
+      // Calculate total volume and max for scaling
+      const volumeValues = Array.from(hourlyVolumes.values());
+      const totalVolumeFromMap = volumeValues.reduce((sum, v) => sum + v, 0);
       const maxVolume = Math.max(...volumeValues, 1);
 
       // Determine the current hour for filtering out future hours
@@ -1250,11 +1277,9 @@ function HourlyStackedNarrativeChart({
         const hourNarr = hourlyNarratives.get(hour)!;
         const topNarratives = hourNarr.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
         
-        // Use analytics volume if available, otherwise fall back to history message_count
+        // Get actual volume for this hour from hourlyVolumes (from volume_history or analytics API)
         // For future hours, always show 0 volume
-        const analyticsVolume = isFutureHour ? 0 : (hourlyVolumes.get(hour) || 0);
-        const historyVolume = isFutureHour ? 0 : (hourlyMessageCounts.get(hour) || 0);
-        const effectiveVolume = useHistoryFallback ? historyVolume : analyticsVolume;
+        const hourlyVolume = isFutureHour ? 0 : (hourlyVolumes.get(hour) || 0);
         
         // Calculate total sample count from narratives for proportional scaling
         const totalSampleCount = topNarratives.reduce((sum, n) => sum + n.count, 0);
@@ -1264,16 +1289,15 @@ function HourlyStackedNarrativeChart({
           slotIndex: slotIdx,
           hourIndex: hour,
           isHourStart,
-          // Use effective volume for display (analytics if available, narrative sample count otherwise)
-          // Future hours always show 0
-          totalMessages: effectiveVolume,
-          volumePercent: effectiveVolume / maxVolume * 100,
-          isEmpty: isFutureHour || (!hourNarr.hasNarrativeData && effectiveVolume === 0),
+          // Use actual hourly volume for display
+          totalMessages: hourlyVolume,
+          volumePercent: hourlyVolume / maxVolume * 100,
+          isEmpty: isFutureHour || (!hourNarr.hasNarrativeData && hourlyVolume === 0),
           isFutureHour
         };
 
         // Add narrative segment data to ALL slots (for tooltip)
-        // Scale segment heights proportionally
+        // Scale segment heights proportionally to actual hourly volume
         // For future hours, clear all segment data to avoid showing misleading tooltips
         if (isFutureHour) {
           for (let i = 0; i < MAX_SEGMENTS; i++) {
@@ -1287,17 +1311,9 @@ function HourlyStackedNarrativeChart({
             flatData[`segment${idx}Name`] = n.name;
             flatData[`segment${idx}Sentiment`] = n.sentiment;
             
-            // When using history fallback, scale segment values proportionally to history volume
-            // Otherwise scale by the proportion of analytics volume
-            let scaledValue: number;
-            if (useHistoryFallback) {
-              // Scale proportionally to history message count for this hour
-              const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
-              scaledValue = Math.round(proportion * historyVolume);
-            } else {
-              const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
-              scaledValue = Math.round(proportion * analyticsVolume);
-            }
+            // Scale segment values proportionally to actual hourly volume
+            const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
+            const scaledValue = Math.round(proportion * hourlyVolume);
             
             // Only set segment VALUE at hour start for bar rendering
             flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
