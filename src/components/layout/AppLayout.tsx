@@ -1,20 +1,22 @@
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarLayout } from "./SidebarLayout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  DashboardSkeleton, 
+  SymbolPageSkeleton, 
+  AnalyticsSkeleton 
+} from "@/components/skeletons";
 
-// Skeleton loader that matches common page layouts
-function ContentLoader() {
+// Generic fallback skeleton for routes without specific skeletons
+function GenericSkeleton() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Header skeleton */}
       <div className="space-y-2">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-72" />
       </div>
-      
-      {/* Card grid skeleton */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="glass-card p-5 space-y-4">
@@ -33,8 +35,6 @@ function ContentLoader() {
           </div>
         ))}
       </div>
-      
-      {/* Large card skeleton */}
       <div className="glass-card p-6 space-y-4">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-[200px] w-full" />
@@ -43,8 +43,35 @@ function ContentLoader() {
   );
 }
 
+// Route-specific skeleton loader component
+function RouteSkeletonLoader({ pathname }: { pathname: string }) {
+  // Dashboard routes
+  if (pathname === "/" || pathname === "/dashboard") {
+    return <DashboardSkeleton />;
+  }
+  
+  // Symbol page routes
+  if (pathname.startsWith("/symbol/")) {
+    return <SymbolPageSkeleton />;
+  }
+  
+  // Analytics page
+  if (pathname === "/analytics") {
+    return <AnalyticsSkeleton />;
+  }
+  
+  // Fallback to generic skeleton
+  return <GenericSkeleton />;
+}
+
 export function AppLayout() {
   const location = useLocation();
+
+  // Memoize the skeleton component to prevent unnecessary re-renders
+  const skeletonFallback = useMemo(
+    () => <RouteSkeletonLoader pathname={location.pathname} />,
+    [location.pathname]
+  );
 
   return (
     <SidebarLayout>
@@ -57,7 +84,7 @@ export function AppLayout() {
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="h-full"
         >
-          <Suspense fallback={<ContentLoader />}>
+          <Suspense fallback={skeletonFallback}>
             <Outlet />
           </Suspense>
         </motion.div>
