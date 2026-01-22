@@ -273,7 +273,7 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               )}
 
               {/* Confidence footer */}
-              <div className="flex items-center justify-end gap-1.5 pt-2">
+              <div className="flex items-center justify-start gap-1.5 pt-2">
                 <span className="text-xs text-muted-foreground">Confidence:</span>
                 <span className="text-xs font-medium">
                   {Math.round(overlay.confidence * 100)}%
