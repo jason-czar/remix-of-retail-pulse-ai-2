@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { useState } from "react";
 import { SearchCommand } from "@/components/SearchCommand";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -26,6 +28,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleSignOut = async () => {
     await signOut();
@@ -36,12 +39,26 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     return email.substring(0, 2).toUpperCase();
   };
 
+  // Mobile: Use the original Header navigation
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex flex-col w-full">
+        <Header />
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Desktop: Use sidebar navigation
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <SidebarInset className="flex flex-col">
-          {/* Top bar with trigger, search, theme, and user */}
+          {/* Top bar with search, theme, and user */}
           <header className="sticky top-0 z-40 flex h-14 items-center gap-4 bg-transparent px-4">
             
             <div className="flex-1" />
