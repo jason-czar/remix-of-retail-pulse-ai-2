@@ -149,7 +149,7 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
         {/* Two-column layout - 35/65 split */}
         <div className="grid grid-cols-1 md:grid-cols-[7fr_13fr] gap-4 md:gap-6">
           {/* Left Column: Readiness Score + Narratives (35%) */}
-          <div className="space-y-4 min-w-0">
+          <div className="flex flex-col min-w-0">
             {/* Readiness Score with progress bar */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -169,7 +169,7 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
             </div>
 
             {/* Blocking and Supportive narratives - compact */}
-            <div className="space-y-3">
+            <div className="space-y-3 mb-4">
               {/* Blocking Narratives */}
               {readiness.blocking_narratives.length > 0 && (
                 <div className="p-3 rounded-lg bg-bearish/5 border border-bearish/20">
