@@ -12,6 +12,7 @@ import { SearchCommand } from "@/components/SearchCommand";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MessagesSidebarProvider, useMessagesSidebar } from "@/contexts/MessagesSidebarContext";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -27,15 +28,17 @@ interface SidebarLayoutProps {
 }
 
 // Inner component that can access sidebar context
-function DesktopLayoutContent({ children }: { children: ReactNode }) {
+function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode; rightSidebar?: ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { state, sidebarWidth } = useSidebar();
+  const { state, sidebarWidth: leftSidebarWidth } = useSidebar();
+  const { isOpen: rightSidebarOpen, sidebarWidth: rightSidebarWidth } = useMessagesSidebar();
   
-  const isExpanded = state === "expanded";
-  // Calculate offset: sidebar width + 12px inset + 8px gap
-  const contentOffset = isExpanded ? sidebarWidth + 20 : 68; // 48px collapsed + 20px
+  const isLeftExpanded = state === "expanded";
+  // Calculate offsets: sidebar width + 12px inset + 8px gap
+  const leftOffset = isLeftExpanded ? leftSidebarWidth + 20 : 68; // 48px collapsed + 20px
+  const rightOffset = rightSidebarOpen ? rightSidebarWidth + 20 : 0; // 12px inset + 8px gap
 
   const handleSignOut = async () => {
     await signOut();
@@ -47,9 +50,10 @@ function DesktopLayoutContent({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div 
-      className="flex-1 flex flex-col w-full transition-[margin] duration-300 ease-out"
-      style={{ marginLeft: `${contentOffset}px` }}
+    <>
+      <div 
+        className="flex-1 flex flex-col w-full transition-[margin] duration-300 ease-out"
+        style={{ marginLeft: `${leftOffset}px`, marginRight: `${rightOffset}px` }}
     >
       {/* Top bar with search, theme, and user */}
       <header className="sticky top-0 z-40 flex h-14 items-center gap-4 bg-transparent px-4">
@@ -103,8 +107,12 @@ function DesktopLayoutContent({ children }: { children: ReactNode }) {
         {children}
       </main>
       
-      <CompactFooter />
-    </div>
+        <CompactFooter />
+      </div>
+      
+      {/* Right sidebar rendered inside the context */}
+      {rightSidebar}
+    </>
   );
 }
 
@@ -126,21 +134,18 @@ export function SidebarLayout({ children, rightSidebar }: SidebarLayoutProps) {
 
   // Desktop: Use sidebar navigation with overlay sidebar (doesn't push content)
   return (
-    <>
+    <MessagesSidebarProvider>
       <SidebarProvider defaultOpen={true}>
         <div className="min-h-screen flex flex-col w-full relative">
           {/* Sidebar as fixed overlay */}
           <AppSidebar />
           
-          {/* Main content with offset for sidebar */}
-          <DesktopLayoutContent>
+          {/* Main content with offset for both sidebars */}
+          <DesktopLayoutContent rightSidebar={rightSidebar}>
             {children}
           </DesktopLayoutContent>
         </div>
       </SidebarProvider>
-      
-      {/* Right sidebar rendered outside SidebarProvider to avoid positioning issues */}
-      {rightSidebar}
-    </>
+    </MessagesSidebarProvider>
   );
 }

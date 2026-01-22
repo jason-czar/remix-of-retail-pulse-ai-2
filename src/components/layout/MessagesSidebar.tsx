@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useMessagesSidebar } from "@/contexts/MessagesSidebarContext";
 
 const SIDEBAR_MIN_WIDTH = 240;
 const SIDEBAR_MAX_WIDTH = 480;
@@ -62,24 +63,25 @@ function CondensedMessageCard({ user, content, time, searchTerm }: Omit<Message,
 }
 
 export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebarProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setIsOpen, sidebarWidth, setSidebarWidth } = useMessagesSidebar();
   const [searchTerm, setSearchTerm] = useState("");
   const [isResizing, setIsResizing] = useState(false);
   
-  // Resizable width state - stored in localStorage
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
+  // Sync width from localStorage on mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('messages-sidebar:width');
-      return saved ? parseInt(saved, 10) : SIDEBAR_DEFAULT_WIDTH;
+      if (saved) {
+        setSidebarWidth(parseInt(saved, 10));
+      }
     }
-    return SIDEBAR_DEFAULT_WIDTH;
-  });
+  }, [setSidebarWidth]);
   
   const handleSetSidebarWidth = useCallback((width: number) => {
     const clampedWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
     setSidebarWidth(clampedWidth);
     localStorage.setItem('messages-sidebar:width', String(clampedWidth));
-  }, []);
+  }, [setSidebarWidth]);
   
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
