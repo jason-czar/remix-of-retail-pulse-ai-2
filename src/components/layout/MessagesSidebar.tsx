@@ -63,27 +63,43 @@ function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Om
   );
 }
 
+type SentimentFilter = "all" | "bullish" | "bearish" | "neutral";
+
 export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sentimentFilter, setSentimentFilter] = useState<SentimentFilter>("all");
 
-  // Filter messages based on search term
+  // Filter messages based on search term and sentiment
   const filteredMessages = useMemo(() => {
-    if (!searchTerm.trim() || searchTerm.length < 2) {
-      return messages.slice(0, 50);
+    let result = messages;
+    
+    // Apply sentiment filter
+    if (sentimentFilter !== "all") {
+      result = result.filter(msg => msg.sentiment.toLowerCase() === sentimentFilter);
     }
     
-    const term = searchTerm.toLowerCase().trim();
-    return messages
-      .filter(msg => 
+    // Apply search filter
+    if (searchTerm.trim() && searchTerm.length >= 2) {
+      const term = searchTerm.toLowerCase().trim();
+      result = result.filter(msg => 
         msg.content.toLowerCase().includes(term) ||
         msg.user.toLowerCase().includes(term)
-      )
-      .slice(0, 50);
-  }, [messages, searchTerm]);
+      );
+    }
+    
+    return result.slice(0, 50);
+  }, [messages, searchTerm, sentimentFilter]);
 
   const displayCount = filteredMessages.length;
   const totalCount = messages.length;
+  
+  const filterButtons: { value: SentimentFilter; label: string; variant: "default" | "bullish" | "bearish" | "neutral" }[] = [
+    { value: "all", label: "All", variant: "default" },
+    { value: "bullish", label: "Bullish", variant: "bullish" },
+    { value: "bearish", label: "Bearish", variant: "bearish" },
+    { value: "neutral", label: "Neutral", variant: "neutral" },
+  ];
 
   return (
     <>
@@ -161,7 +177,7 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="h-8 pl-8 pr-8 text-xs glass-input"
                 />
-                {searchTerm && (
+              {searchTerm && (
                   <button
                     onClick={() => setSearchTerm("")}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
@@ -169,6 +185,31 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
                     <X className="h-3.5 w-3.5" />
                   </button>
                 )}
+              </div>
+              
+              {/* Sentiment Filter Buttons */}
+              <div className="flex gap-1.5 mt-2.5">
+                {filterButtons.map((btn) => (
+                  <button
+                    key={btn.value}
+                    onClick={() => setSentimentFilter(btn.value)}
+                    className={cn(
+                      "flex-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all duration-200",
+                      "border",
+                      sentimentFilter === btn.value
+                        ? btn.value === "bullish"
+                          ? "bg-[#00C805]/20 text-[#00C805] border-[#00C805]/30"
+                          : btn.value === "bearish"
+                          ? "bg-[#FF5000]/20 text-[#FF5000] border-[#FF5000]/30"
+                          : btn.value === "neutral"
+                          ? "bg-[#0DA2E7]/20 text-[#0DA2E7] border-[#0DA2E7]/30"
+                          : "bg-primary/20 text-primary border-primary/30"
+                        : "bg-transparent text-muted-foreground border-black/[0.06] dark:border-white/[0.08] hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+                    )}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -213,7 +254,7 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
             {/* Footer */}
             <div className="p-3 border-t border-black/[0.04] dark:border-white/[0.06]">
               <p className="text-[10px] text-muted-foreground text-center">
-                {searchTerm ? (
+                {searchTerm || sentimentFilter !== "all" ? (
                   <>Found {displayCount} matching messages</>
                 ) : (
                   <>Showing {displayCount} of {totalCount} messages</>
