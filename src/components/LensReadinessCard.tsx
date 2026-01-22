@@ -100,7 +100,7 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
   
   if (isLoading) {
     return (
-      <Card className="p-4 md:p-5 glass-card mt-4">
+      <Card className="p-4 md:p-5 glass-card h-full">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Skeleton className="h-5 w-36" />
@@ -131,17 +131,12 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
   const TimingIcon = timing.icon;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-    >
-      <Card className="p-4 md:p-5 glass-card mt-4 border-primary/10">
-        {/* Header with lens name and timing badge */}
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="font-semibold text-sm md:text-base">
-            {getLensDisplayName(lens)} Readiness
-          </h4>
+    <Card className="p-4 md:p-5 glass-card h-full border-primary/10">
+      {/* Header with lens name and timing badge */}
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-semibold text-sm md:text-base">
+          {getLensDisplayName(lens)} Readiness
+        </h4>
           <Badge 
             variant={timing.variant} 
             className={cn("text-xs px-2.5 py-0.5", timing.bgClass)}
@@ -285,9 +280,8 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
                 </span>
               </div>
             </div>
-          )}
-        </div>
-      </Card>
-    </motion.div>
+        )}
+      </div>
+    </Card>
   );
 }
