@@ -83,6 +83,9 @@ export default function SymbolPage() {
     data: messages = [],
     isLoading: messagesLoading
   } = useSymbolMessages(symbol, 50, start, end);
+  
+  // Debug: Log messages data flow
+  console.log('[SymbolPage] Messages from hook:', messages?.length, 'isLoading:', messagesLoading);
   const {
     data: lensSummaryData,
     isLoading: lensSummaryLoading,

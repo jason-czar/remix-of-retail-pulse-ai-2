@@ -68,6 +68,9 @@ function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Om
 }
 
 export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebarProps) {
+  // Debug: Log messages received
+  console.log('[MessagesSidebar] Received messages:', messages?.length, 'isLoading:', isLoading, 'sample:', messages?.[0]);
+  
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isResizing, setIsResizing] = useState(false);
