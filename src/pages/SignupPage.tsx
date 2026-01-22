@@ -40,8 +40,8 @@ export default function SignupPage() {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Account created! Let's set up your profile.");
-      navigate("/onboarding");
+      toast.success("Welcome to DeriveStreet!");
+      navigate("/dashboard");
     }
   };
 
