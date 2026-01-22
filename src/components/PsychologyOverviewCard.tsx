@@ -97,7 +97,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Dominant Emotion
               </span>
-              <div className="glass-tile-inverted tile-emotion p-3 flex-1">
+              <div className="glass-tile-inverted p-3 flex-1">
                 <p className="text-sm font-medium capitalize">{summary.dominant_emotion}</p>
               </div>
             </motion.div>
@@ -112,7 +112,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Primary Risk
               </span>
-              <div className="glass-tile-inverted tile-risk p-3 flex-1">
+              <div className="glass-tile-inverted p-3 flex-1">
                 <p className="text-sm font-medium">{summary.primary_risk}</p>
               </div>
             </motion.div>
@@ -127,7 +127,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Action Bias
               </span>
-              <div className="glass-tile-inverted tile-action p-3 flex-1">
+              <div className="glass-tile-inverted p-3 flex-1">
                 <p className="text-sm font-medium">{summary.action_bias}</p>
               </div>
             </motion.div>
@@ -142,7 +142,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Best Lens
               </span>
-              <div className="glass-tile-inverted tile-lens p-3 flex-1">
+              <div className="glass-tile-inverted p-3 flex-1">
                 <p className="text-sm font-medium">
                   {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary dark:text-primary">({bestLens.score})</span>
                 </p>
