@@ -750,66 +750,70 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
     <div className="w-full">
       {/* Main chart area with fixed height */}
       <div className="h-[354px] md:h-[554px]">
-        {/* Header - Stacked on mobile */}
+        {/* Header - Collapsible */}
         <Collapsible defaultOpen={false}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4">
-            <div className="flex items-center gap-2 md:gap-3 flex-1">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="flex items-center gap-2">
               <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
                 <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
-                  {historyData?.data && historyData.data.length > 0 && (
-                    <span className="px-1.5 md:px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] md:text-xs">
-                      {historyData.data.length} snapshots
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs md:text-sm text-muted-foreground hidden md:block">
-                  Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
-                </p>
-              </div>
+              <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
             </div>
             
-            <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
-              {is1DView && (
-                <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
-              )}
-              
-              {showPriceToggle && (
-                <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-                  <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
-                  <Switch
-                    checked={showPriceOverlay}
-                    onCheckedChange={setShowPriceOverlay}
-                    className="data-[state=checked]:bg-primary"
-                    style={showPriceOverlay ? { backgroundColor: priceLineColor } : undefined}
-                  />
-                </div>
-              )}
-              
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => refetch()}
-                disabled={isFetching}
-                className="h-7 md:h-8 px-2 md:px-3 text-[10px] md:text-xs shrink-0"
-              >
-                <RefreshCw className={`h-3 w-3 md:h-3.5 md:w-3.5 mr-1 md:mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Refresh</span>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 md:h-8 px-1.5 md:px-2 shrink-0 group">
+                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </Button>
-              
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 md:h-8 px-1.5 md:px-2 shrink-0 group">
-                  <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                </Button>
-              </CollapsibleTrigger>
-            </div>
+            </CollapsibleTrigger>
           </div>
 
-          {/* Legend - Collapsible content */}
+          {/* Collapsible content - contains all header details and controls */}
           <CollapsibleContent>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4 pb-3 border-b border-border/30">
+              <div className="flex items-center gap-2 md:gap-3 flex-1">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {historyData?.data && historyData.data.length > 0 && (
+                      <span className="px-1.5 md:px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] md:text-xs">
+                        {historyData.data.length} snapshots
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
+                {is1DView && (
+                  <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />
+                )}
+                
+                {showPriceToggle && (
+                  <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                    <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
+                    <Switch
+                      checked={showPriceOverlay}
+                      onCheckedChange={setShowPriceOverlay}
+                      className="data-[state=checked]:bg-primary"
+                      style={showPriceOverlay ? { backgroundColor: priceLineColor } : undefined}
+                    />
+                  </div>
+                )}
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                  className="h-7 md:h-8 px-2 md:px-3 text-[10px] md:text-xs shrink-0"
+                >
+                  <RefreshCw className={`h-3 w-3 md:h-3.5 md:w-3.5 mr-1 md:mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
               {/* Dominant emotion indicator */}
               {dominantEmotionData && (
