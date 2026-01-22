@@ -137,8 +137,15 @@ serve(async (req) => {
 
     const lensContext = getLensPromptContext(lens as DecisionLens);
     const lensName = getLensDisplayName(lens as DecisionLens);
+    
+    // Summary lens needs more tokens for comprehensive overview
+    const isSummaryLens = lens === 'summary';
+    const maxTokens = isSummaryLens ? 512 : 256;
+    const lengthGuidance = isSummaryLens 
+      ? "Provide a comprehensive 4-6 sentence summary covering the key themes, dominant emotions, and significant narratives. Be thorough but concise."
+      : "Provide a 2-3 sentence summary of what retail investors are saying that's relevant to this decision lens. Be specific about what you found (or didn't find). If there's limited discussion on this topic, say so clearly.";
 
-    console.log(`Generating ${lensName} summary for ${symbol} from ${messages.length} messages...`);
+    console.log(`Generating ${lensName} summary for ${symbol} from ${messages.length} messages (max_tokens: ${maxTokens})...`);
 
     // Call Lovable AI for lens-specific summary
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -152,7 +159,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a senior equity research analyst providing decision-support insights. Your analysis should be concise (2-3 sentences), actionable, and focused on the specific lens the user has selected. Write in a professional, authoritative tone.`,
+            content: `You are a senior equity research analyst providing decision-support insights. Your analysis should be actionable and focused on the specific lens the user has selected. Write in a professional, authoritative tone. Always complete your sentences - never end mid-thought.`,
           },
           {
             role: "user",
@@ -160,13 +167,13 @@ serve(async (req) => {
 
 ${lensContext}
 
-Provide a 2-3 sentence summary of what retail investors are saying that's relevant to this decision lens. Be specific about what you found (or didn't find). If there's limited discussion on this topic, say so clearly.
+${lengthGuidance}
 
 Messages:
 ${messageTexts}`,
           },
         ],
-        max_tokens: 256,
+        max_tokens: maxTokens,
       }),
     });
 
