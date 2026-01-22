@@ -57,7 +57,7 @@ export function AppSidebar() {
   
   const isActive = (path: string) => location.pathname === path || location.pathname + location.search === path;
   const isSymbolActive = location.pathname.startsWith("/symbol/");
-  const isSettingsActive = location.pathname === "/settings";
+  const isSettingsActive = location.pathname.startsWith("/settings");
 
   return (
     <Sidebar collapsible="icon">
