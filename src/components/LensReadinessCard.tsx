@@ -168,29 +168,8 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
               </div>
             </div>
 
-            {/* Blocking and Supportive narratives - compact */}
-            <div className="space-y-3 mb-4">
-              {/* Blocking Narratives */}
-              {readiness.blocking_narratives.length > 0 && (
-                <div className="p-3 rounded-lg bg-bearish/5 border border-bearish/20">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <TrendingDown className="h-3.5 w-3.5 text-bearish" />
-                    <span className="text-xs font-medium text-bearish">Blocking</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
-                      <Badge 
-                        key={idx} 
-                        variant="outline" 
-                        className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0"
-                      >
-                        {narrative}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+            {/* Supportive and Blocking narratives - compact */}
+            <div className="space-y-3 mt-4 mb-4">
               {/* Supportive Narratives */}
               {readiness.supportive_narratives.length > 0 && (
                 <div className="p-3 rounded-lg bg-bullish/5 border border-bullish/20">
@@ -204,6 +183,27 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
                         key={idx} 
                         variant="outline" 
                         className="text-[10px] border-bullish/40 text-bullish bg-bullish/10 px-2 py-0"
+                      >
+                        {narrative}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Blocking Narratives */}
+              {readiness.blocking_narratives.length > 0 && (
+                <div className="p-3 rounded-lg bg-bearish/5 border border-bearish/20">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <TrendingDown className="h-3.5 w-3.5 text-bearish" />
+                    <span className="text-xs font-medium text-bearish">Blocking</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
+                      <Badge 
+                        key={idx} 
+                        variant="outline" 
+                        className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0"
                       >
                         {narrative}
                       </Badge>
