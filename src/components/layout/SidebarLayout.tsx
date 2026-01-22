@@ -37,8 +37,8 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
   
   const isLeftExpanded = state === "expanded";
   // Calculate padding to center content between sidebars
-  // Left: sidebar width + 12px inset
-  const leftPadding = isLeftExpanded ? leftSidebarWidth + 24 : 72; // 48px collapsed + 24px
+  // Left: sidebar width + small gap
+  const leftPadding = isLeftExpanded ? leftSidebarWidth + 12 : 64; // 48px collapsed + 16px
   // Right: only when messages sidebar is open
   const rightPadding = rightSidebarOpen ? rightSidebarWidth + 24 : 16;
 
