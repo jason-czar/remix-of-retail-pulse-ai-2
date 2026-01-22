@@ -100,16 +100,16 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
   
   if (isLoading) {
     return (
-      <Card className="p-5 md:p-6 glass-card h-full">
-        <div className="space-y-4">
+      <Card className="p-4 md:p-5 glass-card h-full">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-6 w-44" />
-            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-5 w-20" />
           </div>
-          <Skeleton className="h-2.5 w-full" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-2 w-full" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
           </div>
         </div>
       </Card>
@@ -131,155 +131,155 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
   const TimingIcon = timing.icon;
 
   return (
-    <Card className="p-5 md:p-6 glass-card h-full border-primary/10">
+    <Card className="p-4 md:p-5 glass-card h-full border-primary/10">
       {/* Header with lens name and timing badge */}
-      <div className="flex items-center justify-between mb-5">
-        <h4 className="font-semibold text-base md:text-lg">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-semibold text-sm md:text-base">
           {getLensDisplayName(lens)} Readiness
         </h4>
-        <Badge 
-          variant={timing.variant} 
-          className={cn("text-sm px-3 py-1", timing.bgClass)}
-        >
-          <TimingIcon className="h-4 w-4 mr-1.5" />
-          {timing.label}
-        </Badge>
-      </div>
-
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
-        {/* Left Column: Readiness Score + Narratives */}
-        <div className="space-y-5">
-          {/* Readiness Score with progress bar */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Readiness Score</span>
-              <span className={cn("text-2xl font-display font-semibold", getReadinessColor(readiness.readiness_score))}>
-                {readiness.readiness_score}
-              </span>
-            </div>
-            <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-secondary/50">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${readiness.readiness_score}%` }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-                className={cn("h-full rounded-full", getProgressColor(readiness.readiness_score))}
-              />
-            </div>
-          </div>
-
-          {/* Blocking and Supportive narratives */}
-          <div className="space-y-4">
-            {/* Blocking Narratives */}
-            {readiness.blocking_narratives.length > 0 && (
-              <div className="p-4 rounded-xl bg-bearish/5 border border-bearish/20">
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingDown className="h-4 w-4 text-bearish" />
-                  <span className="text-sm font-medium text-bearish">Blocking</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
-                    <Badge 
-                      key={idx} 
-                      variant="outline" 
-                      className="text-xs border-bearish/40 text-bearish bg-bearish/10 px-2.5 py-0.5"
-                    >
-                      {narrative}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Supportive Narratives */}
-            {readiness.supportive_narratives.length > 0 && (
-              <div className="p-4 rounded-xl bg-bullish/5 border border-bullish/20">
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="h-4 w-4 text-bullish" />
-                  <span className="text-sm font-medium text-bullish">Supportive</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => (
-                    <Badge 
-                      key={idx} 
-                      variant="outline" 
-                      className="text-xs border-bullish/40 text-bullish bg-bullish/10 px-2.5 py-0.5"
-                    >
-                      {narrative}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Delay recommendation */}
-          {readiness.recommended_delay && readiness.recommended_delay !== "None" && (
-            <p className="text-sm text-muted-foreground italic">
-              Recommended delay: {readiness.recommended_delay}
-            </p>
-          )}
+          <Badge 
+            variant={timing.variant} 
+            className={cn("text-xs px-2.5 py-0.5", timing.bgClass)}
+          >
+            <TimingIcon className="h-3 w-3 mr-1" />
+            {timing.label}
+          </Badge>
         </div>
 
-        {/* Right Column: Risk, Concerns, Actions */}
-        {overlay && (
-          <div className="md:border-l md:border-border/40 md:pl-8 space-y-5">
-            {/* Risk Score - inline header */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Risk Score</span>
-              <span className={cn("text-xl font-semibold", getRiskColor(overlay.risk_score))}>
-                {overlay.risk_score}/100
-              </span>
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          {/* Left Column: Readiness Score + Narratives */}
+          <div className="space-y-4">
+            {/* Readiness Score with progress bar */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs text-muted-foreground">Readiness Score</span>
+                <span className={cn("text-xl font-display", getReadinessColor(readiness.readiness_score))}>
+                  {readiness.readiness_score}
+                </span>
+              </div>
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary/50">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${readiness.readiness_score}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className={cn("h-full rounded-full", getProgressColor(readiness.readiness_score))}
+                />
+              </div>
             </div>
 
-            {/* Key Concerns */}
-            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <AlertCircle className="h-4 w-4 text-warning" />
-                  <span className="text-sm font-medium">Key Concerns</span>
+            {/* Blocking and Supportive narratives - compact */}
+            <div className="space-y-3">
+              {/* Blocking Narratives */}
+              {readiness.blocking_narratives.length > 0 && (
+                <div className="p-3 rounded-lg bg-bearish/5 border border-bearish/20">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <TrendingDown className="h-3.5 w-3.5 text-bearish" />
+                    <span className="text-xs font-medium text-bearish">Blocking</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
+                      <Badge 
+                        key={idx} 
+                        variant="outline" 
+                        className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0"
+                      >
+                        {narrative}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <ul className="space-y-2">
-                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
-                    <li 
-                      key={idx} 
-                      className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-2 before:h-2 before:bg-warning/60 before:rounded-full"
-                    >
-                      {cleanNarrativeIdSuffix(concern)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              )}
 
-            {/* Recommended Actions */}
-            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Recommended Actions</span>
+              {/* Supportive Narratives */}
+              {readiness.supportive_narratives.length > 0 && (
+                <div className="p-3 rounded-lg bg-bullish/5 border border-bullish/20">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <TrendingUp className="h-3.5 w-3.5 text-bullish" />
+                    <span className="text-xs font-medium text-bullish">Supportive</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => (
+                      <Badge 
+                        key={idx} 
+                        variant="outline" 
+                        className="text-[10px] border-bullish/40 text-bullish bg-bullish/10 px-2 py-0"
+                      >
+                        {narrative}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <ul className="space-y-2">
-                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
-                    <li 
-                      key={idx} 
-                      className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-2 before:h-2 before:bg-primary/60 before:rounded-full"
-                    >
-                      {cleanNarrativeIdSuffix(action)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Confidence footer */}
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <span className="text-xs text-muted-foreground">Confidence:</span>
-              <span className="text-sm font-medium">
-                {Math.round(overlay.confidence * 100)}%
-              </span>
+              )}
             </div>
+
+            {/* Delay recommendation */}
+            {readiness.recommended_delay && readiness.recommended_delay !== "None" && (
+              <p className="text-xs text-muted-foreground italic">
+                Recommended delay: {readiness.recommended_delay}
+              </p>
+            )}
           </div>
+
+          {/* Right Column: Risk, Concerns, Actions */}
+          {overlay && (
+            <div className="md:border-l md:border-border/40 md:pl-6 space-y-4">
+              {/* Risk Score - inline header */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Risk Score</span>
+                <span className={cn("text-lg font-medium", getRiskColor(overlay.risk_score))}>
+                  {overlay.risk_score}/100
+                </span>
+              </div>
+
+              {/* Key Concerns - compact */}
+              {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <AlertCircle className="h-3.5 w-3.5 text-warning" />
+                    <span className="text-xs font-medium">Key Concerns</span>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
+                      <li 
+                        key={idx} 
+                        className="text-xs text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full"
+                      >
+                        {cleanNarrativeIdSuffix(concern)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Recommended Actions - compact */}
+              {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Lightbulb className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-xs font-medium">Recommended Actions</span>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
+                      <li 
+                        key={idx} 
+                        className="text-xs text-muted-foreground pl-3 relative before:absolute before:left-0 before:top-[6px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full"
+                      >
+                        {cleanNarrativeIdSuffix(action)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Confidence footer */}
+              <div className="flex items-center justify-end gap-1.5 pt-1">
+                <span className="text-[10px] text-muted-foreground">Confidence:</span>
+                <span className="text-[10px] font-medium">
+                  {Math.round(overlay.confidence * 100)}%
+                </span>
+              </div>
+            </div>
         )}
       </div>
     </Card>
