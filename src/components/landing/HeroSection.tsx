@@ -33,7 +33,7 @@ export function HeroSection() {
             ease: [0.25, 0.4, 0.25, 1]
           }}>
               <span className="block font-normal font-sans text-3xl">
-                We read the retail investor market to derive actionable insight.
+                We derive actionable insight from the retail investor market.
               </span>
             </motion.h1>
 
