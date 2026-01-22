@@ -82,7 +82,7 @@ export default function SymbolPage() {
   const {
     data: messages = [],
     isLoading: messagesLoading
-  } = useSymbolMessages(symbol, 10, start, end);
+  } = useSymbolMessages(symbol, 50, start, end);
   const {
     data: lensSummaryData,
     isLoading: lensSummaryLoading,

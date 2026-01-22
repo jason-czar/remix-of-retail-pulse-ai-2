@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Clock, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageSquare, Clock, ExternalLink, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,23 @@ interface MessagesSidebarProps {
   isLoading: boolean;
 }
 
-function CondensedMessageCard({ user, content, sentiment, time }: Omit<Message, 'id' | 'emotions'>) {
+function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Omit<Message, 'id' | 'emotions'> & { searchTerm?: string }) {
+  // Highlight matching text if there's a search term
+  const highlightText = (text: string) => {
+    if (!searchTerm || searchTerm.trim().length < 2) return text;
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, i) => 
+      regex.test(part) ? (
+        <mark key={i} className="bg-primary/30 text-foreground rounded-sm px-0.5">{part}</mark>
+      ) : (
+        part
+      )
+    );
+  };
+
   return (
     <div className="p-3 glass-list-item">
       <div className="flex items-center justify-between mb-1.5">
@@ -35,7 +52,9 @@ function CondensedMessageCard({ user, content, sentiment, time }: Omit<Message, 
           {sentiment}
         </Badge>
       </div>
-      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{content}</p>
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+        {highlightText(content)}
+      </p>
       <span className="text-[10px] text-muted-foreground/70 flex items-center gap-1 mt-1.5">
         <Clock className="h-2.5 w-2.5" />
         {time}
@@ -46,6 +65,25 @@ function CondensedMessageCard({ user, content, sentiment, time }: Omit<Message, 
 
 export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Filter messages based on search term
+  const filteredMessages = useMemo(() => {
+    if (!searchTerm.trim() || searchTerm.length < 2) {
+      return messages.slice(0, 50);
+    }
+    
+    const term = searchTerm.toLowerCase().trim();
+    return messages
+      .filter(msg => 
+        msg.content.toLowerCase().includes(term) ||
+        msg.user.toLowerCase().includes(term)
+      )
+      .slice(0, 50);
+  }, [messages, searchTerm]);
+
+  const displayCount = filteredMessages.length;
+  const totalCount = messages.length;
 
   return (
     <>
@@ -100,7 +138,7 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
           >
             {/* Header */}
             <div className="p-4 border-b border-black/[0.04] dark:border-white/[0.06]">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-primary" />
                   <h3 className="font-semibold text-sm">Messages</h3>
@@ -112,25 +150,57 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
                   </Button>
                 </Link>
               </div>
+              
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search messages..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-8 pl-8 pr-8 text-xs glass-input"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Messages List */}
             <ScrollArea className="flex-1 px-3 py-3">
               <div className="space-y-2">
                 {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
+                  Array.from({ length: 8 }).map((_, i) => (
                     <Skeleton key={i} className="h-20 w-full rounded-lg" />
                   ))
-                ) : messages.length > 0 ? (
-                  messages.slice(0, 10).map((msg) => (
+                ) : filteredMessages.length > 0 ? (
+                  filteredMessages.map((msg) => (
                     <CondensedMessageCard
                       key={msg.id}
                       user={msg.user}
                       content={msg.content}
                       sentiment={msg.sentiment}
                       time={msg.time}
+                      searchTerm={searchTerm}
                     />
                   ))
+                ) : searchTerm ? (
+                  <div className="text-center py-8">
+                    <Search className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">No messages matching "{searchTerm}"</p>
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="text-xs text-primary mt-2 hover:underline"
+                    >
+                      Clear search
+                    </button>
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <MessageSquare className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
@@ -143,7 +213,11 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
             {/* Footer */}
             <div className="p-3 border-t border-black/[0.04] dark:border-white/[0.06]">
               <p className="text-[10px] text-muted-foreground text-center">
-                Showing latest {Math.min(messages.length, 10)} of {messages.length} messages
+                {searchTerm ? (
+                  <>Found {displayCount} matching messages</>
+                ) : (
+                  <>Showing {displayCount} of {totalCount} messages</>
+                )}
               </p>
             </div>
           </motion.aside>
