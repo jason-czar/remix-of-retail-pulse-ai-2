@@ -24,6 +24,7 @@ import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHisto
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
 import { NCSTrendChart } from "@/components/NCSTrendChart";
 import { HistoricalEpisodeMatcher } from "@/components/HistoricalEpisodeMatcher";
+import { WelcomeTour } from "@/components/WelcomeTour";
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
@@ -113,6 +114,7 @@ export default function SymbolPage() {
   
   return (
     <>
+      <WelcomeTour />
       <div className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
         <div className="flex flex-row items-start justify-between gap-4 mb-4 md:mb-6 md:mt-[23px] mt-[15px]">
