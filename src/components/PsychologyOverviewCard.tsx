@@ -92,7 +92,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Dominant Emotion
               </span>
-              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-bearish/20 dark:border-bearish/25 flex-1">
+              <div className="p-3 bg-bearish/5 dark:bg-bearish/[0.06] backdrop-blur-sm rounded-lg border border-bearish/20 dark:border-bearish/25 flex-1">
                 <p className="text-sm font-medium capitalize">{summary.dominant_emotion}</p>
               </div>
             </div>
@@ -102,7 +102,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Primary Risk
               </span>
-              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-warning/20 dark:border-warning/20 flex-1">
+              <div className="p-3 bg-warning/5 dark:bg-warning/[0.06] backdrop-blur-sm rounded-lg border border-warning/20 dark:border-warning/25 flex-1">
                 <p className="text-sm font-medium text-warning">{summary.primary_risk}</p>
               </div>
             </div>
@@ -112,7 +112,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Action Bias
               </span>
-              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-bullish/20 dark:border-bullish/25 flex-1">
+              <div className="p-3 bg-bullish/5 dark:bg-bullish/[0.06] backdrop-blur-sm rounded-lg border border-bullish/20 dark:border-bullish/25 flex-1">
                 <p className="text-sm font-medium">{summary.action_bias}</p>
               </div>
             </div>
@@ -122,7 +122,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
                 Best Lens
               </span>
-              <div className="p-3 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-neutral/20 dark:border-neutral/25 flex-1">
+              <div className="p-3 bg-neutral/5 dark:bg-neutral/[0.06] backdrop-blur-sm rounded-lg border border-neutral/20 dark:border-neutral/25 flex-1">
                 <p className="text-sm font-medium">
                   {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary">({bestLens.score})</span>
                 </p>
