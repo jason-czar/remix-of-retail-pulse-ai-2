@@ -279,19 +279,6 @@ export default function SymbolPage() {
         <div className="mb-8 md:mb-12">
           <NarrativeImpactHistorySection symbol={symbol} />
         </div>
-
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-          {statsLoading ? Array.from({
-        length: 4
-      }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />) : <>
-              <MetricCard label="Sentiment Score" value={data.sentiment} change={data.sentimentChange} icon={TrendIcon} trend={data.trend} />
-              <MetricCard label="Message Volume" value={data.volume} change={data.volumeChange} suffix=" (24h)" />
-              <MetricCard label="1H Change" value={`${data.sentimentChange > 0 ? "+" : ""}${data.sentimentChange}%`} trend={data.sentimentChange >= 0 ? "bullish" : "bearish"} />
-              <MetricCard label="7D Trend" value={data.trend === 'bullish' ? 'Strengthening' : data.trend === 'bearish' ? 'Weakening' : 'Stable'} trend={data.trend} />
-            </>}
-        </div>
       </div>;
 
   // Always use SidebarLayout for symbol pages (both auth and non-auth users)
