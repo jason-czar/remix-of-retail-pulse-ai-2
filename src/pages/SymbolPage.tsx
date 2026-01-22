@@ -19,6 +19,7 @@ import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
 import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
 import { LensReadinessCard } from "@/components/LensReadinessCard";
+import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
 import { DecisionReadinessDashboard } from "@/components/DecisionReadinessDashboard";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
@@ -269,9 +270,13 @@ export default function SymbolPage() {
               )}
             </Card>
 
-            {/* Lens-specific Readiness Card (only shown for non-summary lenses) */}
+            {/* Right side: Readiness Card (non-summary) or Psychology Overview (summary) */}
             <div className="lg:col-span-2">
-              <LensReadinessCard symbol={symbol} lens={decisionLens} />
+              {decisionLens === 'summary' ? (
+                <PsychologyOverviewCard symbol={symbol} />
+              ) : (
+                <LensReadinessCard symbol={symbol} lens={decisionLens} />
+              )}
             </div>
           </motion.div>
         </AnimatePresence>
