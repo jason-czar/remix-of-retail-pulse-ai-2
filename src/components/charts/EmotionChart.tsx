@@ -749,7 +749,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   return (
     <div className="w-full">
       {/* Main chart area with fixed height */}
-      <div className="h-[280px] md:h-[480px]">
+      <div className="h-[354px] md:h-[554px]">
         {/* Header - Stacked on mobile */}
         <Collapsible defaultOpen={false}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4">
