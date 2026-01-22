@@ -30,13 +30,23 @@ import { useDefaultWatchlist } from "@/hooks/use-watchlist";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
+import { User, Key, CreditCard, Database, Palette } from "lucide-react";
+
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Trending", url: "/trending", icon: TrendingUp },
   { title: "Alerts", url: "/alerts", icon: Bell },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "API", url: "/api-docs", icon: FileCode },
-  { title: "Settings", url: "/settings", icon: Settings },
+];
+
+const settingsSubItems = [
+  { title: "Profile", url: "/settings?tab=profile", icon: User },
+  { title: "API Keys", url: "/settings?tab=api-keys", icon: Key },
+  { title: "Alerts", url: "/settings?tab=alerts", icon: Bell },
+  { title: "Data", url: "/settings?tab=data", icon: Database },
+  { title: "Appearance", url: "/settings?tab=appearance", icon: Palette },
+  { title: "Subscription", url: "/settings?tab=subscription", icon: CreditCard },
 ];
 
 export function AppSidebar() {
@@ -45,8 +55,9 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { data: watchlist } = useDefaultWatchlist();
   
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || location.pathname + location.search === path;
   const isSymbolActive = location.pathname.startsWith("/symbol/");
+  const isSettingsActive = location.pathname === "/settings";
 
   return (
     <Sidebar collapsible="icon">
@@ -128,6 +139,44 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Settings with dropdown */}
+              <Collapsible defaultOpen={isSettingsActive} className="group/settings">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton 
+                      tooltip="Settings"
+                      isActive={isSettingsActive}
+                      className="w-full"
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span className={cn(collapsed && "sr-only")}>Settings</span>
+                      <ChevronDown className={cn(
+                        "ml-auto h-4 w-4 transition-transform duration-200",
+                        "group-data-[state=open]/settings:rotate-180",
+                        collapsed && "sr-only"
+                      )} />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {settingsSubItems.map((item) => (
+                        <SidebarMenuSubItem key={item.title}>
+                          <SidebarMenuSubButton 
+                            asChild 
+                            isActive={isActive(item.url)}
+                          >
+                            <Link to={item.url}>
+                              <item.icon className="h-3 w-3" />
+                              <span>{item.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
