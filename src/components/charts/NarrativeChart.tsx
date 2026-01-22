@@ -1635,9 +1635,9 @@ function HourlyStackedNarrativeChart({
       }
       return sum;
     }), 1);
-    // Scale domain to make bars ~25% shorter (multiply by 1.35 instead of 1.1)
+    // Scale domain to make bars shorter - multiply by 1.8 (25% reduction from 1.35)
     // This leaves more vertical space for the price line overlay
-    return [0, Math.ceil(maxStackedValue * 1.35)];
+    return [0, Math.ceil(maxStackedValue * 1.8)];
   }, [chartDataWithPrice]);
 
   // Calculate price domain for right Y-axis - tight padding to fill vertical space
