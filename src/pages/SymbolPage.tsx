@@ -261,9 +261,11 @@ export default function SymbolPage() {
                   <Skeleton className="h-4 w-3/4" />
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-                  <FormattedSummary text={summary} />
-                </p>
+                <div className="flex-1 max-h-48 overflow-y-auto scrollbar-thin">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    <FormattedSummary text={summary} />
+                  </p>
+                </div>
               )}
             </Card>
 
