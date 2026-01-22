@@ -110,64 +110,56 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
           {summary.dominant_emotion && (
             <motion.div 
-              className="flex flex-col"
+              className="glass-tile-inverted p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 }}
             >
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+              <span className="text-xs text-muted-foreground mb-1.5">
                 Dominant Emotion
               </span>
-              <div className="glass-tile-inverted p-3 flex-1">
-                <p className="text-sm font-medium capitalize">{summary.dominant_emotion}</p>
-              </div>
+              <p className="text-base font-semibold capitalize">{summary.dominant_emotion}</p>
             </motion.div>
           )}
           {summary.primary_risk && (
             <motion.div 
-              className="flex flex-col"
+              className="glass-tile-inverted p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
             >
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+              <span className="text-xs text-muted-foreground mb-1.5">
                 Primary Risk
               </span>
-              <div className="glass-tile-inverted p-3 flex-1">
-                <p className="text-sm font-medium">{summary.primary_risk}</p>
-              </div>
+              <p className="text-base font-semibold">{summary.primary_risk}</p>
             </motion.div>
           )}
           {summary.action_bias && (
             <motion.div 
-              className="flex flex-col"
+              className="glass-tile-inverted p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 }}
             >
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+              <span className="text-xs text-muted-foreground mb-1.5">
                 Action Bias
               </span>
-              <div className="glass-tile-inverted p-3 flex-1">
-                <p className="text-sm font-medium">{summary.action_bias}</p>
-              </div>
+              <p className="text-base font-semibold">{summary.action_bias}</p>
             </motion.div>
           )}
           {bestLens && (
             <motion.div 
-              className="flex flex-col"
+              className="glass-tile-inverted p-4 flex flex-col"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground/70 mb-1.5 font-medium">
+              <span className="text-xs text-muted-foreground mb-1.5">
                 Best Lens
               </span>
-              <div className="glass-tile-inverted p-3 flex-1">
-                <p className="text-sm font-medium">
-                  {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary dark:text-primary">({bestLens.score})</span>
-                </p>
-              </div>
+              <p className="text-base font-semibold">
+                {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary dark:text-primary">({bestLens.score})</span>
+              </p>
             </motion.div>
           )}
         </div>
