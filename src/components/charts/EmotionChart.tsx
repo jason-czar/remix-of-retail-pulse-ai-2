@@ -770,34 +770,6 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                   Signal emotions: Euphoria, Regret, Capitulation, FOMO, Greed
                 </p>
               </div>
-              
-              {/* Mini emotion breakdown - hidden on mobile */}
-              {dominantEmotionData && (
-                <div className="hidden lg:flex ml-4 pl-4 border-l border-border/50 items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full animate-pulse" 
-                      style={{ backgroundColor: dominantEmotionData.color }}
-                    />
-                    <span className="text-sm font-medium" style={{ color: dominantEmotionData.color }}>
-                      {dominantEmotionData.emotion}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {dominantEmotionData.intensity}% dominant
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {dominantEmotionData.topEmotions.slice(1).map((e, i) => (
-                      <div 
-                        key={e.name}
-                        className="w-2 h-2 rounded-full opacity-60" 
-                        style={{ backgroundColor: e.color }}
-                        title={`${e.name}: ${e.score}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
             
             <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide">
@@ -838,7 +810,36 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
 
           {/* Legend - Collapsible content */}
           <CollapsibleContent>
-            <div className="flex flex-wrap gap-1 md:gap-2 mb-3 md:mb-4">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
+              {/* Dominant emotion indicator */}
+              {dominantEmotionData && (
+                <div className="flex items-center gap-2 md:gap-3 pr-3 md:pr-4 border-r border-border/50">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full animate-pulse" 
+                      style={{ backgroundColor: dominantEmotionData.color }}
+                    />
+                    <span className="text-sm font-medium" style={{ color: dominantEmotionData.color }}>
+                      {dominantEmotionData.emotion}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {dominantEmotionData.intensity}% dominant
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {dominantEmotionData.topEmotions.slice(1).map((e, i) => (
+                      <div 
+                        key={e.name}
+                        className="w-2 h-2 rounded-full opacity-60" 
+                        style={{ backgroundColor: e.color }}
+                        title={`${e.name}: ${e.score}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Emotion legend badges */}
               {DEFAULT_SIGNAL_EMOTIONS.map(emotion => (
                 <div key={emotion} className="flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded bg-card/50 border border-border text-[10px] md:text-xs">
                   <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-sm" style={{ backgroundColor: EMOTION_COLORS[emotion] }} />
