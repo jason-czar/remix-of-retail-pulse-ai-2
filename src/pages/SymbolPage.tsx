@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SentimentChart } from "@/components/charts/SentimentChart";
 import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
-import { VolumeChart } from "@/components/charts/VolumeChart";
+
 import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
@@ -165,7 +165,6 @@ export default function SymbolPage() {
                 <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
                 <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
                 <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
-                <TabsTrigger value="volume" className="text-xs md:text-sm px-2.5 md:px-3">Volume</TabsTrigger>
               </TabsList>
             </div>
             {/* Desktop: TimeRangeSelector in header row */}
@@ -212,11 +211,6 @@ export default function SymbolPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="volume" forceMount={activeTab === 'volume' ? true : undefined} className={activeTab !== 'volume' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-                </div>
-              </TabsContent>
             </motion.div>
           </AnimatePresence>
         </Tabs>
