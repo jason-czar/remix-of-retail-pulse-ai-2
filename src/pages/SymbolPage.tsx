@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { SidebarLayout } from "@/components/layout/SidebarLayout";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,8 @@ export default function SymbolPage() {
   const [activeTab, setActiveTab] = useState<string>('narratives');
   const [decisionLens, setDecisionLens] = useState<DecisionLens>('summary');
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isAdmin = user?.email === 'admin@czar.ing';
 
   // Calculate date range based on selection (timezone-aware)
   const {
@@ -150,79 +153,83 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Charts Section - Unified header with tabs and time range */}
-        <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
-          {/* Mobile: TimeRangeSelector above tabs */}
-          {activeTab !== 'momentum' && <div className="flex justify-center mb-3 md:hidden">
-              <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-            </div>}
+        {/* Charts Section - Admin only */}
+        {isAdmin && (
+          <>
+            <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)}>
+              {/* Mobile: TimeRangeSelector above tabs */}
+              {activeTab !== 'momentum' && <div className="flex justify-center mb-3 md:hidden">
+                  <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+                </div>}
 
-          {/* Unified header row: TabsList + TimeRangeSelector (desktop only) */}
-          <div className="flex-col justify-between gap-3 mb-2 md:mb-3 px-0 flex md:flex-row">
-            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-              <TabsList className="w-max md:w-auto">
-                <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
-                <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
-                <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
-                <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
-                <TabsTrigger value="volume" className="text-xs md:text-sm px-2.5 md:px-3">Volume</TabsTrigger>
-              </TabsList>
-            </div>
-            {/* Desktop: TimeRangeSelector in header row */}
-            {activeTab !== 'momentum' && <div className="hidden md:block">
-                <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-              </div>}
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{
-          opacity: 0,
-          y: 8
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} exit={{
-          opacity: 0,
-          y: -8
-        }} transition={{
-          duration: 0.2,
-          ease: "easeInOut"
-        }}>
-              <TabsContent value="narratives" forceMount={activeTab === 'narratives' ? true : undefined} className={activeTab !== 'narratives' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+              {/* Unified header row: TabsList + TimeRangeSelector (desktop only) */}
+              <div className="flex-col justify-between gap-3 mb-2 md:mb-3 px-0 flex md:flex-row">
+                <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+                  <TabsList className="w-max md:w-auto">
+                    <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
+                    <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
+                    <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
+                    <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
+                    <TabsTrigger value="volume" className="text-xs md:text-sm px-2.5 md:px-3">Volume</TabsTrigger>
+                  </TabsList>
                 </div>
-              </TabsContent>
+                {/* Desktop: TimeRangeSelector in header row */}
+                {activeTab !== 'momentum' && <div className="hidden md:block">
+                    <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+                  </div>}
+              </div>
 
-              <TabsContent value="emotions" forceMount={activeTab === 'emotions' ? true : undefined} className={activeTab !== 'emotions' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-                </div>
-              </TabsContent>
+              <AnimatePresence mode="wait">
+                <motion.div key={activeTab} initial={{
+              opacity: 0,
+              y: 8
+            }} animate={{
+              opacity: 1,
+              y: 0
+            }} exit={{
+              opacity: 0,
+              y: -8
+            }} transition={{
+              duration: 0.2,
+              ease: "easeInOut"
+            }}>
+                  <TabsContent value="narratives" forceMount={activeTab === 'narratives' ? true : undefined} className={activeTab !== 'narratives' ? 'hidden' : ''}>
+                    <div className="-mx-4 md:mx-0">
+                      <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                    </div>
+                  </TabsContent>
 
-              <TabsContent value="sentiment" forceMount={activeTab === 'sentiment' ? true : undefined} className={activeTab !== 'sentiment' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-                </div>
-              </TabsContent>
+                  <TabsContent value="emotions" forceMount={activeTab === 'emotions' ? true : undefined} className={activeTab !== 'emotions' ? 'hidden' : ''}>
+                    <div className="-mx-4 md:mx-0">
+                      <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                    </div>
+                  </TabsContent>
 
-              <TabsContent value="momentum" forceMount={activeTab === 'momentum' ? true : undefined} className={activeTab !== 'momentum' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <EmotionMomentumChart symbol={symbol} days={7} />
-                </div>
-              </TabsContent>
+                  <TabsContent value="sentiment" forceMount={activeTab === 'sentiment' ? true : undefined} className={activeTab !== 'sentiment' ? 'hidden' : ''}>
+                    <div className="-mx-4 md:mx-0">
+                      <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                    </div>
+                  </TabsContent>
 
-              <TabsContent value="volume" forceMount={activeTab === 'volume' ? true : undefined} className={activeTab !== 'volume' ? 'hidden' : ''}>
-                <div className="-mx-4 md:mx-0">
-                  <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-                </div>
-              </TabsContent>
-            </motion.div>
-          </AnimatePresence>
-        </Tabs>
+                  <TabsContent value="momentum" forceMount={activeTab === 'momentum' ? true : undefined} className={activeTab !== 'momentum' ? 'hidden' : ''}>
+                    <div className="-mx-4 md:mx-0">
+                      <EmotionMomentumChart symbol={symbol} days={7} />
+                    </div>
+                  </TabsContent>
 
-        {/* Section divider */}
-        <Separator className="my-6 md:my-8 glass-divider" />
+                  <TabsContent value="volume" forceMount={activeTab === 'volume' ? true : undefined} className={activeTab !== 'volume' ? 'hidden' : ''}>
+                    <div className="-mx-4 md:mx-0">
+                      <VolumeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                    </div>
+                  </TabsContent>
+                </motion.div>
+              </AnimatePresence>
+            </Tabs>
+
+            {/* Section divider */}
+            <Separator className="my-6 md:my-8 glass-divider" />
+          </>
+        )}
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
         <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-[31px]">
