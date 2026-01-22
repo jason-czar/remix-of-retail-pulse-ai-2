@@ -828,4 +828,97 @@
       0 4px 12px hsl(0 0% 0% / 0.25),
       inset 0 1px 0 hsl(0 0% 100% / 0.05);
   }
+
+  /* =========================================================
+     Glass Tile Inverted — Opposite-theme glass for metric tiles
+     Light mode: dark translucent glass
+     Dark mode: light translucent glass
+     ========================================================= */
+  .glass-tile-inverted {
+    @apply relative overflow-hidden;
+    border-radius: 0.5rem;
+    backdrop-filter: blur(12px) saturate(140%);
+    transition: 
+      background-color 200ms ease,
+      box-shadow 200ms ease,
+      border-color 200ms ease;
+  }
+
+  /* Light mode: Dark glass tiles */
+  :not(.dark) .glass-tile-inverted {
+    background: hsl(0 0% 12% / 0.85);
+    border: 1px solid hsl(0 0% 0% / 0.15);
+    color: hsl(0 0% 98%);
+    box-shadow: 
+      0 4px 16px hsl(0 0% 0% / 0.15),
+      0 1px 3px hsl(0 0% 0% / 0.1),
+      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+  }
+
+  :not(.dark) .glass-tile-inverted:hover {
+    background: hsl(0 0% 14% / 0.9);
+    box-shadow: 
+      0 6px 20px hsl(0 0% 0% / 0.2),
+      0 2px 6px hsl(0 0% 0% / 0.12),
+      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+  }
+
+  /* Dark mode: Light glass tiles */
+  .dark .glass-tile-inverted {
+    background: hsl(0 0% 100% / 0.92);
+    border: 1px solid hsl(0 0% 100% / 0.4);
+    color: hsl(0 0% 12%);
+    box-shadow: 
+      0 4px 16px hsl(0 0% 0% / 0.3),
+      0 1px 3px hsl(0 0% 0% / 0.2),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+  }
+
+  .dark .glass-tile-inverted:hover {
+    background: hsl(0 0% 100% / 0.96);
+    box-shadow: 
+      0 6px 20px hsl(0 0% 0% / 0.4),
+      0 2px 6px hsl(0 0% 0% / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.7);
+  }
+
+  /* Inverted tile with bearish/orange tint (Dominant Emotion) */
+  :not(.dark) .glass-tile-inverted.tile-emotion {
+    background: hsl(19 40% 16% / 0.88);
+    border-color: hsl(19 100% 50% / 0.25);
+  }
+  .dark .glass-tile-inverted.tile-emotion {
+    background: hsl(19 100% 98% / 0.92);
+    border-color: hsl(19 100% 50% / 0.2);
+  }
+
+  /* Inverted tile with warning tint (Primary Risk) */
+  :not(.dark) .glass-tile-inverted.tile-risk {
+    background: hsl(19 35% 14% / 0.88);
+    border-color: hsl(19 100% 50% / 0.25);
+  }
+  .dark .glass-tile-inverted.tile-risk {
+    background: hsl(19 90% 98% / 0.92);
+    border-color: hsl(19 100% 50% / 0.2);
+  }
+
+  /* Inverted tile with bullish/green tint (Action Bias) */
+  :not(.dark) .glass-tile-inverted.tile-action {
+    background: hsl(122 30% 14% / 0.88);
+    border-color: hsl(122 100% 39% / 0.25);
+  }
+  .dark .glass-tile-inverted.tile-action {
+    background: hsl(122 60% 98% / 0.92);
+    border-color: hsl(122 100% 39% / 0.2);
+  }
+
+  /* Inverted tile with neutral/blue tint (Best Lens) */
+  :not(.dark) .glass-tile-inverted.tile-lens {
+    background: hsl(199 35% 16% / 0.88);
+    border-color: hsl(199 89% 48% / 0.25);
+  }
+  .dark .glass-tile-inverted.tile-lens {
+    background: hsl(199 80% 98% / 0.92);
+    border-color: hsl(199 89% 48% / 0.2);
+  }
 }
