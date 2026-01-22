@@ -239,7 +239,7 @@ export default function SymbolPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6"
+            className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-4 lg:gap-6"
           >
             {/* Intelligence Summary Card */}
             <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
@@ -271,7 +271,7 @@ export default function SymbolPage() {
             </Card>
 
             {/* Right side: Readiness Card (non-summary) or Psychology Overview (summary) */}
-            <div className="lg:col-span-2">
+            <div>
               {decisionLens === 'summary' ? (
                 <PsychologyOverviewCard symbol={symbol} />
               ) : (
