@@ -239,11 +239,11 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
                     <AlertCircle className="h-4 w-4 text-warning" />
                     <span className="text-sm font-medium">Key Concerns</span>
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="space-y-1.5">
                     {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
                       <li 
                         key={idx} 
-                        className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full"
+                        className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full"
                       >
                         {cleanNarrativeIdSuffix(concern)}
                       </li>
@@ -259,11 +259,11 @@ export function LensReadinessCard({ symbol, lens }: LensReadinessCardProps) {
                     <Lightbulb className="h-4 w-4 text-primary" />
                     <span className="text-sm font-medium">Recommended Actions</span>
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="space-y-1.5">
                     {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
                       <li 
                         key={idx} 
-                        className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[8px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full"
+                        className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full"
                       >
                         {cleanNarrativeIdSuffix(action)}
                       </li>
