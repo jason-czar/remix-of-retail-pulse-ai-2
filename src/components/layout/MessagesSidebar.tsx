@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Clock, ExternalLink, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+
+const SIDEBAR_MIN_WIDTH = 240;
+const SIDEBAR_MAX_WIDTH = 480;
+const SIDEBAR_DEFAULT_WIDTH = 320;
 
 interface Message {
   id: string;
@@ -66,6 +70,55 @@ function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Om
 export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isResizing, setIsResizing] = useState(false);
+  
+  // Resizable width state - stored in localStorage
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('messages-sidebar:width');
+      return saved ? parseInt(saved, 10) : SIDEBAR_DEFAULT_WIDTH;
+    }
+    return SIDEBAR_DEFAULT_WIDTH;
+  });
+  
+  const handleSetSidebarWidth = useCallback((width: number) => {
+    const clampedWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
+    setSidebarWidth(clampedWidth);
+    localStorage.setItem('messages-sidebar:width', String(clampedWidth));
+  }, []);
+  
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+  
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      // For right sidebar, width = viewport width - mouse X position - right inset (12px)
+      const newWidth = window.innerWidth - e.clientX - 12;
+      handleSetSidebarWidth(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+    
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, handleSetSidebarWidth]);
 
   // Filter messages based on search term
   const filteredMessages = useMemo(() => {
@@ -98,8 +151,9 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
           "rounded-l-lg",
           "hover:bg-black/[0.06] dark:hover:bg-white/[0.1]",
           "transition-all duration-200",
-          isOpen && "right-[280px] md:right-[320px]"
+          "hidden md:flex" // Hide on mobile, show on desktop
         )}
+        style={isOpen ? { right: `${sidebarWidth}px` } : undefined}
       >
         {isOpen ? (
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -118,11 +172,10 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            transition={isResizing ? { duration: 0 } : { type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
               "fixed right-3 top-3 bottom-3 z-40",
-              "w-[280px] md:w-[320px]",
-              "flex flex-col",
+              "flex flex-col relative overflow-hidden",
               // Liquid Glass styling matching left sidebar
               "rounded-2xl",
               "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
@@ -131,11 +184,26 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
               "shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]",
               "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
               // Top edge highlight for glass refraction effect
-              "before:absolute before:inset-x-0 before:top-0 before:h-[1px]",
+              "before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:z-10",
               "before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent",
               "dark:before:via-white/20"
             )}
+            style={{ width: `${sidebarWidth}px` }}
           >
+            {/* Resize handle - on left edge for right sidebar */}
+            <div
+              onMouseDown={handleMouseDown}
+              className={cn(
+                "absolute top-0 bottom-0 w-1 cursor-ew-resize z-20",
+                "left-0",
+                // Visible handle indicator
+                "bg-transparent hover:bg-primary/20 active:bg-primary/30",
+                "transition-colors duration-150",
+                // Wider hit area
+                "before:absolute before:inset-y-0 before:-left-1 before:-right-1",
+                isResizing && "bg-primary/30"
+              )}
+            />
             {/* Header */}
             <div className="p-4 border-b border-black/[0.04] dark:border-white/[0.06]">
               <div className="flex items-center justify-between mb-3">
