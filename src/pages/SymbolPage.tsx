@@ -243,7 +243,7 @@ export default function SymbolPage() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
-                  </div> : <div>
+                  </div> : <div className="flex-1 max-h-80 overflow-y-auto scrollbar-thin">
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       <FormattedSummary text={summary} />
                     </p>
