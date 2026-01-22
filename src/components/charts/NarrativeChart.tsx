@@ -1115,20 +1115,39 @@ function HourlyStackedNarrativeChart({
     }
     
     const prices = priceData.prices.map(p => p.price);
-    const minPrice = Math.min(...prices, priceData.previousClose);
-    const maxPrice = Math.max(...prices, priceData.previousClose);
-    const range = maxPrice - minPrice;
+    const previousClose = priceData.previousClose;
     
+    // Check boundary conditions
+    const allAbovePrevClose = prices.every(p => p >= previousClose);
+    const allBelowPrevClose = prices.every(p => p <= previousClose);
+    
+    let minPrice: number;
+    let maxPrice: number;
+    
+    if (allAbovePrevClose) {
+      // Pin bottom to previousClose - this aligns reference line with chart bottom
+      minPrice = previousClose;
+      maxPrice = Math.max(...prices);
+    } else if (allBelowPrevClose) {
+      // Pin top to previousClose - this aligns reference line with chart top
+      minPrice = Math.min(...prices);
+      maxPrice = previousClose;
+    } else {
+      minPrice = Math.min(...prices, previousClose);
+      maxPrice = Math.max(...prices, previousClose);
+    }
+    
+    const range = maxPrice - minPrice;
     if (range === 0) return null;
     
     // Calculate where previousClose sits in the vertical range (0 = top, 1 = bottom)
     // SVG gradients go from top (0%) to bottom (100%)
-    const previousClosePercent = ((maxPrice - priceData.previousClose) / range) * 100;
+    const previousClosePercent = ((maxPrice - previousClose) / range) * 100;
     
     return {
       previousClosePercent,
-      hasDataAbove: prices.some(p => p > priceData.previousClose!),
-      hasDataBelow: prices.some(p => p < priceData.previousClose!)
+      hasDataAbove: prices.some(p => p > previousClose),
+      hasDataBelow: prices.some(p => p < previousClose)
     };
   }, [priceData?.prices, priceData?.previousClose]);
 
@@ -1641,25 +1660,49 @@ function HourlyStackedNarrativeChart({
   }, [chartDataWithPrice]);
 
   // Calculate price domain for right Y-axis - tight padding to fill vertical space
+  // When stock is only above/below previous close, pin the domain to align reference line with chart edge
   const priceDomain = useMemo(() => {
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
       return ["auto", "auto"];
     }
     const prices = priceData.prices.map(p => p.price);
+    const previousClose = priceData.previousClose;
+    
     let minPrice = Math.min(...prices);
     let maxPrice = Math.max(...prices);
 
     // Include previousClose in the domain so the reference line is always visible
-    if (priceData.previousClose != null) {
-      minPrice = Math.min(minPrice, priceData.previousClose);
-      maxPrice = Math.max(maxPrice, priceData.previousClose);
+    if (previousClose != null) {
+      minPrice = Math.min(minPrice, previousClose);
+      maxPrice = Math.max(maxPrice, previousClose);
     }
+    
     const range = maxPrice - minPrice;
     // Use 3% padding for tight fit, minimum $0.25 to handle flat prices
-    const padding = Math.max(range * 0.03, 0.25);
+    const topPadding = Math.max(range * 0.03, 0.25);
+    const bottomPadding = Math.max(range * 0.03, 0.25);
     // Round to nearest $0.25 for cleaner axis labels
     const roundTo = 0.25;
-    return [Math.floor((minPrice - padding) / roundTo) * roundTo, Math.ceil((maxPrice + padding) / roundTo) * roundTo];
+    
+    // Check if all prices are above or equal to previousClose (stock only up)
+    const allAbovePrevClose = previousClose != null && prices.every(p => p >= previousClose);
+    // Check if all prices are below or equal to previousClose (stock only down)
+    const allBelowPrevClose = previousClose != null && prices.every(p => p <= previousClose);
+    
+    if (allAbovePrevClose && previousClose != null) {
+      // Pin the bottom of the domain to previousClose exactly
+      // This aligns the reference line with the chart bottom, so fill covers all bars
+      return [previousClose, Math.ceil((maxPrice + topPadding) / roundTo) * roundTo];
+    }
+    
+    if (allBelowPrevClose && previousClose != null) {
+      // Pin the top of the domain to previousClose exactly
+      // This aligns the reference line with the chart top
+      return [Math.floor((minPrice - bottomPadding) / roundTo) * roundTo, previousClose];
+    }
+    
+    // Normal case: price crossed both sides of previous close
+    return [Math.floor((minPrice - bottomPadding) / roundTo) * roundTo, Math.ceil((maxPrice + topPadding) / roundTo) * roundTo];
   }, [priceData, showPriceOverlay]);
 
   // Calculate the first price point for the pre-market extension line
