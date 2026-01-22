@@ -42,6 +42,7 @@ export default function SymbolPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('1D');
   const [activeTab, setActiveTab] = useState<string>('narratives');
   const [decisionLens, setDecisionLens] = useState<DecisionLens>('summary');
+  const [messagesSidebarOpen, setMessagesSidebarOpen] = useState(false);
   const queryClient = useQueryClient();
 
   // Calculate date range based on selection (timezone-aware)
@@ -113,7 +114,13 @@ export default function SymbolPage() {
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
 
   const content = (
-    <div className="container mx-auto px-4 py-6 md:py-8">
+    <motion.div 
+      className="container mx-auto px-4 py-6 md:py-8"
+      animate={{ 
+        marginRight: messagesSidebarOpen ? 'calc(320px + 1.5rem)' : 0 
+      }}
+      transition={{ type: "spring", damping: 25, stiffness: 200 }}
+    >
         {/* Symbol Header - Mobile Optimized */}
         <div className="flex flex-row items-start justify-between gap-4 mb-10 md:mb-14 md:mt-[57px] mt-[38px]">
           {/* Left side: Symbol info */}
@@ -312,14 +319,20 @@ export default function SymbolPage() {
               <MetricCard label="7D Trend" value={data.trend === 'bullish' ? 'Strengthening' : data.trend === 'bearish' ? 'Weakening' : 'Stable'} trend={data.trend} />
             </>}
         </div>
-      </div>
+      </motion.div>
   );
 
   // Always use SidebarLayout for symbol pages (both auth and non-auth users)
   return (
     <SidebarLayout>
       {content}
-      <MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />
+      <MessagesSidebar 
+        symbol={symbol} 
+        messages={messages} 
+        isLoading={messagesLoading} 
+        isOpen={messagesSidebarOpen}
+        onOpenChange={setMessagesSidebarOpen}
+      />
     </SidebarLayout>
   );
 }
