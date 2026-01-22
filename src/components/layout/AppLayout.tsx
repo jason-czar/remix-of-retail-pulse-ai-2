@@ -1,31 +1,8 @@
-import { Suspense, useState, useEffect } from "react";
+import { Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarLayout } from "./SidebarLayout";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Navigation progress bar component
-function NavigationProgress({ isNavigating }: { isNavigating: boolean }) {
-  return (
-    <AnimatePresence>
-      {isNavigating && (
-        <motion.div
-          className="fixed top-0 left-0 right-0 z-[100] h-[2px] bg-primary/20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div
-            className="h-full bg-primary"
-            initial={{ width: "0%" }}
-            animate={{ width: "90%" }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-}
 
 // Skeleton loader that matches common page layouts
 function ContentLoader() {
@@ -68,42 +45,23 @@ function ContentLoader() {
 
 export function AppLayout() {
   const location = useLocation();
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [prevPath, setPrevPath] = useState(location.pathname);
-
-  useEffect(() => {
-    if (location.pathname !== prevPath) {
-      setIsNavigating(true);
-      setPrevPath(location.pathname);
-      
-      // Complete the progress bar after animation
-      const timer = setTimeout(() => {
-        setIsNavigating(false);
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [location.pathname, prevPath]);
 
   return (
-    <>
-      <NavigationProgress isNavigating={isNavigating} />
-      <SidebarLayout>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="h-full"
-          >
-            <Suspense fallback={<ContentLoader />}>
-              <Outlet />
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
-      </SidebarLayout>
-    </>
+    <SidebarLayout>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="h-full"
+        >
+          <Suspense fallback={<ContentLoader />}>
+            <Outlet />
+          </Suspense>
+        </motion.div>
+      </AnimatePresence>
+    </SidebarLayout>
   );
 }
