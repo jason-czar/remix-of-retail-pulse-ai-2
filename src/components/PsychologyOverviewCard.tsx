@@ -118,7 +118,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-xs text-muted-foreground mb-1.5">
                 Dominant Emotion
               </span>
-              <p className="text-base font-semibold capitalize">{summary.dominant_emotion}</p>
+              <p className="text-sm font-medium capitalize">{summary.dominant_emotion}</p>
             </motion.div>
           )}
           {summary.primary_risk && (
@@ -131,7 +131,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-xs text-muted-foreground mb-1.5">
                 Primary Risk
               </span>
-              <p className="text-base font-semibold">{summary.primary_risk}</p>
+              <p className="text-sm font-medium">{summary.primary_risk}</p>
             </motion.div>
           )}
           {summary.action_bias && (
@@ -144,7 +144,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-xs text-muted-foreground mb-1.5">
                 Action Bias
               </span>
-              <p className="text-base font-semibold">{summary.action_bias}</p>
+              <p className="text-sm font-medium">{summary.action_bias}</p>
             </motion.div>
           )}
           {bestLens && (
@@ -157,7 +157,7 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
               <span className="text-xs text-muted-foreground mb-1.5">
                 Best Lens
               </span>
-              <p className="text-base font-semibold">
+              <p className="text-sm font-medium">
                 {LENS_CONFIG[bestLens.key]?.label || bestLens.key} <span className="text-primary dark:text-primary">({bestLens.score})</span>
               </p>
             </motion.div>
