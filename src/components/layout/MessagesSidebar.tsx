@@ -175,7 +175,7 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
             transition={isResizing ? { duration: 0 } : { type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
               "fixed right-3 top-3 bottom-3 z-40",
-              "flex flex-col relative overflow-hidden",
+              "flex flex-col overflow-hidden",
               // Liquid Glass styling matching left sidebar
               "rounded-2xl",
               "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
