@@ -245,42 +245,44 @@ export default function SymbolPage() {
             )}
           >
             {/* Intelligence Summary Card */}
-            <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
-                  <Badge variant="outline" className="text-[10px] md:text-xs">
-                    {getLensDisplayName(decisionLens)}
-                  </Badge>
+            <motion.div layout transition={{ duration: 0.3, ease: "easeOut" }}>
+              <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
+                    <Badge variant="outline" className="text-[10px] md:text-xs">
+                      {getLensDisplayName(decisionLens)}
+                    </Badge>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
+                    <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                    <span className="sr-only">Regenerate</span>
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
-                  <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                  <span className="sr-only">Regenerate</span>
-                </Button>
-              </div>
-              {lensSummaryLoading || isRegenerating ? (
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              ) : (
-                <div className="flex-1 max-h-80 overflow-y-auto scrollbar-thin">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    <FormattedSummary text={summary} />
-                  </p>
-                </div>
-              )}
-            </Card>
+                {lensSummaryLoading || isRegenerating ? (
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : (
+                  <div className="flex-1 max-h-80 overflow-y-auto scrollbar-thin">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      <FormattedSummary text={summary} />
+                    </p>
+                  </div>
+                )}
+              </Card>
+            </motion.div>
 
             {/* Right side: Readiness Card (non-summary) or Psychology Overview (summary) */}
-            <div>
+            <motion.div layout transition={{ duration: 0.3, ease: "easeOut" }}>
               {decisionLens === 'summary' ? (
                 <PsychologyOverviewCard symbol={symbol} />
               ) : (
                 <LensReadinessCard symbol={symbol} lens={decisionLens} />
               )}
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
 
