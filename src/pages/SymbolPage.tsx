@@ -115,9 +115,9 @@ export default function SymbolPage() {
 
   const content = (
     <motion.div 
-      className="container mx-auto px-4 py-6 md:py-8"
+      className="max-w-7xl px-4 py-6 md:py-8"
       animate={{ 
-        marginRight: messagesSidebarOpen ? 'calc(320px + 1.5rem)' : 0 
+        paddingRight: messagesSidebarOpen ? 'calc(320px + 2rem)' : '1rem'
       }}
       transition={{ type: "spring", damping: 25, stiffness: 200 }}
     >
