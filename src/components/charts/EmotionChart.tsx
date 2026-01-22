@@ -749,10 +749,10 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   return (
     <div className="w-full">
       {/* Main chart area with fixed height */}
-      <div className="h-[354px] md:h-[554px]">
+      <div className="h-[362px] md:h-[562px]">
         {/* Header - Collapsible */}
         <Collapsible defaultOpen={false}>
-          <div className="flex items-center justify-end mb-3 md:mb-4">
+          <div className="flex items-center justify-end mb-1 md:mb-1.5">
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm" className="h-7 md:h-8 px-1.5 md:px-2 shrink-0 group">
                 <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
