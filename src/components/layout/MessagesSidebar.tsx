@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Clock, ExternalLink, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ interface MessagesSidebarProps {
   isLoading: boolean;
 }
 
-function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Omit<Message, 'id' | 'emotions'> & { searchTerm?: string }) {
+function CondensedMessageCard({ user, content, time, searchTerm }: Omit<Message, 'id' | 'emotions' | 'sentiment'> & { searchTerm?: string }) {
   // Highlight matching text if there's a search term
   const highlightText = (text: string) => {
     if (!searchTerm || searchTerm.trim().length < 2) return text;
@@ -47,16 +47,10 @@ function CondensedMessageCard({ user, content, sentiment, time, searchTerm }: Om
 
   return (
     <div className="p-3 glass-list-item">
-      <div className="flex items-center justify-between mb-1.5">
+      <div className="mb-1.5">
         <span className="font-medium text-xs">@{user}</span>
-        <Badge 
-          variant={sentiment === "bullish" ? "bullish" : sentiment === "bearish" ? "bearish" : "neutral"} 
-          className="text-[10px] px-1.5 py-0"
-        >
-          {sentiment}
-        </Badge>
       </div>
-      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+      <p className="text-xs text-muted-foreground leading-relaxed">
         {highlightText(content)}
       </p>
       <span className="text-[10px] text-muted-foreground/70 flex items-center gap-1 mt-1.5">
@@ -153,7 +147,7 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
           "transition-all duration-200",
           "hidden md:flex" // Hide on mobile, show on desktop
         )}
-        style={isOpen ? { right: `${sidebarWidth}px` } : undefined}
+        style={isOpen ? { right: `${sidebarWidth + 12}px` } : undefined}
       >
         {isOpen ? (
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -253,7 +247,6 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
                       key={msg.id}
                       user={msg.user}
                       content={msg.content}
-                      sentiment={msg.sentiment}
                       time={msg.time}
                       searchTerm={searchTerm}
                     />
