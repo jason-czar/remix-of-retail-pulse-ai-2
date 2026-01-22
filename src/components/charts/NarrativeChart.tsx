@@ -1211,9 +1211,16 @@ function HourlyStackedNarrativeChart({
       const totalAnalyticsVolume = Array.from(hourlyVolumes.values()).reduce((sum, v) => sum + v, 0);
       const totalHistoryVolume = Array.from(hourlyMessageCounts.values()).reduce((sum, v) => sum + v, 0);
       
-      // Use history message counts as fallback when analytics API has no data for this day
-      // This happens when viewing previous trading days (weekends, pre-market)
-      const useHistoryFallback = totalAnalyticsVolume === 0 && totalHistoryVolume > 0;
+      // Determine if we're viewing a past day (analytics API only returns current day data)
+      const nowForComparison = new Date();
+      const isShowingPastDay = displayDate.toDateString() !== nowForComparison.toDateString();
+      
+      // Use history message counts as fallback when:
+      // 1. Analytics API has no data for this day
+      // 2. We're viewing a previous trading day (weekends, pre-market) - analytics only returns current day
+      // 3. Analytics volume is suspiciously low compared to history (stale/wrong day data)
+      const analyticsIsStale = isShowingPastDay || (totalHistoryVolume > 0 && totalAnalyticsVolume < totalHistoryVolume * 0.1);
+      const useHistoryFallback = (totalAnalyticsVolume === 0 && totalHistoryVolume > 0) || analyticsIsStale;
       
       // Use whichever data source has values for max calculation
       const effectiveVolumes = useHistoryFallback ? hourlyMessageCounts : hourlyVolumes;
