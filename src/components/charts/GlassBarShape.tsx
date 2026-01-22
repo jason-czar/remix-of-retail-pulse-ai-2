@@ -185,7 +185,7 @@ export function GlassHorizontalBarShape(props: GlassBarShapeProps & { isExtreme?
  * Stacked Glass Bar Cell - for use in stacked bar charts
  * Apply as a shape to individual Bar components
  */
-export function StackedGlassBarShape(props: GlassBarShapeProps) {
+export function StackedGlassBarShape(props: GlassBarShapeProps & { isTopSegment?: boolean }) {
   const {
     x = 0,
     y = 0,
@@ -199,6 +199,7 @@ export function StackedGlassBarShape(props: GlassBarShapeProps) {
     slotsPerHour = 12,
     baseOpacity = 0.4,
     hoverOpacity = 0.7,
+    isTopSegment = false,
   } = props;
 
   const isHourActive = activeHour !== null && payload?.hourIndex === activeHour;
@@ -208,6 +209,10 @@ export function StackedGlassBarShape(props: GlassBarShapeProps) {
     transition: 'fill-opacity 0.2s ease-out, stroke-opacity 0.2s ease-out',
   };
 
+  // Generate unique gradient ID based on position
+  const gradientId = `topFade-${x}-${y}`;
+  const fadeHeight = Math.min(height * 0.35, 24); // Fade covers top 35% or max 24px
+
   // For 5-min views with expanded widths
   if (is5MinView) {
     if (!payload?.isHourStart || height === 0) {
@@ -216,37 +221,83 @@ export function StackedGlassBarShape(props: GlassBarShapeProps) {
     const expandedWidth = width * slotsPerHour;
     
     return (
-      <Rectangle
-        x={x}
-        y={y}
-        width={expandedWidth}
-        height={height}
-        fill={fill}
-        fillOpacity={opacity}
-        stroke={fill}
-        strokeOpacity={isHourActive ? 0.7 : 0.4}
-        strokeWidth={0.5}
-        radius={radius}
-        style={glassStyle}
-      />
+      <g>
+        {isTopSegment && (
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="white" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+        )}
+        <Rectangle
+          x={x}
+          y={y}
+          width={expandedWidth}
+          height={height}
+          fill={fill}
+          fillOpacity={opacity}
+          stroke={fill}
+          strokeOpacity={isHourActive ? 0.7 : 0.4}
+          strokeWidth={0.5}
+          radius={radius}
+          style={glassStyle}
+        />
+        {/* Top fade overlay for softer transition */}
+        {isTopSegment && fadeHeight > 0 && (
+          <rect
+            x={x}
+            y={y}
+            width={expandedWidth}
+            height={fadeHeight}
+            fill={`url(#${gradientId})`}
+            rx={Array.isArray(radius) ? radius[0] : radius || 0}
+            ry={Array.isArray(radius) ? radius[1] : radius || 0}
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
+      </g>
     );
   }
 
   if (height <= 0) return null;
 
   return (
-    <Rectangle
-      x={x}
-      y={y}
-      width={width}
-      height={height}
-      fill={fill}
-      fillOpacity={opacity}
-      stroke={fill}
-      strokeOpacity={0.4}
-      strokeWidth={0.5}
-      radius={radius}
-      style={glassStyle}
-    />
+    <g>
+      {isTopSegment && (
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="white" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      )}
+      <Rectangle
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        fillOpacity={opacity}
+        stroke={fill}
+        strokeOpacity={0.4}
+        strokeWidth={0.5}
+        radius={radius}
+        style={glassStyle}
+      />
+      {/* Top fade overlay for softer transition to price line */}
+      {isTopSegment && fadeHeight > 0 && (
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={fadeHeight}
+          fill={`url(#${gradientId})`}
+          rx={Array.isArray(radius) ? radius[0] : radius || 0}
+          ry={Array.isArray(radius) ? radius[1] : radius || 0}
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+    </g>
   );
 }
