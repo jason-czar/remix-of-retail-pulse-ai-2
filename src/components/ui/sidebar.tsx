@@ -15,6 +15,8 @@ const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "17rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
+const SIDEBAR_MIN_WIDTH = 200;
+const SIDEBAR_MAX_WIDTH = 400;
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 type SidebarContext = {
   state: "expanded" | "collapsed";
@@ -24,6 +26,8 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  sidebarWidth: number;
+  setSidebarWidth: (width: number) => void;
 };
 const SidebarContext = React.createContext<SidebarContext | null>(null);
 function useSidebar() {
@@ -53,6 +57,22 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, React.ComponentProps<"d
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
+  
+  // Resizable width state - stored in localStorage
+  const [sidebarWidth, setSidebarWidth] = React.useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar:width');
+      return saved ? parseInt(saved, 10) : 272; // 17rem = 272px
+    }
+    return 272;
+  });
+  
+  const handleSetSidebarWidth = React.useCallback((width: number) => {
+    const clampedWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
+    setSidebarWidth(clampedWidth);
+    localStorage.setItem('sidebar:width', String(clampedWidth));
+  }, []);
+  
   const setOpen = React.useCallback((value: boolean | ((value: boolean) => boolean)) => {
     const openState = typeof value === "function" ? value(open) : value;
     if (setOpenProp) {
@@ -92,8 +112,10 @@ const SidebarProvider = React.forwardRef<HTMLDivElement, React.ComponentProps<"d
     isMobile,
     openMobile,
     setOpenMobile,
-    toggleSidebar
-  }), [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]);
+    toggleSidebar,
+    sidebarWidth,
+    setSidebarWidth: handleSetSidebarWidth,
+  }), [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, sidebarWidth, handleSetSidebarWidth]);
   return <SidebarContext.Provider value={contextValue}>
       <TooltipProvider delayDuration={0}>
         <div style={{
@@ -123,8 +145,46 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
     isMobile,
     state,
     openMobile,
-    setOpenMobile
+    setOpenMobile,
+    sidebarWidth,
+    setSidebarWidth,
   } = useSidebar();
+  
+  const [isResizing, setIsResizing] = React.useState(false);
+  
+  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+  
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      // For left sidebar, width = mouse X position - sidebar left offset (12px inset)
+      const newWidth = e.clientX - 12;
+      setSidebarWidth(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+    
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, setSidebarWidth]);
+  
   if (collapsible === "none") {
     return <div className={cn("flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground", className)} ref={ref} {...props}>
         {children}
@@ -139,28 +199,33 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
         </SheetContent>
       </Sheet>;
   }
+  
+  const dynamicWidth = state === "collapsed" ? SIDEBAR_WIDTH_ICON : `${sidebarWidth}px`;
+  
   return <div ref={ref} className="group peer hidden text-sidebar-foreground md:block" data-state={state} data-collapsible={state === "collapsed" ? collapsible : ""} data-variant={variant} data-side={side}>
       {/* Sidebar as pure overlay - no gap div to push content */}
-      <div className={cn(
-        "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] md:flex",
-        // Smooth transitions with bounce easing for expand/collapse
-        "transition-[left,right,width,opacity,transform] duration-300 ease-bounce-out",
-        // Floating inset from viewport edge
-        side === "left" 
-          ? "left-3 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" 
-          : "right-3 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-        // Vertical inset for floating appearance
-        "top-3 bottom-3 h-[calc(100svh_-_24px)]",
-        // Collapsed state: icon width with subtle scale
-        "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
-        className
-      )} {...props}>
+      <div 
+        className={cn(
+          "fixed inset-y-0 z-10 hidden h-svh md:flex",
+          // Smooth transitions with bounce easing for expand/collapse (only when not resizing)
+          !isResizing && "transition-[left,right,width,opacity,transform] duration-300 ease-bounce-out",
+          // Floating inset from viewport edge
+          side === "left" 
+            ? "left-3 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" 
+            : "right-3 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+          // Vertical inset for floating appearance
+          "top-3 bottom-3 h-[calc(100svh_-_24px)]",
+          className
+        )} 
+        style={{ width: dynamicWidth }}
+        {...props}
+      >
         <div 
           data-sidebar="sidebar" 
           className={cn(
             "flex h-full w-full flex-col relative overflow-hidden",
             // Smooth content reveal transition
-            "transition-[opacity,transform] duration-300 ease-out",
+            !isResizing && "transition-[opacity,transform] duration-300 ease-out",
             // Liquid Glass material - matched to Messages Sidebar
             "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
             "backdrop-blur-[28px] backdrop-saturate-[160%]",
@@ -177,6 +242,23 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
           )}
         >
           {children}
+          
+          {/* Resize handle - only show when expanded */}
+          {state === "expanded" && (
+            <div
+              onMouseDown={handleMouseDown}
+              className={cn(
+                "absolute top-0 bottom-0 w-1 cursor-ew-resize z-20",
+                side === "left" ? "right-0" : "left-0",
+                // Visible handle indicator
+                "bg-transparent hover:bg-primary/20 active:bg-primary/30",
+                "transition-colors duration-150",
+                // Wider hit area
+                "before:absolute before:inset-y-0 before:-left-1 before:-right-1",
+                isResizing && "bg-primary/30"
+              )}
+            />
+          )}
         </div>
       </div>
     </div>;
