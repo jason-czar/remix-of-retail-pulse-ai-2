@@ -354,91 +354,6 @@ function LensReadinessCard({
       </AnimatePresence>
     </Card>;
 }
-function OverviewCard({
-  snapshot
-}: {
-  snapshot: ReturnType<typeof useLatestPsychologySnapshot>["data"];
-}) {
-  if (!snapshot) return null;
-  const {
-    interpretation,
-    data_confidence,
-    observed_state
-  } = snapshot;
-  const summary = interpretation.snapshot_summary;
-
-  // Get the highest readiness lens
-  const readinessEntries = Object.entries(interpretation.decision_readiness);
-  const bestLens = readinessEntries.reduce((best, [key, val]) => {
-    if (!best || val.readiness_score > best.score) {
-      return {
-        key,
-        score: val.readiness_score,
-        timing: val.recommended_timing
-      };
-    }
-    return best;
-  }, null as {
-    key: string;
-    score: number;
-    timing: string;
-  } | null);
-
-  // Count active signals
-  const activeSignals = Object.entries(observed_state.signals).filter(([_, signal]) => signal.active).map(([key]) => key.replace(/_/g, " "));
-  return <Card className="p-4 md:p-5 glass-card border-primary/20 mb-4">
-      <div className="flex items-start gap-3">
-        
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <h3 className="font-semibold text-sm md:text-base">Psychology Overview</h3>
-            <Badge variant="outline" className="text-[10px]">
-              Confidence: {Math.round(data_confidence.score * 100)}%
-            </Badge>
-          </div>
-          
-          {summary.one_liner && <p className="text-sm text-muted-foreground mb-3">{summary.one_liner}</p>}
-
-          {/* Temporal Attribution */}
-          <TemporalAttributionBadge attribution={snapshot.interpretation.temporal_attribution} />
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-3">
-            {summary.dominant_emotion && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-                <span className="text-muted-foreground">Dominant Emotion</span>
-                <p className="font-medium capitalize">{summary.dominant_emotion}</p>
-              </div>}
-            {summary.primary_risk && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-                <span className="text-muted-foreground">Primary Risk</span>
-                <p className="font-medium text-warning">{summary.primary_risk}</p>
-              </div>}
-            {summary.action_bias && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-                <span className="text-muted-foreground">Action Bias</span>
-                <p className="font-medium">{summary.action_bias}</p>
-              </div>}
-            {bestLens && <div className="p-2.5 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
-                <span className="text-muted-foreground">Best Lens</span>
-                <p className="font-medium">
-                  {LENS_CONFIG[bestLens.key]?.label || bestLens.key} ({bestLens.score})
-                </p>
-              </div>}
-          </div>
-
-          {/* Active Signals */}
-          {activeSignals.length > 0 && <div className="mt-3 pt-3 border-t border-border/50">
-              <div className="flex items-center gap-1.5 mb-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
-                <span className="text-xs font-medium text-warning">Active Signals</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {activeSignals.map((signal, idx) => <Badge key={idx} variant="outline" className="text-[10px] border-warning/30 text-warning bg-warning/5 capitalize">
-                    {signal}
-                  </Badge>)}
-              </div>
-            </div>}
-        </div>
-      </div>
-    </Card>;
-}
 
 // ============= DASHBOARD HEADER =============
 
@@ -533,8 +448,7 @@ export function DecisionReadinessDashboard({
       {/* Dashboard Header with Last Updated and Refresh */}
       {snapshot && <DashboardHeader symbol={symbol} createdAt={snapshot.created_at} onRefreshComplete={handleRefreshComplete} />}
 
-      {/* Overview Card */}
-      <OverviewCard snapshot={snapshot} />
+      {/* Lens Cards Grid */}
 
       {/* Lens Cards Grid */}
       {sortedEntries.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
