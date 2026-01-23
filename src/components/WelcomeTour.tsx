@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { X, ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Feature flag to disable the tour temporarily - set to true to re-enable
+const TOUR_ENABLED = false;
+
 interface TourStep {
   title: string;
   description: string;
@@ -57,6 +60,11 @@ export function WelcomeTour() {
   const [currentStep, setCurrentStep] = useState(0);
   const [spotlightRect, setSpotlightRect] = useState<SpotlightRect | null>(null);
   const [cardStyle, setCardStyle] = useState<React.CSSProperties>({});
+
+  // Early return if tour is disabled
+  if (!TOUR_ENABLED) {
+    return null;
+  }
 
   const updateSpotlight = useCallback(() => {
     const step = tourSteps[currentStep];
