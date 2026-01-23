@@ -1678,11 +1678,11 @@ function HourlyStackedNarrativeChart({
     }
     
     const range = maxPrice - minPrice;
-    // Use 3% padding for tight fit, minimum $0.25 to handle flat prices
-    const topPadding = Math.max(range * 0.03, 0.25);
-    const bottomPadding = Math.max(range * 0.03, 0.25);
-    // Round to nearest $0.25 for cleaner axis labels
-    const roundTo = 0.25;
+    // Use 1% padding for expanded vertical range, minimum $0.10 to handle flat prices
+    const topPadding = Math.max(range * 0.01, 0.10);
+    const bottomPadding = Math.max(range * 0.01, 0.10);
+    // Round to nearest $0.10 for cleaner axis labels with tighter domain
+    const roundTo = 0.10;
     
     // Check if all prices are above or equal to previousClose (stock only up)
     const allAbovePrevClose = previousClose != null && prices.every(p => p >= previousClose);
