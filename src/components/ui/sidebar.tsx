@@ -206,7 +206,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"> & {
       {/* Sidebar as pure overlay - no gap div to push content */}
       <div 
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh md:flex",
+          "fixed inset-y-0 z-50 hidden h-svh md:flex",
           // Smooth transitions with bounce easing for expand/collapse (only when not resizing)
           !isResizing && "transition-[left,right,width,opacity,transform] duration-300 ease-bounce-out",
           // Floating inset from viewport edge
