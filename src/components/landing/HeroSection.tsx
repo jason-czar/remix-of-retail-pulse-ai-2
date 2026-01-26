@@ -48,8 +48,7 @@ export function HeroSection() {
             delay: 0.35,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              Institutional-grade intelligence on retail investor sentiment, narratives, and psychology — delivered in
-              real-time for strategic decision-making.
+              Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered in real-time for strategic decision-making.
             </motion.p>
 
             <motion.div className="flex flex-row flex-nowrap items-center justify-center gap-3 sm:gap-4 max-w-full overflow-x-auto scrollbar-hide" initial={{
