@@ -16,7 +16,8 @@ import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
-import { DecisionLensSelector, DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
+import { DecisionLensSelector, DecisionLens, getLensDisplayName, getLensDecisionQuestion } from "@/components/DecisionLensSelector";
+import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
 import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
 import { MessagesSidebar } from "@/components/layout/MessagesSidebar";
@@ -231,18 +232,31 @@ export default function SymbolPage() {
           ease: "easeOut"
         }}>
               <Card className="p-4 md:p-5 glass-card flex flex-col" data-tour="intelligence-summary">
-                <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
                     <Badge variant="outline" className="text-[10px] md:text-xs">
                       {getLensDisplayName(decisionLens)}
                     </Badge>
+                    {lensSummaryData?.confidence && (
+                      <ConfidenceBadge 
+                        level={lensSummaryData.confidence} 
+                        tooltipContent={`Based on ${lensSummaryData.relevantCount ?? '—'} relevant messages out of ${lensSummaryData.messageCount ?? '—'} total`}
+                        size="sm"
+                      />
+                    )}
                   </div>
                   <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
                     <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
                     <span className="sr-only">Regenerate</span>
                   </Button>
                 </div>
+                
+                {/* Decision Question - anchors interpretation */}
+                <p className="text-xs text-muted-foreground/70 mb-3 italic">
+                  {getLensDecisionQuestion(decisionLens)}
+                </p>
+                
                 {lensSummaryLoading || isRegenerating ? <div className="space-y-2 flex-1">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
