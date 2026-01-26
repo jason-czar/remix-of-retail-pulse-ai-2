@@ -23,12 +23,21 @@ type DecisionLens =
   | 'leadership-change'
   | 'strategic-pivot'
   | 'product-launch'
-  | 'activist-risk';
+  | 'activist-risk'
+  | 'custom';
 
 type ConfidenceLevel = 'high' | 'moderate' | 'low';
 
+// Custom lens configuration from user
+interface CustomLensConfig {
+  name: string;
+  decision_question: string;
+  focus_areas: string[];
+  exclusions: string[];
+}
+
 // Keywords for each lens to estimate topic relevance
-const LENS_KEYWORDS: Record<DecisionLens, string[]> = {
+const LENS_KEYWORDS: Record<Exclude<DecisionLens, 'custom'>, string[]> = {
   'summary': [], // Summary accepts all messages
   'corporate-strategy': ['strategy', 'vision', 'moat', 'competitive', 'positioning', 'market share', 'leadership', 'roadmap', 'ecosystem', 'advantage', 'disruption', 'innovation', 'growth plan', 'execution'],
   'earnings': ['earnings', 'revenue', 'eps', 'guidance', 'beat', 'miss', 'margin', 'profit', 'quarter', 'q1', 'q2', 'q3', 'q4', 'outlook', 'forecast', 'sales', 'income', 'ebitda'],
@@ -41,8 +50,27 @@ const LENS_KEYWORDS: Record<DecisionLens, string[]> = {
 };
 
 // Get lens-specific prompt context with decision question, focus areas, and exclusions
-function getLensPromptContext(lens: DecisionLens): { question: string; context: string } {
-  const lensConfigs: Record<DecisionLens, { question: string; context: string }> = {
+function getLensPromptContext(lens: DecisionLens, customConfig?: CustomLensConfig): { question: string; context: string; name: string } {
+  // Handle custom lens
+  if (lens === 'custom' && customConfig) {
+    const focusSection = customConfig.focus_areas.length > 0
+      ? `Focus on:\n${customConfig.focus_areas.map(f => `- ${f}`).join('\n')}`
+      : '';
+    
+    const exclusionSection = customConfig.exclusions.length > 0
+      ? `\n\nExplicitly avoid:\n${customConfig.exclusions.map(e => `- ${e}`).join('\n')}`
+      : '';
+    
+    return {
+      name: customConfig.name,
+      question: customConfig.decision_question,
+      context: `${focusSection}${exclusionSection}
+
+If discussion is sparse or inconclusive for this lens, state that clearly and briefly note what investors ARE focused on instead.`,
+    };
+  }
+  
+  const lensConfigs: Record<Exclude<DecisionLens, 'custom'>, { question: string; context: string }> = {
     'summary': {
       question: 'What is the current psychological state of retail investors?',
       context: `Provide a high-level synthesis of retail sentiment and psychological state.
@@ -167,11 +195,14 @@ Explicitly avoid:
 - Strategic disagreements from regular investors`
     },
   };
-  return lensConfigs[lens];
+  
+  const config = lensConfigs[lens as Exclude<DecisionLens, 'custom'>];
+  const name = getLensDisplayName(lens as Exclude<DecisionLens, 'custom'>);
+  return { ...config, name };
 }
 
-function getLensDisplayName(lens: DecisionLens): string {
-  const names: Record<DecisionLens, string> = {
+function getLensDisplayName(lens: Exclude<DecisionLens, 'custom'>): string {
+  const names: Record<Exclude<DecisionLens, 'custom'>, string> = {
     'summary': 'Summary',
     'corporate-strategy': 'Corporate Strategy Insights',
     'earnings': 'Earnings',
@@ -186,11 +217,19 @@ function getLensDisplayName(lens: DecisionLens): string {
 }
 
 // Check if a message is relevant to the lens based on keyword matching
-function isMessageRelevantToLens(messageText: string, lens: DecisionLens): boolean {
+function isMessageRelevantToLens(messageText: string, lens: DecisionLens, customConfig?: CustomLensConfig): boolean {
   if (lens === 'summary') return true; // Summary accepts all
   
-  const keywords = LENS_KEYWORDS[lens];
   const lowerText = messageText.toLowerCase();
+  
+  // For custom lenses, use focus_areas as keywords
+  if (lens === 'custom' && customConfig) {
+    return customConfig.focus_areas.some(focus => 
+      lowerText.includes(focus.toLowerCase())
+    );
+  }
+  
+  const keywords = LENS_KEYWORDS[lens as Exclude<DecisionLens, 'custom'>];
   return keywords.some(keyword => lowerText.includes(keyword.toLowerCase()));
 }
 
@@ -284,11 +323,19 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, lens = 'corporate-strategy', skipCache = false } = await req.json();
+    const { symbol, lens = 'corporate-strategy', skipCache = false, customLensConfig } = await req.json();
 
     if (!symbol) {
       return new Response(
         JSON.stringify({ error: "Symbol is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate custom lens config if lens is 'custom'
+    if (lens === 'custom' && !customLensConfig) {
+      return new Response(
+        JSON.stringify({ error: "customLensConfig is required for custom lenses" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -304,18 +351,24 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
     
+    // Generate cache key for custom lenses (use a hash of the config)
+    const cacheKey = lens === 'custom' && customLensConfig 
+      ? `custom-${customLensConfig.name.toLowerCase().replace(/\s+/g, '-')}`
+      : lens;
+    
     // Check cache first (unless skipCache is true)
+    // Note: Custom lenses have shorter cache time and unique keys
     if (!skipCache) {
       const { data: cached } = await supabase
         .from("lens_summary_cache")
         .select("summary, message_count")
         .eq("symbol", symbol.toUpperCase())
-        .eq("lens", lens)
+        .eq("lens", cacheKey)
         .gt("expires_at", new Date().toISOString())
         .maybeSingle();
 
       if (cached) {
-        console.log(`Cache hit for ${symbol} ${lens}`);
+        console.log(`Cache hit for ${symbol} ${cacheKey}`);
         return new Response(
           JSON.stringify({ 
             summary: cached.summary, 
@@ -329,7 +382,7 @@ serve(async (req) => {
       }
     }
 
-    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${lens}, fetching messages...`);
+    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${cacheKey}, fetching messages...`);
     
     // Fetch recent messages from StockTwits (last 24 hours, limit 500)
     const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=500`;
@@ -349,8 +402,11 @@ serve(async (req) => {
     const messagesData = await messagesResponse.json();
     const messages = messagesData.data?.messages || messagesData.messages || [];
 
+    const lensConfig = getLensPromptContext(lens as DecisionLens, customLensConfig);
+    const lensName = lensConfig.name;
+
     if (messages.length === 0) {
-      const noDataSummary = `No recent messages found for ${symbol.toUpperCase()} to analyze through the ${getLensDisplayName(lens)} lens.`;
+      const noDataSummary = `No recent messages found for ${symbol.toUpperCase()} to analyze through the ${lensName} lens.`;
       return new Response(
         JSON.stringify({ 
           summary: noDataSummary, 
@@ -372,7 +428,7 @@ serve(async (req) => {
 
     // Calculate lens relevance and confidence
     const relevantMessages = messageTexts.filter((text: string) => 
-      isMessageRelevantToLens(text, lens as DecisionLens)
+      isMessageRelevantToLens(text, lens as DecisionLens, customLensConfig)
     );
     const themeCounts = countNarrativeThemes(relevantMessages);
     const { confidence, dominantThemeShare } = calculateConfidence(
@@ -381,10 +437,7 @@ serve(async (req) => {
       themeCounts
     );
 
-    console.log(`Confidence for ${symbol} ${lens}: ${confidence} (relevant: ${relevantMessages.length}/${messageTexts.length}, dominant theme: ${(dominantThemeShare * 100).toFixed(1)}%)`);
-
-    const lensConfig = getLensPromptContext(lens as DecisionLens);
-    const lensName = getLensDisplayName(lens as DecisionLens);
+    console.log(`Confidence for ${symbol} ${cacheKey}: ${confidence} (relevant: ${relevantMessages.length}/${messageTexts.length}, dominant theme: ${(dominantThemeShare * 100).toFixed(1)}%)`);
 
     console.log(`Generating ${lensName} summary for ${symbol} from ${messages.length} messages...`);
 
@@ -443,7 +496,7 @@ ${messageTexts.join("\n---\n")}`,
     
     // Only cache if we got a valid AI response
     if (!rawSummary) {
-      console.error("AI returned empty response for", symbol, lens);
+      console.error("AI returned empty response for", symbol, cacheKey);
       return new Response(
         JSON.stringify({ 
           summary: `Unable to generate ${lensName} insights for ${symbol.toUpperCase()} at this time.`,
@@ -458,16 +511,17 @@ ${messageTexts.join("\n---\n")}`,
 
     // Sanitize AI-generated summary to remove non-ASCII characters
     const sanitizedSummary = sanitizeText(rawSummary);
-    console.log(`Sanitized summary for ${symbol} ${lens}: removed ${rawSummary.length - sanitizedSummary.length} chars`);
+    console.log(`Sanitized summary for ${symbol} ${cacheKey}: removed ${rawSummary.length - sanitizedSummary.length} chars`);
 
-    // Cache the valid result (30 minute expiry)
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    // Cache the valid result (30 minute expiry for default, 15 min for custom)
+    const cacheMinutes = lens === 'custom' ? 15 : 30;
+    const expiresAt = new Date(Date.now() + cacheMinutes * 60 * 1000).toISOString();
     await supabase
       .from("lens_summary_cache")
       .upsert(
         {
           symbol: symbol.toUpperCase(),
-          lens,
+          lens: cacheKey,
           summary: sanitizedSummary,
           message_count: messages.length,
           expires_at: expiresAt,

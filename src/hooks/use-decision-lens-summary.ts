@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DecisionLens } from "@/components/DecisionLensSelector";
+import { DecisionLens, LensValue, isDefaultLens } from "@/components/DecisionLensSelector";
 import { ConfidenceLevel } from "@/components/ui/ConfidenceBadge";
+import { CustomLens } from "@/hooks/use-custom-lenses";
 
 export interface LensSummaryData {
   summary: string;
@@ -20,12 +21,33 @@ function mapConfidence(backendConfidence?: string): ConfidenceLevel | undefined 
   return 'experimental'; // 'low' maps to 'experimental'
 }
 
-export function useDecisionLensSummary(symbol: string, lens: DecisionLens) {
+export function useDecisionLensSummary(
+  symbol: string, 
+  lens: LensValue, 
+  customLens?: CustomLens | null
+) {
+  // Determine if this is a custom lens request
+  const isCustom = !isDefaultLens(lens) && !!customLens;
+  
   return useQuery({
-    queryKey: ['decision-lens-summary', symbol, lens],
+    queryKey: ['decision-lens-summary', symbol, isCustom ? customLens?.id : lens],
     queryFn: async () => {
+      const body: Record<string, unknown> = { symbol };
+      
+      if (isCustom && customLens) {
+        body.lens = 'custom';
+        body.customLensConfig = {
+          name: customLens.name,
+          decision_question: customLens.decision_question,
+          focus_areas: customLens.focus_areas,
+          exclusions: customLens.exclusions,
+        };
+      } else {
+        body.lens = lens;
+      }
+      
       const { data, error } = await supabase.functions.invoke('generate-lens-summary', {
-        body: { symbol, lens }
+        body
       });
       
       if (error) {
@@ -43,7 +65,7 @@ export function useDecisionLensSummary(symbol: string, lens: DecisionLens) {
         dominantThemeShare: data.dominantThemeShare,
       } as LensSummaryData;
     },
-    enabled: !!symbol && !!lens,
+    enabled: !!symbol && (isDefaultLens(lens) || !!customLens),
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000,
   });

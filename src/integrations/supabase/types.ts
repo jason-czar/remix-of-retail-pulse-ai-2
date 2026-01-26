@@ -482,6 +482,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_custom_lenses: {
+        Row: {
+          created_at: string
+          decision_question: string
+          exclusions: string[]
+          focus_areas: string[]
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision_question: string
+          exclusions?: string[]
+          focus_areas?: string[]
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decision_question?: string
+          exclusions?: string[]
+          focus_areas?: string[]
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       volume_cache: {
         Row: {
           created_at: string | null
