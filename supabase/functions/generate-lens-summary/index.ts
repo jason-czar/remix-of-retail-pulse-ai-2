@@ -25,19 +25,149 @@ type DecisionLens =
   | 'product-launch'
   | 'activist-risk';
 
-function getLensPromptContext(lens: DecisionLens): string {
-  const contexts: Record<DecisionLens, string> = {
-    'summary': 'Provide a holistic overview of retail sentiment. Identify the most significant themes, dominant emotions, and key narratives driving discussion. Highlight any notable consensus or divergence. Focus on what a decision-maker needs to know right now.',
-    'corporate-strategy': 'Focus on overall corporate strategy, competitive positioning, long-term vision, and strategic direction. Highlight themes around market leadership, competitive advantages, and business model evolution.',
-    'earnings': 'Focus on earnings performance, revenue growth, profitability metrics, guidance, and financial results. Highlight discussions about quarterly results, beats/misses, and forward guidance.',
-    'ma': 'Focus on merger and acquisition activity, potential takeover targets, deal rumors, and consolidation themes. Highlight discussions about buyout speculation, merger synergies, and acquisition targets.',
-    'capital-allocation': 'Focus on capital allocation decisions including buybacks, dividends, debt management, and investment priorities. Highlight discussions about shareholder returns and capital deployment.',
-    'leadership-change': 'Focus on executive changes, CEO transitions, board reshuffling, and management commentary. Highlight discussions about leadership quality and succession planning.',
-    'strategic-pivot': 'Focus on strategic pivots, business divestitures, segment sales, and major business model changes. Highlight discussions about corporate restructuring and portfolio optimization.',
-    'product-launch': 'Focus on new product launches, product cycles, innovation pipeline, and market reception. Highlight discussions about upcoming releases and product performance.',
-    'activist-risk': 'Focus on activist investor involvement, proxy fights, board challenges, and shareholder activism. Highlight discussions about activist campaigns and governance concerns.',
+type ConfidenceLevel = 'high' | 'moderate' | 'low';
+
+// Keywords for each lens to estimate topic relevance
+const LENS_KEYWORDS: Record<DecisionLens, string[]> = {
+  'summary': [], // Summary accepts all messages
+  'corporate-strategy': ['strategy', 'vision', 'moat', 'competitive', 'positioning', 'market share', 'leadership', 'roadmap', 'ecosystem', 'advantage', 'disruption', 'innovation', 'growth plan', 'execution'],
+  'earnings': ['earnings', 'revenue', 'eps', 'guidance', 'beat', 'miss', 'margin', 'profit', 'quarter', 'q1', 'q2', 'q3', 'q4', 'outlook', 'forecast', 'sales', 'income', 'ebitda'],
+  'ma': ['merger', 'acquisition', 'takeover', 'buyout', 'deal', 'acquire', 'target', 'bid', 'synergy', 'consolidation', 'rumor'],
+  'capital-allocation': ['buyback', 'dividend', 'debt', 'capital', 'cash', 'return', 'capex', 'share repurchase', 'balance sheet', 'investment', 'payout'],
+  'leadership-change': ['ceo', 'cfo', 'executive', 'management', 'leadership', 'resign', 'appointed', 'succession', 'board', 'transition', 'chief'],
+  'strategic-pivot': ['pivot', 'divestiture', 'spinoff', 'restructure', 'exit', 'segment', 'transformation', 'business model', 'sell off', 'reorganization'],
+  'product-launch': ['launch', 'product', 'release', 'new', 'innovation', 'feature', 'update', 'rollout', 'announcement', 'beta', 'upgrade'],
+  'activist-risk': ['activist', 'proxy', 'board fight', 'governance', 'shareholder proposal', 'vote', 'campaign', 'stake', 'icahn', 'ackman', 'peltz', 'elliott'],
+};
+
+// Get lens-specific prompt context with decision question, focus areas, and exclusions
+function getLensPromptContext(lens: DecisionLens): { question: string; context: string } {
+  const lensConfigs: Record<DecisionLens, { question: string; context: string }> = {
+    'summary': {
+      question: 'What is the current psychological state of retail investors?',
+      context: `Provide a high-level synthesis of retail sentiment and psychological state.
+
+Focus on:
+- Dominant emotions and collective mood (fear, greed, confusion, conviction)
+- Consensus vs fragmentation in views
+- Near-term expectations, frustrations, or catalysts
+
+Explicitly avoid:
+- Strategic interpretation or long-term positioning
+- Capital allocation judgments
+- Specific earnings metrics`
+    },
+    'corporate-strategy': {
+      question: 'How do retail investors perceive management\'s strategic direction?',
+      context: `Focus strictly on perceived corporate strategy and long-term competitive positioning.
+
+Highlight:
+- How investors interpret management's strategic intent and vision
+- Views on competitive moats, ecosystem control, or market position
+- Whether strategic moves are seen as visionary, defensive, or reactive
+
+Explicitly avoid:
+- Short-term price action or trading sentiment
+- Earnings beats/misses (unless directly tied to strategy)
+- Emotional complaints unless they challenge strategic narrative`
+    },
+    'earnings': {
+      question: 'What are retail expectations around financial performance?',
+      context: `Focus on earnings-related discussion and financial performance expectations.
+
+Highlight:
+- Revenue, margins, guidance, or segment performance mentions
+- Gap between expectations and perceived outcomes
+- Forward earnings narratives and guidance interpretation
+
+Explicitly avoid:
+- Strategic positioning unrelated to financials
+- Product discussions unless tied to revenue impact
+
+If investors are NOT discussing earnings meaningfully, state this and note what they are focused on instead.`
+    },
+    'ma': {
+      question: 'Is there meaningful speculation about acquisition activity?',
+      context: `Focus on merger and acquisition speculation, deal activity, and consolidation themes.
+
+Highlight:
+- Specific deal rumors, buyout targets, or acquirer mentions
+- Views on merger synergies, valuations, or strategic fit
+- Concerns about overpaying or integration risks
+
+Explicitly avoid:
+- General competitive positioning (unless about being acquired/acquiring)
+- Product launches or earnings performance
+- Leadership changes (unless tied to deal probability)`
+    },
+    'capital-allocation': {
+      question: 'How do investors view shareholder return priorities?',
+      context: `Focus on capital deployment and shareholder return expectations.
+
+Highlight:
+- Discussion of buybacks, dividends, or special returns
+- Views on debt management or balance sheet priorities
+- Opinions on capex spending, investment levels, or cash hoarding
+
+Explicitly avoid:
+- Earnings performance metrics (unless about cash generation)
+- Strategic pivots or M&A speculation`
+    },
+    'leadership-change': {
+      question: 'What is retail sentiment on management quality and stability?',
+      context: `Focus on leadership perception, executive changes, and management credibility.
+
+Highlight:
+- Discussion of CEO/executive performance or competence
+- Succession planning concerns or transition speculation
+- Management credibility on guidance or communication
+
+Explicitly avoid:
+- Strategic or product decisions (unless directly questioning leadership competence)
+- Earnings metrics
+- Activist involvement (separate lens)`
+    },
+    'strategic-pivot': {
+      question: 'Are investors anticipating major business model changes?',
+      context: `Focus on strategic pivots, divestitures, and business model transformation.
+
+Highlight:
+- Discussion of segment sales, spinoffs, or restructuring
+- Views on business model changes or market exits
+- Concerns about execution risk or strategic clarity
+
+Explicitly avoid:
+- Regular product launches or earnings
+- Leadership changes (unless driving the pivot)`
+    },
+    'product-launch': {
+      question: 'How is the market receiving new products or innovation pipeline?',
+      context: `Focus on new product launches, innovation cycles, and market reception.
+
+Highlight:
+- Discussion of specific upcoming or recent product releases
+- Views on innovation quality, market fit, or differentiation
+- Concerns about delays, quality issues, or market reception
+
+Explicitly avoid:
+- Earnings metrics (unless directly tied to product revenue)
+- Strategic repositioning beyond product scope`
+    },
+    'activist-risk': {
+      question: 'Is there meaningful activist involvement or governance concern?',
+      context: `Focus on activist investor involvement, proxy activity, and governance challenges.
+
+Highlight:
+- Discussion of specific activist investors or campaigns
+- Views on board composition or governance quality
+- Concerns about proxy fights, shareholder proposals, or forced changes
+
+Explicitly avoid:
+- General leadership criticism (unless activist-driven)
+- Strategic disagreements from regular investors`
+    },
   };
-  return contexts[lens];
+  return lensConfigs[lens];
 }
 
 function getLensDisplayName(lens: DecisionLens): string {
@@ -54,6 +184,99 @@ function getLensDisplayName(lens: DecisionLens): string {
   };
   return names[lens];
 }
+
+// Check if a message is relevant to the lens based on keyword matching
+function isMessageRelevantToLens(messageText: string, lens: DecisionLens): boolean {
+  if (lens === 'summary') return true; // Summary accepts all
+  
+  const keywords = LENS_KEYWORDS[lens];
+  const lowerText = messageText.toLowerCase();
+  return keywords.some(keyword => lowerText.includes(keyword.toLowerCase()));
+}
+
+// Count narrative themes in messages (simple word clustering)
+function countNarrativeThemes(messages: string[]): Record<string, number> {
+  const themeCounts: Record<string, number> = {};
+  
+  // Common theme indicators
+  const themePatterns = [
+    { theme: 'bullish', patterns: ['bullish', 'moon', 'buy', 'long', 'undervalued', 'going up', 'rocket'] },
+    { theme: 'bearish', patterns: ['bearish', 'sell', 'short', 'overvalued', 'going down', 'dump', 'crash'] },
+    { theme: 'uncertainty', patterns: ['uncertain', 'confused', 'wait', 'unsure', 'dont know', 'not sure'] },
+    { theme: 'earnings_focus', patterns: ['earnings', 'revenue', 'eps', 'profit', 'quarter', 'guidance'] },
+    { theme: 'technical', patterns: ['support', 'resistance', 'chart', 'pattern', 'breakout', 'breakdown'] },
+    { theme: 'news_driven', patterns: ['news', 'announced', 'report', 'breaking', 'rumor'] },
+  ];
+  
+  for (const msg of messages) {
+    const lowerMsg = msg.toLowerCase();
+    for (const { theme, patterns } of themePatterns) {
+      if (patterns.some(p => lowerMsg.includes(p))) {
+        themeCounts[theme] = (themeCounts[theme] || 0) + 1;
+      }
+    }
+  }
+  
+  return themeCounts;
+}
+
+// Calculate confidence level based on relevance ratio and theme concentration
+function calculateConfidence(
+  totalMessages: number,
+  relevantCount: number,
+  themeCounts: Record<string, number>
+): { confidence: ConfidenceLevel; dominantThemeShare: number } {
+  if (totalMessages === 0) {
+    return { confidence: 'low', dominantThemeShare: 0 };
+  }
+  
+  const relevantRatio = relevantCount / totalMessages;
+  
+  // Calculate dominant theme share
+  const themeValues = Object.values(themeCounts);
+  const maxThemeCount = themeValues.length > 0 ? Math.max(...themeValues) : 0;
+  const dominantThemeShare = relevantCount > 0 ? maxThemeCount / relevantCount : 0;
+  
+  // Confidence logic incorporating both relevance and concentration
+  let confidence: ConfidenceLevel;
+  if (relevantRatio >= 0.35 && dominantThemeShare >= 0.40) {
+    confidence = 'high';
+  } else if (relevantRatio >= 0.20 && dominantThemeShare >= 0.25) {
+    confidence = 'moderate';
+  } else {
+    confidence = 'low';
+  }
+  
+  return { confidence, dominantThemeShare };
+}
+
+// New decision-intelligence focused system prompt
+const SYSTEM_PROMPT = `You are a senior equity research analyst producing decision-support intelligence for institutional users.
+
+Write with precision and compression. Avoid generic sentiment language.
+
+Prioritize:
+- What is CHANGING in retail perception
+- Where investor expectations DIVERGE
+- Why this matters for forward-looking decisions
+
+Distinguish between dominant signals and minority-but-strategically-relevant views.
+Do not give equal weight to all narratives.
+
+Each sentence should introduce a distinct, decision-relevant insight.
+Do NOT restate facts unless they are being actively debated.
+
+If discussion is sparse or inconclusive for this lens, state that clearly and briefly note what investors ARE focused on instead.`;
+
+// Output structure skeleton to append to user prompt
+const OUTPUT_SKELETON = `
+Structure your response as:
+Sentence 1: Core retail narrative specific to this lens
+Sentence 2: Source of tension or asymmetry—identify WHO holds opposing views (e.g., traders vs long-term holders, bulls vs skeptics)
+Sentence 3 (optional): Forward-looking implication for decision-makers
+
+If views are uniform, note the consensus strength in Sentence 2.
+Limit output to exactly 3 sentences maximum.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -94,7 +317,13 @@ serve(async (req) => {
       if (cached) {
         console.log(`Cache hit for ${symbol} ${lens}`);
         return new Response(
-          JSON.stringify({ summary: cached.summary, cached: true, messageCount: cached.message_count }),
+          JSON.stringify({ 
+            summary: cached.summary, 
+            cached: true, 
+            messageCount: cached.message_count,
+            // Return moderate confidence for cached results as we don't have fresh stats
+            confidence: 'moderate' as ConfidenceLevel,
+          }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -123,24 +352,43 @@ serve(async (req) => {
     if (messages.length === 0) {
       const noDataSummary = `No recent messages found for ${symbol.toUpperCase()} to analyze through the ${getLensDisplayName(lens)} lens.`;
       return new Response(
-        JSON.stringify({ summary: noDataSummary, cached: false, messageCount: 0 }),
+        JSON.stringify({ 
+          summary: noDataSummary, 
+          cached: false, 
+          messageCount: 0,
+          confidence: 'low' as ConfidenceLevel,
+          relevantCount: 0,
+          dominantThemeShare: 0,
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Prepare message content for AI analysis
+    // Extract message texts for analysis
     const messageTexts = messages
       .slice(0, 300)
       .map((m: any) => m.body || m.content || "")
-      .filter((text: string) => text.length > 10)
-      .join("\n---\n");
+      .filter((text: string) => text.length > 10);
 
-    const lensContext = getLensPromptContext(lens as DecisionLens);
+    // Calculate lens relevance and confidence
+    const relevantMessages = messageTexts.filter((text: string) => 
+      isMessageRelevantToLens(text, lens as DecisionLens)
+    );
+    const themeCounts = countNarrativeThemes(relevantMessages);
+    const { confidence, dominantThemeShare } = calculateConfidence(
+      messageTexts.length,
+      relevantMessages.length,
+      themeCounts
+    );
+
+    console.log(`Confidence for ${symbol} ${lens}: ${confidence} (relevant: ${relevantMessages.length}/${messageTexts.length}, dominant theme: ${(dominantThemeShare * 100).toFixed(1)}%)`);
+
+    const lensConfig = getLensPromptContext(lens as DecisionLens);
     const lensName = getLensDisplayName(lens as DecisionLens);
 
     console.log(`Generating ${lensName} summary for ${symbol} from ${messages.length} messages...`);
 
-    // Call Lovable AI for lens-specific summary
+    // Call Lovable AI for lens-specific summary with enhanced prompt
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -152,21 +400,22 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a senior equity research analyst providing decision-support insights. Your analysis should be concise (2-3 sentences), actionable, and focused on the specific lens the user has selected. Write in a professional, authoritative tone.`,
+            content: SYSTEM_PROMPT,
           },
           {
             role: "user",
             content: `Analyze these ${messages.length} StockTwits messages about ${symbol.toUpperCase()} through the "${lensName}" lens.
 
-${lensContext}
+Decision Question: ${lensConfig.question}
 
-Provide a 2-3 sentence summary of what retail investors are saying that's relevant to this decision lens. Be specific about what you found (or didn't find). If there's limited discussion on this topic, say so clearly.
+${lensConfig.context}
+${OUTPUT_SKELETON}
 
 Messages:
-${messageTexts}`,
+${messageTexts.join("\n---\n")}`,
           },
         ],
-        max_tokens: 256,
+        max_tokens: 384,
       }),
     });
 
@@ -200,6 +449,7 @@ ${messageTexts}`,
           summary: `Unable to generate ${lensName} insights for ${symbol.toUpperCase()} at this time.`,
           cached: false, 
           messageCount: messages.length,
+          confidence: 'low' as ConfidenceLevel,
           error: true
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -228,7 +478,14 @@ ${messageTexts}`,
     console.log(`Cached ${lensName} summary for ${symbol}`);
 
     return new Response(
-      JSON.stringify({ summary: sanitizedSummary, cached: false, messageCount: messages.length }),
+      JSON.stringify({ 
+        summary: sanitizedSummary, 
+        cached: false, 
+        messageCount: messages.length,
+        confidence,
+        relevantCount: relevantMessages.length,
+        dominantThemeShare,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
