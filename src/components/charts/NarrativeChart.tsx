@@ -908,7 +908,7 @@ function TimeSeriesNarrativeChart({
       </Collapsible>
 
       {/* Main content: Side Panel + Chart */}
-      <div className="flex md:gap-4 h-[calc(100%-60px)]">
+      <div className="flex md:gap-4 h-[calc(100%-60px)] pl-1">
         {/* Left Side Panel - Only on desktop */}
         {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
 
