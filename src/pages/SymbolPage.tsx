@@ -20,6 +20,7 @@ import { DecisionLensSelector, DecisionLens, LensValue, getLensDisplayName, getL
 import { CustomLens } from "@/hooks/use-custom-lenses";
 import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
 import { LensReadinessCard } from "@/components/LensReadinessCard";
+import { CustomLensReadinessCard } from "@/components/CustomLensReadinessCard";
 import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
 import { MessagesSidebar } from "@/components/layout/MessagesSidebar";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
@@ -284,9 +285,17 @@ export default function SymbolPage() {
           duration: 0.3,
           ease: "easeOut"
         }}>
-              {decisionLens === 'summary' || activeCustomLens 
-                ? <PsychologyOverviewCard symbol={symbol} /> 
-                : <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />}
+              {activeCustomLens ? (
+                <CustomLensReadinessCard 
+                  customLens={activeCustomLens} 
+                  summaryData={lensSummaryData}
+                  isLoading={lensSummaryLoading}
+                />
+              ) : decisionLens === 'summary' ? (
+                <PsychologyOverviewCard symbol={symbol} />
+              ) : (
+                <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />
+              )}
             </motion.div>
           </motion.div>
         </AnimatePresence>
