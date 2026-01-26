@@ -14,10 +14,10 @@ export function CredibilitySection() {
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal className="text-center mb-16">
-            <h2 className="text-2xl md:text-3xl font-display mb-4">
+            <h2 className="text-2xl md:text-3xl font-display mb-4 text-balance">
               Built for Institutional Standards
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-muted-foreground max-w-xl mx-auto text-balance">
               Enterprise-grade infrastructure designed to meet the demands of professional investors.
             </p>
           </ScrollReveal>

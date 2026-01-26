@@ -52,10 +52,10 @@ export function IntelligencePatternsSection() {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <ScrollReveal className="text-center mb-14">
-            <h2 className="text-2xl md:text-3xl font-display mb-4">
+            <h2 className="text-2xl md:text-3xl font-display mb-4 text-balance">
               Intelligence Patterns
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto text-balance">
               Real strategic scenarios where retail sentiment intelligence revealed actionable foresight before market reaction.
             </p>
           </ScrollReveal>

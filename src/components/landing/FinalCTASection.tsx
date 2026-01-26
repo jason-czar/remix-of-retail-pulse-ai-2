@@ -32,13 +32,13 @@ export function FinalCTASection() {
               />
               
               <div className="relative">
-                <h2 className="text-2xl md:text-3xl font-display mb-4">
+                <h2 className="text-2xl md:text-3xl font-display mb-4 text-balance">
                   Ready to understand what
                   <br />
                   <span className="text-gradient">retail investors are thinking?</span>
                 </h2>
                 
-                <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
+                <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-balance">
                   Join leading institutions using Derive Street to gain an edge in 
                   understanding retail investor behavior and sentiment.
                 </p>

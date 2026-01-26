@@ -8,10 +8,10 @@ export function ProblemSection() {
         <div className="max-w-4xl mx-auto">
           {/* Problem Statement */}
           <ScrollReveal className="text-center mb-16">
-            <h2 className="text-2xl md:text-3xl font-display mb-6">
+            <h2 className="text-2xl md:text-3xl font-display mb-6 text-balance">
               The Problem
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className="text-lg text-muted-foreground leading-relaxed text-balance">
               Retail investors now move markets. Their sentiment can create short squeezes, 
               amplify momentum, or signal regime changes — yet most institutional players 
               lack systematic ways to monitor and interpret this signal at scale.
