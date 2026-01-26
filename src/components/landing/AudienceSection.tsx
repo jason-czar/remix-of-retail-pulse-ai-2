@@ -90,9 +90,9 @@ function AudienceBlock({
         <div className="inline-flex p-3 rounded-lg bg-primary/10 mb-4">
           <Icon className="h-6 w-6 text-primary" />
         </div>
-        <h3 className="text-2xl font-display mb-2">{title}</h3>
-        <p className="text-primary font-medium mb-4">{subtitle}</p>
-        <p className="text-muted-foreground mb-6 leading-relaxed">{description}</p>
+        <h3 className="text-2xl font-display mb-2 text-balance">{title}</h3>
+        <p className="text-primary font-medium mb-4 text-balance">{subtitle}</p>
+        <p className="text-muted-foreground mb-6 leading-relaxed text-balance">{description}</p>
         <Link to={ctaLink}>
           <Button variant="ghost" className="group glass-button-secondary">
             {cta}

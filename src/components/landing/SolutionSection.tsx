@@ -10,10 +10,10 @@ export function SolutionSection() {
       <div className="container mx-auto px-4 relative">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal className="text-center mb-16">
-            <h2 className="text-2xl md:text-3xl font-display mb-4">
+            <h2 className="text-2xl md:text-3xl font-display mb-4 text-balance">
               Our Solution
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-balance">
               Derive Street transforms millions of retail investor conversations into 
               actionable intelligence for institutional decision-makers.
             </p>
