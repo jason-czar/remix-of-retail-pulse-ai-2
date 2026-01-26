@@ -55,11 +55,14 @@ const THEME_COLORS = ["hsl(199 89% 48%)",
 
 // Color palette for narratives based on sentiment
 const getSentimentColor = (sentiment: string, index: number) => {
-  const bullishColors = ["#00C805", // Primary green
+  const bullishColors = ["#00C805",
+  // Primary green
   "hsl(122 100% 35%)", "hsl(122 100% 30%)"];
-  const bearishColors = ["#FF5000", // Primary orange/red
+  const bearishColors = ["#FF5000",
+  // Primary orange/red
   "hsl(19 100% 45%)", "hsl(19 100% 40%)"];
-  const neutralColors = ["#0DA2E7", // Primary blue
+  const neutralColors = ["#0DA2E7",
+  // Primary blue
   "hsl(199 85% 45%)", "hsl(199 80% 40%)"];
   const palette = sentiment === "bullish" ? bullishColors : sentiment === "bearish" ? bearishColors : neutralColors;
   return palette[index % palette.length];
@@ -75,8 +78,10 @@ const getSentimentBadge = (sentiment: string) => {
 
 // Sentiment colors
 const SENTIMENT_COLORS = {
-  bullish: "#00C805", // Green
-  bearish: "#FF5000", // Orange/Red
+  bullish: "#00C805",
+  // Green
+  bearish: "#FF5000",
+  // Orange/Red
   neutral: "#0DA2E7" // Blue
 };
 
@@ -411,9 +416,7 @@ function NarrativeSidePanel({
         {data.segments.length > 0 && <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
             <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Top Narratives:</div>
             {data.segments.map((segment, idx) => <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
-                <div className={cn("rounded-sm flex-shrink-0", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} style={{
-            backgroundColor: SENTIMENT_COLORS[segment.sentiment as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral
-          }} />
+                
                 <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>
                   {segment.name}
                 </span>
@@ -756,12 +759,11 @@ function TimeSeriesNarrativeChart({
 
     // Find most recent data point with messages (non-gap, has data)
     let mostRecent = chartDataWithPrice.slice().reverse().find(item => !item.isGap && item.totalMessages > 0);
-    
+
     // If no valid points, fall back to the last data point (most recent date)
     if (!mostRecent && chartDataWithPrice.length > 0) {
       mostRecent = chartDataWithPrice[chartDataWithPrice.length - 1];
     }
-    
     if (!mostRecent) return null;
     return {
       label: mostRecent.date,
@@ -995,16 +997,14 @@ function HourlyStackedNarrativeChart({
     const now = new Date();
     const currentHour = now.getHours();
     const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
-    
+
     // Determine if we should show the previous trading day:
     // 1. It's a weekend (Saturday or Sunday)
     // 2. It's before market open (before START_HOUR, typically 8am or 5am)
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const isBeforeMarketOpen = currentHour < START_HOUR;
     const showPreviousTradingDay = isWeekend || isBeforeMarketOpen;
-    
     let targetDate = new Date(now);
-    
     if (showPreviousTradingDay) {
       // Go back to the most recent trading day
       if (isWeekend) {
@@ -1016,7 +1016,7 @@ function HourlyStackedNarrativeChart({
         // Before market open on a weekday - check if yesterday was a trading day
         targetDate = new Date(now.getTime() - 24 * 60 * 60 * 1000); // Go back 1 day
         const yesterdayDayOfWeek = targetDate.getDay();
-        
+
         // If yesterday was Sunday, go back to Friday
         if (yesterdayDayOfWeek === 0) {
           targetDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
@@ -1027,13 +1027,12 @@ function HourlyStackedNarrativeChart({
         }
       }
     }
-    
+
     // Set day boundaries based on target date
     const todayStart = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
     const todayEnd = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
     // 24H: rolling 24 hours (always from current time)
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
     return {
       todayStart,
       todayEnd,
@@ -1064,12 +1063,16 @@ function HourlyStackedNarrativeChart({
   // For 1D view, pass the target date boundaries to fetch volume for that specific day
   const volumeStartDate = timeRange === "1D" ? todayStart.toISOString() : undefined;
   const volumeEndDate = timeRange === "1D" ? todayEnd.toISOString() : undefined;
-  const { data: volumeData } = useVolumeAnalytics(symbol, timeRange, volumeStartDate, volumeEndDate);
+  const {
+    data: volumeData
+  } = useVolumeAnalytics(symbol, timeRange, volumeStartDate, volumeEndDate);
 
   // Fetch actual volume history from database for past days
   // The volume_history table stores hourly_distribution with real message counts
   const targetDateStr = displayDate.toISOString().split('T')[0];
-  const { data: volumeHistoryData } = useQuery({
+  const {
+    data: volumeHistoryData
+  } = useQuery({
     queryKey: ['volume-history-hourly', symbol, targetDateStr],
     queryFn: async () => {
       // Get the latest volume_history record for the target date
@@ -1077,17 +1080,12 @@ function HourlyStackedNarrativeChart({
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(displayDate);
       endOfDay.setHours(23, 59, 59, 999);
-      
-      const { data, error } = await supabase
-        .from('volume_history')
-        .select('hourly_distribution, daily_volume, recorded_at')
-        .eq('symbol', symbol)
-        .gte('recorded_at', startOfDay.toISOString())
-        .lte('recorded_at', endOfDay.toISOString())
-        .order('recorded_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('volume_history').select('hourly_distribution, daily_volume, recorded_at').eq('symbol', symbol).gte('recorded_at', startOfDay.toISOString()).lte('recorded_at', endOfDay.toISOString()).order('recorded_at', {
+        ascending: false
+      }).limit(1).maybeSingle();
       if (error) {
         console.error('Failed to fetch volume history:', error);
         return null;
@@ -1095,7 +1093,7 @@ function HourlyStackedNarrativeChart({
       return data;
     },
     enabled: !!symbol && timeRange === "1D",
-    staleTime: 60000,
+    staleTime: 60000
   });
 
   // Determine price line color based on current price vs previous close
@@ -1113,17 +1111,14 @@ function HourlyStackedNarrativeChart({
     if (!priceData?.prices || priceData.prices.length === 0 || priceData.previousClose == null) {
       return null;
     }
-    
     const prices = priceData.prices.map(p => p.price);
     const previousClose = priceData.previousClose;
-    
+
     // Check boundary conditions
     const allAbovePrevClose = prices.every(p => p >= previousClose);
     const allBelowPrevClose = prices.every(p => p <= previousClose);
-    
     let minPrice: number;
     let maxPrice: number;
-    
     if (allAbovePrevClose) {
       // Pin bottom to previousClose - this aligns reference line with chart bottom
       minPrice = previousClose;
@@ -1136,14 +1131,12 @@ function HourlyStackedNarrativeChart({
       minPrice = Math.min(...prices, previousClose);
       maxPrice = Math.max(...prices, previousClose);
     }
-    
     const range = maxPrice - minPrice;
     if (range === 0) return null;
-    
+
     // Calculate where previousClose sits in the vertical range (0 = top, 1 = bottom)
     // SVG gradients go from top (0%) to bottom (100%)
-    const previousClosePercent = ((maxPrice - previousClose) / range) * 100;
-    
+    const previousClosePercent = (maxPrice - previousClose) / range * 100;
     return {
       previousClosePercent,
       hasDataAbove: prices.some(p => p > previousClose),
@@ -1155,7 +1148,7 @@ function HourlyStackedNarrativeChart({
   // Prefer volume_history from database (has real hourly counts) over analytics API
   const hourlyVolumeMap = useMemo(() => {
     const map = new Map<number, number>();
-    
+
     // First, try to use volume_history from database (most accurate)
     if (volumeHistoryData?.hourly_distribution && Array.isArray(volumeHistoryData.hourly_distribution)) {
       volumeHistoryData.hourly_distribution.forEach((item: any) => {
@@ -1168,14 +1161,14 @@ function HourlyStackedNarrativeChart({
       });
       if (map.size > 0) return map;
     }
-    
+
     // Fallback to analytics API data (only has current day data)
     if (volumeData && volumeData.length > 0) {
       volumeData.forEach((item: any) => {
         // Parse hour from time string - handles both "HH:MM" (e.g., "15:00") and "8am/12pm" formats
         const timeStr = item.time?.toLowerCase() || "";
         let hour = 0;
-        
+
         // Handle "HH:MM" format (e.g., "15:00", "09:00") from StockTwits analytics API
         if (timeStr.includes(":")) {
           const parts = timeStr.split(":");
@@ -1189,14 +1182,11 @@ function HourlyStackedNarrativeChart({
           const num = parseInt(timeStr.replace("pm", ""));
           hour = num === 12 ? 12 : num + 12; // 12pm = 12, 1pm = 13, etc.
         }
-        
         map.set(hour, item.volume || 0);
       });
     }
-    
     return map;
   }, [volumeData, volumeHistoryData]);
-
   const {
     stackedChartData,
     totalMessages,
@@ -1232,14 +1222,13 @@ function HourlyStackedNarrativeChart({
           const pointDate = new Date(point.recorded_at);
           return pointDate.getTime() >= todayStart.getTime() && pointDate.getTime() <= todayEnd.getTime();
         });
-        
         filteredData.forEach(point => {
           const date = new Date(point.recorded_at);
           const hourIndex = date.getHours();
           const slot = hourlyNarratives.get(hourIndex);
           if (slot) {
             slot.hasNarrativeData = true;
-            
+
             // Aggregate narratives for this hour
             if (point.narratives && Array.isArray(point.narratives)) {
               point.narratives.forEach((n: any) => {
@@ -1262,7 +1251,6 @@ function HourlyStackedNarrativeChart({
       // Get actual hourly volumes from hourlyVolumeMap
       // This map now prefers volume_history (has real counts) over analytics API
       const hourlyVolumes: Map<number, number> = new Map();
-      
       for (let h = START_HOUR; h <= END_HOUR; h++) {
         const volume = hourlyVolumeMap.get(h) || 0;
         hourlyVolumes.set(h, volume);
@@ -1295,14 +1283,13 @@ function HourlyStackedNarrativeChart({
         // Get the hour's narrative data (for tooltip on any slot within the hour)
         const hourNarr = hourlyNarratives.get(hour)!;
         const topNarratives = hourNarr.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
-        
+
         // Get actual volume for this hour from hourlyVolumes (from volume_history or analytics API)
         // For future hours, always show 0 volume
-        const hourlyVolume = isFutureHour ? 0 : (hourlyVolumes.get(hour) || 0);
-        
+        const hourlyVolume = isFutureHour ? 0 : hourlyVolumes.get(hour) || 0;
+
         // Calculate total sample count from narratives for proportional scaling
         const totalSampleCount = topNarratives.reduce((sum, n) => sum + n.count, 0);
-        
         const flatData: Record<string, any> = {
           time: hourLabel,
           slotIndex: slotIdx,
@@ -1311,7 +1298,7 @@ function HourlyStackedNarrativeChart({
           // Use actual hourly volume for display
           totalMessages: hourlyVolume,
           volumePercent: hourlyVolume / maxVolume * 100,
-          isEmpty: isFutureHour || (!hourNarr.hasNarrativeData && hourlyVolume === 0),
+          isEmpty: isFutureHour || !hourNarr.hasNarrativeData && hourlyVolume === 0,
           isFutureHour
         };
 
@@ -1329,11 +1316,11 @@ function HourlyStackedNarrativeChart({
           topNarratives.forEach((n, idx) => {
             flatData[`segment${idx}Name`] = n.name;
             flatData[`segment${idx}Sentiment`] = n.sentiment;
-            
+
             // Scale segment values proportionally to actual hourly volume
             const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
             const scaledValue = Math.round(proportion * hourlyVolume);
-            
+
             // Only set segment VALUE at hour start for bar rendering
             flatData[`segment${idx}`] = isHourStart ? scaledValue : 0;
             flatData[`segment${idx}Count`] = n.count; // Store original count for tooltip
@@ -1347,7 +1334,7 @@ function HourlyStackedNarrativeChart({
         }
         stackedChartData.push(flatData);
       }
-      
+
       // Add a closing slot for the final X-axis label (e.g., "3pm" for market close)
       const closingHour = END_HOUR + 1;
       const closingHourLabel = closingHour === 0 ? "12am" : closingHour < 12 ? `${closingHour}am` : closingHour === 12 ? "12pm" : `${closingHour - 12}pm`;
@@ -1370,7 +1357,6 @@ function HourlyStackedNarrativeChart({
         closingSlot[`segment${i}Count`] = 0;
       }
       stackedChartData.push(closingSlot);
-      
       const totalMessages = volumeValues.reduce((sum, v) => sum + v, 0);
       const hasAnyData = Array.from(hourlyNarratives.values()).some(h => h.hasNarrativeData);
       return {
@@ -1414,7 +1400,6 @@ function HourlyStackedNarrativeChart({
       }[];
       totalMessages: number;
     }>();
-    
     filteredData.forEach(point => {
       const date = new Date(point.recorded_at);
       const hourKey = date.toLocaleTimeString(undefined, {
@@ -1423,7 +1408,6 @@ function HourlyStackedNarrativeChart({
       });
       const sortKey = date.toISOString();
       const hourIndex = date.getHours();
-      
       if (!byHour.has(sortKey)) {
         byHour.set(sortKey, {
           hour: hourKey,
@@ -1462,7 +1446,7 @@ function HourlyStackedNarrativeChart({
     const stackedChartData = hourEntries.sort((a, b) => a.sortKey.localeCompare(b.sortKey)).map(hourData => {
       // Sort narratives by count descending and take top MAX_SEGMENTS
       const topNarratives = hourData.narratives.sort((a, b) => b.count - a.count).slice(0, MAX_SEGMENTS);
-      
+
       // Calculate total sample count from narratives for proportional scaling
       const totalSampleCount = topNarratives.reduce((sum, n) => sum + n.count, 0);
       const actualVolume = hourData.totalMessages;
@@ -1475,7 +1459,7 @@ function HourlyStackedNarrativeChart({
         totalMessages: hourData.totalMessages,
         volumePercent: hourData.totalMessages / maxMessages * 100
       };
-      
+
       // Scale segment heights proportionally to actual volume
       topNarratives.forEach((n, idx) => {
         const proportion = totalSampleCount > 0 ? n.count / totalSampleCount : 0;
@@ -1494,7 +1478,7 @@ function HourlyStackedNarrativeChart({
       }
       return flatData;
     });
-    
+
     // Compute total from actual volumes
     const totalMessages = hourEntries.reduce((sum, h) => sum + h.totalMessages, 0);
     return {
@@ -1510,17 +1494,15 @@ function HourlyStackedNarrativeChart({
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0) {
       return stackedChartData;
     }
-
     const previousClose = priceData.previousClose ?? 0;
 
     // For 5-minute view (Today), use 5-minute slot alignment for granular price line
     if (is5MinView) {
       const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
-      
+
       // Find the first slot that has actual price data to use for pre-market extension
       let firstPriceSlotIndex: number | null = null;
       let firstPrice: number | null = null;
-      
       for (let i = 0; i < stackedChartData.length; i++) {
         const slotIndex = stackedChartData[i].slotIndex;
         const pricePoint = priceBySlot.get(slotIndex);
@@ -1530,30 +1512,25 @@ function HourlyStackedNarrativeChart({
           break;
         }
       }
-      
       return stackedChartData.map(item => {
         const slotIndex = item.slotIndex;
         const pricePoint = priceBySlot.get(slotIndex);
         const price = pricePoint?.price ?? null;
-        
+
         // For slots BEFORE the first real price data, extend backwards with reduced opacity
         // This handles the pre-market period (e.g., 8am-9:30am before market opens)
-        const isPreMarketExtension = firstPriceSlotIndex !== null && 
-                                     firstPrice !== null && 
-                                     slotIndex < firstPriceSlotIndex && 
-                                     price === null;
-        
+        const isPreMarketExtension = firstPriceSlotIndex !== null && firstPrice !== null && slotIndex < firstPriceSlotIndex && price === null;
+
         // Also include the first real price slot in the extension to create seamless overlap
-        const isTransitionSlot = firstPriceSlotIndex !== null && 
-                                 firstPrice !== null && 
-                                 slotIndex === firstPriceSlotIndex;
-        
+        const isTransitionSlot = firstPriceSlotIndex !== null && firstPrice !== null && slotIndex === firstPriceSlotIndex;
         if (isPreMarketExtension) {
           // Use the first available price for the extension line
           return {
             ...item,
-            price: null, // Keep main price null so it doesn't render
-            priceExtension: firstPrice, // Separate data key for extension
+            price: null,
+            // Keep main price null so it doesn't render
+            priceExtension: firstPrice,
+            // Separate data key for extension
             priceAbove: null,
             priceBelow: null,
             priceExtensionAbove: firstPrice! >= previousClose ? firstPrice : null,
@@ -1562,13 +1539,14 @@ function HourlyStackedNarrativeChart({
             isPreMarketExtension: true
           };
         }
-        
+
         // At the transition slot, include BOTH extension and regular price to overlap fills
         if (isTransitionSlot) {
           return {
             ...item,
             price,
-            priceExtension: firstPrice, // Extension also has this value to overlap
+            priceExtension: firstPrice,
+            // Extension also has this value to overlap
             priceAbove: price! >= previousClose ? price : null,
             priceBelow: price! < previousClose ? price : null,
             priceExtensionAbove: firstPrice! >= previousClose ? firstPrice : null,
@@ -1577,7 +1555,7 @@ function HourlyStackedNarrativeChart({
             isPreMarketExtension: false
           };
         }
-        
+
         // When price is null (gaps in data), set area values to null so connectNulls bridges smoothly
         if (price === null) {
           return {
@@ -1592,11 +1570,11 @@ function HourlyStackedNarrativeChart({
             isPreMarketExtension: false
           };
         }
-        
         return {
           ...item,
           price,
-          priceExtension: null, // No extension for slots with real data
+          priceExtension: null,
+          // No extension for slots with real data
           // For area fills: both areas need the price value
           // priceAbove fills from previousClose UP to price (when price > previousClose)
           // priceBelow fills from previousClose DOWN to price (when price < previousClose)
@@ -1616,7 +1594,6 @@ function HourlyStackedNarrativeChart({
       const hourIndex = item.hourIndex;
       const pricePoint = priceByHour.get(hourIndex);
       const price = pricePoint?.price ?? null;
-      
       if (price === null) {
         return {
           ...item,
@@ -1628,7 +1605,6 @@ function HourlyStackedNarrativeChart({
           isPreMarketExtension: false
         };
       }
-      
       return {
         ...item,
         price,
@@ -1667,7 +1643,6 @@ function HourlyStackedNarrativeChart({
     }
     const prices = priceData.prices.map(p => p.price);
     const previousClose = priceData.previousClose;
-    
     let minPrice = Math.min(...prices);
     let maxPrice = Math.max(...prices);
 
@@ -1676,31 +1651,28 @@ function HourlyStackedNarrativeChart({
       minPrice = Math.min(minPrice, previousClose);
       maxPrice = Math.max(maxPrice, previousClose);
     }
-    
     const range = maxPrice - minPrice;
     // Use 1% padding for expanded vertical range, minimum $0.10 to handle flat prices
     const topPadding = Math.max(range * 0.01, 0.10);
     const bottomPadding = Math.max(range * 0.01, 0.10);
     // Round to nearest $0.10 for cleaner axis labels with tighter domain
     const roundTo = 0.10;
-    
+
     // Check if all prices are above or equal to previousClose (stock only up)
     const allAbovePrevClose = previousClose != null && prices.every(p => p >= previousClose);
     // Check if all prices are below or equal to previousClose (stock only down)
     const allBelowPrevClose = previousClose != null && prices.every(p => p <= previousClose);
-    
     if (allAbovePrevClose && previousClose != null) {
       // Pin the bottom of the domain to previousClose exactly
       // This aligns the reference line with the chart bottom, so fill covers all bars
       return [previousClose, Math.ceil((maxPrice + topPadding) / roundTo) * roundTo];
     }
-    
     if (allBelowPrevClose && previousClose != null) {
       // Pin the top of the domain to previousClose exactly
       // This aligns the reference line with the chart top
       return [Math.floor((minPrice - bottomPadding) / roundTo) * roundTo, previousClose];
     }
-    
+
     // Normal case: price crossed both sides of previous close
     return [Math.floor((minPrice - bottomPadding) / roundTo) * roundTo, Math.ceil((maxPrice + topPadding) / roundTo) * roundTo];
   }, [priceData, showPriceOverlay]);
@@ -1710,10 +1682,9 @@ function HourlyStackedNarrativeChart({
     if (!showPriceOverlay || !priceData?.prices || priceData.prices.length === 0 || !is5MinView) {
       return null;
     }
-    
     const priceBySlot = alignPricesToFiveMinSlots(priceData.prices, START_HOUR, END_HOUR);
     const previousClose = priceData.previousClose ?? 0;
-    
+
     // Find the first slot index with actual price data
     for (let i = 0; i < stackedChartData.length; i++) {
       const slotIndex = stackedChartData[i].slotIndex;
@@ -1730,52 +1701,43 @@ function HourlyStackedNarrativeChart({
   }, [priceData, showPriceOverlay, is5MinView, stackedChartData, START_HOUR, END_HOUR]);
 
   // Custom component to render horizontal line from Y-axis to first price point
-  const FirstPriceExtensionLine = useCallback(({ yAxisMap, xAxisMap }: any) => {
+  const FirstPriceExtensionLine = useCallback(({
+    yAxisMap,
+    xAxisMap
+  }: any) => {
     if (!firstPriceData || !yAxisMap?.right || !xAxisMap) return null;
-    
     const yAxis = yAxisMap.right;
     const xAxis = Object.values(xAxisMap)[0] as any;
     if (!yAxis || !xAxis) return null;
-    
+
     // Calculate y position from price
     const yScale = yAxis.scale;
     const y = yScale ? yScale(firstPriceData.price) : null;
     if (y === null || y === undefined) return null;
-    
+
     // Calculate x position - from axis start to the center of the first data point bar
     const xStart = xAxis.x; // Left edge of chart area
     const barWidth = xAxis.width / stackedChartData.length;
     // End at the center of the bar where the price point sits
-    const xEnd = xAxis.x + (barWidth * firstPriceData.dataIndex) + (barWidth / 2);
-    
-    return (
-      <line
-        x1={xStart}
-        y1={y}
-        x2={xEnd}
-        y2={y}
-        stroke={firstPriceData.color}
-        strokeOpacity={0.5}
-        strokeWidth={2}
-        strokeLinecap="round"
-      />
-    );
+    const xEnd = xAxis.x + barWidth * firstPriceData.dataIndex + barWidth / 2;
+    return <line x1={xStart} y1={y} x2={xEnd} y2={y} stroke={firstPriceData.color} strokeOpacity={0.5} strokeWidth={2} strokeLinecap="round" />;
   }, [firstPriceData, stackedChartData.length]);
 
   // Custom crosshair line that we can control via activeIndex - includes dot on price line
   // Track whether the user is actively hovering over the chart
   const isHoveringChart = hoveredData !== null;
-
-  const CrosshairLine = useCallback(({ offset, xAxisMap, yAxisMap }: any) => {
+  const CrosshairLine = useCallback(({
+    offset,
+    xAxisMap,
+    yAxisMap
+  }: any) => {
     // Only show crosshair when hovering over the chart
     if (!isHoveringChart || activeIndex === null || activeIndex === undefined) return null;
-    const xAxis = xAxisMap ? (Object.values(xAxisMap)[0] as any) : null;
+    const xAxis = xAxisMap ? Object.values(xAxisMap)[0] as any : null;
     if (!xAxis || !offset || !chartDataWithPrice.length) return null;
-
     const barWidth = xAxis.width / chartDataWithPrice.length;
     const clampedIndex = Math.max(0, Math.min(activeIndex, chartDataWithPrice.length - 1));
     const x = xAxis.x + barWidth * clampedIndex + barWidth / 2;
-
     const y1 = offset.top;
     const y2 = offset.top + offset.height;
 
@@ -1795,31 +1757,18 @@ function HourlyStackedNarrativeChart({
         }
       }
     }
-
-    return (
-      <g style={{ opacity: 1, transition: 'opacity 0.2s ease-out' }}>
-        <line
-          x1={x}
-          y1={y1}
-          x2={x}
-          y2={y2}
-          stroke="hsl(var(--muted-foreground))"
-          strokeWidth={1}
-          strokeOpacity={0.5}
-          style={{ transition: 'x1 0.05s ease-out, x2 0.05s ease-out' }}
-        />
+    return <g style={{
+      opacity: 1,
+      transition: 'opacity 0.2s ease-out'
+    }}>
+        <line x1={x} y1={y1} x2={x} y2={y2} stroke="hsl(var(--muted-foreground))" strokeWidth={1} strokeOpacity={0.5} style={{
+        transition: 'x1 0.05s ease-out, x2 0.05s ease-out'
+      }} />
         {/* Dot on the price line */}
-        {dotY !== null && (
-          <circle
-            cx={x}
-            cy={dotY}
-            r={5}
-            fill={dotColor}
-            style={{ transition: 'cx 0.05s ease-out, cy 0.05s ease-out, fill 0.15s ease-out' }}
-          />
-        )}
-      </g>
-    );
+        {dotY !== null && <circle cx={x} cy={dotY} r={5} fill={dotColor} style={{
+        transition: 'cx 0.05s ease-out, cy 0.05s ease-out, fill 0.15s ease-out'
+      }} />}
+      </g>;
   }, [activeIndex, chartDataWithPrice, showPriceOverlay, priceLineColor, priceData?.previousClose, isHoveringChart]);
 
   // Derive panel data (hovered or most recent with data)
@@ -1830,12 +1779,11 @@ function HourlyStackedNarrativeChart({
 
     // Find most recent data point with messages (prioritize non-empty points)
     let mostRecent = chartDataWithPrice.slice().reverse().find(item => (item as any).totalMessages > 0 && !(item as any).isEmpty);
-    
+
     // If no non-empty points, fall back to the last data point (most recent time slot)
     if (!mostRecent && chartDataWithPrice.length > 0) {
       mostRecent = chartDataWithPrice[chartDataWithPrice.length - 1];
     }
-    
     if (!mostRecent) return null;
     const mr = mostRecent as Record<string, any>;
     return {
@@ -1909,7 +1857,6 @@ function HourlyStackedNarrativeChart({
     }
     return chartDataWithPrice.length - 1;
   }, [chartDataWithPrice]);
-
   const handleChartMouseLeave = useCallback(() => {
     setActiveHour(null);
     setHoveredData(null);
@@ -2019,63 +1966,45 @@ w-[120vw]
                   <defs>
                     {/* Solid fill above previous close - consistent 0.15 opacity, clipped at baseline */}
                     <linearGradient id="priceAboveGradient" x1="0" y1="0" x2="0" y2="1">
-                      {priceGradientStops ? (
-                        <>
+                      {priceGradientStops ? <>
                           <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
                           <stop offset="100%" stopColor="transparent" stopOpacity={0} />
-                        </>
-                      ) : (
-                        <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />
-                      )}
+                        </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />}
                     </linearGradient>
                     {/* Solid fill below previous close - consistent 0.15 opacity, clipped at baseline */}
                     <linearGradient id="priceBelowGradient" x1="0" y1="0" x2="0" y2="1">
-                      {priceGradientStops ? (
-                        <>
+                      {priceGradientStops ? <>
                           <stop offset="0%" stopColor="transparent" stopOpacity={0} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />
                           <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />
-                        </>
-                      ) : (
-                        <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />
-                      )}
+                        </> : <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />}
                     </linearGradient>
                     {/* Dynamic gradient for price line - green above previous close, red below */}
                     <linearGradient id="priceLineGradient" x1="0" y1="0" x2="0" y2="1">
-                      {priceGradientStops ? (
-                        <>
+                      {priceGradientStops ? <>
                           <stop offset="0%" stopColor={PRICE_UP_COLOR} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} />
                           <stop offset="100%" stopColor={PRICE_DOWN_COLOR} />
-                        </>
-                      ) : (
-                        <stop offset="0%" stopColor={PRICE_UP_COLOR} />
-                      )}
+                        </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} />}
                     </linearGradient>
                     {/* Pre-market extension line gradient - 50% opacity */}
                     <linearGradient id="priceExtensionLineGradient" x1="0" y1="0" x2="0" y2="1">
-                      {priceGradientStops ? (
-                        <>
+                      {priceGradientStops ? <>
                           <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
                           <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
-                        </>
-                      ) : (
-                        <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
-                      )}
+                        </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />}
                     </linearGradient>
                     {/* Pre-market extension fill - single color based on opening price position */}
-                    {firstPriceData && (
-                      <linearGradient id="priceExtensionFillGradient" x1="0" y1="0" x2="0" y2="1">
+                    {firstPriceData && <linearGradient id="priceExtensionFillGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={firstPriceData.color} stopOpacity={0.15} />
                         <stop offset="100%" stopColor={firstPriceData.color} stopOpacity={0.15} />
-                      </linearGradient>
-                    )}
+                      </linearGradient>}
                   </defs>
                   <XAxis dataKey="time" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} interval={is5MinView ? 11 : 0} tick={({
                   x,
@@ -2104,11 +2033,7 @@ w-[120vw]
                   <YAxis yAxisId="left" hide={true} domain={barDomain as [number, number | string]} />
                   {showPriceOverlay && <YAxis yAxisId="right" hide={true} domain={priceDomain as [number, number]} />}
                   {/* Tooltip drives Recharts' activeTooltipIndex; we render our own crosshair for full control */}
-                  <Tooltip
-                    content={() => null}
-                    cursor={false}
-                    defaultIndex={lastPricePointIndex ?? undefined}
-                  />
+                  <Tooltip content={() => null} cursor={false} defaultIndex={lastPricePointIndex ?? undefined} />
                   {/* Only render bars when data is ready - prevents placeholder bars during loading */}
                   {!historyLoading && hasAnyData && Array.from({
                   length: MAX_SEGMENTS
@@ -2116,51 +2041,14 @@ w-[120vw]
                       {chartDataWithPrice.map((entry, entryIdx) => <Cell key={`cell-${entryIdx}`} fill={SENTIMENT_COLORS[entry[`segment${idx}Sentiment`] as keyof typeof SENTIMENT_COLORS] || SENTIMENT_COLORS.neutral} />)}
                     </Bar>)}
                   {/* Single area fill between price line and previous close - gradient handles color transition */}
-                  {showPriceOverlay && is5MinView && priceData?.previousClose && (
-                    <>
+                  {showPriceOverlay && is5MinView && priceData?.previousClose && <>
                       {/* Pre-market extension area - single color based on opening price position */}
-                      {firstPriceData && (
-                        <Area 
-                          yAxisId="right" 
-                          type="monotone" 
-                          dataKey="priceExtension" 
-                          stroke="none"
-                          fill="url(#priceExtensionFillGradient)"
-                          baseValue={priceData.previousClose}
-                          connectNulls={false}
-                          isAnimationActive={false}
-                          dot={false}
-                          activeDot={false}
-                        />
-                      )}
+                      {firstPriceData && <Area yAxisId="right" type="monotone" dataKey="priceExtension" stroke="none" fill="url(#priceExtensionFillGradient)" baseValue={priceData.previousClose} connectNulls={false} isAnimationActive={false} dot={false} activeDot={false} />}
                       {/* Fill above previous close (green) - uses price data, gradient clips at baseline */}
-                      <Area 
-                        yAxisId="right" 
-                        type="monotone" 
-                        dataKey="price" 
-                        stroke="none"
-                        fill="url(#priceAboveGradient)"
-                        baseValue={priceData.previousClose}
-                        connectNulls
-                        isAnimationActive={false}
-                        dot={false}
-                        activeDot={false}
-                      />
+                      <Area yAxisId="right" type="monotone" dataKey="price" stroke="none" fill="url(#priceAboveGradient)" baseValue={priceData.previousClose} connectNulls isAnimationActive={false} dot={false} activeDot={false} />
                       {/* Fill below previous close (red) - uses price data, gradient clips at baseline */}
-                      <Area 
-                        yAxisId="right" 
-                        type="monotone" 
-                        dataKey="price" 
-                        stroke="none"
-                        fill="url(#priceBelowGradient)"
-                        baseValue={priceData.previousClose}
-                        connectNulls
-                        isAnimationActive={false}
-                        dot={false}
-                        activeDot={false}
-                      />
-                    </>
-                  )}
+                      <Area yAxisId="right" type="monotone" dataKey="price" stroke="none" fill="url(#priceBelowGradient)" baseValue={priceData.previousClose} connectNulls isAnimationActive={false} dot={false} activeDot={false} />
+                    </>}
                   {/* Pre-market extension line - same opacity as main line for consistent appearance */}
                   {showPriceOverlay && is5MinView && <Line yAxisId="right" type="monotone" dataKey="priceExtension" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={false} connectNulls={false} />}
                   {showPriceOverlay && <Line yAxisId="right" type="monotone" dataKey="price" stroke="url(#priceLineGradient)" strokeWidth={2} dot={false} activeDot={false} connectNulls />}
