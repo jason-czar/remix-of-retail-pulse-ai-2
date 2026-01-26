@@ -32,7 +32,7 @@ export function HeroSection() {
             delay: 0.2,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              <span className="block font-normal font-sans text-3xl">Actionable insights derived from the retail investor market.</span>
+              <span className="block font-normal font-sans text-3xl text-balance">Actionable insights derived from the retail investor market.</span>
             </motion.h1>
 
             <motion.p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8" initial={{
