@@ -24,19 +24,6 @@ const Index = () => {
         className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat hidden dark:block"
         style={{ backgroundImage: `url(${landingBgDark})` }}
       />
-      {/* Subtle overlay gradient for text legibility */}
-      <div 
-        className="fixed inset-0 -z-[9] pointer-events-none dark:hidden"
-        style={{ 
-          background: 'radial-gradient(ellipse 120% 80% at 50% 0%, hsl(0 0% 100% / 0.7) 0%, hsl(0 0% 100% / 0.4) 40%, transparent 70%), linear-gradient(to bottom, hsl(0 0% 100% / 0.3) 0%, hsl(0 0% 100% / 0.5) 50%, hsl(0 0% 100% / 0.6) 100%)'
-        }}
-      />
-      <div 
-        className="fixed inset-0 -z-[9] pointer-events-none hidden dark:block"
-        style={{ 
-          background: 'radial-gradient(ellipse 120% 80% at 50% 0%, hsl(220 10% 8% / 0.75) 0%, hsl(220 10% 8% / 0.5) 40%, transparent 70%), linear-gradient(to bottom, hsl(220 10% 8% / 0.4) 0%, hsl(220 10% 8% / 0.5) 50%, hsl(220 10% 8% / 0.6) 100%)'
-        }}
-      />
       <CursorLight />
       <Header />
       <main>
