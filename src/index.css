@@ -363,38 +363,7 @@
       background-color 300ms ease;
   }
 
-  /* Cursor light overlay - subtle radial gradient following cursor
-     Only active when inside a .cursor-light-enabled container (landing page) */
-  .cursor-light-enabled .glass-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-    background: radial-gradient(
-      600px circle at var(--cursor-x) var(--cursor-y),
-      hsl(0 0% 100% / 0.08),
-      transparent 60%
-    );
-    opacity: 0;
-    transition: opacity 300ms ease;
-  }
-
-  /* Only activate on hover-capable devices */
-  @media (hover: hover) and (pointer: fine) {
-    .cursor-light-enabled .glass-card:hover::before {
-      opacity: 1;
-    }
-  }
-
-  /* Dark mode: slightly dimmer for subtlety */
-  .dark .cursor-light-enabled .glass-card::before {
-    background: radial-gradient(
-      600px circle at var(--cursor-x) var(--cursor-y),
-      hsl(0 0% 100% / 0.06),
-      transparent 65%
-    );
-  }
+  /* Cursor light overlay removed - no hover highlight on landing page cards */
 
   .dark .glass-card {
     @apply border border-white/15;
@@ -404,13 +373,6 @@
       inset 0 1px 0 hsl(0 0% 100% / 0.1);
   }
 
-  .dark .glass-card:hover {
-    background: hsl(0 0% 14% / 0.6) !important;
-    box-shadow: 
-      0 16px 44px hsl(0 0% 0% / 0.6),
-      0 6px 16px hsl(0 0% 0% / 0.35),
-      inset 0 1px 0 hsl(0 0% 100% / 0.14);
-  }
 
   :not(.dark) .glass-card {
     @apply border border-black/[0.08];
@@ -420,13 +382,6 @@
       inset 0 1px 0 hsl(0 0% 100% / 0.7);
   }
 
-  :not(.dark) .glass-card:hover {
-    background: hsl(0 0% 100% / 0.65) !important;
-    box-shadow: 
-      0 12px 40px hsl(240 10% 50% / 0.18),
-      0 4px 12px hsl(240 10% 50% / 0.1),
-      inset 0 1px 0 hsl(0 0% 100% / 0.85);
-  }
 
   /* =========================================================
      Glass Button Primary — Confident, solid glass for primary CTAs
