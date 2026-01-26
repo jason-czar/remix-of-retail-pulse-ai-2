@@ -82,32 +82,39 @@ function getRiskColor(score: number): string {
   return "text-bullish";
 }
 
-// Extract concerns from summary text
-function extractConcerns(summary: string, exclusions: string[]): string[] {
-  // Look for tension/risk indicators in the summary
+// Use AI-generated concerns or fallback to generated ones
+function getConcerns(summaryData?: LensSummaryData | null, exclusions?: string[]): string[] {
+  // Use AI-generated concerns if available
+  if (summaryData?.keyConcerns && summaryData.keyConcerns.length > 0) {
+    return summaryData.keyConcerns.slice(0, 3);
+  }
+  
+  // Fallback: generate from exclusions
   const concerns: string[] = [];
-  
-  // Add exclusions as potential concerns to monitor
-  exclusions.slice(0, 2).forEach(exclusion => {
-    concerns.push(`Monitor for ${exclusion.toLowerCase()} developments`);
-  });
-  
-  // Generic concern based on confidence
+  if (exclusions && exclusions.length > 0) {
+    exclusions.slice(0, 2).forEach(exclusion => {
+      concerns.push(`Monitor for ${exclusion.toLowerCase()} developments`);
+    });
+  }
   concerns.push("Data coverage may not capture all relevant discussions");
-  
   return concerns.slice(0, 3);
 }
 
-// Generate recommended actions based on focus areas
-function generateActions(focusAreas: string[], decisionQuestion: string): string[] {
+// Use AI-generated actions or fallback to generated ones
+function getActions(summaryData?: LensSummaryData | null, focusAreas?: string[]): string[] {
+  // Use AI-generated actions if available
+  if (summaryData?.recommendedActions && summaryData.recommendedActions.length > 0) {
+    return summaryData.recommendedActions.slice(0, 3);
+  }
+  
+  // Fallback: generate from focus areas
   const actions: string[] = [];
-  
-  focusAreas.slice(0, 2).forEach(area => {
-    actions.push(`Continue monitoring ${area.toLowerCase()} sentiment trends`);
-  });
-  
+  if (focusAreas && focusAreas.length > 0) {
+    focusAreas.slice(0, 2).forEach(area => {
+      actions.push(`Continue monitoring ${area.toLowerCase()} sentiment trends`);
+    });
+  }
   actions.push("Cross-reference with other decision lenses for validation");
-  
   return actions.slice(0, 3);
 }
 
@@ -121,8 +128,11 @@ export function CustomLensReadinessCard({
   const timing = getTimingRecommendation(readinessScore);
   const TimingIcon = timing.icon;
   
-  const concerns = extractConcerns(summaryData?.summary || "", customLens.exclusions);
-  const actions = generateActions(customLens.focus_areas, customLens.decision_question);
+  const concerns = getConcerns(summaryData, customLens.exclusions);
+  const actions = getActions(summaryData, customLens.focus_areas);
+  
+  // Check if we have AI-generated content
+  const hasAIContent = (summaryData?.keyConcerns?.length ?? 0) > 0 || (summaryData?.recommendedActions?.length ?? 0) > 0;
   
   // Calculate confidence percentage
   const confidencePercent = summaryData?.confidence === 'high' ? 85 : 
