@@ -1,61 +1,199 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Plus, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { CustomLens, useCustomLenses, useDeleteCustomLens } from "@/hooks/use-custom-lenses";
+import { CreateCustomLensDialog } from "@/components/CreateCustomLensDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type DecisionLens = 'summary' | 'corporate-strategy' | 'earnings' | 'ma' | 'capital-allocation' | 'leadership-change' | 'strategic-pivot' | 'product-launch' | 'activist-risk';
 
-interface DecisionLensSelectorProps {
-  value: DecisionLens;
-  onChange: (lens: DecisionLens) => void;
-}
+// Combined type for both default and custom lenses
+export type LensValue = DecisionLens | string;
 
-const lensOptions: {
-  value: DecisionLens;
+export interface LensOption {
+  value: LensValue;
   label: string;
-}[] = [{
-  value: 'summary',
-  label: 'Summary'
-}, {
-  value: 'corporate-strategy',
-  label: 'Corporate Strategy Insights'
-}, {
-  value: 'earnings',
-  label: 'Earnings'
-}, {
-  value: 'ma',
-  label: 'M&A'
-}, {
-  value: 'capital-allocation',
-  label: 'Capital Allocation'
-}, {
-  value: 'leadership-change',
-  label: 'Leadership Change'
-}, {
-  value: 'strategic-pivot',
-  label: 'Strategic Pivot / Divestiture'
-}, {
-  value: 'product-launch',
-  label: 'Product Launch'
-}, {
-  value: 'activist-risk',
-  label: 'Activist Risk'
-}];
-
-export function DecisionLensSelector({
-  value,
-  onChange
-}: DecisionLensSelectorProps) {
-  return <div className="inline-flex items-center gap-1.5 rounded-full py-1.5 px-[10px] overflow-x-auto md:mx-0 scrollbar-hide bg-muted/60 backdrop-blur-xl border border-border/40 dark:glass-tabs-list mx-[4px] shadow-none">
-      {lensOptions.map(option => <button key={option.value} className={cn("inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", value === option.value ? "bg-background text-foreground shadow-md dark:shadow-[0_4px_16px_hsl(240_15%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.15)] dark:bg-[linear-gradient(180deg,hsl(0_0%_100%/0.12)_0%,hsl(0_0%_100%/0.06)_100%)] dark:border dark:border-white/12 dark:backdrop-blur-md" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")} onClick={() => onChange(option.value)}>
-          {option.label}
-        </button>)}
-    </div>;
+  isCustom?: boolean;
+  customLens?: CustomLens;
 }
 
-export function getLensDisplayName(lens: DecisionLens): string {
-  const option = lensOptions.find(o => o.value === lens);
+interface DecisionLensSelectorProps {
+  value: LensValue;
+  onChange: (lens: LensValue, customLens?: CustomLens) => void;
+}
+
+const defaultLensOptions: LensOption[] = [
+  { value: 'summary', label: 'Summary' },
+  { value: 'corporate-strategy', label: 'Corporate Strategy Insights' },
+  { value: 'earnings', label: 'Earnings' },
+  { value: 'ma', label: 'M&A' },
+  { value: 'capital-allocation', label: 'Capital Allocation' },
+  { value: 'leadership-change', label: 'Leadership Change' },
+  { value: 'strategic-pivot', label: 'Strategic Pivot / Divestiture' },
+  { value: 'product-launch', label: 'Product Launch' },
+  { value: 'activist-risk', label: 'Activist Risk' },
+];
+
+export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorProps) {
+  const { user } = useAuth();
+  const { data: customLenses = [] } = useCustomLenses();
+  const deleteMutation = useDeleteCustomLens();
+  const [editingLens, setEditingLens] = useState<CustomLens | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [lensToDelete, setLensToDelete] = useState<CustomLens | null>(null);
+  
+  // Combine default and custom lenses
+  const allLensOptions: LensOption[] = [
+    ...defaultLensOptions,
+    ...customLenses.map((lens) => ({
+      value: lens.slug,
+      label: lens.name,
+      isCustom: true,
+      customLens: lens,
+    })),
+  ];
+  
+  const handleDeleteConfirm = async () => {
+    if (lensToDelete) {
+      await deleteMutation.mutateAsync(lensToDelete.id);
+      // If we deleted the currently selected lens, switch to summary
+      if (value === lensToDelete.slug) {
+        onChange('summary');
+      }
+    }
+    setDeleteDialogOpen(false);
+    setLensToDelete(null);
+  };
+  
+  return (
+    <>
+      <div className="inline-flex items-center gap-1.5 rounded-full py-1.5 px-[10px] overflow-x-auto md:mx-0 scrollbar-hide bg-muted/60 backdrop-blur-xl border border-border/40 dark:glass-tabs-list mx-[4px] shadow-none">
+        {allLensOptions.map((option) => (
+          <div key={option.value} className="relative flex items-center shrink-0">
+            <button
+              className={cn(
+                "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200",
+                value === option.value
+                  ? "bg-background text-foreground shadow-md dark:shadow-[0_4px_16px_hsl(240_15%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.15)] dark:bg-[linear-gradient(180deg,hsl(0_0%_100%/0.12)_0%,hsl(0_0%_100%/0.06)_100%)] dark:border dark:border-white/12 dark:backdrop-blur-md"
+                  : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5",
+                option.isCustom && "pr-7"
+              )}
+              onClick={() => onChange(option.value, option.customLens)}
+            >
+              {option.label}
+            </button>
+            
+            {/* Custom lens dropdown menu */}
+            {option.isCustom && option.customLens && value === option.value && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0.5 h-5 w-5 p-0 rounded-full hover:bg-white/10"
+                  >
+                    <MoreHorizontal className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32">
+                  <DropdownMenuItem onClick={() => setEditingLens(option.customLens!)}>
+                    <Pencil className="h-3.5 w-3.5 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setLensToDelete(option.customLens!);
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        ))}
+        
+        {/* Create new lens button (only for logged-in users) */}
+        {user && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <CreateCustomLensDialog
+                trigger={
+                  <button className="inline-flex items-center justify-center shrink-0 w-7 h-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                }
+              />
+            </TooltipTrigger>
+            <TooltipContent>Create custom lens</TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+      
+      {/* Edit dialog */}
+      {editingLens && (
+        <CreateCustomLensDialog
+          editLens={editingLens}
+          trigger={<span />}
+          onClose={() => setEditingLens(null)}
+        />
+      )}
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Custom Lens</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{lensToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+export function getLensDisplayName(lens: LensValue, customLens?: CustomLens): string {
+  if (customLens) return customLens.name;
+  
+  const option = defaultLensOptions.find(o => o.value === lens);
   return option?.label || 'Summary';
 }
 
-export function getLensDecisionQuestion(lens: DecisionLens): string {
+export function getLensDecisionQuestion(lens: LensValue, customLens?: CustomLens): string {
+  if (customLens) return customLens.decision_question;
+  
   const questions: Record<DecisionLens, string> = {
     'summary': 'What is the current psychological state of retail investors?',
     'corporate-strategy': 'How do retail investors perceive management\'s strategic direction?',
@@ -67,7 +205,7 @@ export function getLensDecisionQuestion(lens: DecisionLens): string {
     'product-launch': 'How is the market receiving new products or innovation pipeline?',
     'activist-risk': 'Is there meaningful activist involvement or governance concern?',
   };
-  return questions[lens];
+  return questions[lens as DecisionLens] || 'What are the key themes in retail discussion?';
 }
 
 export function getLensPromptContext(lens: DecisionLens): string {
@@ -170,4 +308,9 @@ Explicitly avoid:
 - Strategic disagreements from regular investors`,
   };
   return contexts[lens];
+}
+
+// Helper to check if a lens value is a default lens
+export function isDefaultLens(lens: LensValue): lens is DecisionLens {
+  return defaultLensOptions.some(o => o.value === lens);
 }

@@ -16,7 +16,8 @@ import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
-import { DecisionLensSelector, DecisionLens, getLensDisplayName, getLensDecisionQuestion } from "@/components/DecisionLensSelector";
+import { DecisionLensSelector, DecisionLens, LensValue, getLensDisplayName, getLensDecisionQuestion, isDefaultLens } from "@/components/DecisionLensSelector";
+import { CustomLens } from "@/hooks/use-custom-lenses";
 import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
 import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
@@ -42,7 +43,8 @@ export default function SymbolPage() {
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
   const [timeRange, setTimeRange] = useState<TimeRange>('1D');
   const [activeTab, setActiveTab] = useState<string>('narratives');
-  const [decisionLens, setDecisionLens] = useState<DecisionLens>('summary');
+  const [decisionLens, setDecisionLens] = useState<LensValue>('summary');
+  const [activeCustomLens, setActiveCustomLens] = useState<CustomLens | null>(null);
   const queryClient = useQueryClient();
 
   // Calculate date range based on selection (timezone-aware)
@@ -84,18 +86,27 @@ export default function SymbolPage() {
     data: messages = [],
     isLoading: messagesLoading
   } = useSymbolMessages(symbol, 50, start, end);
+  
+  // Handle lens change with custom lens support
+  const handleLensChange = (lens: LensValue, customLens?: CustomLens) => {
+    setDecisionLens(lens);
+    setActiveCustomLens(customLens || null);
+  };
+  
   const {
     data: lensSummaryData,
     isLoading: lensSummaryLoading,
     isFetching: lensSummaryFetching,
     refetch: refetchLensSummary
-  } = useDecisionLensSummary(symbol, decisionLens);
+  } = useDecisionLensSummary(symbol, decisionLens, activeCustomLens);
+  
   const [isRegenerating, setIsRegenerating] = useState(false);
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     // Invalidate the cache to force a fresh fetch
+    const cacheKey = activeCustomLens ? activeCustomLens.id : decisionLens;
     await queryClient.invalidateQueries({
-      queryKey: ['decision-lens-summary', symbol, decisionLens]
+      queryKey: ['decision-lens-summary', symbol, cacheKey]
     });
     await refetchLensSummary();
     setIsRegenerating(false);
@@ -110,7 +121,7 @@ export default function SymbolPage() {
     volumeChange: 0,
     badges: [] as string[]
   };
-  const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens)} for ${symbol}...`;
+  const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens, activeCustomLens || undefined)} for ${symbol}...`;
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
   
   return (
@@ -208,7 +219,7 @@ export default function SymbolPage() {
 
         {/* Decision Lens Selector - Horizontal scroll on mobile */}
         <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-[31px]" data-tour="decision-lens">
-          <DecisionLensSelector value={decisionLens} onChange={setDecisionLens} />
+          <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
         </div>
 
         {/* AI Summary + Readiness Card Side-by-Side with lens transition animation */}
@@ -236,7 +247,7 @@ export default function SymbolPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
                     <Badge variant="outline" className="text-[10px] md:text-xs">
-                      {getLensDisplayName(decisionLens)}
+                      {getLensDisplayName(decisionLens, activeCustomLens || undefined)}
                     </Badge>
                     {lensSummaryData?.confidence && (
                       <ConfidenceBadge 
@@ -252,9 +263,8 @@ export default function SymbolPage() {
                   </Button>
                 </div>
                 
-                {/* Decision Question - anchors interpretation */}
                 <p className="text-xs text-muted-foreground/70 mb-3 italic">
-                  {getLensDecisionQuestion(decisionLens)}
+                  {getLensDecisionQuestion(decisionLens, activeCustomLens || undefined)}
                 </p>
                 
                 {lensSummaryLoading || isRegenerating ? <div className="space-y-2 flex-1">
@@ -269,12 +279,14 @@ export default function SymbolPage() {
               </Card>
             </motion.div>
 
-            {/* Right side: Readiness Card (non-summary) or Psychology Overview (summary) */}
+            {/* Right side: Readiness Card (non-summary default lenses) or Psychology Overview (summary/custom) */}
             <motion.div layout transition={{
           duration: 0.3,
           ease: "easeOut"
         }}>
-              {decisionLens === 'summary' ? <PsychologyOverviewCard symbol={symbol} /> : <LensReadinessCard symbol={symbol} lens={decisionLens} />}
+              {decisionLens === 'summary' || activeCustomLens 
+                ? <PsychologyOverviewCard symbol={symbol} /> 
+                : <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />}
             </motion.div>
           </motion.div>
         </AnimatePresence>
