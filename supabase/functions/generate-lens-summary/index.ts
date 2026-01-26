@@ -513,6 +513,92 @@ ${messageTexts.join("\n---\n")}`,
     const sanitizedSummary = sanitizeText(rawSummary);
     console.log(`Sanitized summary for ${symbol} ${cacheKey}: removed ${rawSummary.length - sanitizedSummary.length} chars`);
 
+    // For custom lenses, generate AI-driven concerns and recommended actions
+    let keyConcerns: string[] = [];
+    let recommendedActions: string[] = [];
+    
+    if (lens === 'custom' && customLensConfig) {
+      console.log(`Generating concerns and actions for custom lens ${customLensConfig.name}...`);
+      
+      const concernsActionsPrompt = `Based on this analysis of ${symbol.toUpperCase()} through the "${customLensConfig.name}" lens, generate specific concerns and recommended actions.
+
+Summary: ${sanitizedSummary}
+
+Focus Areas: ${customLensConfig.focus_areas.join(', ')}
+Exclusions to monitor: ${customLensConfig.exclusions.join(', ')}
+Decision Question: ${customLensConfig.decision_question}
+
+Generate concerns and actions that are specific, actionable, and directly tied to the lens focus.`;
+
+      try {
+        const concernsResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              {
+                role: "system",
+                content: "You are a senior equity research analyst. Extract key concerns and recommended actions from the analysis provided. Be specific and actionable.",
+              },
+              { role: "user", content: concernsActionsPrompt },
+            ],
+            tools: [
+              {
+                type: "function",
+                function: {
+                  name: "extract_concerns_actions",
+                  description: "Extract key concerns and recommended actions from the analysis",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      key_concerns: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "3 specific risks or concerns identified in the analysis, each under 100 characters"
+                      },
+                      recommended_actions: {
+                        type: "array",
+                        items: { type: "string" },
+                        description: "3 actionable recommendations for decision-makers, each under 100 characters"
+                      }
+                    },
+                    required: ["key_concerns", "recommended_actions"],
+                    additionalProperties: false
+                  }
+                }
+              }
+            ],
+            tool_choice: { type: "function", function: { name: "extract_concerns_actions" } },
+            max_tokens: 500,
+          }),
+        });
+
+        if (concernsResponse.ok) {
+          const concernsData = await concernsResponse.json();
+          const toolCall = concernsData.choices?.[0]?.message?.tool_calls?.[0];
+          
+          if (toolCall?.function?.arguments) {
+            try {
+              const parsed = JSON.parse(toolCall.function.arguments);
+              keyConcerns = (parsed.key_concerns || []).slice(0, 3).map((c: string) => sanitizeText(c));
+              recommendedActions = (parsed.recommended_actions || []).slice(0, 3).map((a: string) => sanitizeText(a));
+              console.log(`Generated ${keyConcerns.length} concerns and ${recommendedActions.length} actions for ${symbol}`);
+            } catch (parseError) {
+              console.error("Failed to parse concerns/actions:", parseError);
+            }
+          }
+        } else {
+          console.error("Concerns/actions AI call failed:", concernsResponse.status);
+        }
+      } catch (concernsError) {
+        console.error("Error generating concerns/actions:", concernsError);
+      }
+    }
+
     // Cache the valid result (30 minute expiry for default, 15 min for custom)
     const cacheMinutes = lens === 'custom' ? 15 : 30;
     const expiresAt = new Date(Date.now() + cacheMinutes * 60 * 1000).toISOString();
@@ -531,15 +617,23 @@ ${messageTexts.join("\n---\n")}`,
 
     console.log(`Cached ${lensName} summary for ${symbol}`);
 
+    const responseData: Record<string, unknown> = { 
+      summary: sanitizedSummary, 
+      cached: false, 
+      messageCount: messages.length,
+      confidence,
+      relevantCount: relevantMessages.length,
+      dominantThemeShare,
+    };
+    
+    // Include concerns and actions for custom lenses
+    if (lens === 'custom') {
+      responseData.keyConcerns = keyConcerns;
+      responseData.recommendedActions = recommendedActions;
+    }
+
     return new Response(
-      JSON.stringify({ 
-        summary: sanitizedSummary, 
-        cached: false, 
-        messageCount: messages.length,
-        confidence,
-        relevantCount: relevantMessages.length,
-        dominantThemeShare,
-      }),
+      JSON.stringify(responseData),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

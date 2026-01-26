@@ -11,6 +11,9 @@ export interface LensSummaryData {
   confidence?: ConfidenceLevel;
   relevantCount?: number;
   dominantThemeShare?: number;
+  // Custom lens specific fields
+  keyConcerns?: string[];
+  recommendedActions?: string[];
 }
 
 // Map backend confidence values to UI ConfidenceLevel
@@ -63,6 +66,9 @@ export function useDecisionLensSummary(
         confidence: mapConfidence(data.confidence),
         relevantCount: data.relevantCount,
         dominantThemeShare: data.dominantThemeShare,
+        // Custom lens specific fields
+        keyConcerns: data.keyConcerns,
+        recommendedActions: data.recommendedActions,
       } as LensSummaryData;
     },
     enabled: !!symbol && (isDefaultLens(lens) || !!customLens),
