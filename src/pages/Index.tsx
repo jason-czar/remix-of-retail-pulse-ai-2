@@ -49,11 +49,11 @@ const Index = () => {
     <div className="min-h-screen cursor-light-enabled relative">
       {/* Theme-aware background images with lazy loading */}
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat dark:hidden transition-opacity duration-500 ${bgLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 z-0 bg-cover bg-center bg-no-repeat dark:hidden transition-opacity duration-500 ${bgLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined }}
       />
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat hidden dark:block transition-opacity duration-500 ${bgLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 z-0 bg-cover bg-center bg-no-repeat hidden dark:block transition-opacity duration-500 ${bgLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined }}
       />
       <CursorLight />
