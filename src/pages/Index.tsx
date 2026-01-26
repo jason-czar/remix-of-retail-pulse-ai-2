@@ -9,8 +9,8 @@ import { IntelligencePatternsSection } from "@/components/landing/IntelligencePa
 import { CredibilitySection } from "@/components/landing/CredibilitySection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
 import { CursorLight } from "@/components/landing/CursorLight";
-import landingBgDark from "@/assets/landing-bg-dark.jpeg";
-import landingBgLight from "@/assets/landing-bg-light.jpeg";
+import landingBgDark from "@/assets/landing-bg-dark.webp";
+import landingBgLight from "@/assets/landing-bg-light.webp";
 
 const Index = () => {
   return (
