@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -13,6 +13,19 @@ import { CursorLight } from "@/components/landing/CursorLight";
 
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  // Parallax scroll handler with throttling via requestAnimationFrame
+  const handleScroll = useCallback(() => {
+    requestAnimationFrame(() => {
+      setScrollY(window.scrollY);
+    });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     // Lazy load background images
@@ -47,14 +60,20 @@ const Index = () => {
 
   return (
     <div className="min-h-screen cursor-light-enabled relative">
-      {/* Theme-aware background images with smooth fade-in animation */}
+      {/* Theme-aware background images with smooth fade-in animation and parallax */}
       <div 
         className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat dark:hidden transition-all duration-1000 ease-out ${bgLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-sm'}`}
-        style={{ backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined }}
+        style={{ 
+          backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined,
+          transform: `translateY(${scrollY * 0.15}px) scale(${bgLoaded ? 1.1 : 1.15})`,
+        }}
       />
       <div 
         className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat hidden dark:block transition-all duration-1000 ease-out ${bgLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-sm'}`}
-        style={{ backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined }}
+        style={{ 
+          backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined,
+          transform: `translateY(${scrollY * 0.15}px) scale(${bgLoaded ? 1.1 : 1.15})`,
+        }}
       />
       <CursorLight />
       <Header />
