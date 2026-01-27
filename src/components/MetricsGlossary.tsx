@@ -167,6 +167,73 @@ function GlossarySection({ entries, title }: { entries: GlossaryEntry[]; title: 
   );
 }
 
+// Standalone content component for embedding in Settings page
+export function MetricsGlossaryContent() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold mb-2">Metrics Glossary</h2>
+        <p className="text-sm text-muted-foreground">
+          Reference guide for understanding confidence levels, metrics, and signals used throughout the platform.
+        </p>
+      </div>
+      
+      <Tabs defaultValue="confidence" className="w-full">
+        <TabsList className="w-full grid grid-cols-3 bg-secondary/50">
+          <TabsTrigger value="confidence" className="text-xs">
+            Confidence
+          </TabsTrigger>
+          <TabsTrigger value="metrics" className="text-xs">
+            Metrics
+          </TabsTrigger>
+          <TabsTrigger value="signals" className="text-xs">
+            Signals
+          </TabsTrigger>
+        </TabsList>
+        
+        <div className="mt-4">
+          <TabsContent value="confidence" className="mt-0">
+            <div className="mb-4">
+              <p className="text-sm text-muted-foreground">
+                Confidence levels indicate how much data supports each analysis. They help you gauge 
+                the reliability of insights before making decisions.
+              </p>
+            </div>
+            <GlossarySection entries={CONFIDENCE_ENTRIES} title="Confidence Levels" />
+          </TabsContent>
+          
+          <TabsContent value="metrics" className="mt-0">
+            <div className="mb-4">
+              <p className="text-sm text-muted-foreground">
+                Core metrics derived from social sentiment analysis. Each measures a different 
+                dimension of retail investor behavior.
+              </p>
+            </div>
+            <GlossarySection entries={METRIC_ENTRIES} title="Key Metrics" />
+          </TabsContent>
+          
+          <TabsContent value="signals" className="mt-0">
+            <div className="mb-4">
+              <p className="text-sm text-muted-foreground">
+                Signals are pattern-based alerts triggered when specific behavioral conditions are detected 
+                in social sentiment data.
+              </p>
+            </div>
+            <GlossarySection entries={SIGNAL_ENTRIES} title="Market Signals" />
+          </TabsContent>
+        </div>
+      </Tabs>
+      
+      <div className="p-4 rounded-lg bg-secondary/20 border border-border/50">
+        <p className="text-xs text-muted-foreground text-center">
+          All metrics describe observed retail sentiment patterns. They do not constitute financial advice 
+          and should be used alongside other research.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 interface MetricsGlossaryProps {
   trigger?: React.ReactNode;
   defaultOpen?: boolean;
