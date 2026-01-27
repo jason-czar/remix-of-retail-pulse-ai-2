@@ -167,55 +167,57 @@ export default function SymbolPage() {
           <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
         </div>
 
-        {/* Charts Section - Unified header with tabs and time range */}
-        <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)} data-tour="chart-tabs">
-          {/* Chart content first */}
-          <TabsContent value="narratives" className="mt-0 mb-3 md:mb-4">
-            <div className="-mx-4 md:mx-0">
-              <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </div>
-          </TabsContent>
+        {/* Charts Section - Only visible when Summary lens is selected */}
+        {decisionLens === 'summary' && (
+          <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)} data-tour="chart-tabs">
+            {/* Chart content first */}
+            <TabsContent value="narratives" className="mt-0 mb-3 md:mb-4">
+              <div className="-mx-4 md:mx-0">
+                <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="emotions" className="mt-0 mb-3 md:mb-4">
-            <div className="-mx-4 md:mx-0">
-              <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </div>
-          </TabsContent>
+            <TabsContent value="emotions" className="mt-0 mb-3 md:mb-4">
+              <div className="-mx-4 md:mx-0">
+                <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="sentiment" className="mt-0 mb-3 md:mb-4">
-            <div className="-mx-4 md:mx-0">
-              <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
-            </div>
-          </TabsContent>
+            <TabsContent value="sentiment" className="mt-0 mb-3 md:mb-4">
+              <div className="-mx-4 md:mx-0">
+                <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+              </div>
+            </TabsContent>
 
-          <TabsContent value="momentum" className="mt-0 mb-3 md:mb-4">
-            <div className="-mx-4 md:mx-0">
-              <EmotionMomentumChart symbol={symbol} days={7} />
-            </div>
-          </TabsContent>
+            <TabsContent value="momentum" className="mt-0 mb-3 md:mb-4">
+              <div className="-mx-4 md:mx-0">
+                <EmotionMomentumChart symbol={symbol} days={7} />
+              </div>
+            </TabsContent>
 
-          {/* Selectors below charts */}
-          {/* Mobile: TimeRangeSelector above tabs */}
-          {activeTab !== 'momentum' && <div className="flex justify-center mb-3 md:hidden">
-              <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
-            </div>}
-
-          {/* Unified row: TabsList + TimeRangeSelector */}
-          <div className="flex-col justify-between gap-3 px-0 flex md:flex-row">
-            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-              <TabsList className="w-max md:w-auto">
-                <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
-                <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
-                <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
-                <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
-              </TabsList>
-            </div>
-            {/* Desktop: TimeRangeSelector in row */}
-            {activeTab !== 'momentum' && <div className="hidden md:block">
+            {/* Selectors below charts */}
+            {/* Mobile: TimeRangeSelector above tabs */}
+            {activeTab !== 'momentum' && <div className="flex justify-center mb-3 md:hidden">
                 <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
               </div>}
-          </div>
-        </Tabs>
+
+            {/* Unified row: TabsList + TimeRangeSelector */}
+            <div className="flex-col justify-between gap-3 px-0 flex md:flex-row">
+              <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+                <TabsList className="w-max md:w-auto">
+                  <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
+                  <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
+                  <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
+                  <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
+                </TabsList>
+              </div>
+              {/* Desktop: TimeRangeSelector in row */}
+              {activeTab !== 'momentum' && <div className="hidden md:block">
+                  <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
+                </div>}
+            </div>
+          </Tabs>
+        )}
 
         {/* Section divider */}
         <Separator className="my-6 md:my-8 glass-divider" />
