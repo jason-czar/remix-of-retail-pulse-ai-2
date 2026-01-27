@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SearchCommand } from "@/components/SearchCommand";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { MetricsGlossary } from "@/components/MetricsGlossary";
+
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -70,9 +70,6 @@ export function Header() {
             </Button>
             <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
             
-            <div className="hidden md:flex">
-              <MetricsGlossary />
-            </div>
             
             <ThemeToggle />
             

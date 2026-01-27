@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { MetricsGlossary } from "@/components/MetricsGlossary";
 
 export function CompactFooter() {
   return (
@@ -7,6 +8,13 @@ export function CompactFooter() {
         <span>© {new Date().getFullYear()} Derive Street</span>
         
         <nav className="flex items-center gap-4">
+          <MetricsGlossary 
+            trigger={
+              <button className="hover:text-foreground transition-colors">
+                Help
+              </button>
+            } 
+          />
           <Link to="/api-docs" className="hover:text-foreground transition-colors">
             API
           </Link>
