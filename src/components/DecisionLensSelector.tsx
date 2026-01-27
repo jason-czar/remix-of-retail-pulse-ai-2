@@ -46,8 +46,8 @@ const defaultLensOptions: LensOption[] = [
   { value: 'earnings', label: 'Earnings' },
   { value: 'ma', label: 'M&A' },
   { value: 'capital-allocation', label: 'Capital Allocation' },
-  { value: 'leadership-change', label: 'Leadership Change' },
-  { value: 'strategic-pivot', label: 'Strategic Pivot / Divestiture' },
+  { value: 'leadership-change', label: 'Leadership' },
+  { value: 'strategic-pivot', label: 'Strategic Pivot' },
   { value: 'product-launch', label: 'Product Launch' },
   { value: 'activist-risk', label: 'Activist Risk' },
 ];
