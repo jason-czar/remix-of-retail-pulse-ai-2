@@ -321,30 +321,29 @@ export default function SymbolPage() {
                 isLoading={lensSummaryLoading}
               >
                 {/* Summary content integrated into the card */}
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <div /> {/* Spacer for alignment */}
+                <div className="relative">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={handleRegenerate} 
                     disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
-                    className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                    className="absolute -top-1 right-0 h-7 px-2 text-muted-foreground hover:text-foreground"
                   >
                     <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
                     <span className="sr-only">Regenerate</span>
                   </Button>
+                  {lensSummaryLoading || isRegenerating ? (
+                    <div className="space-y-2 pr-10">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : (
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed pr-10">
+                      <FormattedSummary text={summary} />
+                    </p>
+                  )}
                 </div>
-                {lensSummaryLoading || isRegenerating ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                ) : (
-                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                    <FormattedSummary text={summary} />
-                  </p>
-                )}
               </DecisionQuestionHeader>
             </motion.div>
           )}
