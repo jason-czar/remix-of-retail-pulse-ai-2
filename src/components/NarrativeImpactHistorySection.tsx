@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useLatestSnapshotWithOutcomes, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
 import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
 import { FlaskConical, TrendingUp, TrendingDown, BarChart3, ChevronDown, ChevronUp, ChevronRight, Info } from "lucide-react";
@@ -430,27 +430,40 @@ export function NarrativeImpactHistorySection({
         </button>
       </CollapsibleTrigger>
 
-      <CollapsibleContent className="space-y-4">
-        {/* Overview Chart */}
-        <OutcomeDistributionChart outcomes={sortedOutcomes} />
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="narrative-impact-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="space-y-4">
+              {/* Overview Chart */}
+              <OutcomeDistributionChart outcomes={sortedOutcomes} />
 
-        {/* Individual Narrative Cards */}
-        <div className="grid gap-3 md:grid-cols-2">
-          {displayedOutcomes.map(outcome => <NarrativeImpactCard key={outcome.narrative_id} outcome={outcome} isExpanded={expandedCards.has(outcome.narrative_id)} onToggle={() => toggleCard(outcome.narrative_id)} />)}
-        </div>
+              {/* Individual Narrative Cards */}
+              <div className="grid gap-3 md:grid-cols-2">
+                {displayedOutcomes.map(outcome => <NarrativeImpactCard key={outcome.narrative_id} outcome={outcome} isExpanded={expandedCards.has(outcome.narrative_id)} onToggle={() => toggleCard(outcome.narrative_id)} />)}
+              </div>
 
-        {/* Show More/Less */}
-        {hasMore && <div className="flex justify-center">
-            <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)}>
-              {showAll ? <>
-                  <ChevronUp className="h-4 w-4 mr-1" />
-                  Show Less
-                </> : <>
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Show {sortedOutcomes.length - 4} More Narratives
-                </>}
-            </Button>
-          </div>}
-      </CollapsibleContent>
+              {/* Show More/Less */}
+              {hasMore && <div className="flex justify-center">
+                  <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)}>
+                    {showAll ? <>
+                        <ChevronUp className="h-4 w-4 mr-1" />
+                        Show Less
+                      </> : <>
+                        <ChevronDown className="h-4 w-4 mr-1" />
+                        Show {sortedOutcomes.length - 4} More Narratives
+                      </>}
+                  </Button>
+                </div>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Collapsible>;
 }
