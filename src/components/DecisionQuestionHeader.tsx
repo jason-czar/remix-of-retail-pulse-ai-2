@@ -215,20 +215,20 @@ export function DecisionQuestionHeader({
 
           {/* Right: Condensed Score Tiles */}
           {showScores && (
-            <div className="flex items-stretch gap-3 md:gap-4 shrink-0">
+            <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:items-stretch lg:gap-4 lg:shrink-0">
               {/* Readiness Score */}
-              <div className="glass-tile px-4 py-3.5 rounded-2xl min-w-[120px]">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Readiness</span>
+              <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
+                <div className="flex items-center gap-1.5 lg:gap-2 mb-1 lg:mb-1.5">
+                  <Gauge className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">Readiness</span>
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <span className={cn("text-2xl md:text-3xl font-display", getReadinessColor(readinessScore))}>
+                <div className="flex items-baseline gap-0.5 lg:gap-1">
+                  <span className={cn("text-xl lg:text-3xl font-display", getReadinessColor(readinessScore))}>
                     {readinessScore}
                   </span>
-                  <span className="text-xs text-muted-foreground">/100</span>
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
-                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
+                <div className="relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${readinessScore}%` }}
@@ -239,18 +239,18 @@ export function DecisionQuestionHeader({
               </div>
 
               {/* Risk Score */}
-              <div className="glass-tile px-4 py-3.5 rounded-2xl min-w-[120px]">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Risk</span>
+              <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
+                <div className="flex items-center gap-1.5 lg:gap-2 mb-1 lg:mb-1.5">
+                  <ShieldAlert className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">Risk</span>
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <span className={cn("text-2xl md:text-3xl font-display", getRiskColor(riskScore))}>
+                <div className="flex items-baseline gap-0.5 lg:gap-1">
+                  <span className={cn("text-xl lg:text-3xl font-display", getRiskColor(riskScore))}>
                     {riskScore}
                   </span>
-                  <span className="text-xs text-muted-foreground">/100</span>
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
-                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
+                <div className="relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskScore}%` }}
@@ -264,18 +264,18 @@ export function DecisionQuestionHeader({
               </div>
 
               {/* Confidence Score */}
-              <div className="glass-tile px-4 py-3.5 rounded-2xl min-w-[120px]">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Target className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Confidence</span>
+              <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
+                <div className="flex items-center gap-1.5 lg:gap-2 mb-1 lg:mb-1.5">
+                  <Target className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">Confidence</span>
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <span className={cn("text-2xl md:text-3xl font-display", getConfidenceColor(confidence))}>
+                <div className="flex items-baseline gap-0.5 lg:gap-1">
+                  <span className={cn("text-xl lg:text-3xl font-display", getConfidenceColor(confidence))}>
                     {confidencePercent}
                   </span>
-                  <span className="text-xs text-muted-foreground">%</span>
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
                 </div>
-                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
+                <div className="relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${confidencePercent}%` }}
