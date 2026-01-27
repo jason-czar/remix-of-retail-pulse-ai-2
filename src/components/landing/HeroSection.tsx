@@ -21,7 +21,7 @@ export function HeroSection() {
             {/* Subtle top accent glow */}
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-t-2xl" />
 
-            <motion.h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-medium leading-tight mb-6" initial={{
+            <motion.h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-medium leading-tight mb-4" initial={{
             opacity: 0,
             y: 20
           }} animate={{
@@ -32,10 +32,10 @@ export function HeroSection() {
             delay: 0.2,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              <span className="block font-normal font-sans text-3xl text-balance">Actionable insights derived from the retail investor market.</span>
+              <span className="block font-normal font-sans text-3xl md:text-4xl text-balance">Retail Sentiment Intelligence for Institutional Decisions</span>
             </motion.h1>
 
-            <motion.p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8" initial={{
+            <motion.p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-6" initial={{
             opacity: 0,
             y: 20
           }} animate={{
@@ -43,10 +43,24 @@ export function HeroSection() {
             y: 0
           }} transition={{
             duration: 0.6,
-            delay: 0.35,
+            delay: 0.3,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered in real-time for strategic decision-making.
+              Decode narratives, emotions, and crowd psychology across 8,500+ symbols—structured for strategic decision-making.
+            </motion.p>
+
+            <motion.p className="text-sm text-muted-foreground/70 mb-8" initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.6,
+            delay: 0.4,
+            ease: [0.25, 0.4, 0.25, 1]
+          }}>
+              10M+ messages analyzed daily · Sub-50ms API response
             </motion.p>
 
             <motion.div className="flex flex-row flex-nowrap items-center justify-center gap-3 sm:gap-4 max-w-full overflow-x-auto scrollbar-hide" initial={{
