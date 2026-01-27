@@ -1,7 +1,7 @@
 import { TrendingUp, MessageSquare, AlertTriangle } from "lucide-react";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
 export function ProblemSection() {
-  return <section className="py-20 lg:py-28 landing-section-contained">
+  return <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Problem Statement */}

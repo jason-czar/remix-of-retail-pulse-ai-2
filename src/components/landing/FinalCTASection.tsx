@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export function FinalCTASection() {
   return (
-    <section className="py-20 lg:py-28 relative landing-section-contained">
+    <section className="py-20 lg:py-28 relative">
       
       <div className="container mx-auto px-4 relative">
         <div className="max-w-3xl mx-auto">

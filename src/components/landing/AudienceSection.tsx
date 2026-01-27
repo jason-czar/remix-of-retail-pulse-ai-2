@@ -5,7 +5,7 @@ import { ScrollReveal } from "./ScrollReveal";
 
 export function AudienceSection() {
   return (
-    <section className="py-20 lg:py-28 landing-section-contained">
+    <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto space-y-20">
           {/* Corporate Strategy */}

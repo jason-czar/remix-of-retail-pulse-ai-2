@@ -195,34 +195,17 @@
     position: relative;
   }
 
-  /* Smooth theme transition for cinematic intro - scoped to key elements only */
-  body.theme-transitioning {
-    transition: background-color 2000ms ease-out !important;
-  }
-  
-  /* Only transition elements that visually change during theme switch */
-  body.theme-transitioning .glass-card,
-  body.theme-transitioning .glass-button-primary,
-  body.theme-transitioning .glass-button-secondary,
-  body.theme-transitioning header,
-  body.theme-transitioning footer,
-  body.theme-transitioning h1,
-  body.theme-transitioning h2,
-  body.theme-transitioning h3,
-  body.theme-transitioning p,
-  body.theme-transitioning span {
+  /* Smooth theme transition for cinematic intro */
+  body.theme-transitioning,
+  body.theme-transitioning * {
     transition: 
       background-color 2000ms ease-out,
       border-color 2000ms ease-out,
       color 2000ms ease-out,
-      box-shadow 2000ms ease-out !important;
-  }
-  
-  /* CSS containment for below-fold sections to limit reflow scope */
-  .landing-section-contained {
-    contain: layout style paint;
-    content-visibility: auto;
-    contain-intrinsic-size: auto 600px;
+      fill 2000ms ease-out,
+      stroke 2000ms ease-out,
+      box-shadow 2000ms ease-out,
+      opacity 2000ms ease-out !important;
   }
 
   body::before {

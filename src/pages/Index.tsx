@@ -78,11 +78,11 @@ const Index = () => {
     <div className="min-h-screen cursor-light-enabled relative">
       {/* Theme-aware background images with smooth crossfade animation */}
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-opacity duration-[2000ms] ease-out will-change-opacity ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[2000ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined }}
       />
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-opacity duration-[2000ms] ease-out will-change-opacity ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[2000ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined }}
       />
       <CursorLight />
