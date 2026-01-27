@@ -253,7 +253,8 @@ export default function SymbolPage() {
                     {lensSummaryData?.confidence && (
                       <ConfidenceBadge 
                         level={lensSummaryData.confidence} 
-                        tooltipContent={`Based on ${lensSummaryData.relevantCount ?? '—'} relevant messages out of ${lensSummaryData.messageCount ?? '—'} total`}
+                        context="volume"
+                        tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`}
                         size="sm"
                       />
                     )}

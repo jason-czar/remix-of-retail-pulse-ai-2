@@ -12,7 +12,16 @@ interface ConfidenceBadgeProps {
   className?: string;
   size?: "sm" | "md";
   count?: number; // Optional count prefix (e.g., "3 High")
+  context?: ConfidenceContext; // Determines tooltip explanation context
 }
+
+// Context types for more specific tooltip explanations
+export type ConfidenceContext = 
+  | "volume"      // Message volume-based confidence
+  | "episodes"    // Historical episode count-based
+  | "coherence"   // Narrative coherence analysis
+  | "match"       // Pattern/similarity matching
+  | "general";    // Default general explanation
 
 const CONFIDENCE_CONFIG: Record<ConfidenceLevel, {
   label: string;
@@ -20,27 +29,49 @@ const CONFIDENCE_CONFIG: Record<ConfidenceLevel, {
   text: string;
   border: string;
   defaultTooltip: string;
+  contextTooltips: Record<ConfidenceContext, string>;
 }> = {
   high: {
     label: "High",
     bg: "bg-bullish/20",
     text: "text-bullish",
     border: "border-bullish/30",
-    defaultTooltip: "Strong data support: high message volume, diverse authors, stable patterns",
+    defaultTooltip: "Strong signal: 70%+ relevant data with consistent patterns across sources.",
+    contextTooltips: {
+      volume: "High message volume (70%+ relevant) with diverse author participation.",
+      episodes: "10+ historical episodes observed, providing statistically meaningful patterns.",
+      coherence: "Strong narrative focus with low entropy and stable emotion alignment.",
+      match: "Strong pattern match: 3+ matching narratives and emotions with 70%+ similarity.",
+      general: "Strong signal: 70%+ relevant data with consistent patterns across sources.",
+    },
   },
   moderate: {
     label: "Moderate",
     bg: "bg-amber-500/20",
     text: "text-amber-400",
     border: "border-amber-500/30",
-    defaultTooltip: "Reasonable data support: validate against other sources",
+    defaultTooltip: "Reasonable signal: 40-70% data coverage. Cross-reference with other sources.",
+    contextTooltips: {
+      volume: "Moderate message volume (40-70% relevant). Consider additional data sources.",
+      episodes: "5-9 historical episodes observed. Patterns are indicative but not conclusive.",
+      coherence: "Mixed narrative signals with moderate consistency across timeframes.",
+      match: "Partial pattern match: some overlapping signals but incomplete alignment.",
+      general: "Reasonable signal: 40-70% data coverage. Cross-reference with other sources.",
+    },
   },
   experimental: {
     label: "Experimental",
     bg: "bg-purple-500/20",
     text: "text-purple-400",
     border: "border-purple-500/30",
-    defaultTooltip: "Limited data: treat as directional signal only, not actionable",
+    defaultTooltip: "Limited data: <40% coverage. Directional only, not actionable.",
+    contextTooltips: {
+      volume: "Low message volume (<40% relevant). Treat as directional signal only.",
+      episodes: "Fewer than 5 episodes observed. Insufficient data for reliable patterns.",
+      coherence: "High narrative fragmentation or unstable signals across timeframes.",
+      match: "Weak pattern match: limited overlapping data points.",
+      general: "Limited data: <40% coverage. Directional only, not actionable.",
+    },
   },
 };
 
@@ -66,9 +97,13 @@ export function ConfidenceBadge({
   className,
   size = "sm",
   count,
+  context = "general",
 }: ConfidenceBadgeProps) {
   const config = CONFIDENCE_CONFIG[level];
   const sizeClasses = size === "sm" ? "text-[10px]" : "text-xs";
+  
+  // Determine tooltip text: custom > context-specific > default
+  const resolvedTooltip = tooltipContent || config.contextTooltips[context] || config.defaultTooltip;
   
   const badge = (
     <Badge
@@ -95,7 +130,7 @@ export function ConfidenceBadge({
       <Tooltip>
         <TooltipTrigger asChild>{badge}</TooltipTrigger>
         <TooltipContent className="max-w-xs">
-          <p className="text-xs">{tooltipContent || config.defaultTooltip}</p>
+          <p className="text-xs">{resolvedTooltip}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

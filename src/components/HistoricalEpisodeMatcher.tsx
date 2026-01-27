@@ -56,7 +56,7 @@ function EpisodeCard({
             </p>
           </div>
         </div>
-        <ConfidenceBadge level={confidenceLevel} tooltipContent={`${episode.matching_narratives.length} matching narratives, ${episode.matching_emotions.length} matching emotions`} />
+        <ConfidenceBadge level={confidenceLevel} context="match" tooltipContent={`${episode.matching_narratives.length} matching narratives, ${episode.matching_emotions.length} matching emotions`} />
       </div>
       
       {/* Matching narratives */}

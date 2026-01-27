@@ -75,6 +75,7 @@ export function NarrativeHistoricalImpact({ outcome, compact = false }: Narrativ
         <div className="flex items-center gap-2">
           <ConfidenceBadge 
             level="experimental"
+            context="episodes"
             tooltipContent={`Only ${episode_count} episode${episode_count !== 1 ? "s" : ""} observed. Need 5+ for reliable analysis.`}
           />
           <span className="text-xs text-muted-foreground">

@@ -193,7 +193,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
           <span className={cn("text-2xl font-display", getRiskColor(coherence.risk_level))}>
             {coherence.score}
           </span>
-          <ConfidenceBadge level={confidenceLevel} />
+          <ConfidenceBadge level={confidenceLevel} context="coherence" />
         </div>
       </div>
       
