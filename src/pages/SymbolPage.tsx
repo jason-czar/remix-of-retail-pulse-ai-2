@@ -348,11 +348,45 @@ function TimeRangeSelector({
     '7D': '7D',
     '30D': '30D'
   };
-  return <div className="inline-flex h-9 md:h-10 items-center justify-center rounded-full p-1 md:p-1.5 text-muted-foreground glass-tabs-list overflow-x-auto scrollbar-hide px-[4px] py-0 shadow-none">
-      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap md:px-3.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0 px-[11px] py-[4px] border-0", range === value ? "bg-background text-foreground shadow-md dark:glass-tabs-trigger-active" : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5")}>
+  return (
+    <div className={cn(
+      "relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
+      // Liquid Glass styling matching decision lens selector
+      "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
+      "backdrop-blur-[28px] backdrop-saturate-[160%]",
+      "border border-black/[0.08] dark:border-white/[0.1]",
+      "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)]",
+      "dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),0_1px_4px_rgba(0,0,0,0.15)]",
+      // Top edge highlight for glass refraction effect
+      "before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:z-10 before:rounded-t-2xl",
+      "before:bg-gradient-to-r before:from-transparent before:via-white/50 before:to-transparent",
+      "dark:before:via-white/20"
+    )}>
+      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => (
+        <button
+          key={range}
+          onClick={() => onChange(range)}
+          className={cn(
+            "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0",
+            range === value
+              ? [
+                  // Light mode: frosted white with subtle depth
+                  "bg-white text-foreground",
+                  "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                  "border border-black/[0.06]",
+                  // Dark mode: subtle glass elevation
+                  "dark:bg-white/[0.12] dark:text-foreground",
+                  "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                  "dark:border-white/[0.12]"
+                ]
+              : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+          )}
+        >
           {labels[range]}
-        </button>)}
-    </div>;
+        </button>
+      ))}
+    </div>
+  );
 }
 
 // Markdown-style text formatter supporting bold, italics, and bullet points
