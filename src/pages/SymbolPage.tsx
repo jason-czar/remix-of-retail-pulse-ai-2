@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -159,6 +160,8 @@ export default function SymbolPage() {
     refetch: refetchLensSummary
   } = useDecisionLensSummary(symbol, decisionLens, activeCustomLens);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.email === 'admin@czar.ing';
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     // Invalidate the cache to force a fresh fetch
@@ -343,16 +346,18 @@ export default function SymbolPage() {
                       <p className="text-[13px] md:text-sm text-foreground/80 leading-[1.7] tracking-[-0.01em] inline">
                         <FormattedSummary text={summary} />
                       </p>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="inline-flex ml-2 h-7 w-7 text-muted-foreground hover:text-foreground align-middle">
-                            <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Generate a fresh analysis</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      {isAdmin && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="inline-flex ml-2 h-7 w-7 text-muted-foreground hover:text-foreground align-middle">
+                              <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Generate a fresh analysis</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </motion.div>}
                 </div>
               </DecisionQuestionHeader>
@@ -387,17 +392,19 @@ export default function SymbolPage() {
                       </Badge>
                       {lensSummaryData?.confidence && <ConfidenceBadge level={lensSummaryData.confidence} context="volume" tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} size="sm" />}
                     </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
-                          <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                          <span className="sr-only">Regenerate</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Generate a fresh analysis</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    {isAdmin && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
+                            <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                            <span className="sr-only">Regenerate</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Generate a fresh analysis</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                   
                   <p className="text-xs text-muted-foreground/70 mb-3 italic">
