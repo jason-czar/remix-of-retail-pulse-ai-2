@@ -190,16 +190,16 @@ export function DecisionQuestionHeader({
             {/* Copy Link Button */}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={handleCopyLink}
-              className="h-8 px-3 text-muted-foreground hover:text-foreground gap-1.5"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              title="Copy shareable link"
             >
               {copied ? (
-                <Check className="h-3.5 w-3.5 text-bullish" />
+                <Check className="h-4 w-4 text-bullish" />
               ) : (
-                <Link2 className="h-3.5 w-3.5" />
+                <Link2 className="h-4 w-4" />
               )}
-              <span className="text-xs">{copied ? "Copied" : "Copy Link"}</span>
             </Button>
             
             {/* Timing Badge - Desktop */}
