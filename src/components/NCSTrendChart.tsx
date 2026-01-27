@@ -47,7 +47,7 @@ function CustomTooltip({ active, payload }: any) {
         <span className="text-sm font-medium">
           {format(parseISO(data.date), "MMM d, yyyy")}
         </span>
-        <ConfidenceBadge level={confidenceLevel} />
+        <ConfidenceBadge level={confidenceLevel} context="coherence" />
       </div>
       
       <div className="space-y-1.5">

@@ -417,9 +417,9 @@ export function NarrativeImpactHistorySection({
           </p>
         </div>
         <div className="flex gap-2 text-xs">
-          {highConfidenceCount > 0 && <ConfidenceBadge level="high" showTooltip={false} count={highConfidenceCount} />}
-          {moderateCount > 0 && <ConfidenceBadge level="moderate" showTooltip={false} count={moderateCount} />}
-          {experimentalCount > 0 && <ConfidenceBadge level="experimental" showTooltip={false} count={experimentalCount} />}
+          {highConfidenceCount > 0 && <ConfidenceBadge level="high" count={highConfidenceCount} context="episodes" />}
+          {moderateCount > 0 && <ConfidenceBadge level="moderate" count={moderateCount} context="episodes" />}
+          {experimentalCount > 0 && <ConfidenceBadge level="experimental" count={experimentalCount} context="episodes" />}
         </div>
       </div>
 
