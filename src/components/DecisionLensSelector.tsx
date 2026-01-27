@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Plus, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,35 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   const [editingLens, setEditingLens] = useState<CustomLens | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [lensToDelete, setLensToDelete] = useState<CustomLens | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  
+  // Check scroll state
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    const checkScroll = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 1);
+    };
+    
+    checkScroll();
+    container.addEventListener('scroll', checkScroll);
+    window.addEventListener('resize', checkScroll);
+    
+    // Re-check after lenses load
+    const observer = new ResizeObserver(checkScroll);
+    observer.observe(container);
+    
+    return () => {
+      container.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+      observer.disconnect();
+    };
+  }, [customLenses]);
   
   // Combine default and custom lenses
   const allLensOptions: LensOption[] = [
@@ -86,19 +115,27 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   return (
     <>
       <div className="relative max-w-full">
-        {/* Left scroll fade indicator */}
-        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background/80 to-transparent pointer-events-none z-10 rounded-l-2xl" />
-        
-        {/* Right scroll fade indicator */}
-        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background/80 to-transparent pointer-events-none z-10 rounded-r-2xl" />
-        
+        {/* Left scroll fade indicator - only visible when can scroll left */}
         <div className={cn(
-          "relative inline-flex items-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
-          // Liquid Glass styling - subtle and seamless
-          "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
-          "backdrop-blur-[20px] backdrop-saturate-[140%]",
-          "border border-black/[0.04] dark:border-white/[0.06]",
-          // Minimal shadow
+          "absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background/80 to-transparent pointer-events-none z-10 rounded-l-2xl transition-opacity duration-200",
+          canScrollLeft ? "opacity-100" : "opacity-0"
+        )} />
+        
+        {/* Right scroll fade indicator - only visible when can scroll right */}
+        <div className={cn(
+          "absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background/80 to-transparent pointer-events-none z-10 rounded-r-2xl transition-opacity duration-200",
+          canScrollRight ? "opacity-100" : "opacity-0"
+        )} />
+        
+        <div 
+          ref={scrollContainerRef}
+          className={cn(
+            "relative inline-flex items-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
+            // Liquid Glass styling - subtle and seamless
+            "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
+            "backdrop-blur-[20px] backdrop-saturate-[140%]",
+            "border border-black/[0.04] dark:border-white/[0.06]",
+            // Minimal shadow
           "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
           "dark:shadow-none"
         )}>
