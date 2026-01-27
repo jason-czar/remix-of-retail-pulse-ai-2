@@ -151,7 +151,7 @@ export function LensReadinessCard({
   }
   const timing = getTimingBadge(readiness.recommended_timing);
   const TimingIcon = timing.icon;
-  return <div className="p-4 md:p-5 h-full py-0 px-[37px]">
+  return <div className="p-4 md:p-5 h-full py-0 px-[25px]">
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <>
