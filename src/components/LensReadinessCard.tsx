@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestPsychologySnapshot, DecisionReadiness, DecisionOverlay, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
 import { DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
-import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, Minus, Lightbulb, RefreshCw, AlertTriangle } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, Minus, RefreshCw, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, getReadinessSeverity, getRiskSeverity } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -170,7 +170,7 @@ export function LensReadinessCard({
             {/* Recommended Actions Card */}
             {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <Card className="p-4 glass-card">
                 <div className="flex items-center gap-2 mb-2.5">
-                  <Lightbulb className="h-4 w-4 text-primary" />
+                  
                   <span className="text-sm font-medium">Recommended Actions</span>
                 </div>
                 <ul className="space-y-1.5">
