@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useHistoricalEpisodeMatcher, SimilarEpisode } from "@/hooks/use-historical-episode-matcher";
 import { ConfidenceBadge, getConfidenceLevel } from "@/components/ui/ConfidenceBadge";
 import { format } from "date-fns";
@@ -216,58 +217,71 @@ export function HistoricalEpisodeMatcher({
   const episodesWithOutcomes = episodes.filter(e => e.price_change_after_10d !== undefined);
   const avgOutcome10d = episodesWithOutcomes.length > 0 ? episodesWithOutcomes.reduce((sum, e) => sum + (e.price_change_after_10d || 0), 0) / episodesWithOutcomes.length : null;
   const positiveCount = episodesWithOutcomes.filter(e => (e.price_change_after_10d || 0) > 0).length;
-  return <Card className="p-4 md:p-5 glass-card">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          
-          <div>
-            <h3 className="font-semibold text-sm md:text-base">Similar Historical Episodes</h3>
-            <p className="text-xs text-muted-foreground">
-              {episodes.length} matching patterns found in past 90 days
-            </p>
-          </div>
-        </div>
-        {episodesWithOutcomes.length >= 3 && avgOutcome10d !== null && <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className={cn("text-right", avgOutcome10d > 0 ? "text-bullish" : avgOutcome10d < 0 ? "text-bearish" : "text-muted-foreground")}>
-                  <div className="text-lg font-display">
-                    {avgOutcome10d > 0 ? "+" : ""}{avgOutcome10d.toFixed(1)}%
-                  </div>
-                  <div className="text-[10px] text-muted-foreground">
-                    avg 10D ({positiveCount}/{episodesWithOutcomes.length} positive)
-                  </div>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs max-w-xs">
-                  Average 10-day price change following similar episodes. 
-                  This is descriptive historical data, not a prediction.
+  return <Collapsible defaultOpen={false}>
+      <Card className="p-4 md:p-5 glass-card">
+        {/* Header */}
+        <CollapsibleTrigger className="flex items-center gap-2 w-full group">
+          <div className="flex items-start justify-between flex-1">
+            <div className="flex items-center gap-3">
+              <div>
+                <h3 className="font-semibold text-sm md:text-base text-left">Similar Historical Episodes</h3>
+                <p className="text-xs text-muted-foreground text-left">
+                  {episodes.length} matching patterns found in past 90 days
                 </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>}
-      </div>
-      
-      {/* Disclaimer */}
-      <div className="flex items-start gap-2 mb-4 p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
-        <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-        <p className="text-[10px] text-amber-400">
-          Historical patterns are descriptive only. Past behavior does not predict future outcomes.
-        </p>
-      </div>
-      
-      {/* Episode cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {displayedEpisodes.map((episode, idx) => <EpisodeCard key={episode.snapshot.id} episode={episode} index={idx} />)}
-      </div>
-      
-      {/* Show more/less */}
-      {episodes.length > 3 && <div className="mt-4 text-center">
-          <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)} className="text-xs">
-            {showAll ? `Show Less` : `Show ${episodes.length - 3} More`}
-          </Button>
-        </div>}
-    </Card>;
+              </div>
+            </div>
+            {episodesWithOutcomes.length >= 3 && avgOutcome10d !== null && <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <div className={cn("text-right", avgOutcome10d > 0 ? "text-bullish" : avgOutcome10d < 0 ? "text-bearish" : "text-muted-foreground")}>
+                      <div className="text-lg font-display">
+                        {avgOutcome10d > 0 ? "+" : ""}{avgOutcome10d.toFixed(1)}%
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        avg 10D ({positiveCount}/{episodesWithOutcomes.length} positive)
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs max-w-xs">
+                      Average 10-day price change following similar episodes. 
+                      This is descriptive historical data, not a prediction.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>}
+          </div>
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0 ml-2" />
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="pt-4"
+          >
+            {/* Disclaimer */}
+            <div className="flex items-start gap-2 mb-4 p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-[10px] text-amber-400">
+                Historical patterns are descriptive only. Past behavior does not predict future outcomes.
+              </p>
+            </div>
+            
+            {/* Episode cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {displayedEpisodes.map((episode, idx) => <EpisodeCard key={episode.snapshot.id} episode={episode} index={idx} />)}
+            </div>
+            
+            {/* Show more/less */}
+            {episodes.length > 3 && <div className="mt-4 text-center">
+                <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)} className="text-xs">
+                  {showAll ? `Show Less` : `Show ${episodes.length - 3} More`}
+                </Button>
+              </div>}
+          </motion.div>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>;
 }
