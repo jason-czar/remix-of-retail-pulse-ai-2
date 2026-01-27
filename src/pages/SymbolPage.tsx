@@ -464,7 +464,9 @@ export default function SymbolPage() {
                 <CustomLensReadinessCard 
                   customLens={activeCustomLens} 
                   summaryData={lensSummaryData} 
-                  isLoading={lensSummaryLoading} 
+                  isLoading={lensSummaryLoading}
+                  symbol={symbol}
+                  onRefresh={() => refetchLensSummary()}
                 />
               ) : (
                 <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />
