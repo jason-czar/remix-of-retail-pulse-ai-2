@@ -199,13 +199,13 @@
   body.theme-transitioning,
   body.theme-transitioning * {
     transition: 
-      background-color 1500ms ease-out,
-      border-color 1500ms ease-out,
-      color 1500ms ease-out,
-      fill 1500ms ease-out,
-      stroke 1500ms ease-out,
-      box-shadow 1500ms ease-out,
-      opacity 1500ms ease-out !important;
+      background-color 2000ms ease-out,
+      border-color 2000ms ease-out,
+      color 2000ms ease-out,
+      fill 2000ms ease-out,
+      stroke 2000ms ease-out,
+      box-shadow 2000ms ease-out,
+      opacity 2000ms ease-out !important;
   }
 
   body::before {
