@@ -111,7 +111,12 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
           {children}
         </main>
         
-        <CompactFooter />
+        <div 
+          className="transition-[padding] duration-300 ease-out"
+          style={{ paddingLeft: `${leftPadding}px`, paddingRight: `${rightPadding}px` }}
+        >
+          <CompactFooter />
+        </div>
       </div>
       
       {/* Right sidebar rendered inside the context */}
