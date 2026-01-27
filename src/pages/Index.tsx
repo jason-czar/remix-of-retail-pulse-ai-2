@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -11,8 +12,41 @@ import { CredibilitySection } from "@/components/landing/CredibilitySection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
 import { CursorLight } from "@/components/landing/CursorLight";
 
+const INTRO_SESSION_KEY = "landing-intro-shown";
+
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
+  const [introComplete, setIntroComplete] = useState(false);
+  const { setTheme, resolvedTheme } = useTheme();
+
+  // One-time cinematic intro: dark → light transition
+  useEffect(() => {
+    const introShown = sessionStorage.getItem(INTRO_SESSION_KEY);
+    
+    if (introShown) {
+      setIntroComplete(true);
+      return;
+    }
+
+    // Force dark mode for intro
+    setTheme("dark");
+
+    // After 1.5s in dark mode, transition to light mode
+    const transitionTimer = setTimeout(() => {
+      setTheme("light");
+    }, 1500);
+
+    // Mark intro as complete after full sequence (1.5s dark + 1.5s transition)
+    const completeTimer = setTimeout(() => {
+      sessionStorage.setItem(INTRO_SESSION_KEY, "true");
+      setIntroComplete(true);
+    }, 3000);
+
+    return () => {
+      clearTimeout(transitionTimer);
+      clearTimeout(completeTimer);
+    };
+  }, [setTheme]);
 
   useEffect(() => {
     // Lazy load background images
