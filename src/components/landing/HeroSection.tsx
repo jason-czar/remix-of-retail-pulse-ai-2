@@ -49,7 +49,7 @@ export function HeroSection() {
               Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered in real-time for strategic decision-making.
             </motion.p>
 
-            <motion.div className="flex flex-row flex-nowrap items-center justify-center gap-3 sm:gap-4 max-w-full overflow-x-auto scrollbar-hide" initial={{
+            <motion.div className="flex flex-row flex-nowrap items-center justify-center gap-3 sm:gap-4 max-w-full overflow-visible py-4" initial={{
             opacity: 0,
             y: 20
           }} animate={{
@@ -61,12 +61,12 @@ export function HeroSection() {
             ease: [0.25, 0.4, 0.25, 1]
           }}>
               <Link to="/symbol/NVDA" className="shrink-0">
-                <Button size="lg" className="px-5 sm:px-8 rounded-full glass-button-primary">
+                <Button size="lg" className="px-5 sm:px-8 rounded-full glass-button-primary shadow-[0_4px_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_6px_28px_hsl(var(--primary)/0.5)] transition-shadow duration-300">
                   View NVDA
                 </Button>
               </Link>
               <Link to="/learn-more" className="shrink-0">
-                <Button variant="ghost" size="lg" className="px-5 sm:px-8 rounded-full glass-button-secondary">
+                <Button variant="ghost" size="lg" className="px-5 sm:px-8 rounded-full glass-button-secondary shadow-[0_4px_16px_hsl(0_0%_0%/0.08)] dark:shadow-[0_4px_20px_hsl(0_0%_0%/0.5)] hover:shadow-[0_6px_24px_hsl(0_0%_0%/0.12)] dark:hover:shadow-[0_6px_28px_hsl(0_0%_0%/0.6)] transition-shadow duration-300">
                   Learn More
                 </Button>
               </Link>
