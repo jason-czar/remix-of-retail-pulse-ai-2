@@ -195,6 +195,19 @@
     position: relative;
   }
 
+  /* Smooth theme transition for cinematic intro */
+  body.theme-transitioning,
+  body.theme-transitioning * {
+    transition: 
+      background-color 1500ms ease-out,
+      border-color 1500ms ease-out,
+      color 1500ms ease-out,
+      fill 1500ms ease-out,
+      stroke 1500ms ease-out,
+      box-shadow 1500ms ease-out,
+      opacity 1500ms ease-out !important;
+  }
+
   body::before {
     content: '';
     position: fixed;

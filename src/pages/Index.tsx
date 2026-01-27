@@ -25,17 +25,21 @@ const Index = () => {
     // After 2s in dark mode, start transition to light mode
     const transitionTimer = setTimeout(() => {
       setIsTransitioning(true);
+      // Add transition class to body for smooth CSS transitions
+      document.body.classList.add("theme-transitioning");
       setTheme("light");
     }, 2000);
 
     // End transition state after crossfade completes
     const endTransitionTimer = setTimeout(() => {
       setIsTransitioning(false);
+      document.body.classList.remove("theme-transitioning");
     }, 3500);
 
     return () => {
       clearTimeout(transitionTimer);
       clearTimeout(endTransitionTimer);
+      document.body.classList.remove("theme-transitioning");
     };
   }, [setTheme]);
 
@@ -71,7 +75,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className={`min-h-screen cursor-light-enabled relative ${isTransitioning ? '[&_*]:!transition-all [&_*]:!duration-[1500ms]' : ''}`}>
+    <div className="min-h-screen cursor-light-enabled relative">
       {/* Theme-aware background images with smooth crossfade animation */}
       <div 
         className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[1500ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
