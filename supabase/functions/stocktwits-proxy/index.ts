@@ -122,7 +122,35 @@ Deno.serve(async (req) => {
     }
 
     const response = await fetch(targetUrl, fetchOptions)
-    const data = await response.json()
+    
+    // Check content-type to handle non-JSON responses gracefully
+    const contentType = response.headers.get('content-type') || ''
+    const responseText = await response.text()
+    
+    // If response is not JSON (e.g., HTML error page), return a proper error
+    if (!contentType.includes('application/json') || responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<')) {
+      console.error(`Upstream API returned non-JSON response (status ${response.status}):`, responseText.substring(0, 500))
+      return new Response(
+        JSON.stringify({ 
+          error: 'Upstream API temporarily unavailable',
+          status: response.status,
+          details: response.status === 429 ? 'Rate limited' : 'Service error'
+        }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    // Try to parse JSON, with fallback error handling
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', responseText.substring(0, 500))
+      return new Response(
+        JSON.stringify({ error: 'Invalid response from upstream API' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     return new Response(
       JSON.stringify(data),
