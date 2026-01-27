@@ -48,11 +48,14 @@ export function HeroSection() {
             {/* Subtle top accent glow */}
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-t-2xl" />
 
-            {/* Content wrapper with dynamic height */}
+            {/* Content wrapper with dynamic height - centers headline during initial phase */}
             <motion.div
-              className="flex flex-col items-center justify-center"
+              className="flex flex-col items-center"
+              style={{
+                justifyContent: animationPhase === 'expanded' ? 'flex-start' : 'center',
+              }}
               animate={{
-                minHeight: animationPhase === 'expanded' ? 'auto' : '180px',
+                minHeight: animationPhase === 'expanded' ? 'auto' : '80px',
               }}
               transition={{
                 duration: 0.8,
