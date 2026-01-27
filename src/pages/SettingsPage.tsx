@@ -22,15 +22,13 @@ import {
   EyeOff,
   Loader2,
   Check,
-  AlertTriangle,
-  HelpCircle
+  AlertTriangle
 } from "lucide-react";
 import AlertsManager from "@/components/AlertsManager";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import HistoryBackfillUploader from "@/components/HistoryBackfillUploader";
 import ManualSnapshotTrigger from "@/components/ManualSnapshotTrigger";
 import AdminDataControls from "@/components/AdminDataControls";
-import { MetricsGlossaryContent } from "@/components/MetricsGlossary";
 import { toast } from "sonner";
 
 interface ApiKey {
@@ -229,7 +227,7 @@ export default function SettingsPage() {
       <h1 className="text-3xl font-display mb-8">Settings</h1>
 
       <Tabs value={currentTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-6">
-          <TabsList className="flex-wrap h-auto">
+          <TabsList>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profile
@@ -253,10 +251,6 @@ export default function SettingsPage() {
             <TabsTrigger value="subscription" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Subscription
-            </TabsTrigger>
-            <TabsTrigger value="help" className="flex items-center gap-2">
-              <HelpCircle className="h-4 w-4" />
-              Help
             </TabsTrigger>
           </TabsList>
 
@@ -495,13 +489,6 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-            </Card>
-          </TabsContent>
-
-          {/* Help Tab */}
-          <TabsContent value="help">
-            <Card className="p-6 glass-card">
-              <MetricsGlossaryContent />
             </Card>
           </TabsContent>
         </Tabs>
