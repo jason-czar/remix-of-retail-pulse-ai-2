@@ -10,7 +10,7 @@ import { CustomLens } from "@/hooks/use-custom-lenses";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, XCircle, Clock, Link2, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getReadinessSeverity, getRiskSeverity, getConfidenceSeverity } from "@/lib/utils";
 
 interface DecisionQuestionHeaderProps {
   symbol: string;
@@ -36,17 +36,30 @@ const LENS_KEY_MAP: Record<string, string> = {
   'supply-chain': 'supply_chain'
 };
 
-// All scores use primary (blue) color with subtle opacity variations
-function getScoreColor(): string {
-  return "text-primary";
+// Get dynamic severity-based colors for scores
+function getReadinessColor(score: number): string {
+  return getReadinessSeverity(score).textClass;
 }
 
-// Subtle opacity variations to differentiate score types while keeping blue
-const PROGRESS_COLORS = {
-  readiness: "bg-primary",           // Full opacity - primary metric
-  risk: "bg-primary/70",             // Slightly muted
-  confidence: "bg-primary/85",       // Between the two
-} as const;
+function getRiskColor(score: number): string {
+  return getRiskSeverity(score).textClass;
+}
+
+function getConfidenceColor(score: number): string {
+  return getConfidenceSeverity(score).textClass;
+}
+
+function getReadinessProgressColor(score: number): string {
+  return getReadinessSeverity(score).bgClass;
+}
+
+function getRiskProgressColor(score: number): string {
+  return getRiskSeverity(score).bgClass;
+}
+
+function getConfidenceProgressColor(score: number): string {
+  return getConfidenceSeverity(score).bgClass;
+}
 
 function getTimingBadge(timing?: string) {
   switch (timing) {
@@ -232,7 +245,7 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Readiness</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
-                  <span className={cn("text-xl lg:text-3xl font-display", getScoreColor())}>
+                  <span className={cn("text-xl lg:text-3xl font-display", getReadinessColor(readinessScore))}>
                     {readinessScore}
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
@@ -244,8 +257,7 @@ export function DecisionQuestionHeader({
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className={cn(
                       "h-full rounded-full transition-shadow duration-300",
-                      PROGRESS_COLORS.readiness,
-                      "group-hover:shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
+                      getReadinessProgressColor(readinessScore)
                     )}
                   />
                 </div>
@@ -257,7 +269,7 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Risk</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
-                  <span className={cn("text-xl lg:text-3xl font-display", getScoreColor())}>
+                  <span className={cn("text-xl lg:text-3xl font-display", getRiskColor(riskScore))}>
                     {riskScore}
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
@@ -269,8 +281,7 @@ export function DecisionQuestionHeader({
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className={cn(
                       "h-full rounded-full transition-shadow duration-300",
-                      PROGRESS_COLORS.risk,
-                      "group-hover:shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
+                      getRiskProgressColor(riskScore)
                     )}
                   />
                 </div>
@@ -282,7 +293,7 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Confidence</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
-                  <span className={cn("text-xl lg:text-3xl font-display", getScoreColor())}>
+                  <span className={cn("text-xl lg:text-3xl font-display", getConfidenceColor(confidencePercent))}>
                     {confidencePercent}
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
@@ -294,8 +305,7 @@ export function DecisionQuestionHeader({
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className={cn(
                       "h-full rounded-full transition-shadow duration-300",
-                      PROGRESS_COLORS.confidence,
-                      "group-hover:shadow-[0_0_8px_hsl(var(--primary)/0.55)]"
+                      getConfidenceProgressColor(confidencePercent)
                     )}
                   />
                 </div>

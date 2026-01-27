@@ -8,7 +8,7 @@ import { CustomLens } from "@/hooks/use-custom-lenses";
 import { LensSummaryData } from "@/hooks/use-decision-lens-summary";
 import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, AlertCircle, Lightbulb, RefreshCw, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn, getReadinessSeverity, getRiskSeverity } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -73,21 +73,15 @@ function getTimingRecommendation(readiness: number): {
 }
 
 function getReadinessColor(score: number): string {
-  if (score >= 70) return "text-bullish";
-  if (score >= 40) return "text-warning";
-  return "text-bearish";
+  return getReadinessSeverity(score).textClass;
 }
 
 function getProgressColor(score: number): string {
-  if (score >= 70) return "bg-bullish";
-  if (score >= 40) return "bg-warning";
-  return "bg-bearish";
+  return getReadinessSeverity(score).bgClass;
 }
 
 function getRiskColor(score: number): string {
-  if (score >= 70) return "text-bearish";
-  if (score >= 40) return "text-warning";
-  return "text-bullish";
+  return getRiskSeverity(score).textClass;
 }
 
 // Use AI-generated concerns or fallback to generated ones

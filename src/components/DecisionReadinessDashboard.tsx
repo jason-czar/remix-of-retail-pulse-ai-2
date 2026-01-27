@@ -12,7 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCircle2, XCircle, Clock, AlertTriangle, TrendingUp, TrendingDown, Minus, Shield, Target, Activity, Brain, Users, Rocket, RefreshCcw, RefreshCw, Loader2, Lightbulb, AlertCircle, Timer, ChevronDown, ChevronUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getReadinessSeverity, getRiskSeverity } from "@/lib/utils";
 
 // Clean narrative ID suffixes from text (e.g., "China tariff risk china_tariff_risk" -> "China tariff risk")
 function cleanNarrativeIdSuffix(text: string): string {
@@ -97,19 +97,13 @@ function getTimingBadge(timing: DecisionReadiness["recommended_timing"]) {
   }
 }
 function getReadinessColor(score: number): string {
-  if (score >= 70) return "text-bullish";
-  if (score >= 40) return "text-warning";
-  return "text-bearish";
+  return getReadinessSeverity(score).textClass;
 }
 function getProgressColor(score: number): string {
-  if (score >= 70) return "bg-bullish";
-  if (score >= 40) return "bg-warning";
-  return "bg-bearish";
+  return getReadinessSeverity(score).bgClass;
 }
 function getRiskColor(score: number): string {
-  if (score >= 70) return "text-bearish";
-  if (score >= 40) return "text-warning";
-  return "text-bullish";
+  return getRiskSeverity(score).textClass;
 }
 
 // ============= TEMPORAL ATTRIBUTION COMPONENTS =============

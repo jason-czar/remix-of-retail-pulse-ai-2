@@ -41,7 +41,18 @@
 
     --radius: 0.5rem;
 
-    /* Custom sentiment/severity colors - gradient from green to red-orange */
+    /* Severity color scale (0-100%) - 9 levels from green to red-orange */
+    --severity-1: 122 100% 39%;     /* #00c805 - Very Low (0-10%) */
+    --severity-2: 105 100% 41%;     /* #33d100 - Low (10-25%) */
+    --severity-3: 89 100% 42%;      /* #70d900 - Elevated (25-40%) */
+    --severity-4: 68 100% 45%;      /* #c8e500 - Moderate (40-55%) */
+    --severity-5: 62 100% 45%;      /* #e0e800 - Heightened (55-65%) */
+    --severity-6: 46 100% 47%;      /* #f1b800 - High (65-75%) */
+    --severity-7: 35 100% 48%;      /* #f69000 - Very High (75-85%) */
+    --severity-8: 24 100% 49%;      /* #fc6600 - Critical (85-95%) */
+    --severity-9: 19 100% 50%;      /* #ff5000 - Extreme (95-100%) */
+    
+    /* Semantic aliases for common use cases */
     --bullish: 122 100% 39%;        /* #00c805 - pure green */
     --bullish-foreground: 122 100% 15%;
     --bearish: 19 100% 50%;         /* #ff5000 - red-orange */
@@ -126,7 +137,18 @@
     --input: 0 0% 28%;
     --ring: 211 100% 50%;
 
-    /* Custom sentiment/severity colors - gradient from green to red-orange */
+    /* Severity color scale (0-100%) - 9 levels from green to red-orange */
+    --severity-1: 122 100% 39%;     /* #00c805 - Very Low (0-10%) */
+    --severity-2: 105 100% 41%;     /* #33d100 - Low (10-25%) */
+    --severity-3: 89 100% 42%;      /* #70d900 - Elevated (25-40%) */
+    --severity-4: 68 100% 45%;      /* #c8e500 - Moderate (40-55%) */
+    --severity-5: 62 100% 45%;      /* #e0e800 - Heightened (55-65%) */
+    --severity-6: 46 100% 47%;      /* #f1b800 - High (65-75%) */
+    --severity-7: 35 100% 48%;      /* #f69000 - Very High (75-85%) */
+    --severity-8: 24 100% 49%;      /* #fc6600 - Critical (85-95%) */
+    --severity-9: 19 100% 50%;      /* #ff5000 - Extreme (95-100%) */
+    
+    /* Semantic aliases for common use cases */
     --bullish: 122 100% 39%;        /* #00c805 - pure green */
     --bullish-foreground: 122 100% 95%;
     --bearish: 19 100% 50%;         /* #ff5000 - red-orange */
