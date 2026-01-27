@@ -39,7 +39,7 @@ export function HeroSection() {
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-t-2xl" />
 
             {/* Content wrapper with dynamic height - centers headline during initial phase */}
-            <motion.div className="flex flex-col items-center" style={{
+            <motion.div className="flex flex-col items-center leading-tight " style={{
             justifyContent: animationPhase === "expanded" ? "flex-start" : "center"
           }} animate={{
             minHeight: "100%"
