@@ -220,8 +220,8 @@ function WatchlistItem({
   return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-3 glass-list-item group">
       <div className="flex items-center gap-4">
         <div>
-          <div className="font-mono font-semibold group-hover:text-primary transition-colors">
-            ${symbol}
+          <div className="font-semibold group-hover:text-primary transition-colors">
+            {symbol}
           </div>
           <div className="text-sm text-muted-foreground">{name}</div>
         </div>
@@ -294,7 +294,7 @@ function RealAlertItem({
           <div className={`p-1.5 rounded ${isEmotion ? "bg-accent/20 text-accent" : "bg-primary/20 text-primary"}`}>
             <Icon className="h-3 w-3" />
           </div>
-          <span className="font-mono font-semibold">${alert.symbol}</span>
+          <span className="font-semibold">{alert.symbol}</span>
         </div>
         <div className="flex items-center gap-2">
           {!alert.is_active && <Badge variant="secondary" className="text-xs">Paused</Badge>}
@@ -322,8 +322,8 @@ function TrendingItem({
   return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-2 glass-list-item group">
       <div className="flex items-center gap-3">
         <TrendIcon className={`h-4 w-4 ${trend === "bullish" ? "text-bullish" : "text-bearish"}`} />
-        <span className="font-mono font-semibold group-hover:text-primary transition-colors">
-          ${symbol}
+        <span className="font-semibold group-hover:text-primary transition-colors">
+          {symbol}
         </span>
       </div>
       <div className="flex items-center gap-4">
