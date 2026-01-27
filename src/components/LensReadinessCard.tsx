@@ -181,7 +181,7 @@ export function LensReadinessCard({
                 <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-warning/15 dark:bg-warning/20">
                   <AlertTriangle className="h-4 w-4 text-warning" />
                 </div>
-                <div className="relative flex items-center justify-center mb-4">
+                <div className="relative flex items-center justify-center mb-6">
                   <span className="text-base font-semibold tracking-tight">Key Concerns</span>
                 </div>
                 <ul className="relative space-y-3 px-3">
@@ -216,7 +216,7 @@ export function LensReadinessCard({
                 <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-primary/15 dark:bg-primary/20">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
                 </div>
-                <div className="relative flex items-center justify-center mb-4">
+                <div className="relative flex items-center justify-center mb-6">
                   <span className="text-base font-semibold tracking-tight">Recommended Actions</span>
                 </div>
                 <ul className="relative space-y-3 px-3">
@@ -255,7 +255,7 @@ export function LensReadinessCard({
               <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-bearish/15 dark:bg-bearish/20">
                 <TrendingDown className="h-4 w-4 text-bearish" />
               </div>
-              <div className="relative flex items-center justify-center mb-4">
+              <div className="relative flex items-center justify-center mb-6">
                 <span className="text-base font-semibold tracking-tight">Blocking</span>
               </div>
               <div className="relative flex flex-wrap justify-center gap-2">
@@ -290,7 +290,7 @@ export function LensReadinessCard({
               <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-bullish/15 dark:bg-bullish/20">
                 <TrendingUp className="h-4 w-4 text-bullish" />
               </div>
-              <div className="relative flex items-center justify-center mb-4">
+              <div className="relative flex items-center justify-center mb-6">
                 <span className="text-base font-semibold tracking-tight">Supportive</span>
               </div>
               <div className="relative flex flex-wrap justify-center gap-2">
