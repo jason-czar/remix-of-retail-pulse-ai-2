@@ -177,7 +177,7 @@ export function LensReadinessCard({
                 {/* Subtle glow accent */}
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-warning/10 dark:bg-warning/15 rounded-full blur-3xl pointer-events-none" />
                 
-                <div className="relative flex items-center gap-2.5 mb-4">
+                <div className="relative flex items-center justify-center gap-2.5 mb-4">
                   <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-warning/15 dark:bg-warning/20">
                     <AlertTriangle className="h-4 w-4 text-warning" />
                   </div>
@@ -211,7 +211,7 @@ export function LensReadinessCard({
                 {/* Subtle glow accent */}
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 dark:bg-primary/15 rounded-full blur-3xl pointer-events-none" />
                 
-                <div className="relative flex items-center gap-2.5 mb-4">
+                <div className="relative flex items-center justify-center gap-2.5 mb-4">
                   <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/15 dark:bg-primary/20">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
                   </div>
@@ -249,7 +249,7 @@ export function LensReadinessCard({
               {/* Subtle glow accent */}
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-bearish/10 dark:bg-bearish/15 rounded-full blur-3xl pointer-events-none" />
               
-              <div className="relative flex items-center gap-2.5 mb-4">
+              <div className="relative flex items-center justify-center gap-2.5 mb-4">
                 <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-bearish/15 dark:bg-bearish/20">
                   <TrendingDown className="h-4 w-4 text-bearish" />
                 </div>
@@ -283,7 +283,7 @@ export function LensReadinessCard({
               {/* Subtle glow accent */}
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-bullish/10 dark:bg-bullish/15 rounded-full blur-3xl pointer-events-none" />
               
-              <div className="relative flex items-center gap-2.5 mb-4">
+              <div className="relative flex items-center justify-center gap-2.5 mb-4">
                 <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-bullish/15 dark:bg-bullish/20">
                   <TrendingUp className="h-4 w-4 text-bullish" />
                 </div>
