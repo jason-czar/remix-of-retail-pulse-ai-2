@@ -156,12 +156,12 @@ export function LensReadinessCard({
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Key Concerns Card */}
             {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <Card className="p-4 glass-card">
-                <div className="flex items-center gap-2 mb-2.5">
+                <div className="flex items-center gap-2 mb-3">
                   
-                  <span className="text-sm font-medium">Key Concerns</span>
+                  <span className="text-base font-medium">Key Concerns</span>
                 </div>
-                <ul className="space-y-1.5">
-                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
+                <ul className="space-y-2">
+                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
                       {cleanNarrativeText(concern)}
                     </li>)}
                 </ul>
@@ -169,12 +169,12 @@ export function LensReadinessCard({
 
             {/* Recommended Actions Card */}
             {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <Card className="p-4 glass-card">
-                <div className="flex items-center gap-2 mb-2.5">
+                <div className="flex items-center gap-2 mb-3">
                   
-                  <span className="text-sm font-medium">Recommended Actions</span>
+                  <span className="text-base font-medium">Recommended Actions</span>
                 </div>
-                <ul className="space-y-1.5">
-                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
+                <ul className="space-y-2">
+                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
                       {cleanNarrativeText(action)}
                     </li>)}
                 </ul>
