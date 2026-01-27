@@ -298,7 +298,7 @@ export function LensReadinessCard({
         </div>
 
         {/* Delay recommendation */}
-        {readiness.recommended_delay && readiness.recommended_delay !== "None" && <p className="text-xs text-muted-foreground italic mt-3 my-[22px]">
+        {readiness.recommended_delay && readiness.recommended_delay !== "None" && <p className="text-xs text-muted-foreground italic my-[22px] mb-0 mt-[17px]">
             Recommended delay: {readiness.recommended_delay}
           </p>}
 
