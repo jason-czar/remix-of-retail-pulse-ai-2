@@ -156,30 +156,78 @@ export function LensReadinessCard({
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <>
           <Separator className="mb-6 opacity-50" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4 items-stretch">
             {/* Key Concerns Card */}
-            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <div className="glass-tile p-4 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base font-medium">Key Concerns</span>
+            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="relative overflow-hidden rounded-2xl p-5 
+                  bg-gradient-to-br from-warning/[0.08] via-warning/[0.04] to-transparent
+                  dark:from-warning/[0.12] dark:via-warning/[0.06] dark:to-transparent
+                  border border-warning/20 dark:border-warning/25
+                  shadow-[0_4px_24px_-4px_hsl(var(--warning)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
+                  dark:shadow-[0_4px_24px_-4px_hsl(var(--warning)/0.25)]
+                  backdrop-blur-xl"
+              >
+                {/* Subtle glow accent */}
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-warning/10 dark:bg-warning/15 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="relative flex items-center gap-2.5 mb-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-warning/15 dark:bg-warning/20">
+                    <AlertTriangle className="h-4 w-4 text-warning" />
+                  </div>
+                  <span className="text-base font-semibold tracking-tight">Key Concerns</span>
                 </div>
-                <ul className="space-y-2">
-                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
+                <ul className="relative space-y-3">
+                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
+                    <li 
+                      key={idx} 
+                      className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-warning/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--warning)/0.5)]"
+                    >
                       {cleanNarrativeText(concern)}
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>
-              </div>}
+              </motion.div>
+            )}
 
             {/* Recommended Actions Card */}
-            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <div className="glass-tile p-4 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-base font-medium">Recommended Actions</span>
+            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
+                className="relative overflow-hidden rounded-2xl p-5 
+                  bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent
+                  dark:from-primary/[0.12] dark:via-primary/[0.06] dark:to-transparent
+                  border border-primary/20 dark:border-primary/25
+                  shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
+                  dark:shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.25)]
+                  backdrop-blur-xl"
+              >
+                {/* Subtle glow accent */}
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 dark:bg-primary/15 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="relative flex items-center gap-2.5 mb-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-primary/15 dark:bg-primary/20">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-base font-semibold tracking-tight">Recommended Actions</span>
                 </div>
-                <ul className="space-y-2">
-                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-sm text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[9px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
+                <ul className="relative space-y-3">
+                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
+                    <li 
+                      key={idx} 
+                      className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-primary/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
+                    >
                       {cleanNarrativeText(action)}
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>
-              </div>}
+              </motion.div>
+            )}
           </div>
         </>}
 
