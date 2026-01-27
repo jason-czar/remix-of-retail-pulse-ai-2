@@ -32,6 +32,64 @@ import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw } from "lucide-react";
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
+
+// Sticky Lens Bar with smooth animation when locked
+interface StickyLensBarProps {
+  decisionLens: LensValue;
+  onLensChange: (lens: LensValue, customLens?: CustomLens) => void;
+}
+
+function StickyLensBar({ decisionLens, onLensChange }: StickyLensBarProps) {
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [isStuck, setIsStuck] = useState(false);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When sentinel goes out of view (above viewport), the bar is stuck
+        setIsStuck(!entry.isIntersecting);
+      },
+      { 
+        threshold: 0,
+        rootMargin: '-56px 0px 0px 0px' // Account for top-14 (56px) offset
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      {/* Invisible sentinel element to detect when sticky kicks in */}
+      <div ref={sentinelRef} className="h-0 w-full" aria-hidden="true" />
+      
+      <div 
+        ref={stickyRef}
+        className={cn(
+          "sticky top-14 z-30 -mx-4 px-4 py-3 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5",
+          "transition-all duration-300 ease-out",
+          isStuck && [
+            // Enhanced glass effect when stuck
+            "bg-background/80 dark:bg-background/60",
+            "backdrop-blur-xl",
+            "shadow-[0_1px_3px_rgba(0,0,0,0.05),0_4px_12px_rgba(0,0,0,0.03)]",
+            "dark:shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.15)]",
+            "border-b border-border/30"
+          ]
+        )}
+        data-tour="decision-lens"
+      >
+        <DecisionLensSelector value={decisionLens} onChange={onLensChange} />
+      </div>
+    </>
+  );
+}
+
 export default function SymbolPage() {
   const {
     symbol: paramSymbol
@@ -218,10 +276,8 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Decision Lens Selector - Sticky below header */}
-        <div className="sticky top-14 z-30 -mx-4 px-4 py-3 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5" data-tour="decision-lens">
-          <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
-        </div>
+        {/* Decision Lens Selector - Sticky below header with smooth animation */}
+        <StickyLensBar decisionLens={decisionLens} onLensChange={handleLensChange} />
 
         {/* Charts Section - Only visible when Summary lens is selected */}
         <AnimatePresence mode="wait">
