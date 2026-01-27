@@ -43,8 +43,28 @@ export default function SymbolPage() {
   
   // Extract symbol from URL path as fallback (handles static routes like /symbol/AAPL)
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
-  const [timeRange, setTimeRange] = useState<TimeRange>('1D');
   const [activeTab, setActiveTab] = useState<string>('narratives');
+  
+  // Initialize time range from URL query param or default to '1D'
+  const validTimeRanges: TimeRange[] = ['1H', '6H', '1D', '24H', '7D', '30D'];
+  const initialTimeRange = (searchParams.get('range') as TimeRange) || '1D';
+  const [timeRange, setTimeRangeState] = useState<TimeRange>(
+    validTimeRanges.includes(initialTimeRange) ? initialTimeRange : '1D'
+  );
+  
+  // Wrapper to update URL when time range changes
+  const setTimeRange = (range: TimeRange) => {
+    setTimeRangeState(range);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (range === '1D') {
+        newParams.delete('range');
+      } else {
+        newParams.set('range', range);
+      }
+      return newParams;
+    }, { replace: true });
+  };
   
   // Initialize decision lens from URL query param or default to 'summary'
   const initialLens = searchParams.get('lens') || 'summary';
