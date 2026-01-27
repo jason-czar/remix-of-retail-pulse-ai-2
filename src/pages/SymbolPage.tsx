@@ -341,20 +341,23 @@ export default function SymbolPage() {
                     </TooltipContent>
                   </Tooltip>
                   {lensSummaryLoading || isRegenerating ? (
-                    <div className="space-y-2 pr-10">
+                    <div className="space-y-3 pr-10">
                       <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-[95%]" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-3/4" />
                     </div>
                   ) : (
-                    <motion.p 
+                    <motion.div 
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
-                      className="text-sm md:text-base text-muted-foreground leading-relaxed pr-10"
+                      className="pr-10"
                     >
-                      <FormattedSummary text={summary} />
-                    </motion.p>
+                      <p className="text-[15px] md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
+                        <FormattedSummary text={summary} />
+                      </p>
+                    </motion.div>
                   )}
                 </div>
               </DecisionQuestionHeader>
@@ -417,8 +420,9 @@ export default function SymbolPage() {
                   </p>
                   
                   {lensSummaryLoading || isRegenerating ? (
-                    <div className="space-y-2 flex-1">
+                    <div className="space-y-3 flex-1">
                       <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-[95%]" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-3/4" />
                     </div>
@@ -429,7 +433,7 @@ export default function SymbolPage() {
                       transition={{ duration: 0.4, ease: "easeOut" }}
                       className="flex-1"
                     >
-                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                      <p className="text-[15px] md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
                         <FormattedSummary text={summary} />
                       </p>
                     </motion.div>

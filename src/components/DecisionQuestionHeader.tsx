@@ -172,15 +172,15 @@ export function DecisionQuestionHeader({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <Card className="p-4 md:p-5 glass-card border-primary/10" data-tour="intelligence-summary">
+      <Card className="p-5 md:p-6 glass-card border-primary/10" data-tour="intelligence-summary">
         {/* Question on top, badges below */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
           {/* Left: Decision Question */}
           <div className="flex-1 min-w-0">
             {/* Decision Question - First */}
-            <p className="text-base md:text-lg font-medium text-foreground leading-snug text-balance mb-2">
+            <h2 className="text-lg md:text-xl font-semibold text-foreground leading-snug text-balance mb-3">
               {decisionQuestion}
-            </p>
+            </h2>
             {/* Badges Row - Confidence, Copy Link, Timing, then Lens Name */}
             <div className="flex items-center gap-2 flex-wrap">
               {confidence && (
@@ -322,8 +322,10 @@ export function DecisionQuestionHeader({
 
         {/* Summary content passed as children */}
         {children && (
-          <div className="mt-4 pt-4 border-t border-border/50">
-            {children}
+          <div className="mt-5 pt-5 border-t border-border/30">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              {children}
+            </div>
           </div>
         )}
       </Card>
