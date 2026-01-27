@@ -1,14 +1,21 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestPsychologySnapshot, DecisionReadiness, DecisionOverlay, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
 import { DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
-import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, Minus, AlertCircle, Lightbulb } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, Minus, AlertCircle, Lightbulb, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
 interface LensReadinessCardProps {
   symbol: string;
   lens: DecisionLens;
+  onRefresh?: () => void;
 }
 
 // Map from DecisionLens to interpretation keys
@@ -78,12 +85,47 @@ function getRiskColor(score: number): string {
 }
 export function LensReadinessCard({
   symbol,
-  lens
+  lens,
+  onRefresh
 }: LensReadinessCardProps) {
+  const { user } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const isAdmin = user?.email === 'admin@czar.ing';
+  
   const {
     data: snapshot,
-    isLoading
+    isLoading,
+    refetch
   } = useLatestPsychologySnapshot(symbol);
+
+  const handleRefreshSnapshot = async () => {
+    setIsRefreshing(true);
+    try {
+      const { error } = await supabase.functions.invoke('record-psychology-snapshot', {
+        body: { 
+          symbols: [symbol.toUpperCase()],
+          periodType: 'hourly',
+          forceRun: true
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`Fresh snapshot triggered for ${symbol.toUpperCase()}`);
+      
+      // Trigger refetch after a short delay to allow snapshot to be recorded
+      setTimeout(() => {
+        refetch();
+        onRefresh?.();
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to refresh snapshot:', err);
+      toast.error('Failed to trigger snapshot refresh');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Don't render for summary lens
   if (lens === 'summary') {
@@ -243,5 +285,21 @@ export function LensReadinessCard({
                 </div>}
             </div>}
       </div>
+
+      {/* Admin-only refresh button */}
+      {isAdmin && (
+        <div className="flex justify-end mt-4 pt-3 border-t border-border/30">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefreshSnapshot}
+            disabled={isRefreshing}
+            className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
+            {isRefreshing ? "Refreshing..." : "Refresh Snapshot"}
+          </Button>
+        </div>
+      )}
     </Card>;
 }
