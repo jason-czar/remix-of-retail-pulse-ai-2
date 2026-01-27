@@ -164,12 +164,12 @@ export function LensReadinessCard({
           </Badge>
         </div>
 
-        {/* Top Row: Key Concerns (left) and Recommended Actions (right) */}
+        {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 pb-4 border-b border-border/30">
-            {/* Key Concerns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Key Concerns Card */}
             {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
-              <div>
+              <Card className="p-4 glass-card">
                 <div className="flex items-center gap-2 mb-2.5">
                   <AlertCircle className="h-4 w-4 text-warning" />
                   <span className="text-sm font-medium">Key Concerns</span>
@@ -181,12 +181,12 @@ export function LensReadinessCard({
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Card>
             )}
 
-            {/* Recommended Actions */}
+            {/* Recommended Actions Card */}
             {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
-              <div>
+              <Card className="p-4 glass-card">
                 <div className="flex items-center gap-2 mb-2.5">
                   <Lightbulb className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">Recommended Actions</span>
@@ -198,7 +198,7 @@ export function LensReadinessCard({
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Card>
             )}
           </div>
         )}
