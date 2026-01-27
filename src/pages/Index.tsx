@@ -58,8 +58,8 @@ const Index = () => {
     loadImages();
   }, []);
 
-  // Parallax transform - background moves at 30% of scroll speed
-  const parallaxTransform = `translateY(${scrollY * 0.3}px) scale(1.1)`;
+  // Parallax transform - background moves up at 30% of scroll speed
+  const parallaxTransform = `translateY(${scrollY * -0.3}px) scale(1.1)`;
 
   return (
     <div className="min-h-screen cursor-light-enabled relative overflow-x-hidden">
