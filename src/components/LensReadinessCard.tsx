@@ -155,8 +155,8 @@ export function LensReadinessCard({
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <>
-          <Separator className="mb-6 opacity-50" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4 items-stretch">
+          <Separator className="my-6 opacity-50" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 items-stretch">
             {/* Key Concerns Card */}
             {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
               <motion.div 
