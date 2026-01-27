@@ -90,10 +90,21 @@ export default {
   				DEFAULT: 'hsl(var(--neutral))',
   				foreground: 'hsl(var(--neutral-foreground))'
   			},
-  			warning: {
-  				DEFAULT: 'hsl(var(--warning))',
-  				foreground: 'hsl(var(--warning-foreground))'
-  			},
+			warning: {
+				DEFAULT: 'hsl(var(--warning))',
+				foreground: 'hsl(var(--warning-foreground))'
+			},
+			severity: {
+				'1': 'hsl(var(--severity-1))',
+				'2': 'hsl(var(--severity-2))',
+				'3': 'hsl(var(--severity-3))',
+				'4': 'hsl(var(--severity-4))',
+				'5': 'hsl(var(--severity-5))',
+				'6': 'hsl(var(--severity-6))',
+				'7': 'hsl(var(--severity-7))',
+				'8': 'hsl(var(--severity-8))',
+				'9': 'hsl(var(--severity-9))'
+			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
