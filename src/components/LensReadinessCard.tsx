@@ -232,39 +232,79 @@ export function LensReadinessCard({
         </>}
 
         {/* Supportive and Blocking Narratives */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-0">
           {/* Supportive Narratives */}
           {readiness.supportive_narratives.length > 0 && (
-            <div className="p-3 rounded-lg border border-bullish/20 bg-transparent">
-              <div className="flex items-center gap-1.5 mb-2">
-                <TrendingUp className="h-3.5 w-3.5 text-bullish" />
-                <span className="text-xs font-medium text-bullish">Supportive</span>
+            <motion.div 
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.15 }}
+              className="relative overflow-hidden rounded-2xl p-5 
+                bg-gradient-to-br from-bullish/[0.08] via-bullish/[0.04] to-transparent
+                dark:from-bullish/[0.12] dark:via-bullish/[0.06] dark:to-transparent
+                border border-bullish/20 dark:border-bullish/25
+                shadow-[0_4px_24px_-4px_hsl(var(--bullish)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
+                dark:shadow-[0_4px_24px_-4px_hsl(var(--bullish)/0.25)]
+                backdrop-blur-xl"
+            >
+              {/* Subtle glow accent */}
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-bullish/10 dark:bg-bullish/15 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="relative flex items-center gap-2.5 mb-4">
+                <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-bullish/15 dark:bg-bullish/20">
+                  <TrendingUp className="h-4 w-4 text-bullish" />
+                </div>
+                <span className="text-base font-semibold tracking-tight">Supportive</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="relative flex flex-wrap gap-2">
                 {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => (
-                  <Badge key={idx} variant="outline" className="text-[10px] border-bullish/40 text-bullish bg-bullish/10 px-2 py-0">
+                  <Badge 
+                    key={idx} 
+                    variant="outline" 
+                    className="text-xs border-bullish/40 text-bullish bg-bullish/10 px-2.5 py-1 rounded-lg"
+                  >
                     {cleanNarrativeText(narrative)}
                   </Badge>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Blocking Narratives */}
           {readiness.blocking_narratives.length > 0 && (
-            <div className="p-3 rounded-lg border border-bearish/20 bg-transparent">
-              <div className="flex items-center gap-1.5 mb-2">
-                <TrendingDown className="h-3.5 w-3.5 text-bearish" />
-                <span className="text-xs font-medium text-bearish">Blocking</span>
+            <motion.div 
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.2 }}
+              className="relative overflow-hidden rounded-2xl p-5 
+                bg-gradient-to-br from-bearish/[0.08] via-bearish/[0.04] to-transparent
+                dark:from-bearish/[0.12] dark:via-bearish/[0.06] dark:to-transparent
+                border border-bearish/20 dark:border-bearish/25
+                shadow-[0_4px_24px_-4px_hsl(var(--bearish)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
+                dark:shadow-[0_4px_24px_-4px_hsl(var(--bearish)/0.25)]
+                backdrop-blur-xl"
+            >
+              {/* Subtle glow accent */}
+              <div className="absolute -top-12 -right-12 w-32 h-32 bg-bearish/10 dark:bg-bearish/15 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="relative flex items-center gap-2.5 mb-4">
+                <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-bearish/15 dark:bg-bearish/20">
+                  <TrendingDown className="h-4 w-4 text-bearish" />
+                </div>
+                <span className="text-base font-semibold tracking-tight">Blocking</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="relative flex flex-wrap gap-2">
                 {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
-                  <Badge key={idx} variant="outline" className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0">
+                  <Badge 
+                    key={idx} 
+                    variant="outline" 
+                    className="text-xs border-bearish/40 text-bearish bg-bearish/10 px-2.5 py-1 rounded-lg"
+                  >
                     {cleanNarrativeText(narrative)}
                   </Badge>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
