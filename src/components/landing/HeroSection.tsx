@@ -49,7 +49,7 @@ export function HeroSection() {
               Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered in real-time for strategic decision-making.
             </motion.p>
 
-            <motion.div className="flex flex-row flex-nowrap items-center justify-center gap-3 sm:gap-4 max-w-full overflow-visible py-4" initial={{
+            <motion.div className="flex flex-row flex-nowrap items-center justify-center gap-3 max-w-full overflow-visible py-0 sm:gap-[17px]" initial={{
             opacity: 0,
             y: 20
           }} animate={{
