@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ interface DecisionQuestionHeaderProps {
   relevantCount?: number;
   messageCount?: number;
   isLoading?: boolean;
+  children?: ReactNode;
 }
 
 // Map from DecisionLens to interpretation keys
@@ -94,7 +95,8 @@ export function DecisionQuestionHeader({
   confidence,
   relevantCount,
   messageCount,
-  isLoading
+  isLoading,
+  children
 }: DecisionQuestionHeaderProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -144,7 +146,7 @@ export function DecisionQuestionHeader({
 
   if (loading) {
     return (
-      <Card className="p-4 md:p-5 glass-card mb-4 lg:mb-6">
+      <Card className="p-4 md:p-5 glass-card">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <Skeleton className="h-6 w-2/3" />
           <div className="flex gap-3">
@@ -153,6 +155,13 @@ export function DecisionQuestionHeader({
             <Skeleton className="h-14 w-28" />
           </div>
         </div>
+        {children && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        )}
       </Card>
     );
   }
@@ -163,7 +172,7 @@ export function DecisionQuestionHeader({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <Card className="p-4 md:p-5 glass-card mb-4 lg:mb-6 border-primary/10">
+      <Card className="p-4 md:p-5 glass-card border-primary/10" data-tour="intelligence-summary">
         {/* Question on top, badges below */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Left: Decision Question */}
@@ -311,6 +320,13 @@ export function DecisionQuestionHeader({
               <timing.icon className="h-4 w-4 mr-1.5" />
               {timing.label}
             </Badge>
+          </div>
+        )}
+
+        {/* Summary content passed as children */}
+        {children && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            {children}
           </div>
         )}
       </Card>

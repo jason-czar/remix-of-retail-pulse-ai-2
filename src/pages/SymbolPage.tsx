@@ -300,57 +300,29 @@ export default function SymbolPage() {
           )}
         </AnimatePresence>
 
-        {/* Decision Question Header - Prominent display for non-summary lenses */}
+        {/* Decision Question Header with integrated Intelligence Summary */}
         <AnimatePresence mode="wait">
           {decisionLens !== 'summary' && (
-            <DecisionQuestionHeader
+            <motion.div
               key={`header-${decisionLens}`}
-              symbol={symbol}
-              lens={decisionLens}
-              customLens={activeCustomLens}
-              confidence={lensSummaryData?.confidence}
-              relevantCount={lensSummaryData?.relevantCount}
-              messageCount={lensSummaryData?.messageCount}
-              isLoading={lensSummaryLoading}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Intelligence Summary + Readiness Card - Stacked layout */}
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={decisionLens} 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="space-y-4 lg:space-y-6"
-          >
-            {/* Intelligence Summary Card */}
-            <motion.div 
-              layout 
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="mb-4 lg:mb-6"
             >
-              <Card className="p-4 md:p-5 glass-card flex flex-col" data-tour="intelligence-summary">
+              <DecisionQuestionHeader
+                symbol={symbol}
+                lens={decisionLens}
+                customLens={activeCustomLens}
+                confidence={lensSummaryData?.confidence}
+                relevantCount={lensSummaryData?.relevantCount}
+                messageCount={lensSummaryData?.messageCount}
+                isLoading={lensSummaryLoading}
+              >
+                {/* Summary content integrated into the card */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-sm md:text-base">Intelligence Summary</h3>
-                    {decisionLens === 'summary' && (
-                      <>
-                        <Badge variant="outline" className="text-[10px] md:text-xs">
-                          {getLensDisplayName(decisionLens, activeCustomLens || undefined)}
-                        </Badge>
-                        {lensSummaryData?.confidence && (
-                          <ConfidenceBadge 
-                            level={lensSummaryData.confidence} 
-                            context="volume" 
-                            tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} 
-                            size="sm" 
-                          />
-                        )}
-                      </>
-                    )}
-                  </div>
+                  <div /> {/* Spacer for alignment */}
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -362,34 +334,105 @@ export default function SymbolPage() {
                     <span className="sr-only">Regenerate</span>
                   </Button>
                 </div>
-                
-                {/* Show decision question inline only for summary lens */}
-                {decisionLens === 'summary' && (
-                  <p className="text-xs text-muted-foreground/70 mb-3 italic">
-                    {getLensDecisionQuestion(decisionLens, activeCustomLens || undefined)}
-                  </p>
-                )}
-                
                 {lensSummaryLoading || isRegenerating ? (
-                  <div className="space-y-2 flex-1">
+                  <div className="space-y-2">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
                   </div>
                 ) : (
-                  <div className="flex-1">
-                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                      <FormattedSummary text={summary} />
-                    </p>
-                  </div>
+                  <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                    <FormattedSummary text={summary} />
+                  </p>
                 )}
-              </Card>
+              </DecisionQuestionHeader>
             </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* Readiness Card - Full width below */}
+        {/* Summary lens - Keep original separate card layout */}
+        <AnimatePresence mode="wait">
+          {decisionLens === 'summary' && (
             <motion.div 
-              layout 
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              key={decisionLens} 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="space-y-4 lg:space-y-6"
+            >
+              {/* Intelligence Summary Card for Summary lens */}
+              <motion.div 
+                layout 
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <Card className="p-4 md:p-5 glass-card flex flex-col" data-tour="intelligence-summary">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] md:text-xs">
+                        {getLensDisplayName(decisionLens, activeCustomLens || undefined)}
+                      </Badge>
+                      {lensSummaryData?.confidence && (
+                        <ConfidenceBadge 
+                          level={lensSummaryData.confidence} 
+                          context="volume" 
+                          tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} 
+                          size="sm" 
+                        />
+                      )}
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleRegenerate} 
+                      disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
+                      className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                      <span className="sr-only">Regenerate</span>
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground/70 mb-3 italic">
+                    {getLensDecisionQuestion(decisionLens, activeCustomLens || undefined)}
+                  </p>
+                  
+                  {lensSummaryLoading || isRegenerating ? (
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : (
+                    <div className="flex-1">
+                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                        <FormattedSummary text={summary} />
+                      </p>
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+
+              {/* Readiness Card */}
+              <motion.div 
+                layout 
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                <PsychologyOverviewCard symbol={symbol} />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Readiness Card for non-summary lenses */}
+        <AnimatePresence mode="wait">
+          {decisionLens !== 'summary' && (
+            <motion.div 
+              key={`readiness-${decisionLens}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.25, ease: "easeOut", delay: 0.1 }}
             >
               {activeCustomLens ? (
                 <CustomLensReadinessCard 
@@ -397,13 +440,11 @@ export default function SymbolPage() {
                   summaryData={lensSummaryData} 
                   isLoading={lensSummaryLoading} 
                 />
-              ) : decisionLens === 'summary' ? (
-                <PsychologyOverviewCard symbol={symbol} />
               ) : (
                 <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />
               )}
             </motion.div>
-          </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Narrative Coherence Score */}
