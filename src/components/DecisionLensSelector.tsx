@@ -100,8 +100,18 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
               className={cn(
                 "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200",
                 value === option.value
-                  ? "bg-background text-foreground shadow-md dark:shadow-[0_4px_16px_hsl(240_15%_0%/0.5),inset_0_1px_0_hsl(0_0%_100%/0.15)] dark:bg-[linear-gradient(180deg,hsl(0_0%_100%/0.12)_0%,hsl(0_0%_100%/0.06)_100%)] dark:border dark:border-white/12 dark:backdrop-blur-md"
-                  : "text-muted-foreground hover:text-foreground/80 hover:bg-white/5",
+                  ? [
+                      // Light mode: frosted white with subtle depth
+                      "bg-white/95 text-foreground",
+                      "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(0,0,0,0.03)]",
+                      "border border-black/[0.06]",
+                      // Dark mode: glowing glass with inner light
+                      "dark:bg-[linear-gradient(180deg,hsl(0_0%_100%/0.14)_0%,hsl(0_0%_100%/0.06)_100%)]",
+                      "dark:shadow-[0_4px_16px_hsl(220_80%_60%/0.15),0_1px_3px_rgba(0,0,0,0.3),inset_0_1px_0_hsl(0_0%_100%/0.2),inset_0_0_12px_hsl(220_80%_70%/0.1)]",
+                      "dark:border dark:border-white/[0.15]",
+                      "dark:backdrop-blur-md"
+                    ]
+                  : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
                 option.isCustom && "pr-7"
               )}
               onClick={() => onChange(option.value, option.customLens)}
