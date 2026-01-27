@@ -196,16 +196,16 @@
   }
 
   /* Smooth theme transition for cinematic intro */
-body.theme-transitioning,
-body.theme-transitioning * {
-  transition: 
-    background-color 2500ms cubic-bezier(0.3, 0.0, 0.2, 1),
-    border-color 2500ms cubic-bezier(0.3, 0.0, 0.2, 1),
-    color 2500ms cubic-bezier(0.3, 0.0, 0.2, 1),
-    fill 2500ms cubic-bezier(0.3, 0.0, 0.2, 1),
-    stroke 2500ms cubic-bezier(0.3, 0.0, 0.2, 1),
-    box-shadow 2500ms cubic-bezier(0.3, 0.0, 0.2, 1),
-    opacity 2500ms cubic-bezier(0.3, 0.0, 0.2, 1) !important;
+  body.theme-transitioning,
+  body.theme-transitioning * {
+    transition: 
+      background-color 2000ms ease-out,
+      border-color 2000ms ease-out,
+      color 2000ms ease-out,
+      fill 2000ms ease-out,
+      stroke 2000ms ease-out,
+      box-shadow 2000ms ease-out,
+      opacity 2000ms ease-out !important;
   }
 
   body::before {
