@@ -239,6 +239,30 @@ export function DecisionQuestionHeader({
           {/* Right: Condensed Score Tiles */}
           {showScores && (
             <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:items-stretch lg:gap-4 lg:shrink-0">
+              {/* Confidence Score */}
+              <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
+                <div className="mb-1 lg:mb-1.5">
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">Confidence</span>
+                </div>
+                <div className="flex items-baseline gap-0.5 lg:gap-1">
+                  <span className={cn("text-xl lg:text-3xl font-display", getConfidenceColor(confidencePercent))}>
+                    {confidencePercent}
+                  </span>
+                  <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
+                </div>
+                <div className="group relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${confidencePercent}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className={cn(
+                      "h-full rounded-full transition-shadow duration-300",
+                      getConfidenceProgressColor(confidencePercent)
+                    )}
+                  />
+                </div>
+              </div>
+
               {/* Readiness Score */}
               <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
                 <div className="mb-1 lg:mb-1.5">
@@ -282,30 +306,6 @@ export function DecisionQuestionHeader({
                     className={cn(
                       "h-full rounded-full transition-shadow duration-300",
                       getRiskProgressColor(riskScore)
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Confidence Score */}
-              <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
-                <div className="mb-1 lg:mb-1.5">
-                  <span className="text-[10px] lg:text-xs text-muted-foreground">Confidence</span>
-                </div>
-                <div className="flex items-baseline gap-0.5 lg:gap-1">
-                  <span className={cn("text-xl lg:text-3xl font-display", getConfidenceColor(confidencePercent))}>
-                    {confidencePercent}
-                  </span>
-                  <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
-                </div>
-                <div className="group relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${confidencePercent}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full transition-shadow duration-300",
-                      getConfidenceProgressColor(confidencePercent)
                     )}
                   />
                 </div>
