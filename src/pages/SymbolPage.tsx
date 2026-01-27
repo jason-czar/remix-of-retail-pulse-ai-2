@@ -167,8 +167,11 @@ export default function SymbolPage() {
           </div>
         </div>
 
-        {/* Decision Lens Selector - Below header for prominence */}
-        <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-6 md:mb-8" data-tour="decision-lens">
+        {/* Decision Lens Selector - Sticky below header */}
+        <div 
+          className="sticky top-14 z-30 -mx-4 px-4 py-3 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5 bg-background/80 backdrop-blur-xl border-b border-transparent [&:not(:hover)]:border-black/[0.04] dark:[&:not(:hover)]:border-white/[0.04]" 
+          data-tour="decision-lens"
+        >
           <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
         </div>
 
