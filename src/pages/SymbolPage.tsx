@@ -4,6 +4,7 @@ import { useParams, Link, useLocation, useSearchParams } from "react-router-dom"
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -322,16 +323,23 @@ export default function SymbolPage() {
               >
                 {/* Summary content integrated into the card */}
                 <div className="relative">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={handleRegenerate} 
-                    disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
-                    className="absolute -top-1 right-0 h-7 px-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                    <span className="sr-only">Regenerate</span>
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleRegenerate} 
+                        disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
+                        className="absolute -top-1 right-0 h-7 px-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                        <span className="sr-only">Regenerate</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>Generate a fresh analysis</p>
+                    </TooltipContent>
+                  </Tooltip>
                   {lensSummaryLoading || isRegenerating ? (
                     <div className="space-y-2 pr-10">
                       <Skeleton className="h-4 w-full" />
@@ -385,16 +393,23 @@ export default function SymbolPage() {
                         />
                       )}
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={handleRegenerate} 
-                      disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
-                      className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                    >
-                      <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                      <span className="sr-only">Regenerate</span>
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={handleRegenerate} 
+                          disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
+                          className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                        >
+                          <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                          <span className="sr-only">Regenerate</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Generate a fresh analysis</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                   
                   <p className="text-xs text-muted-foreground/70 mb-3 italic">
