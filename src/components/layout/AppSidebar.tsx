@@ -100,7 +100,7 @@ export function AppSidebar() {
                           isActive={location.pathname === `/symbol/${symbol}`}
                         >
                           <Link to={`/symbol/${symbol}`}>
-                            <span className="font-mono text-sm">${symbol}</span>
+                            <span className="text-sm font-medium">{symbol}</span>
                           </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>

@@ -170,7 +170,7 @@ export function WatchlistManager({ open, onOpenChange }: WatchlistManagerProps) 
                       <div className="flex items-center gap-3">
                         <GripVertical className="h-4 w-4 text-muted-foreground/50" />
                         <div>
-                          <span className="font-mono font-semibold">${symbol}</span>
+                          <span className="font-semibold">{symbol}</span>
                           {trendingData?.name && (
                             <span className="text-sm text-muted-foreground ml-2">
                               {trendingData.name}
