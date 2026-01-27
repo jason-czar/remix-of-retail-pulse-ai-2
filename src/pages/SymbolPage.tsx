@@ -42,17 +42,15 @@ export default function SymbolPage() {
   }>();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Extract symbol from URL path as fallback (handles static routes like /symbol/AAPL)
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
-  
+
   // Initialize active chart tab from URL query param or default to 'narratives'
   const validTabs = ['narratives', 'emotions', 'sentiment', 'momentum'];
   const initialTab = searchParams.get('chart') || 'narratives';
-  const [activeTab, setActiveTabState] = useState<string>(
-    validTabs.includes(initialTab) ? initialTab : 'narratives'
-  );
-  
+  const [activeTab, setActiveTabState] = useState<string>(validTabs.includes(initialTab) ? initialTab : 'narratives');
+
   // Wrapper to update URL when chart tab changes
   const setActiveTab = (tab: string) => {
     setActiveTabState(tab);
@@ -64,16 +62,16 @@ export default function SymbolPage() {
         newParams.set('chart', tab);
       }
       return newParams;
-    }, { replace: true });
+    }, {
+      replace: true
+    });
   };
-  
+
   // Initialize time range from URL query param or default to '1D'
   const validTimeRanges: TimeRange[] = ['1H', '6H', '1D', '24H', '7D', '30D'];
-  const initialTimeRange = (searchParams.get('range') as TimeRange) || '1D';
-  const [timeRange, setTimeRangeState] = useState<TimeRange>(
-    validTimeRanges.includes(initialTimeRange) ? initialTimeRange : '1D'
-  );
-  
+  const initialTimeRange = searchParams.get('range') as TimeRange || '1D';
+  const [timeRange, setTimeRangeState] = useState<TimeRange>(validTimeRanges.includes(initialTimeRange) ? initialTimeRange : '1D');
+
   // Wrapper to update URL when time range changes
   const setTimeRange = (range: TimeRange) => {
     setTimeRangeState(range);
@@ -85,9 +83,11 @@ export default function SymbolPage() {
         newParams.set('range', range);
       }
       return newParams;
-    }, { replace: true });
+    }, {
+      replace: true
+    });
   };
-  
+
   // Initialize decision lens from URL query param or default to 'summary'
   const initialLens = searchParams.get('lens') || 'summary';
   const [decisionLens, setDecisionLens] = useState<LensValue>(initialLens);
@@ -138,7 +138,7 @@ export default function SymbolPage() {
   const handleLensChange = (lens: LensValue, customLens?: CustomLens) => {
     setDecisionLens(lens);
     setActiveCustomLens(customLens || null);
-    
+
     // Update URL query param
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev);
@@ -148,7 +148,9 @@ export default function SymbolPage() {
         newParams.set('lens', lens);
       }
       return newParams;
-    }, { replace: true });
+    }, {
+      replace: true
+    });
   };
   const {
     data: lensSummaryData,
@@ -227,15 +229,20 @@ export default function SymbolPage() {
 
         {/* Charts Section - Only visible when Summary lens is selected */}
         <AnimatePresence mode="wait">
-          {decisionLens === 'summary' && (
-            <motion.div
-              key="charts-section"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <Tabs value={activeTab} className="mb-6 md:mb-8" onValueChange={setActiveTab} data-tour="chart-tabs">
+          {decisionLens === 'summary' && <motion.div key="charts-section" initial={{
+          opacity: 0,
+          y: -10
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} exit={{
+          opacity: 0,
+          y: -10
+        }} transition={{
+          duration: 0.2,
+          ease: "easeOut"
+        }}>
+              <Tabs value={activeTab} className="mb-6 md:mb-8 overflow-visible " onValueChange={setActiveTab} data-tour="chart-tabs">
                 {/* Chart content first */}
                 <TabsContent value="narratives" className="mt-0 mb-3 md:mb-4">
                   <div className="-mx-4 md:mx-0">
@@ -283,71 +290,62 @@ export default function SymbolPage() {
                     </div>}
                 </div>
               </Tabs>
-            </motion.div>
-          )}
+            </motion.div>}
         </AnimatePresence>
 
         {/* Section divider - animated with charts */}
         <AnimatePresence>
-          {decisionLens === 'summary' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
+          {decisionLens === 'summary' && <motion.div initial={{
+          opacity: 0
+        }} animate={{
+          opacity: 1
+        }} exit={{
+          opacity: 0
+        }} transition={{
+          duration: 0.2,
+          ease: "easeOut"
+        }}>
               <Separator className="my-6 md:my-8 glass-divider" />
-            </motion.div>
-          )}
+            </motion.div>}
         </AnimatePresence>
 
         {/* Decision Question Header with integrated Intelligence Summary */}
         <AnimatePresence mode="wait">
-          {decisionLens !== 'summary' && (
-            <motion.div
-              key={`header-${decisionLens}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="mb-4 lg:mb-6"
-            >
-              <DecisionQuestionHeader
-                symbol={symbol}
-                lens={decisionLens}
-                customLens={activeCustomLens}
-                confidence={lensSummaryData?.confidence}
-                relevantCount={lensSummaryData?.relevantCount}
-                messageCount={lensSummaryData?.messageCount}
-                isLoading={lensSummaryLoading}
-              >
+          {decisionLens !== 'summary' && <motion.div key={`header-${decisionLens}`} initial={{
+          opacity: 0,
+          y: 10
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} exit={{
+          opacity: 0,
+          y: -10
+        }} transition={{
+          duration: 0.25,
+          ease: "easeOut"
+        }} className="mb-4 lg:mb-6">
+              <DecisionQuestionHeader symbol={symbol} lens={decisionLens} customLens={activeCustomLens} confidence={lensSummaryData?.confidence} relevantCount={lensSummaryData?.relevantCount} messageCount={lensSummaryData?.messageCount} isLoading={lensSummaryLoading}>
                 {/* Summary content integrated into the card */}
                 <div>
-                  {lensSummaryLoading || isRegenerating ? (
-                    <div className="space-y-3">
+                  {lensSummaryLoading || isRegenerating ? <div className="space-y-3">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-[95%]" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-3/4" />
-                    </div>
-                  ) : (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
-                    >
+                    </div> : <motion.div initial={{
+                opacity: 0
+              }} animate={{
+                opacity: 1
+              }} transition={{
+                duration: 0.4,
+                ease: "easeOut"
+              }}>
                       <p className="text-[13px] md:text-sm text-foreground/80 leading-[1.7] tracking-[-0.01em] inline">
                         <FormattedSummary text={summary} />
                       </p>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={handleRegenerate} 
-                            disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
-                            className="inline-flex ml-2 h-7 w-7 text-muted-foreground hover:text-foreground align-middle"
-                          >
+                          <Button variant="ghost" size="icon" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="inline-flex ml-2 h-7 w-7 text-muted-foreground hover:text-foreground align-middle">
                             <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
                           </Button>
                         </TooltipTrigger>
@@ -355,54 +353,43 @@ export default function SymbolPage() {
                           <p>Generate a fresh analysis</p>
                         </TooltipContent>
                       </Tooltip>
-                    </motion.div>
-                  )}
+                    </motion.div>}
                 </div>
               </DecisionQuestionHeader>
-            </motion.div>
-          )}
+            </motion.div>}
         </AnimatePresence>
 
         {/* Summary lens - Keep original separate card layout */}
         <AnimatePresence mode="wait">
-          {decisionLens === 'summary' && (
-            <motion.div 
-              key={decisionLens} 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className="space-y-4 lg:space-y-6"
-            >
+          {decisionLens === 'summary' && <motion.div key={decisionLens} initial={{
+          opacity: 0,
+          y: 10
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} exit={{
+          opacity: 0,
+          y: -10
+        }} transition={{
+          duration: 0.25,
+          ease: "easeOut"
+        }} className="space-y-4 lg:space-y-6">
               {/* Intelligence Summary Card for Summary lens */}
-              <motion.div 
-                layout 
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
+              <motion.div layout transition={{
+            duration: 0.3,
+            ease: "easeOut"
+          }}>
                 <Card className="p-4 md:p-5 glass-card flex flex-col" data-tour="intelligence-summary">
                   <div className="flex items-center justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-[10px] md:text-xs">
                         {getLensDisplayName(decisionLens, activeCustomLens || undefined)}
                       </Badge>
-                      {lensSummaryData?.confidence && (
-                        <ConfidenceBadge 
-                          level={lensSummaryData.confidence} 
-                          context="volume" 
-                          tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} 
-                          size="sm" 
-                        />
-                      )}
+                      {lensSummaryData?.confidence && <ConfidenceBadge level={lensSummaryData.confidence} context="volume" tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} size="sm" />}
                     </div>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={handleRegenerate} 
-                          disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
-                          className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                        >
+                        <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
                           <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
                           <span className="sr-only">Regenerate</span>
                         </Button>
@@ -417,62 +404,54 @@ export default function SymbolPage() {
                     {getLensDecisionQuestion(decisionLens, activeCustomLens || undefined)}
                   </p>
                   
-                  {lensSummaryLoading || isRegenerating ? (
-                    <div className="space-y-3 flex-1">
+                  {lensSummaryLoading || isRegenerating ? <div className="space-y-3 flex-1">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-[95%]" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-3/4" />
-                    </div>
-                  ) : (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
-                      className="flex-1"
-                    >
+                    </div> : <motion.div initial={{
+                opacity: 0
+              }} animate={{
+                opacity: 1
+              }} transition={{
+                duration: 0.4,
+                ease: "easeOut"
+              }} className="flex-1">
                       <p className="text-[13px] md:text-sm text-foreground/80 leading-[1.7] tracking-[-0.01em]">
                         <FormattedSummary text={summary} />
                       </p>
-                    </motion.div>
-                  )}
+                    </motion.div>}
                 </Card>
               </motion.div>
 
               {/* Readiness Card */}
-              <motion.div 
-                layout 
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              >
+              <motion.div layout transition={{
+            duration: 0.3,
+            ease: "easeOut"
+          }}>
                 <PsychologyOverviewCard symbol={symbol} />
               </motion.div>
-            </motion.div>
-          )}
+            </motion.div>}
         </AnimatePresence>
 
         {/* Readiness Card for non-summary lenses */}
         <AnimatePresence mode="wait">
-          {decisionLens !== 'summary' && (
-            <motion.div 
-              key={`readiness-${decisionLens}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25, ease: "easeOut", delay: 0.1 }}
-            >
-              {activeCustomLens ? (
-                <CustomLensReadinessCard 
-                  customLens={activeCustomLens} 
-                  summaryData={lensSummaryData} 
-                  isLoading={lensSummaryLoading}
-                  symbol={symbol}
-                  onRefresh={() => refetchLensSummary()}
-                />
-              ) : (
-                <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />
-              )}
-            </motion.div>
-          )}
+          {decisionLens !== 'summary' && <motion.div key={`readiness-${decisionLens}`} initial={{
+          opacity: 0,
+          y: 10
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} exit={{
+          opacity: 0,
+          y: -10
+        }} transition={{
+          duration: 0.25,
+          ease: "easeOut",
+          delay: 0.1
+        }}>
+              {activeCustomLens ? <CustomLensReadinessCard customLens={activeCustomLens} summaryData={lensSummaryData} isLoading={lensSummaryLoading} symbol={symbol} onRefresh={() => refetchLensSummary()} /> : <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />}
+            </motion.div>}
         </AnimatePresence>
 
         {/* Narrative Coherence Score */}
@@ -542,42 +521,19 @@ function TimeRangeSelector({
     '7D': '7D',
     '30D': '30D'
   };
-  return (
-    <div className={cn(
-      "relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
-      // Liquid Glass styling - subtle and seamless
-      "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
-      "backdrop-blur-[20px] backdrop-saturate-[140%]",
-      "border border-black/[0.04] dark:border-white/[0.06]",
-      // Minimal shadow - just enough depth without boxy appearance
-      "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
-      "dark:shadow-none"
-    )}>
-      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => (
-        <button
-          key={range}
-          onClick={() => onChange(range)}
-          className={cn(
-            "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0",
-            range === value
-              ? [
-                  // Light mode: frosted white with subtle depth
-                  "bg-white text-foreground",
-                  "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
-                  "border border-black/[0.06]",
-                  // Dark mode: subtle glass elevation
-                  "dark:bg-white/[0.12] dark:text-foreground",
-                  "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
-                  "dark:border-white/[0.12]"
-                ]
-              : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
-          )}
-        >
+  return <div className={cn("relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
+  // Liquid Glass styling - subtle and seamless
+  "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]", "backdrop-blur-[20px] backdrop-saturate-[140%]", "border border-black/[0.04] dark:border-white/[0.06]",
+  // Minimal shadow - just enough depth without boxy appearance
+  "shadow-[0_1px_2px_rgba(0,0,0,0.02)]", "dark:shadow-none")}>
+      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", range === value ? [
+    // Light mode: frosted white with subtle depth
+    "bg-white text-foreground", "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]", "border border-black/[0.06]",
+    // Dark mode: subtle glass elevation
+    "dark:bg-white/[0.12] dark:text-foreground", "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]", "dark:border-white/[0.12]"] : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]")}>
           {labels[range]}
-        </button>
-      ))}
-    </div>
-  );
+        </button>)}
+    </div>;
 }
 
 // Markdown-style text formatter supporting bold, italics, and bullet points
