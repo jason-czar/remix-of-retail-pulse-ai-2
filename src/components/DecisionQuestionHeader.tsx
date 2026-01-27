@@ -10,7 +10,6 @@ import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, XCircle, Clock, Link2, Check } from "lucide-react";
 import { cn, getReadinessSeverity, getRiskSeverity, getConfidenceSeverity } from "@/lib/utils";
-
 interface DecisionQuestionHeaderProps {
   symbol: string;
   lens: LensValue;
@@ -39,37 +38,27 @@ const LENS_KEY_MAP: Record<string, string> = {
 function getReadinessColor(score: number): string {
   return getReadinessSeverity(score).textClass;
 }
-
 function getRiskColor(score: number): string {
   return getRiskSeverity(score).textClass;
 }
-
 function getConfidenceColor(score: number): string {
   return getConfidenceSeverity(score).textClass;
 }
-
 function getReadinessProgressColor(score: number): string {
   return getReadinessSeverity(score).bgClass;
 }
-
 function getRiskProgressColor(score: number): string {
   return getRiskSeverity(score).bgClass;
 }
-
 function getConfidenceProgressColor(score: number): string {
   return getConfidenceSeverity(score).bgClass;
 }
 
 // Get HSL color for gradient/glow effects
 function getSeverityHsl(score: number, type: 'readiness' | 'risk' | 'confidence'): string {
-  const severity = type === 'risk' 
-    ? getRiskSeverity(score) 
-    : type === 'readiness' 
-      ? getReadinessSeverity(score) 
-      : getConfidenceSeverity(score);
+  const severity = type === 'risk' ? getRiskSeverity(score) : type === 'readiness' ? getReadinessSeverity(score) : getConfidenceSeverity(score);
   return severity.hsl;
 }
-
 function getTimingBadge(timing?: string) {
   switch (timing) {
     case "proceed":
@@ -97,7 +86,6 @@ function getTimingBadge(timing?: string) {
       return null;
   }
 }
-
 export function DecisionQuestionHeader({
   symbol,
   lens,
@@ -108,55 +96,49 @@ export function DecisionQuestionHeader({
   isLoading,
   children
 }: DecisionQuestionHeaderProps) {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [copied, setCopied] = useState(false);
-  const { data: snapshot, isLoading: snapshotLoading } = useLatestPsychologySnapshot(symbol);
-  
+  const {
+    data: snapshot,
+    isLoading: snapshotLoading
+  } = useLatestPsychologySnapshot(symbol);
+
   // Get scores from snapshot for default lenses
   const lensKey = LENS_KEY_MAP[lens];
   const readiness = snapshot?.interpretation?.decision_readiness?.[lensKey];
   const overlay = snapshot?.interpretation?.decision_overlays?.[lensKey];
-  
+
   // For custom lenses, calculate scores from confidence
   const isCustom = !!customLens;
-  const readinessScore = isCustom 
-    ? (confidence === 'high' ? 75 : confidence === 'moderate' ? 55 : 35)
-    : readiness?.readiness_score ?? 0;
-  const riskScore = isCustom
-    ? (100 - readinessScore + Math.round((Math.random() - 0.5) * 10))
-    : overlay?.risk_score ?? 0;
-  const confidencePercent = overlay?.confidence 
-    ? Math.round(overlay.confidence * 100)
-    : (confidence === 'high' ? 85 : confidence === 'moderate' ? 65 : 45);
-  
+  const readinessScore = isCustom ? confidence === 'high' ? 75 : confidence === 'moderate' ? 55 : 35 : readiness?.readiness_score ?? 0;
+  const riskScore = isCustom ? 100 - readinessScore + Math.round((Math.random() - 0.5) * 10) : overlay?.risk_score ?? 0;
+  const confidencePercent = overlay?.confidence ? Math.round(overlay.confidence * 100) : confidence === 'high' ? 85 : confidence === 'moderate' ? 65 : 45;
   const timing = getTimingBadge(readiness?.recommended_timing);
   const decisionQuestion = getLensDecisionQuestion(lens, customLens || undefined);
   const displayName = getLensDisplayName(lens, customLens || undefined);
-  
   const showScores = lens !== 'summary';
   const loading = isLoading || snapshotLoading;
-
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       toast({
         title: "Link copied",
-        description: "The shareable link has been copied to your clipboard.",
+        description: "The shareable link has been copied to your clipboard."
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast({
         title: "Failed to copy",
         description: "Could not copy link to clipboard.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   if (loading) {
-    return (
-      <div className="p-4 md:p-5">
+    return <div className="p-4 md:p-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <Skeleton className="h-6 w-2/3" />
           <div className="flex gap-3">
@@ -165,25 +147,23 @@ export function DecisionQuestionHeader({
             <Skeleton className="h-14 w-28" />
           </div>
         </div>
-        {children && (
-          <div className="mt-4 pt-4 border-t border-border/50">
+        {children && <div className="mt-4 pt-4 border-t border-border/50">
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-3/4" />
-          </div>
-        )}
-      </div>
-    );
+          </div>}
+      </div>;
   }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      className="p-5 md:p-6"
-      data-tour="intelligence-summary"
-    >
+  return <motion.div initial={{
+    opacity: 0,
+    y: -10
+  }} animate={{
+    opacity: 1,
+    y: 0
+  }} transition={{
+    duration: 0.25,
+    ease: "easeOut"
+  }} className="p-5 md:p-6 pb-0" data-tour="intelligence-summary">
         {/* Question on top, badges below */}
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 lg:gap-6">
           {/* Left: Decision Question */}
@@ -194,51 +174,28 @@ export function DecisionQuestionHeader({
             </h2>
             {/* Badges Row - Confidence, Copy Link, Timing, then Lens Name */}
             <div className="flex items-center gap-2 flex-wrap">
-              {confidence && (
-                <ConfidenceBadge 
-                  level={confidence} 
-                  context="volume" 
-                  tooltipContent={`${relevantCount ?? '—'} relevant messages analyzed out of ${messageCount ?? '—'} total.`} 
-                  size="sm" 
-                />
-              )}
+              {confidence && <ConfidenceBadge level={confidence} context="volume" tooltipContent={`${relevantCount ?? '—'} relevant messages analyzed out of ${messageCount ?? '—'} total.`} size="sm" />}
               {/* Copy Link Button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCopyLink}
-                className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
-                title="Copy shareable link"
-              >
-                {copied ? (
-                  <Check className="h-3.5 w-3.5 text-bullish" />
-                ) : (
-                  <Link2 className="h-3.5 w-3.5" />
-                )}
+              <Button variant="ghost" size="icon" onClick={handleCopyLink} className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0" title="Copy shareable link">
+                {copied ? <Check className="h-3.5 w-3.5 text-bullish" /> : <Link2 className="h-3.5 w-3.5" />}
               </Button>
               {/* Timing Badge - Animated */}
-              {timing && showScores && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ 
-                    duration: 0.4, 
-                    delay: 0.3,
-                    ease: [0.34, 1.56, 0.64, 1] // Slight overshoot for emphasis
-                  }}
-                >
-                  <Badge 
-                    variant={timing.variant} 
-                    className={cn(
-                      "text-xs px-2.5 py-1 hidden md:flex items-center gap-1.5 shrink-0 font-semibold",
-                      timing.bgClass
-                    )}
-                  >
+              {timing && showScores && <motion.div initial={{
+            opacity: 0,
+            scale: 0.8
+          }} animate={{
+            opacity: 1,
+            scale: 1
+          }} transition={{
+            duration: 0.4,
+            delay: 0.3,
+            ease: [0.34, 1.56, 0.64, 1] // Slight overshoot for emphasis
+          }}>
+                  <Badge variant={timing.variant} className={cn("text-xs px-2.5 py-1 hidden md:flex items-center gap-1.5 shrink-0 font-semibold", timing.bgClass)}>
                     <timing.icon className="h-3.5 w-3.5" />
                     {timing.label}
                   </Badge>
-                </motion.div>
-              )}
+                </motion.div>}
               {/* Lens Name Badge - After Timing */}
               <Badge variant="outline" className="text-xs shrink-0">
                 {displayName}
@@ -247,25 +204,26 @@ export function DecisionQuestionHeader({
           </div>
 
           {/* Right: Condensed Score Tiles */}
-          {showScores && (
-            <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:items-stretch lg:gap-4 lg:shrink-0">
+          {showScores && <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:items-stretch lg:gap-4 lg:shrink-0">
               {/* Confidence Score */}
-              <motion.div 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.08) 0%, hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.03) 50%, transparent 100%)`,
-                  borderColor: `hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.2)`,
-                  boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.03)`
-                }}
-              >
+              <motion.div initial={{
+          opacity: 0,
+          y: 8
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.3,
+          delay: 0.1
+        }} className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border" style={{
+          background: `linear-gradient(135deg, hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.08) 0%, hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.03) 50%, transparent 100%)`,
+          borderColor: `hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.2)`,
+          boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.03)`
+        }}>
                 {/* Glow accent */}
-                <div 
-                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none"
-                  style={{ background: `hsl(${getSeverityHsl(confidencePercent, 'confidence')})` }}
-                />
+                <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none" style={{
+            background: `hsl(${getSeverityHsl(confidencePercent, 'confidence')})`
+          }} />
                 <div className="relative mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Confidence</span>
                 </div>
@@ -276,38 +234,38 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
                 </div>
                 <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${confidencePercent}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full transition-shadow duration-300",
-                      getConfidenceProgressColor(confidencePercent)
-                    )}
-                    style={{
-                      boxShadow: `0 0 8px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.5)`
-                    }}
-                  />
+                  <motion.div initial={{
+              width: 0
+            }} animate={{
+              width: `${confidencePercent}%`
+            }} transition={{
+              duration: 0.6,
+              ease: "easeOut"
+            }} className={cn("h-full rounded-full transition-shadow duration-300", getConfidenceProgressColor(confidencePercent))} style={{
+              boxShadow: `0 0 8px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.5)`
+            }} />
                 </div>
               </motion.div>
 
               {/* Readiness Score */}
-              <motion.div 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.15 }}
-                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.08) 0%, hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.03) 50%, transparent 100%)`,
-                  borderColor: `hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.2)`,
-                  boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.03)`
-                }}
-              >
+              <motion.div initial={{
+          opacity: 0,
+          y: 8
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.3,
+          delay: 0.15
+        }} className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border" style={{
+          background: `linear-gradient(135deg, hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.08) 0%, hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.03) 50%, transparent 100%)`,
+          borderColor: `hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.2)`,
+          boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.03)`
+        }}>
                 {/* Glow accent */}
-                <div 
-                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none"
-                  style={{ background: `hsl(${getSeverityHsl(readinessScore, 'readiness')})` }}
-                />
+                <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none" style={{
+            background: `hsl(${getSeverityHsl(readinessScore, 'readiness')})`
+          }} />
                 <div className="relative mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Readiness</span>
                 </div>
@@ -318,38 +276,38 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
                 <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${readinessScore}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full transition-shadow duration-300",
-                      getReadinessProgressColor(readinessScore)
-                    )}
-                    style={{
-                      boxShadow: `0 0 8px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.5)`
-                    }}
-                  />
+                  <motion.div initial={{
+              width: 0
+            }} animate={{
+              width: `${readinessScore}%`
+            }} transition={{
+              duration: 0.6,
+              ease: "easeOut"
+            }} className={cn("h-full rounded-full transition-shadow duration-300", getReadinessProgressColor(readinessScore))} style={{
+              boxShadow: `0 0 8px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.5)`
+            }} />
                 </div>
               </motion.div>
 
               {/* Risk Score */}
-              <motion.div 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${getSeverityHsl(riskScore, 'risk')} / 0.08) 0%, hsl(${getSeverityHsl(riskScore, 'risk')} / 0.03) 50%, transparent 100%)`,
-                  borderColor: `hsl(${getSeverityHsl(riskScore, 'risk')} / 0.2)`,
-                  boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.03)`
-                }}
-              >
+              <motion.div initial={{
+          opacity: 0,
+          y: 8
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.3,
+          delay: 0.2
+        }} className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border" style={{
+          background: `linear-gradient(135deg, hsl(${getSeverityHsl(riskScore, 'risk')} / 0.08) 0%, hsl(${getSeverityHsl(riskScore, 'risk')} / 0.03) 50%, transparent 100%)`,
+          borderColor: `hsl(${getSeverityHsl(riskScore, 'risk')} / 0.2)`,
+          boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.03)`
+        }}>
                 {/* Glow accent */}
-                <div 
-                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none"
-                  style={{ background: `hsl(${getSeverityHsl(riskScore, 'risk')})` }}
-                />
+                <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none" style={{
+            background: `hsl(${getSeverityHsl(riskScore, 'risk')})`
+          }} />
                 <div className="relative mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Risk</span>
                 </div>
@@ -360,45 +318,34 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
                 <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${riskScore}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full transition-shadow duration-300",
-                      getRiskProgressColor(riskScore)
-                    )}
-                    style={{
-                      boxShadow: `0 0 8px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.5)`
-                    }}
-                  />
+                  <motion.div initial={{
+              width: 0
+            }} animate={{
+              width: `${riskScore}%`
+            }} transition={{
+              duration: 0.6,
+              ease: "easeOut"
+            }} className={cn("h-full rounded-full transition-shadow duration-300", getRiskProgressColor(riskScore))} style={{
+              boxShadow: `0 0 8px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.5)`
+            }} />
                 </div>
               </motion.div>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Mobile Timing Badge - Below on small screens */}
-        {timing && showScores && (
-          <div className="md:hidden flex justify-center mt-3">
-            <Badge 
-              variant={timing.variant} 
-              className={cn("text-sm px-3 py-1.5", timing.bgClass)}
-            >
+        {timing && showScores && <div className="md:hidden flex justify-center mt-3">
+            <Badge variant={timing.variant} className={cn("text-sm px-3 py-1.5", timing.bgClass)}>
               <timing.icon className="h-4 w-4 mr-1.5" />
               {timing.label}
             </Badge>
-          </div>
-        )}
+          </div>}
 
         {/* Summary content passed as children */}
-        {children && (
-          <div className="mt-5 pt-5 border-t border-border/30">
+        {children && <div className="mt-5 pt-5 border-t border-border/30">
             <div className="prose prose-sm dark:prose-invert max-w-none">
               {children}
             </div>
-          </div>
-        )}
-    </motion.div>
-  );
+          </div>}
+    </motion.div>;
 }
