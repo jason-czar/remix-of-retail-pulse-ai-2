@@ -10,7 +10,7 @@ const stats = [
 
 export function CredibilitySection() {
   return (
-    <section className="py-20 lg:py-28">
+    <section className="py-20 lg:py-28 landing-section-contained">
       <div className="container mx-auto px-4">
         <div className="max-w-5xl mx-auto">
           <ScrollReveal className="text-center mb-16">
