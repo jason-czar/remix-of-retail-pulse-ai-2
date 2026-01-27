@@ -164,14 +164,16 @@ export function DecisionQuestionHeader({
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
       <Card className="p-4 md:p-5 glass-card mb-4 lg:mb-6 border-primary/10">
-        {/* Single row layout: Question left, Scores right */}
+        {/* Question on top, badges below */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Left: Decision Question */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Badge variant="outline" className="text-xs shrink-0">
-                {displayName}
-              </Badge>
+            {/* Decision Question - First */}
+            <p className="text-base md:text-lg font-medium text-foreground leading-snug text-balance mb-2">
+              {decisionQuestion}
+            </p>
+            {/* Badges Row - Confidence, Copy Link, Timing, then Lens Name */}
+            <div className="flex items-center gap-2 flex-wrap">
               {confidence && (
                 <ConfidenceBadge 
                   level={confidence} 
@@ -194,7 +196,7 @@ export function DecisionQuestionHeader({
                   <Link2 className="h-3.5 w-3.5" />
                 )}
               </Button>
-              {/* Timing Badge - Inline */}
+              {/* Timing Badge */}
               {timing && showScores && (
                 <Badge 
                   variant={timing.variant} 
@@ -207,10 +209,11 @@ export function DecisionQuestionHeader({
                   {timing.label}
                 </Badge>
               )}
+              {/* Lens Name Badge - After Timing */}
+              <Badge variant="outline" className="text-xs shrink-0">
+                {displayName}
+              </Badge>
             </div>
-            <p className="text-base md:text-lg font-medium text-foreground leading-snug text-balance">
-              {decisionQuestion}
-            </p>
           </div>
 
           {/* Right: Condensed Score Tiles */}
