@@ -513,22 +513,14 @@ ${messageTexts.join("\n---\n")}`,
     const sanitizedSummary = sanitizeText(rawSummary);
     console.log(`Sanitized summary for ${symbol} ${cacheKey}: removed ${rawSummary.length - sanitizedSummary.length} chars`);
 
-    // Generate AI-driven concerns and recommended actions for all non-summary lenses
+    // For custom lenses, generate AI-driven concerns and recommended actions
     let keyConcerns: string[] = [];
     let recommendedActions: string[] = [];
     
-    // Generate concerns/actions for all lenses except 'summary'
-    if (lens !== 'summary') {
-      const lensDisplayName = lens === 'custom' && customLensConfig 
-        ? customLensConfig.name 
-        : lensName;
+    if (lens === 'custom' && customLensConfig) {
+      console.log(`Generating concerns and actions for custom lens ${customLensConfig.name}...`);
       
-      console.log(`Generating concerns and actions for ${lensDisplayName} lens...`);
-      
-      let concernsActionsPrompt: string;
-      
-      if (lens === 'custom' && customLensConfig) {
-        concernsActionsPrompt = `Based on this analysis of ${symbol.toUpperCase()} through the "${customLensConfig.name}" lens, generate specific concerns and recommended actions.
+      const concernsActionsPrompt = `Based on this analysis of ${symbol.toUpperCase()} through the "${customLensConfig.name}" lens, generate specific concerns and recommended actions.
 
 Summary: ${sanitizedSummary}
 
@@ -537,16 +529,6 @@ Exclusions to monitor: ${customLensConfig.exclusions.join(', ')}
 Decision Question: ${customLensConfig.decision_question}
 
 Generate concerns and actions that are specific, actionable, and directly tied to the lens focus.`;
-      } else {
-        concernsActionsPrompt = `Based on this analysis of ${symbol.toUpperCase()} through the "${lensDisplayName}" lens, generate specific concerns and recommended actions.
-
-Summary: ${sanitizedSummary}
-
-Lens Focus: ${lensConfig.context}
-Decision Question: ${lensConfig.question}
-
-Generate concerns and actions that are specific, actionable, and directly tied to the ${lensDisplayName} analysis.`;
-      }
 
       try {
         const concernsResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -644,8 +626,8 @@ Generate concerns and actions that are specific, actionable, and directly tied t
       dominantThemeShare,
     };
     
-    // Include concerns and actions for all non-summary lenses
-    if (lens !== 'summary') {
+    // Include concerns and actions for custom lenses
+    if (lens === 'custom') {
       responseData.keyConcerns = keyConcerns;
       responseData.recommendedActions = recommendedActions;
     }

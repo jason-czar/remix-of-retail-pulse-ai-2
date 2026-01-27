@@ -23,7 +23,6 @@ import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { DecisionQuestionHeader } from "@/components/DecisionQuestionHeader";
 import { CustomLensReadinessCard } from "@/components/CustomLensReadinessCard";
 import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
-
 import { MessagesSidebar } from "@/components/layout/MessagesSidebar";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
@@ -362,7 +361,6 @@ export default function SymbolPage() {
                   )}
                 </div>
               </DecisionQuestionHeader>
-              
             </motion.div>
           )}
         </AnimatePresence>
@@ -471,13 +469,7 @@ export default function SymbolPage() {
                   isLoading={lensSummaryLoading} 
                 />
               ) : (
-                <LensReadinessCard 
-                  symbol={symbol} 
-                  lens={decisionLens as DecisionLens}
-                  keyConcerns={lensSummaryData?.keyConcerns}
-                  recommendedActions={lensSummaryData?.recommendedActions}
-                  isLoadingInsights={lensSummaryLoading || isRegenerating}
-                />
+                <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />
               )}
             </motion.div>
           )}

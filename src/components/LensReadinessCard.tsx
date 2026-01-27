@@ -9,9 +9,6 @@ import { cn } from "@/lib/utils";
 interface LensReadinessCardProps {
   symbol: string;
   lens: DecisionLens;
-  keyConcerns?: string[];
-  recommendedActions?: string[];
-  isLoadingInsights?: boolean;
 }
 
 // Map from DecisionLens to interpretation keys
@@ -81,19 +78,12 @@ function getRiskColor(score: number): string {
 }
 export function LensReadinessCard({
   symbol,
-  lens,
-  keyConcerns,
-  recommendedActions,
-  isLoadingInsights
+  lens
 }: LensReadinessCardProps) {
   const {
     data: snapshot,
     isLoading
   } = useLatestPsychologySnapshot(symbol);
-  
-  // Use passed keyConcerns/recommendedActions if available, otherwise fall back to overlay data
-  const displayConcerns = keyConcerns?.length ? keyConcerns : undefined;
-  const displayActions = recommendedActions?.length ? recommendedActions : undefined;
 
   // Don't render for summary lens
   if (lens === 'summary') {
@@ -226,46 +216,30 @@ export function LensReadinessCard({
                 </span>
               </div>
 
-              {/* Key Concerns - use passed props or fall back to overlay */}
-              {(displayConcerns || (overlay.dominant_concerns && overlay.dominant_concerns.length > 0)) && <div>
+              {/* Key Concerns - compact */}
+              {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <div>
                   <div className="flex items-center gap-2 mb-2.5">
                     <AlertCircle className="h-4 w-4 text-warning" />
                     <span className="text-sm font-medium">Key Concerns</span>
                   </div>
-                  {isLoadingInsights ? (
-                    <div className="space-y-1.5">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                      <Skeleton className="h-4 w-[85%]" />
-                    </div>
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {(displayConcerns || overlay.dominant_concerns || []).slice(0, 3).map((concern, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
-                          {cleanNarrativeText(concern)}
-                        </li>)}
-                    </ul>
-                  )}
+                  <ul className="space-y-1.5">
+                    {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
+                        {cleanNarrativeText(concern)}
+                      </li>)}
+                  </ul>
                 </div>}
 
-              {/* Recommended Actions - use passed props or fall back to overlay */}
-              {(displayActions || (overlay.recommended_actions && overlay.recommended_actions.length > 0)) && <div>
+              {/* Recommended Actions - compact */}
+              {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <div>
                   <div className="flex items-center gap-2 mb-2.5">
                     <Lightbulb className="h-4 w-4 text-primary" />
                     <span className="text-sm font-medium">Recommended Actions</span>
                   </div>
-                  {isLoadingInsights ? (
-                    <div className="space-y-1.5">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[88%]" />
-                      <Skeleton className="h-4 w-[92%]" />
-                    </div>
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {(displayActions || overlay.recommended_actions || []).slice(0, 3).map((action, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
-                          {cleanNarrativeText(action)}
-                        </li>)}
-                    </ul>
-                  )}
+                  <ul className="space-y-1.5">
+                    {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
+                        {cleanNarrativeText(action)}
+                      </li>)}
+                  </ul>
                 </div>}
             </div>}
       </div>
