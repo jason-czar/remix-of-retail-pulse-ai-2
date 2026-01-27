@@ -33,7 +33,8 @@ import { WelcomeTour } from "@/components/WelcomeTour";
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
-import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 export default function SymbolPage() {
   const {
@@ -462,13 +463,24 @@ export default function SymbolPage() {
         </AnimatePresence>
 
         {/* Narrative Coherence Score */}
-        <div className="mb-8 md:mb-12 mt-8 md:mt-10">
-          <h3 className="text-lg font-semibold mb-4">Narrative Coherence</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-            <NarrativeCoherenceCard symbol={symbol} />
-            <NCSTrendChart symbol={symbol} />
-          </div>
-        </div>
+        <Collapsible defaultOpen={false} className="mb-8 md:mb-12 mt-8 md:mt-10">
+          <CollapsibleTrigger className="flex items-center gap-2 w-full group">
+            <h3 className="text-lg font-semibold">Narrative Coherence</h3>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                <NarrativeCoherenceCard symbol={symbol} />
+                <NCSTrendChart symbol={symbol} />
+              </div>
+            </motion.div>
+          </CollapsibleContent>
+        </Collapsible>
 
         {/* Historical Episode Matcher */}
         <div className="mb-8 md:mb-12">
