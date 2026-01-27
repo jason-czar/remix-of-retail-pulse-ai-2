@@ -1274,6 +1274,27 @@ Generate:
       }
 
       aiData = await aiResponse.json();
+      
+      // Check if the response body contains an error (gateway returns 200 but body has error)
+      if (aiData.error) {
+        console.warn(`${symbol}: AI attempt ${attempt + 1} returned error in body: ${JSON.stringify(aiData.error).slice(0, 200)}`);
+        lastError = new Error(`AI gateway error: ${aiData.error.message || 'Unknown error'}`);
+        
+        // Retry for 500-level errors returned in the body
+        const errorCode = aiData.error.code || 0;
+        const isRetryableBody = errorCode >= 500 || errorCode === 429 || errorCode === 503;
+        
+        if (isRetryableBody && attempt < MAX_RETRIES - 1) {
+          console.log(`${symbol}: Retrying in ${RETRY_DELAYS[attempt]}ms...`);
+          aiData = null; // Reset so we know to continue retrying
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt]));
+          continue;
+        }
+        
+        // Non-retryable or exhausted retries
+        break;
+      }
+      
       console.log(`${symbol}: AI interpretation response received on attempt ${attempt + 1}`);
       break; // Success - exit retry loop
       
