@@ -93,21 +93,22 @@ export function AddToWatchlistButton({
   return (
     <Button
       variant="glass-pill"
+      size="icon"
       onClick={handleToggle}
       disabled={isLoading}
-      className={className}
+      className={cn("h-10 w-10 rounded-full", className)}
+      title={isInWatchlist ? "Remove from watchlist" : "Add to watchlist"}
     >
       {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <Star 
           className={cn(
-            "h-4 w-4 mr-2",
+            "h-4 w-4",
             isInWatchlist && "fill-current text-chart-5"
           )} 
         />
       )}
-      {isInWatchlist ? "In Watchlist" : "Add to Watchlist"}
     </Button>
   );
 }
