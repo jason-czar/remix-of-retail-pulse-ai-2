@@ -231,96 +231,49 @@ export function LensReadinessCard({
           </div>
         </>}
 
-        {/* Bottom Row: Readiness Score + Narratives (left) | Risk Score (right) */}
-        <div className="grid grid-cols-1 md:grid-cols-[7fr_13fr] gap-4 md:gap-6 pt-[63px]">
-          {/* Left Column: Readiness Score + Narratives */}
-          <div className="flex flex-col min-w-0">
-            {/* Readiness Score with progress bar */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-muted-foreground">Readiness Score</span>
-                <span className={cn("text-xl font-display", getReadinessColor(readiness.readiness_score))}>
-                  {readiness.readiness_score}
-                </span>
+        {/* Supportive and Blocking Narratives */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-0">
+          {/* Supportive Narratives */}
+          {readiness.supportive_narratives.length > 0 && (
+            <div className="p-3 rounded-lg border border-bullish/20 bg-transparent">
+              <div className="flex items-center gap-1.5 mb-2">
+                <TrendingUp className="h-3.5 w-3.5 text-bullish" />
+                <span className="text-xs font-medium text-bullish">Supportive</span>
               </div>
-              <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary/50">
-                <motion.div initial={{
-              width: 0
-            }} animate={{
-              width: `${readiness.readiness_score}%`
-            }} transition={{
-              duration: 0.6,
-              ease: "easeOut"
-            }} className={cn("h-full rounded-full", getProgressColor(readiness.readiness_score))} />
+              <div className="flex flex-wrap gap-1.5">
+                {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => (
+                  <Badge key={idx} variant="outline" className="text-[10px] border-bullish/40 text-bullish bg-bullish/10 px-2 py-0">
+                    {cleanNarrativeText(narrative)}
+                  </Badge>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* Supportive and Blocking narratives - compact */}
-            <div className="space-y-3 mt-4 mb-4">
-              {/* Supportive Narratives */}
-              {readiness.supportive_narratives.length > 0 && <div className="p-3 rounded-lg border border-bullish/20 bg-transparent">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <TrendingUp className="h-3.5 w-3.5 text-bullish" />
-                    <span className="text-xs font-medium text-bullish">Supportive</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-[10px] border-bullish/40 text-bullish bg-bullish/10 px-2 py-0">
-                        {cleanNarrativeText(narrative)}
-                      </Badge>)}
-                  </div>
-                </div>}
-
-              {/* Blocking Narratives */}
-              {readiness.blocking_narratives.length > 0 && <div className="p-3 rounded-lg border border-bearish/20 bg-transparent">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <TrendingDown className="h-3.5 w-3.5 text-bearish" />
-                    <span className="text-xs font-medium text-bearish">Blocking</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0">
-                        {cleanNarrativeText(narrative)}
-                      </Badge>)}
-                  </div>
-                </div>}
-            </div>
-
-            {/* Delay recommendation */}
-            {readiness.recommended_delay && readiness.recommended_delay !== "None" && <p className="text-xs text-muted-foreground italic">
-                Recommended delay: {readiness.recommended_delay}
-              </p>}
-
-            {/* Confidence footer - at bottom of left column */}
-            {overlay && <div className="pt-3 mt-auto">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">Confidence</span>
-                  <span className="text-xs font-medium">
-                    {Math.round(overlay.confidence * 100)}%
-                  </span>
-                </div>
-                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50">
-                  <motion.div initial={{
-              width: 0
-            }} animate={{
-              width: `${overlay.confidence * 100}%`
-            }} transition={{
-              duration: 0.5,
-              ease: "easeOut"
-            }} className="h-full rounded-full bg-primary/70" />
-                </div>
-              </div>}
-          </div>
-
-          {/* Right Column: Risk Score only */}
-          {overlay && <div className="md:border-l md:border-border/40 md:pl-6 min-w-0">
-              {/* Risk Score - inline header */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Risk Score</span>
-                <span className={cn("text-xl font-semibold", getRiskColor(overlay.risk_score))}>
-                  {overlay.risk_score}/100
-                </span>
+          {/* Blocking Narratives */}
+          {readiness.blocking_narratives.length > 0 && (
+            <div className="p-3 rounded-lg border border-bearish/20 bg-transparent">
+              <div className="flex items-center gap-1.5 mb-2">
+                <TrendingDown className="h-3.5 w-3.5 text-bearish" />
+                <span className="text-xs font-medium text-bearish">Blocking</span>
               </div>
-            </div>}
+              <div className="flex flex-wrap gap-1.5">
+                {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
+                  <Badge key={idx} variant="outline" className="text-[10px] border-bearish/40 text-bearish bg-bearish/10 px-2 py-0">
+                    {cleanNarrativeText(narrative)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Delay recommendation */}
+        {readiness.recommended_delay && readiness.recommended_delay !== "None" && (
+          <p className="text-xs text-muted-foreground italic mt-3">
+            Recommended delay: {readiness.recommended_delay}
+          </p>
+        )}
 
       {/* Admin-only refresh button */}
       {isAdmin && <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border/30">
