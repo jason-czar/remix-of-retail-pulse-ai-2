@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge, ConfidenceLevel } from "@/components/ui/ConfidenceBadge";
 import { LensValue, getLensDisplayName, getLensDecisionQuestion } from "@/components/DecisionLensSelector";
 import { CustomLens } from "@/hooks/use-custom-lenses";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
-import { CheckCircle2, XCircle, Clock, ShieldAlert, Target, Gauge } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { CheckCircle2, XCircle, Clock, ShieldAlert, Target, Gauge, Link2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DecisionQuestionHeaderProps {
@@ -93,6 +96,8 @@ export function DecisionQuestionHeader({
   messageCount,
   isLoading
 }: DecisionQuestionHeaderProps) {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
   const { data: snapshot, isLoading: snapshotLoading } = useLatestPsychologySnapshot(symbol);
   
   // Get scores from snapshot for default lenses
@@ -119,6 +124,24 @@ export function DecisionQuestionHeader({
   const showScores = lens !== 'summary';
   const loading = isLoading || snapshotLoading;
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      toast({
+        title: "Link copied",
+        description: "The shareable link has been copied to your clipboard.",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy link to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Card className="p-4 md:p-6 glass-card mb-4 lg:mb-6">
@@ -142,7 +165,7 @@ export function DecisionQuestionHeader({
     >
       <Card className="p-4 md:p-6 glass-card mb-4 lg:mb-6 border-primary/10">
         {/* Decision Question - Prominent */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 md:mb-5">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4 md:mb-5">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline" className="text-xs">
@@ -162,19 +185,37 @@ export function DecisionQuestionHeader({
             </p>
           </div>
           
-          {/* Timing Badge - Desktop */}
-          {timing && showScores && (
-            <Badge 
-              variant={timing.variant} 
-              className={cn(
-                "text-sm px-3 py-1.5 hidden md:flex items-center gap-1.5",
-                timing.bgClass
-              )}
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Copy Link Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyLink}
+              className="h-8 px-3 text-muted-foreground hover:text-foreground gap-1.5"
             >
-              <timing.icon className="h-4 w-4" />
-              {timing.label}
-            </Badge>
-          )}
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-bullish" />
+              ) : (
+                <Link2 className="h-3.5 w-3.5" />
+              )}
+              <span className="text-xs">{copied ? "Copied" : "Copy Link"}</span>
+            </Button>
+            
+            {/* Timing Badge - Desktop */}
+            {timing && showScores && (
+              <Badge 
+                variant={timing.variant} 
+                className={cn(
+                  "text-sm px-3 py-1.5 hidden md:flex items-center gap-1.5",
+                  timing.bgClass
+                )}
+              >
+                <timing.icon className="h-4 w-4" />
+                {timing.label}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Score Metrics - Only for non-summary lenses */}
