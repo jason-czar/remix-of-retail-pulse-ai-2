@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useLatestSnapshotWithOutcomes, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
 import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
-import { FlaskConical, TrendingUp, TrendingDown, BarChart3, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { FlaskConical, TrendingUp, TrendingDown, BarChart3, ChevronDown, ChevronUp, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceLine } from "recharts";
@@ -349,6 +350,7 @@ export function NarrativeImpactHistorySection({
   } = useLatestSnapshotWithOutcomes(symbol);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const outcomes = snapshot?.narrative_outcomes || [];
 
   // Sort by episode count (more data = more reliable) then by absolute move magnitude
@@ -404,44 +406,51 @@ export function NarrativeImpactHistorySection({
   const highConfidenceCount = outcomes.filter(o => o.confidence_label === 'high').length;
   const moderateCount = outcomes.filter(o => o.confidence_label === 'moderate').length;
   const experimentalCount = outcomes.filter(o => o.confidence_label === 'experimental').length;
-  return <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            
-            Narrative Impact History
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Historical price outcomes when these narratives dominated social sentiment
-          </p>
+  return <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-4">
+      {/* Header - Clickable to expand/collapse */}
+      <CollapsibleTrigger asChild>
+        <button className="w-full flex items-center justify-between group cursor-pointer text-left">
+          <div>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <ChevronRight className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                isOpen && "rotate-90"
+              )} />
+              Narrative Impact History
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Historical price outcomes when these narratives dominated social sentiment
+            </p>
+          </div>
+          <div className="flex gap-2 text-xs">
+            {highConfidenceCount > 0 && <ConfidenceBadge level="high" count={highConfidenceCount} context="episodes" />}
+            {moderateCount > 0 && <ConfidenceBadge level="moderate" count={moderateCount} context="episodes" />}
+            {experimentalCount > 0 && <ConfidenceBadge level="experimental" count={experimentalCount} context="episodes" />}
+          </div>
+        </button>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent className="space-y-4">
+        {/* Overview Chart */}
+        <OutcomeDistributionChart outcomes={sortedOutcomes} />
+
+        {/* Individual Narrative Cards */}
+        <div className="grid gap-3 md:grid-cols-2">
+          {displayedOutcomes.map(outcome => <NarrativeImpactCard key={outcome.narrative_id} outcome={outcome} isExpanded={expandedCards.has(outcome.narrative_id)} onToggle={() => toggleCard(outcome.narrative_id)} />)}
         </div>
-        <div className="flex gap-2 text-xs">
-          {highConfidenceCount > 0 && <ConfidenceBadge level="high" count={highConfidenceCount} context="episodes" />}
-          {moderateCount > 0 && <ConfidenceBadge level="moderate" count={moderateCount} context="episodes" />}
-          {experimentalCount > 0 && <ConfidenceBadge level="experimental" count={experimentalCount} context="episodes" />}
-        </div>
-      </div>
 
-      {/* Overview Chart */}
-      <OutcomeDistributionChart outcomes={sortedOutcomes} />
-
-      {/* Individual Narrative Cards */}
-      <div className="grid gap-3 md:grid-cols-2">
-        {displayedOutcomes.map(outcome => <NarrativeImpactCard key={outcome.narrative_id} outcome={outcome} isExpanded={expandedCards.has(outcome.narrative_id)} onToggle={() => toggleCard(outcome.narrative_id)} />)}
-      </div>
-
-      {/* Show More/Less */}
-      {hasMore && <div className="flex justify-center">
-          <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)}>
-            {showAll ? <>
-                <ChevronUp className="h-4 w-4 mr-1" />
-                Show Less
-              </> : <>
-                <ChevronDown className="h-4 w-4 mr-1" />
-                Show {sortedOutcomes.length - 4} More Narratives
-              </>}
-          </Button>
-        </div>}
-    </div>;
+        {/* Show More/Less */}
+        {hasMore && <div className="flex justify-center">
+            <Button variant="ghost" size="sm" onClick={() => setShowAll(!showAll)}>
+              {showAll ? <>
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                  Show Less
+                </> : <>
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Show {sortedOutcomes.length - 4} More Narratives
+                </>}
+            </Button>
+          </div>}
+      </CollapsibleContent>
+    </Collapsible>;
 }
