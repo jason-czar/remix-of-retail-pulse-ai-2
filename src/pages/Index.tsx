@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -14,28 +14,37 @@ import { CursorLight } from "@/components/landing/CursorLight";
 
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [overlayOpacity, setOverlayOpacity] = useState(1);
+  const [showOverlay, setShowOverlay] = useState(true);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const { setTheme } = useTheme();
 
-  // Cinematic intro: dark → light transition on every visit
+  // Cinematic intro: dark → light crossfade on every visit
   useEffect(() => {
     // Force dark mode for intro
     setTheme("dark");
+    setOverlayOpacity(1);
+    setShowOverlay(true);
 
-    // After 2s in dark mode, start transition to light mode
+    // After 2s in dark mode, switch to light and fade out dark overlay
     const transitionTimer = setTimeout(() => {
-      setIsTransitioning(true);
+      // Switch theme instantly (hidden behind overlay)
       setTheme("light");
+      
+      // Start fading out the dark overlay to reveal light theme
+      requestAnimationFrame(() => {
+        setOverlayOpacity(0);
+      });
     }, 2000);
 
-    // End transition state after crossfade completes
-    const endTransitionTimer = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 3500);
+    // Remove overlay from DOM after fade completes
+    const cleanupTimer = setTimeout(() => {
+      setShowOverlay(false);
+    }, 3600);
 
     return () => {
       clearTimeout(transitionTimer);
-      clearTimeout(endTransitionTimer);
+      clearTimeout(cleanupTimer);
     };
   }, [setTheme]);
 
@@ -71,14 +80,31 @@ const Index = () => {
   }, []);
 
   return (
-    <div className={`min-h-screen cursor-light-enabled relative ${isTransitioning ? '[&_*]:!transition-all [&_*]:!duration-[1500ms]' : ''}`}>
-      {/* Theme-aware background images with smooth crossfade animation */}
+    <div className="min-h-screen cursor-light-enabled relative">
+      {/* Dark mode snapshot overlay for crossfade effect */}
+      {showOverlay && (
+        <div
+          ref={overlayRef}
+          className="fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-[1500ms] ease-out"
+          style={{ opacity: overlayOpacity }}
+        >
+          {/* Dark background */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined, backgroundColor: '#1E1E1E' }}
+          />
+          {/* Dark theme content overlay - matches dark theme colors */}
+          <div className="absolute inset-0 bg-[#1E1E1E]" />
+        </div>
+      )}
+      
+      {/* Theme-aware background images */}
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[1500ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined }}
       />
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[1500ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined }}
       />
       <CursorLight />
