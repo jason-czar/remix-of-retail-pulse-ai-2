@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SentimentChart } from "@/components/charts/SentimentChart";
 import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
-
 import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
@@ -87,20 +86,18 @@ export default function SymbolPage() {
     data: messages = [],
     isLoading: messagesLoading
   } = useSymbolMessages(symbol, 50, start, end);
-  
+
   // Handle lens change with custom lens support
   const handleLensChange = (lens: LensValue, customLens?: CustomLens) => {
     setDecisionLens(lens);
     setActiveCustomLens(customLens || null);
   };
-  
   const {
     data: lensSummaryData,
     isLoading: lensSummaryLoading,
     isFetching: lensSummaryFetching,
     refetch: refetchLensSummary
   } = useDecisionLensSummary(symbol, decisionLens, activeCustomLens);
-  
   const [isRegenerating, setIsRegenerating] = useState(false);
   const handleRegenerate = async () => {
     setIsRegenerating(true);
@@ -124,9 +121,7 @@ export default function SymbolPage() {
   };
   const summary = lensSummaryData?.summary || `Analyzing ${getLensDisplayName(decisionLens, activeCustomLens || undefined)} for ${symbol}...`;
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
-  
-  return (
-    <>
+  return <>
       <WelcomeTour />
       <div className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
@@ -155,23 +150,20 @@ export default function SymbolPage() {
           {/* Right side: Action buttons - stacked on mobile, row on desktop */}
           <div className="flex flex-col lg:flex-row gap-2 lg:overflow-visible shrink-0">
             <FillTodayGapsButton symbol={symbol} onComplete={() => {
-          queryClient.invalidateQueries({
-            queryKey: ['narrative-history', symbol]
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['emotion-history', symbol]
-          });
-        }} />
+            queryClient.invalidateQueries({
+              queryKey: ['narrative-history', symbol]
+            });
+            queryClient.invalidateQueries({
+              queryKey: ['emotion-history', symbol]
+            });
+          }} />
             <AddToWatchlistButton symbol={symbol} />
             <SymbolAlertDialog symbol={symbol} />
           </div>
         </div>
 
         {/* Decision Lens Selector - Sticky below header */}
-        <div 
-          className="sticky top-14 z-30 -mx-4 px-4 py-3 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5 bg-background/80 backdrop-blur-xl border-b border-transparent [&:not(:hover)]:border-black/[0.04] dark:[&:not(:hover)]:border-white/[0.04]" 
-          data-tour="decision-lens"
-        >
+        <div className="sticky top-14 z-30 -mx-4 px-4 py-3 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5 backdrop-blur-xl border-b border-transparent [&:not(:hover)]:border-black/[0.04] dark:[&:not(:hover)]:border-white/[0.04] bg-transparent" data-tour="decision-lens">
           <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
         </div>
 
@@ -229,23 +221,23 @@ export default function SymbolPage() {
         {/* AI Summary + Readiness Card Side-by-Side with lens transition animation */}
         <AnimatePresence mode="wait">
           <motion.div key={decisionLens} initial={{
-        opacity: 0,
-        y: 10
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} exit={{
-        opacity: 0,
-        y: -10
-      }} transition={{
-        duration: 0.25,
-        ease: "easeOut"
-      }} className={cn("grid grid-cols-1 gap-4 lg:gap-6", decisionLens === 'summary' ? "lg:grid-cols-[4fr_6fr]" : "lg:grid-cols-[7fr_13fr]")}>
+          opacity: 0,
+          y: 10
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} exit={{
+          opacity: 0,
+          y: -10
+        }} transition={{
+          duration: 0.25,
+          ease: "easeOut"
+        }} className={cn("grid grid-cols-1 gap-4 lg:gap-6", decisionLens === 'summary' ? "lg:grid-cols-[4fr_6fr]" : "lg:grid-cols-[7fr_13fr]")}>
             {/* Intelligence Summary Card */}
             <motion.div layout transition={{
-          duration: 0.3,
-          ease: "easeOut"
-        }}>
+            duration: 0.3,
+            ease: "easeOut"
+          }}>
               <Card className="p-4 md:p-5 glass-card flex flex-col" data-tour="intelligence-summary">
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -253,14 +245,7 @@ export default function SymbolPage() {
                     <Badge variant="outline" className="text-[10px] md:text-xs">
                       {getLensDisplayName(decisionLens, activeCustomLens || undefined)}
                     </Badge>
-                    {lensSummaryData?.confidence && (
-                      <ConfidenceBadge 
-                        level={lensSummaryData.confidence} 
-                        context="volume"
-                        tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`}
-                        size="sm"
-                      />
-                    )}
+                    {lensSummaryData?.confidence && <ConfidenceBadge level={lensSummaryData.confidence} context="volume" tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} size="sm" />}
                   </div>
                   <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
                     <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
@@ -286,20 +271,10 @@ export default function SymbolPage() {
 
             {/* Right side: Readiness Card (non-summary default lenses) or Psychology Overview (summary/custom) */}
             <motion.div layout transition={{
-          duration: 0.3,
-          ease: "easeOut"
-        }}>
-              {activeCustomLens ? (
-                <CustomLensReadinessCard 
-                  customLens={activeCustomLens} 
-                  summaryData={lensSummaryData}
-                  isLoading={lensSummaryLoading}
-                />
-              ) : decisionLens === 'summary' ? (
-                <PsychologyOverviewCard symbol={symbol} />
-              ) : (
-                <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />
-              )}
+            duration: 0.3,
+            ease: "easeOut"
+          }}>
+              {activeCustomLens ? <CustomLensReadinessCard customLens={activeCustomLens} summaryData={lensSummaryData} isLoading={lensSummaryLoading} /> : decisionLens === 'summary' ? <PsychologyOverviewCard symbol={symbol} /> : <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />}
             </motion.div>
           </motion.div>
         </AnimatePresence>
@@ -326,8 +301,7 @@ export default function SymbolPage() {
       
       {/* Right sidebar - rendered directly as part of page content */}
       <MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />
-    </>
-  );
+    </>;
 }
 function MetricCard({
   label,
