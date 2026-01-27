@@ -30,11 +30,11 @@ const Index = () => {
       setTheme("light");
     }, 2000);
 
-    // End transition state after crossfade completes (2s dark + 2s transition)
+    // End transition state after crossfade completes (2s dark + 2.5s transition)
     const endTransitionTimer = setTimeout(() => {
       setIsTransitioning(false);
       document.body.classList.remove("theme-transitioning");
-    }, 4000);
+    }, 4500);
 
     return () => {
       clearTimeout(transitionTimer);
@@ -78,11 +78,11 @@ const Index = () => {
     <div className="min-h-screen cursor-light-enabled relative">
       {/* Theme-aware background images with smooth crossfade animation */}
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[2000ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[2500ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined }}
       />
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[2000ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[2500ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
         style={{ backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined }}
       />
       <CursorLight />
