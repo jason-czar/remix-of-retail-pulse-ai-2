@@ -153,7 +153,7 @@ export function LensReadinessCard({
   return <div className="p-4 md:p-5 h-full">
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
-        {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-start">
             {/* Key Concerns Card */}
             {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <Card className="p-4 glass-card">
                 <div className="flex items-center gap-2 mb-3">
