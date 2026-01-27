@@ -3,11 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { SearchCommand } from "@/components/SearchCommand";
 import { WatchlistManager } from "@/components/WatchlistManager";
 import { MarketPsychologyCard } from "@/components/MarketPsychologyCard";
 import { PsychologyHistoryChart } from "@/components/charts/PsychologyHistoryChart";
-import { TrendingUp, TrendingDown, Search, ArrowUpRight, ArrowDownRight, BarChart3, Bell, Star, Plus, AlertCircle } from "lucide-react";
+import { TrendingUp, TrendingDown, Search, ArrowUpRight, ArrowDownRight, BarChart3, Bell, Star, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTrending } from "@/hooks/use-stocktwits";
 import { useDefaultWatchlist } from "@/hooks/use-watchlist";
@@ -95,14 +96,18 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {isLoading ? Array.from({
                 length: 3
-              }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />) : watchlistData.length === 0 ? <div className="text-center py-8">
-                    <Star className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground mb-4">Your watchlist is empty</p>
-                    <Button variant="outline" size="sm" onClick={() => setSearchOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add symbols
-                    </Button>
-                  </div> : watchlistData.map(item => <WatchlistItem key={item.symbol} {...item} />)}
+              }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />) : watchlistData.length === 0 ? <EmptyState
+                    icon={Star}
+                    title="Build Your Watchlist"
+                    description="Track sentiment shifts, narrative changes, and volume spikes for the symbols you care about most."
+                    action={
+                      <Button variant="outline" size="sm" onClick={() => setSearchOpen(true)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add your first symbol
+                      </Button>
+                    }
+                    compact
+                  /> : watchlistData.map(item => <WatchlistItem key={item.symbol} {...item} />)}
               </div>
             </Card>
 
@@ -153,15 +158,19 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {alertsLoading ? Array.from({
                 length: 3
-              }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />) : alerts.length === 0 ? <div className="text-center py-6">
-                    <AlertCircle className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No alerts set up yet</p>
-                    <Link to="/settings">
-                      <Button variant="link" size="sm" className="mt-2">
-                        Create your first alert
-                      </Button>
-                    </Link>
-                  </div> : alerts.slice(0, 3).map(alert => <RealAlertItem key={alert.id} alert={alert} />)}
+              }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />) : alerts.length === 0 ? <EmptyState
+                    icon={Bell}
+                    title="Stay Ahead of Market Shifts"
+                    description="Get notified when sentiment flips, emotions spike, or volume surges on your tracked symbols."
+                    action={
+                      <Link to="/alerts">
+                        <Button variant="link" size="sm">
+                          Create your first alert
+                        </Button>
+                      </Link>
+                    }
+                    compact
+                  /> : alerts.slice(0, 3).map(alert => <RealAlertItem key={alert.id} alert={alert} />)}
               </div>
             </Card>
 

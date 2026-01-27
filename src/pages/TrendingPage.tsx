@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Table,
   TableBody,
@@ -209,8 +210,36 @@ export default function TrendingPage() {
                 </TableRow>
               ) : visibleItems.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No trending symbols found matching your filter.
+                  <TableCell colSpan={7} className="p-0">
+                    <EmptyState
+                      icon={trendFilter === "bullish" ? TrendingUp : trendFilter === "bearish" ? TrendingDown : Flame}
+                      title={
+                        trendFilter === "bullish"
+                          ? "No Bullish Momentum Right Now"
+                          : trendFilter === "bearish"
+                          ? "No Bearish Pressure Detected"
+                          : trendFilter === "neutral"
+                          ? "No Neutral Sentiment Currently"
+                          : "No Trending Symbols"
+                      }
+                      description={
+                        trendFilter === "bullish"
+                          ? "Markets shift quickly. Try checking back later or view all trending symbols to spot emerging opportunities."
+                          : trendFilter === "bearish"
+                          ? "Bearish sentiment is subdued at the moment. View all symbols to see the current market landscape."
+                          : trendFilter === "neutral"
+                          ? "Most symbols are showing directional bias. Check bullish or bearish filters for active trends."
+                          : "Trending data is loading. If this persists, try refreshing the page."
+                      }
+                      action={
+                        trendFilter !== "all" ? (
+                          <Button variant="outline" size="sm" onClick={() => setTrendFilter("all")}>
+                            View All Symbols
+                          </Button>
+                        ) : null
+                      }
+                      compact
+                    />
                   </TableCell>
                 </TableRow>
               ) : (

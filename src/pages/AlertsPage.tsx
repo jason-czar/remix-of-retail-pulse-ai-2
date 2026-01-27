@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Table,
   TableBody,
@@ -332,15 +333,34 @@ export default function AlertsPage() {
                 <TableRow>
                   <TableCell
                     colSpan={6}
-                    className="text-center py-12"
+                    className="p-0"
                   >
-                    <Bell className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground mb-4">
-                      {filter === "all"
-                        ? "No alerts configured yet"
-                        : `No ${filter} alerts`}
-                    </p>
-                    <CreateAlertDialog />
+                    <EmptyState
+                      icon={filter === "all" ? Bell : filter === "paused" ? BellOff : Bell}
+                      title={
+                        filter === "all"
+                          ? "Create Your First Alert"
+                          : filter === "active"
+                          ? "No Active Alerts"
+                          : filter === "paused"
+                          ? "No Paused Alerts"
+                          : filter === "emotion"
+                          ? "No Emotion Alerts"
+                          : "No Sentiment Alerts"
+                      }
+                      description={
+                        filter === "all"
+                          ? "Get real-time notifications when sentiment flips, emotions spike, or volume surges—so you never miss critical market shifts."
+                          : filter === "active"
+                          ? "All your alerts are currently paused. Activate an alert to start receiving notifications."
+                          : filter === "paused"
+                          ? "You don't have any paused alerts. Active alerts are monitoring your symbols in real-time."
+                          : filter === "emotion"
+                          ? "Track fear, greed, and euphoria signals. Emotion alerts help you identify psychological turning points."
+                          : "Monitor bullish/bearish sentiment shifts. Create a sentiment alert to track conviction changes."
+                      }
+                      action={filter === "all" ? <CreateAlertDialog /> : null}
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
