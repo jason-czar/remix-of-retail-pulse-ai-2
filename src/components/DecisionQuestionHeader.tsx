@@ -36,14 +36,17 @@ const LENS_KEY_MAP: Record<string, string> = {
   'supply-chain': 'supply_chain'
 };
 
-// All scores use primary (blue) color for consistency
+// All scores use primary (blue) color with subtle opacity variations
 function getScoreColor(): string {
   return "text-primary";
 }
 
-function getProgressBarColor(): string {
-  return "bg-primary";
-}
+// Subtle opacity variations to differentiate score types while keeping blue
+const PROGRESS_COLORS = {
+  readiness: "bg-primary",           // Full opacity - primary metric
+  risk: "bg-primary/70",             // Slightly muted
+  confidence: "bg-primary/85",       // Between the two
+} as const;
 
 function getTimingBadge(timing?: string) {
   switch (timing) {
@@ -239,7 +242,7 @@ export function DecisionQuestionHeader({
                     initial={{ width: 0 }}
                     animate={{ width: `${readinessScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn("h-full rounded-full", getProgressBarColor())}
+                    className={cn("h-full rounded-full", PROGRESS_COLORS.readiness)}
                   />
                 </div>
               </div>
@@ -260,7 +263,7 @@ export function DecisionQuestionHeader({
                     initial={{ width: 0 }}
                     animate={{ width: `${riskScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn("h-full rounded-full", getProgressBarColor())}
+                    className={cn("h-full rounded-full", PROGRESS_COLORS.risk)}
                   />
                 </div>
               </div>
@@ -281,7 +284,7 @@ export function DecisionQuestionHeader({
                     initial={{ width: 0 }}
                     animate={{ width: `${confidencePercent}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="h-full rounded-full bg-primary/70"
+                    className={cn("h-full rounded-full", PROGRESS_COLORS.confidence)}
                   />
                 </div>
               </div>
