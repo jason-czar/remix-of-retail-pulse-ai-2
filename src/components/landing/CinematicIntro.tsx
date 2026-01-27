@@ -70,7 +70,7 @@ export function CinematicIntro() {
         />
       </motion.div>
 
-      {/* Layer 2: Dark mode overlay - simulates dark theme, then fades to light */}
+      {/* Layer 2: Dark mode tint - allows content to show through with dark appearance */}
       <motion.div
         className="fixed inset-0 z-40 pointer-events-none"
         initial={{ opacity: 1 }}
@@ -81,25 +81,23 @@ export function CinematicIntro() {
           duration: 1.5,
           ease: [0.4, 0.0, 0.2, 1] // Smooth material easing
         }}
+        style={{
+          // Semi-transparent dark overlay that lets content show through
+          backgroundColor: 'rgba(10, 10, 14, 0.92)',
+          backdropFilter: 'brightness(0.15) saturate(0.8)',
+          WebkitBackdropFilter: 'brightness(0.15) saturate(0.8)',
+        }}
       >
-        {/* Dark theme simulation layer */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(180deg, hsl(240 10% 6%) 0%, hsl(240 8% 8%) 50%, hsl(240 10% 6%) 100%)'
-          }}
-        />
-        
-        {/* Subtle ambient glow to hint at content */}
+        {/* Subtle ambient glow in center during dark-reveal phase */}
         <motion.div
           className="absolute inset-0"
           initial={{ opacity: 0 }}
           animate={{ 
-            opacity: phase === "dark-reveal" ? 0.15 : 0
+            opacity: phase === "dark-reveal" ? 1 : 0
           }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           style={{
-            background: 'radial-gradient(ellipse 70% 50% at 50% 35%, rgba(255,255,255,0.1) 0%, transparent 70%)'
+            background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(255,255,255,0.06) 0%, transparent 70%)'
           }}
         />
       </motion.div>
