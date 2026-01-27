@@ -17,9 +17,18 @@ const Index = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { setTheme } = useTheme();
 
-  // Cinematic intro: dark → light transition on every visit
+  // Cinematic intro: dark → light transition on every visit (desktop only)
   useEffect(() => {
-    // Force dark mode for intro
+    // Check if mobile/tablet (skip animation on smaller screens)
+    const isMobileOrTablet = window.matchMedia("(max-width: 1024px)").matches;
+    
+    if (isMobileOrTablet) {
+      // On mobile/tablet, just set light theme immediately without animation
+      setTheme("light");
+      return;
+    }
+
+    // Desktop: Force dark mode for intro
     setTheme("dark");
 
     // After 1.5s in dark mode, start transition to light mode
