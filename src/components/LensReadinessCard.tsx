@@ -153,16 +153,6 @@ export function LensReadinessCard({
   const timing = getTimingBadge(readiness.recommended_timing);
   const TimingIcon = timing.icon;
   return <div className="p-4 md:p-5 h-full">
-      {/* Header with lens name and timing badge */}
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-semibold text-sm md:text-base">
-          {getLensDisplayName(lens)} Readiness
-        </h4>
-          <Badge variant={timing.variant} className={cn("text-xs px-2.5 py-0.5", timing.bgClass)}>
-            <TimingIcon className="h-3 w-3 mr-1" />
-            {timing.label}
-          </Badge>
-        </div>
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && (
