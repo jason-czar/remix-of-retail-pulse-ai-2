@@ -7,8 +7,6 @@ import { motion } from "framer-motion";
 export function FinalCTASection() {
   return (
     <section className="py-20 lg:py-28 relative">
-      {/* Background glow effect */}
-      <div className="absolute inset-0 bg-gradient-glow opacity-60 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative">
         <div className="max-w-3xl mx-auto">
