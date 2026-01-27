@@ -307,23 +307,10 @@ function NarrativeSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
-  // Liquid Glass styling matching selection bars (TabsList, TimeRange, etc.)
-  const glassClasses = cn(
-    "rounded-2xl",
-    "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
-    "backdrop-blur-[20px] backdrop-saturate-[140%]",
-    "border border-black/[0.04] dark:border-white/[0.06]",
-    "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
-    "dark:shadow-none"
-  );
-  
   // Base classes differ between mobile (condensed with margins) and desktop (fixed width)
-  const containerClasses = isMobile 
-    ? cn("w-[calc(100%-10px)] mx-[5px] p-3", glassClasses)
-    : cn("w-[312px] flex-shrink-0 p-5", glassClasses);
-    
+  const containerClasses = isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card" : "w-[312px] flex-shrink-0 p-5 glass-card";
   if (!data) {
-    return <div className={cn(isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[312px] flex-shrink-0 p-5", glassClasses, "flex items-center justify-center")}>
+    return <div className={cn(isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[312px] flex-shrink-0 p-5", "glass-card flex items-center justify-center")}>
         <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>No data available</p>
       </div>;
   }
