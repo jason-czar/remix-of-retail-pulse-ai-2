@@ -14,6 +14,7 @@ import { CursorLight } from "@/components/landing/CursorLight";
 
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const { setTheme } = useTheme();
 
   // Cinematic intro: dark → light transition on every visit
@@ -21,13 +22,20 @@ const Index = () => {
     // Force dark mode for intro
     setTheme("dark");
 
-    // After 2s in dark mode, transition to light mode
+    // After 2s in dark mode, start transition to light mode
     const transitionTimer = setTimeout(() => {
+      setIsTransitioning(true);
       setTheme("light");
     }, 2000);
 
+    // End transition state after crossfade completes
+    const endTransitionTimer = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 3500);
+
     return () => {
       clearTimeout(transitionTimer);
+      clearTimeout(endTransitionTimer);
     };
   }, [setTheme]);
 
@@ -63,7 +71,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen cursor-light-enabled relative">
+    <div className={`min-h-screen cursor-light-enabled relative ${isTransitioning ? '[&_*]:!transition-all [&_*]:!duration-[1500ms]' : ''}`}>
       {/* Theme-aware background images with smooth crossfade animation */}
       <div 
         className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-[1500ms] ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
