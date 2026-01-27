@@ -32,13 +32,23 @@ export function HeroSection() {
               scale: 0.98,
             }}
             animate={{
-              opacity: 1,
+              opacity: animationPhase === "expanded" ? 1 : 0,
               y: 0,
               scale: 1,
             }}
             transition={{
-              duration: 0.7,
-              ease: [0.25, 0.4, 0.25, 1],
+              opacity: {
+                duration: 2.5,
+                ease: [0.3, 0.0, 0.2, 1],
+              },
+              y: {
+                duration: 0.7,
+                ease: [0.25, 0.4, 0.25, 1],
+              },
+              scale: {
+                duration: 0.7,
+                ease: [0.25, 0.4, 0.25, 1],
+              },
             }}
           >
             {/* Subtle top accent glow */}
