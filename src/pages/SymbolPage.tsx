@@ -167,6 +167,11 @@ export default function SymbolPage() {
           </div>
         </div>
 
+        {/* Decision Lens Selector - Below header for prominence */}
+        <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-6 md:mb-8" data-tour="decision-lens">
+          <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
+        </div>
+
         {/* Charts Section - Unified header with tabs and time range */}
         <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)} data-tour="chart-tabs">
           {/* Mobile: TimeRangeSelector above tabs */}
@@ -217,11 +222,6 @@ export default function SymbolPage() {
 
         {/* Section divider */}
         <Separator className="my-6 md:my-8 glass-divider" />
-
-        {/* Decision Lens Selector - Horizontal scroll on mobile */}
-        <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-[31px]" data-tour="decision-lens">
-          <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
-        </div>
 
         {/* AI Summary + Readiness Card Side-by-Side with lens transition animation */}
         <AnimatePresence mode="wait">
