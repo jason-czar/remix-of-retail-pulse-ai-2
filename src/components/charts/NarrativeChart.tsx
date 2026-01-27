@@ -239,14 +239,14 @@ function NarrativeStackedTooltip({
   return <div className="bg-card border border-border rounded-lg p-3 shadow-xl min-w-[280px]">
       <div className="flex items-center justify-between mb-2">
         <span className="font-semibold text-card-foreground">{label}</span>
-        {price != null && <span className="font-medium text-foreground text-sm">
-            ${price.toFixed(2)}
-          </span>}
         {totalMessages > 0 && <div className="flex items-center gap-1.5 text-xs">
             <MessageSquare className="h-3 w-3 text-amber-400" />
             <span className="text-amber-400 font-medium">{totalMessages.toLocaleString()}</span>
             <span className="text-muted-foreground">msgs</span>
           </div>}
+        {price != null && <span className="font-bold text-foreground text-sm">
+            ${price.toFixed(2)}
+          </span>}
       </div>
 
       {/* Volume indicator bar */}
@@ -357,14 +357,11 @@ function NarrativeSidePanel({
   }
   return <div className={cn("", containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
       <div className="">
-        {/* Time/Date Header with Price and Messages */}
+        {/* Time/Date Header with Messages and Price */}
         <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
           <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
             {data.label}
           </span>
-          {data.price != null && <span className={cn("font-medium text-foreground", isMobile ? "text-sm" : "text-base")}>
-              ${data.price.toFixed(2)}
-            </span>}
           {data.totalMessages > 0 && <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
               <MessageSquare className={cn(isMobile ? "h-3 w-3" : "h-4 w-4")} style={{
             color: "#007BFF"
@@ -374,6 +371,9 @@ function NarrativeSidePanel({
           }}>{data.totalMessages.toLocaleString()}</span>
               <span className={cn("text-muted-foreground", isMobile ? "text-[10px]" : "text-xs")}>msgs</span>
             </div>}
+          {data.price != null && <span className={cn("font-bold text-foreground", isMobile ? "text-sm" : "text-base")}>
+              ${data.price.toFixed(2)}
+            </span>}
         </div>
 
         {/* Relative Activity Bar */}
