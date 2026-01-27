@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useParams, Link, useLocation } from "react-router-dom";
+import { useParams, Link, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -39,11 +39,16 @@ export default function SymbolPage() {
     symbol: string;
   }>();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   // Extract symbol from URL path as fallback (handles static routes like /symbol/AAPL)
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
   const [timeRange, setTimeRange] = useState<TimeRange>('1D');
   const [activeTab, setActiveTab] = useState<string>('narratives');
-  const [decisionLens, setDecisionLens] = useState<LensValue>('summary');
+  
+  // Initialize decision lens from URL query param or default to 'summary'
+  const initialLens = searchParams.get('lens') || 'summary';
+  const [decisionLens, setDecisionLens] = useState<LensValue>(initialLens);
   const [activeCustomLens, setActiveCustomLens] = useState<CustomLens | null>(null);
   const queryClient = useQueryClient();
 
@@ -87,10 +92,21 @@ export default function SymbolPage() {
     isLoading: messagesLoading
   } = useSymbolMessages(symbol, 50, start, end);
 
-  // Handle lens change with custom lens support
+  // Handle lens change with custom lens support and URL persistence
   const handleLensChange = (lens: LensValue, customLens?: CustomLens) => {
     setDecisionLens(lens);
     setActiveCustomLens(customLens || null);
+    
+    // Update URL query param
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (lens === 'summary') {
+        newParams.delete('lens');
+      } else {
+        newParams.set('lens', lens);
+      }
+      return newParams;
+    }, { replace: true });
   };
   const {
     data: lensSummaryData,
