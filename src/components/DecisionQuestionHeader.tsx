@@ -144,13 +144,13 @@ export function DecisionQuestionHeader({
 
   if (loading) {
     return (
-      <Card className="p-4 md:p-6 glass-card mb-4 lg:mb-6">
-        <div className="space-y-4">
-          <Skeleton className="h-6 w-3/4" />
-          <div className="grid grid-cols-3 gap-4">
-            <Skeleton className="h-16" />
-            <Skeleton className="h-16" />
-            <Skeleton className="h-16" />
+      <Card className="p-4 md:p-5 glass-card mb-4 lg:mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <Skeleton className="h-6 w-2/3" />
+          <div className="flex gap-3">
+            <Skeleton className="h-14 w-28" />
+            <Skeleton className="h-14 w-28" />
+            <Skeleton className="h-14 w-28" />
           </div>
         </div>
       </Card>
@@ -163,12 +163,13 @@ export function DecisionQuestionHeader({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
     >
-      <Card className="p-4 md:p-6 glass-card mb-4 lg:mb-6 border-primary/10">
-        {/* Decision Question - Prominent */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4 md:mb-5">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="text-xs">
+      <Card className="p-4 md:p-5 glass-card mb-4 lg:mb-6 border-primary/10">
+        {/* Single row layout: Question left, Scores right */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          {/* Left: Decision Question */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Badge variant="outline" className="text-xs shrink-0">
                 {displayName}
               </Badge>
               {confidence && (
@@ -179,129 +180,124 @@ export function DecisionQuestionHeader({
                   size="sm" 
                 />
               )}
+              {/* Copy Link Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopyLink}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                title="Copy shareable link"
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5 text-bullish" />
+                ) : (
+                  <Link2 className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              {/* Timing Badge - Inline */}
+              {timing && showScores && (
+                <Badge 
+                  variant={timing.variant} 
+                  className={cn(
+                    "text-xs px-2 py-0.5 hidden md:flex items-center gap-1 shrink-0",
+                    timing.bgClass
+                  )}
+                >
+                  <timing.icon className="h-3 w-3" />
+                  {timing.label}
+                </Badge>
+              )}
             </div>
-            <p className="text-base md:text-lg font-medium text-foreground leading-snug">
+            <p className="text-base md:text-lg font-medium text-foreground leading-snug text-balance">
               {decisionQuestion}
             </p>
           </div>
-          
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Copy Link Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCopyLink}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              title="Copy shareable link"
-            >
-              {copied ? (
-                <Check className="h-4 w-4 text-bullish" />
-              ) : (
-                <Link2 className="h-4 w-4" />
-              )}
-            </Button>
-            
-            {/* Timing Badge - Desktop */}
-            {timing && showScores && (
-              <Badge 
-                variant={timing.variant} 
-                className={cn(
-                  "text-sm px-3 py-1.5 hidden md:flex items-center gap-1.5",
-                  timing.bgClass
-                )}
-              >
-                <timing.icon className="h-4 w-4" />
-                {timing.label}
-              </Badge>
-            )}
-          </div>
+
+          {/* Right: Condensed Score Tiles */}
+          {showScores && (
+            <div className="flex items-stretch gap-2 md:gap-3 shrink-0">
+              {/* Readiness Score */}
+              <div className="glass-tile px-3 py-2.5 rounded-xl min-w-[90px]">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Gauge className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">Readiness</span>
+                </div>
+                <div className="flex items-baseline gap-0.5">
+                  <span className={cn("text-xl md:text-2xl font-display", getReadinessColor(readinessScore))}>
+                    {readinessScore}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">/100</span>
+                </div>
+                <div className="relative h-1 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${readinessScore}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className={cn("h-full rounded-full", getProgressColor(readinessScore))}
+                  />
+                </div>
+              </div>
+
+              {/* Risk Score */}
+              <div className="glass-tile px-3 py-2.5 rounded-xl min-w-[90px]">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <ShieldAlert className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">Risk</span>
+                </div>
+                <div className="flex items-baseline gap-0.5">
+                  <span className={cn("text-xl md:text-2xl font-display", getRiskColor(riskScore))}>
+                    {riskScore}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">/100</span>
+                </div>
+                <div className="relative h-1 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${riskScore}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className={cn(
+                      "h-full rounded-full",
+                      riskScore >= 70 ? "bg-bearish" : riskScore >= 40 ? "bg-warning" : "bg-bullish"
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Confidence Score */}
+              <div className="glass-tile px-3 py-2.5 rounded-xl min-w-[90px]">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Target className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">Confidence</span>
+                </div>
+                <div className="flex items-baseline gap-0.5">
+                  <span className={cn("text-xl md:text-2xl font-display", getConfidenceColor(confidence))}>
+                    {confidencePercent}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">%</span>
+                </div>
+                <div className="relative h-1 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${confidencePercent}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="h-full rounded-full bg-primary/70"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Score Metrics - Only for non-summary lenses */}
-        {showScores && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-            {/* Readiness Score */}
-            <div className="glass-tile p-3 md:p-4 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <Gauge className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Readiness</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className={cn("text-2xl md:text-3xl font-display", getReadinessColor(readinessScore))}>
-                  {readinessScore}
-                </span>
-                <span className="text-xs text-muted-foreground">/100</span>
-              </div>
-              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${readinessScore}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className={cn("h-full rounded-full", getProgressColor(readinessScore))}
-                />
-              </div>
-            </div>
-
-            {/* Risk Score */}
-            <div className="glass-tile p-3 md:p-4 rounded-xl">
-              <div className="flex items-center gap-2 mb-2">
-                <ShieldAlert className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Risk</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className={cn("text-2xl md:text-3xl font-display", getRiskColor(riskScore))}>
-                  {riskScore}
-                </span>
-                <span className="text-xs text-muted-foreground">/100</span>
-              </div>
-              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${riskScore}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className={cn(
-                    "h-full rounded-full",
-                    riskScore >= 70 ? "bg-bearish" : riskScore >= 40 ? "bg-warning" : "bg-bullish"
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Confidence Score */}
-            <div className="glass-tile p-3 md:p-4 rounded-xl col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Confidence</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className={cn("text-2xl md:text-3xl font-display", getConfidenceColor(confidence))}>
-                  {confidencePercent}
-                </span>
-                <span className="text-xs text-muted-foreground">%</span>
-              </div>
-              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${confidencePercent}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="h-full rounded-full bg-primary/70"
-                />
-              </div>
-            </div>
-
-            {/* Mobile Timing Badge */}
-            {timing && (
-              <div className="md:hidden col-span-2 flex justify-center">
-                <Badge 
-                  variant={timing.variant} 
-                  className={cn("text-sm px-3 py-1.5", timing.bgClass)}
-                >
-                  <timing.icon className="h-4 w-4 mr-1.5" />
-                  {timing.label}
-                </Badge>
-              </div>
-            )}
+        {/* Mobile Timing Badge - Below on small screens */}
+        {timing && showScores && (
+          <div className="md:hidden flex justify-center mt-3">
+            <Badge 
+              variant={timing.variant} 
+              className={cn("text-sm px-3 py-1.5", timing.bgClass)}
+            >
+              <timing.icon className="h-4 w-4 mr-1.5" />
+              {timing.label}
+            </Badge>
           </div>
         )}
       </Card>
