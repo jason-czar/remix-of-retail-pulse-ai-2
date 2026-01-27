@@ -175,7 +175,7 @@ export function DecisionQuestionHeader({
       data-tour="intelligence-summary"
     >
         {/* Question on top, badges below */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
           {/* Left: Decision Question */}
           <div className="flex-1 min-w-0">
             {/* Decision Question - First */}
