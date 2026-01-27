@@ -322,26 +322,9 @@ export default function SymbolPage() {
                 isLoading={lensSummaryLoading}
               >
                 {/* Summary content integrated into the card */}
-                <div className="relative">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={handleRegenerate} 
-                        disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
-                        className="absolute -top-1 right-0 h-7 px-2 text-muted-foreground hover:text-foreground"
-                      >
-                        <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                        <span className="sr-only">Regenerate</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">
-                      <p>Generate a fresh analysis</p>
-                    </TooltipContent>
-                  </Tooltip>
+                <div>
                   {lensSummaryLoading || isRegenerating ? (
-                    <div className="space-y-3 pr-10">
+                    <div className="space-y-3">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-[95%]" />
                       <Skeleton className="h-4 w-full" />
@@ -352,11 +335,27 @@ export default function SymbolPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
-                      className="pr-10"
                     >
-                      <p className="text-[15px] md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
+                      <p className="text-[15px] md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em] inline">
                         <FormattedSummary text={summary} />
                       </p>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={handleRegenerate} 
+                            disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
+                            className="inline-flex ml-2 h-7 px-2 text-muted-foreground hover:text-foreground align-middle"
+                          >
+                            <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                            <span className="ml-1.5 text-xs hidden sm:inline">Generate a fresh analysis</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Generate a fresh analysis</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </motion.div>
                   )}
                 </div>
