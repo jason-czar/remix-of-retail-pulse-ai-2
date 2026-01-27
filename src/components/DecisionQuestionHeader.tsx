@@ -1,6 +1,5 @@
 import { useState, ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -147,7 +146,7 @@ export function DecisionQuestionHeader({
 
   if (loading) {
     return (
-      <Card className="p-4 md:p-5 glass-card">
+      <div className="p-4 md:p-5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <Skeleton className="h-6 w-2/3" />
           <div className="flex gap-3">
@@ -163,7 +162,7 @@ export function DecisionQuestionHeader({
             <Skeleton className="h-4 w-3/4" />
           </div>
         )}
-      </Card>
+      </div>
     );
   }
 
@@ -172,8 +171,9 @@ export function DecisionQuestionHeader({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
+      className="p-5 md:p-6"
+      data-tour="intelligence-summary"
     >
-      <Card className="p-5 md:p-6 glass-card border-primary/10" data-tour="intelligence-summary">
         {/* Question on top, badges below */}
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-6">
           {/* Left: Decision Question */}
@@ -335,7 +335,6 @@ export function DecisionQuestionHeader({
             </div>
           </div>
         )}
-      </Card>
     </motion.div>
   );
 }
