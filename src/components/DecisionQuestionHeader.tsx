@@ -9,7 +9,7 @@ import { LensValue, getLensDisplayName, getLensDecisionQuestion } from "@/compon
 import { CustomLens } from "@/hooks/use-custom-lenses";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, XCircle, Clock, ShieldAlert, Target, Gauge, Link2, Check } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Link2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DecisionQuestionHeaderProps {
@@ -240,8 +240,7 @@ export function DecisionQuestionHeader({
             <div className="grid grid-cols-3 gap-2 w-full lg:flex lg:w-auto lg:items-stretch lg:gap-4 lg:shrink-0">
               {/* Readiness Score */}
               <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
-                <div className="flex items-center gap-1.5 lg:gap-2 mb-1 lg:mb-1.5">
-                  <Gauge className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground" />
+                <div className="mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Readiness</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
@@ -262,8 +261,7 @@ export function DecisionQuestionHeader({
 
               {/* Risk Score */}
               <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
-                <div className="flex items-center gap-1.5 lg:gap-2 mb-1 lg:mb-1.5">
-                  <ShieldAlert className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground" />
+                <div className="mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Risk</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
@@ -287,8 +285,7 @@ export function DecisionQuestionHeader({
 
               {/* Confidence Score */}
               <div className="glass-tile px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px]">
-                <div className="flex items-center gap-1.5 lg:gap-2 mb-1 lg:mb-1.5">
-                  <Target className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-muted-foreground" />
+                <div className="mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Confidence</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
