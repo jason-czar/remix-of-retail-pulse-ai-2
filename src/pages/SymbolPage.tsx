@@ -249,10 +249,10 @@ export default function SymbolPage() {
                 <div className="flex-col justify-between gap-3 px-0 flex md:flex-row">
                   <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
                     <TabsList className="w-max md:w-auto">
-                      <TabsTrigger value="narratives" className="text-xs md:text-sm px-2.5 md:px-3">Narratives</TabsTrigger>
-                      <TabsTrigger value="emotions" className="text-xs md:text-sm px-2.5 md:px-3">Emotions</TabsTrigger>
-                      <TabsTrigger value="sentiment" className="text-xs md:text-sm px-2.5 md:px-3">Sentiment</TabsTrigger>
-                      <TabsTrigger value="momentum" className="text-xs md:text-sm px-2.5 md:px-3">Momentum</TabsTrigger>
+                      <TabsTrigger value="narratives" className="text-xs">Narratives</TabsTrigger>
+                      <TabsTrigger value="emotions" className="text-xs">Emotions</TabsTrigger>
+                      <TabsTrigger value="sentiment" className="text-xs">Sentiment</TabsTrigger>
+                      <TabsTrigger value="momentum" className="text-xs">Momentum</TabsTrigger>
                     </TabsList>
                   </div>
                   {/* Desktop: TimeRangeSelector in row */}
@@ -423,7 +423,7 @@ function TimeRangeSelector({
           key={range}
           onClick={() => onChange(range)}
           className={cn(
-            "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs md:text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0",
+            "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0",
             range === value
               ? [
                   // Light mode: frosted white with subtle depth
