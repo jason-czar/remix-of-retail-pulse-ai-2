@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart3, 
@@ -14,7 +15,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   ArrowLeft,
-  Star
+  Star,
+  Plus
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDefaultWatchlist } from "@/hooks/use-watchlist";
@@ -249,15 +251,20 @@ export default function AnalyticsPage() {
         </div>
 
         {watchlistSymbols.length === 0 ? (
-          <Card className="p-12 glass-card text-center">
-            <Star className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No Watchlist Symbols</h2>
-            <p className="text-muted-foreground mb-6">
-              Add symbols to your watchlist to see aggregated analytics
-            </p>
-            <Link to="/dashboard">
-              <Button>Go to Dashboard</Button>
-            </Link>
+          <Card className="p-6 glass-card">
+            <EmptyState
+              icon={Star}
+              title="Unlock Portfolio-Wide Insights"
+              description="Add symbols to your watchlist to see aggregated sentiment trends, volume patterns, and psychological signals across all your tracked assets in one view."
+              action={
+                <Link to="/dashboard">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Build Your Watchlist
+                  </Button>
+                </Link>
+              }
+            />
           </Card>
         ) : (
           <>
@@ -311,9 +318,12 @@ export default function AnalyticsPage() {
                 {isLoading ? (
                   <Skeleton className="h-[300px] w-full" />
                 ) : aggregatedSentimentData.length === 0 ? (
-                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                    No sentiment data available
-                  </div>
+                  <EmptyState
+                    icon={Activity}
+                    title="Awaiting Sentiment Data"
+                    description="Historical snapshots are recorded daily. Check back tomorrow for trend analysis."
+                    compact
+                  />
                 ) : (
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -379,9 +389,12 @@ export default function AnalyticsPage() {
                 {isLoading ? (
                   <Skeleton className="h-[300px] w-full" />
                 ) : aggregatedSentimentData.length === 0 ? (
-                  <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                    No volume data available
-                  </div>
+                  <EmptyState
+                    icon={MessageSquare}
+                    title="Awaiting Volume Data"
+                    description="Message volume is tracked as snapshots accumulate. Data will appear here once available."
+                    compact
+                  />
                 ) : (
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
