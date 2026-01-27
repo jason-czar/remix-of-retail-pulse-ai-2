@@ -196,18 +196,28 @@ export function DecisionQuestionHeader({
                   <Link2 className="h-3.5 w-3.5" />
                 )}
               </Button>
-              {/* Timing Badge */}
+              {/* Timing Badge - Animated */}
               {timing && showScores && (
-                <Badge 
-                  variant={timing.variant} 
-                  className={cn(
-                    "text-xs px-2 py-0.5 hidden md:flex items-center gap-1 shrink-0",
-                    timing.bgClass
-                  )}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ 
+                    duration: 0.4, 
+                    delay: 0.3,
+                    ease: [0.34, 1.56, 0.64, 1] // Slight overshoot for emphasis
+                  }}
                 >
-                  <timing.icon className="h-3 w-3" />
-                  {timing.label}
-                </Badge>
+                  <Badge 
+                    variant={timing.variant} 
+                    className={cn(
+                      "text-xs px-2.5 py-1 hidden md:flex items-center gap-1.5 shrink-0 font-semibold",
+                      timing.bgClass
+                    )}
+                  >
+                    <timing.icon className="h-3.5 w-3.5" />
+                    {timing.label}
+                  </Badge>
+                </motion.div>
               )}
               {/* Lens Name Badge - After Timing */}
               <Badge variant="outline" className="text-xs shrink-0">
