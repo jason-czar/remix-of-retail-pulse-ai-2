@@ -10,10 +10,10 @@ export function HeroSection() {
       setAnimationPhase("centered");
     }, 500);
 
-    // Expand to full layout after theme transition completes (4s = 2s dark + 2s transition)
+    // Expand to full layout when theme transition starts (2s = dark mode duration)
     const expandedTimer = setTimeout(() => {
       setAnimationPhase("expanded");
-    }, 4000);
+    }, 2000);
     return () => {
       clearTimeout(centeredTimer);
       clearTimeout(expandedTimer);
