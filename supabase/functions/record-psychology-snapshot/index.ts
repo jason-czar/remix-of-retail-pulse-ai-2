@@ -1109,12 +1109,16 @@ async function generateInterpretationLayer(
 
   // Retry logic with exponential backoff for AI interpretation
   const MAX_RETRIES = 3;
-  const RETRY_DELAYS = [1000, 2000, 4000]; // 1s, 2s, 4s
+  const RETRY_DELAYS = [1500, 3000, 5000]; // 1.5s, 3s, 5s
+  const AI_TIMEOUT_MS = 45000; // 45 second timeout per request
   
   let lastError: Error | null = null;
   let aiData: any = null;
   
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+    
     try {
       console.log(`${symbol}: AI interpretation attempt ${attempt + 1}/${MAX_RETRIES}`);
       
@@ -1124,6 +1128,7 @@ async function generateInterpretationLayer(
           Authorization: `Bearer ${lovableApiKey}`,
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
@@ -1248,9 +1253,12 @@ Generate:
         }),
       });
 
+      clearTimeout(timeoutId);
+
       if (!aiResponse.ok) {
         const errorText = await aiResponse.text();
-        const isRetryable = aiResponse.status === 429 || aiResponse.status === 503 || aiResponse.status >= 500;
+        // 524 is Cloudflare timeout, treat as retryable
+        const isRetryable = aiResponse.status === 429 || aiResponse.status === 524 || aiResponse.status === 503 || aiResponse.status >= 500;
         
         console.warn(`${symbol}: AI attempt ${attempt + 1} failed with ${aiResponse.status}: ${errorText.slice(0, 200)}`);
         
@@ -1270,7 +1278,13 @@ Generate:
       break; // Success - exit retry loop
       
     } catch (fetchError) {
-      console.error(`${symbol}: AI fetch error on attempt ${attempt + 1}:`, fetchError);
+      clearTimeout(timeoutId);
+      
+      // Check if it's an abort error (timeout)
+      const isTimeout = fetchError instanceof Error && fetchError.name === 'AbortError';
+      
+      console.error(`${symbol}: AI ${isTimeout ? 'timeout' : 'fetch error'} on attempt ${attempt + 1}:`, 
+        isTimeout ? `Request exceeded ${AI_TIMEOUT_MS}ms` : fetchError);
       lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
       
       if (attempt < MAX_RETRIES - 1) {
@@ -1349,6 +1363,42 @@ Generate:
   };
 }
 
+// Helper to convert narrative ID to human-readable label
+function narrativeIdToLabel(id: string): string {
+  // Common narrative ID patterns to human-readable labels
+  const labelMap: Record<string, string> = {
+    sideways_chop_option_manipulation: "Sideways trading with options pressure",
+    bullish_momentum_breakout: "Strong bullish momentum and breakout potential",
+    bearish_pressure_selling: "Bearish selling pressure",
+    earnings_anticipation: "Earnings anticipation and expectations",
+    valuation_concerns: "Valuation and pricing concerns",
+    institutional_accumulation: "Institutional buying activity",
+    retail_enthusiasm: "Retail investor enthusiasm",
+    technical_resistance: "Technical resistance levels",
+    support_holding: "Support levels holding firm",
+    sector_rotation: "Sector rotation dynamics",
+    macro_uncertainty: "Macro economic uncertainty",
+    growth_optimism: "Growth and expansion optimism",
+    dividend_focus: "Dividend and income focus",
+    buyback_speculation: "Share buyback speculation",
+    leadership_confidence: "Management confidence",
+    product_cycle_excitement: "Product cycle enthusiasm",
+    competitive_pressure: "Competitive market pressure",
+    regulatory_concerns: "Regulatory or compliance concerns",
+    short_squeeze_potential: "Short squeeze potential",
+    profit_taking: "Profit taking activity",
+  };
+  
+  // Try direct match first
+  if (labelMap[id]) return labelMap[id];
+  
+  // Convert snake_case to Title Case with proper formatting
+  return id
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 // Generate fallback interpretation when AI fails
 function generateFallbackInterpretation(
   symbol: string,
@@ -1358,8 +1408,20 @@ function generateFallbackInterpretation(
 ): Interpretation {
   const dominantNarrative = narratives[0];
   const dominantEmotion = emotions[0];
-  const bullishNarratives = narratives.filter(n => n.sentiment_skew > 0.2).map(n => n.id);
-  const bearishNarratives = narratives.filter(n => n.sentiment_skew < -0.2).map(n => n.id);
+  
+  // Use human-readable labels instead of raw IDs
+  const bullishNarratives = narratives
+    .filter(n => n.sentiment_skew > 0.2)
+    .slice(0, 3)
+    .map(n => n.label || narrativeIdToLabel(n.id));
+  const bearishNarratives = narratives
+    .filter(n => n.sentiment_skew < -0.2)
+    .slice(0, 3)
+    .map(n => n.label || narrativeIdToLabel(n.id));
+  const neutralNarratives = narratives
+    .filter(n => Math.abs(n.sentiment_skew) <= 0.2)
+    .slice(0, 2)
+    .map(n => n.label || narrativeIdToLabel(n.id));
   
   // Determine overall bias
   const avgSkew = narratives.reduce((sum, n) => sum + n.sentiment_skew, 0) / (narratives.length || 1);
@@ -1369,34 +1431,74 @@ function generateFallbackInterpretation(
   const baseReadiness = isBullish ? 65 : isBearish ? 35 : 50;
   const timing = isBullish ? "proceed" : isBearish ? "delay" : "delay";
   
+  // Generate more meaningful concerns based on narratives
+  const generateConcerns = (narrativeList: string[]): string[] => {
+    if (narrativeList.length === 0) {
+      return ["Market sentiment remains uncertain", "Limited directional conviction detected"];
+    }
+    return narrativeList.map(n => `Retail discussion centers on ${n.toLowerCase()}`);
+  };
+  
+  // Generate more meaningful actions
+  const generateActions = (isBullish: boolean, isBearish: boolean): string[] => {
+    if (isBullish) {
+      return [
+        "Monitor for continuation of positive sentiment",
+        "Watch for volume confirmation of bullish narratives",
+        "Track institutional positioning for validation",
+      ];
+    } else if (isBearish) {
+      return [
+        "Assess duration and depth of negative sentiment",
+        "Monitor for sentiment stabilization signals",
+        "Evaluate contrarian opportunities if oversold",
+      ];
+    }
+    return [
+      "Continue monitoring for directional clarity",
+      "Track narrative evolution for emerging trends",
+      "Await stronger conviction signals before acting",
+    ];
+  };
+  
   const decision_readiness: Record<string, DecisionReadiness> = {};
   const decision_overlays: Record<string, DecisionOverlay> = {};
   
   for (const lens of DECISION_LENSES) {
     decision_readiness[lens] = {
       readiness_score: baseReadiness + Math.round((Math.random() - 0.5) * 20),
-      blocking_narratives: bearishNarratives.slice(0, 2),
-      supportive_narratives: bullishNarratives.slice(0, 2),
+      blocking_narratives: bearishNarratives.length > 0 ? bearishNarratives : neutralNarratives,
+      supportive_narratives: bullishNarratives.length > 0 ? bullishNarratives : [],
       recommended_timing: timing as "proceed" | "delay" | "avoid",
       recommended_delay: timing === "delay" ? "1-2 weeks" : undefined,
-      confidence: confidenceScore,
+      confidence: Math.max(0.4, confidenceScore * 0.7), // Lower confidence for fallback
     };
     
     decision_overlays[lens] = {
       risk_score: isBearish ? 65 : isBullish ? 35 : 50,
-      dominant_concerns: bearishNarratives.slice(0, 3).map(n => n.replace(/_/g, " ")),
-      recommended_focus: ["Monitor sentiment shifts", "Track narrative changes"],
-      recommended_actions: ["Continue monitoring", "Gather more data"],
-      confidence: confidenceScore,
+      dominant_concerns: generateConcerns(bearishNarratives.length > 0 ? bearishNarratives : neutralNarratives),
+      recommended_focus: [
+        "Monitor retail sentiment trends",
+        "Track narrative concentration changes",
+        `Evaluate ${lens.replace(/_/g, " ")} specific catalysts`,
+      ],
+      recommended_actions: generateActions(isBullish, isBearish),
+      confidence: Math.max(0.4, confidenceScore * 0.7),
     };
   }
+  
+  // Generate a more informative one-liner
+  const sentimentDirection = isBullish ? "bullish" : isBearish ? "bearish" : "mixed";
+  const oneLiner = dominantNarrative?.label 
+    ? `${symbol} retail sentiment is ${sentimentDirection}, with discussion dominated by "${dominantNarrative.label}" narrative.`
+    : `${symbol} shows ${sentimentDirection} retail sentiment with ${emotions.length > 0 ? emotions[0].emotion.toLowerCase() : "neutral"} emotional undertone.`;
   
   return {
     decision_overlays,
     decision_readiness,
     snapshot_summary: {
-      one_liner: `${symbol} shows ${dominantNarrative?.label || "mixed"} narrative with ${dominantEmotion?.emotion || "neutral"} sentiment.`,
-      primary_risk: bearishNarratives[0]?.replace(/_/g, " ") || "Uncertainty",
+      one_liner: oneLiner,
+      primary_risk: bearishNarratives[0] || "Market uncertainty",
       dominant_emotion: dominantEmotion?.emotion || "Neutral",
       action_bias: isBullish ? "Opportunistic" : isBearish ? "Cautious" : "Monitor",
       confidence: confidenceScore,
