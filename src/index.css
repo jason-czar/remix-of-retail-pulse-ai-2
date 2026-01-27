@@ -452,16 +452,14 @@
     border: 1px solid hsl(var(--primary) / 0.6);
     box-shadow: 
       0 2px 8px -2px hsl(var(--primary) / 0.4),
-      0 4px 16px -4px hsl(var(--primary) / 0.3),
-      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+      0 4px 16px -4px hsl(var(--primary) / 0.3);
   }
   
   .dark .glass-button-primary:hover {
     background: hsl(var(--primary) / 0.95);
     box-shadow: 
       0 4px 12px -2px hsl(var(--primary) / 0.5),
-      0 8px 24px -4px hsl(var(--primary) / 0.35),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+      0 8px 24px -4px hsl(var(--primary) / 0.35);
   }
 
   /* =========================================================
@@ -493,21 +491,19 @@
   
   .dark .glass-button-secondary {
     background: hsl(0 0% 100% / 0.08);
-    border: 1px solid hsl(0 0% 100% / 0.12);
+    border: 1px solid hsl(0 0% 100% / 0.08);
     box-shadow: 
       0 2px 6px -2px hsl(0 0% 0% / 0.3),
-      0 4px 12px -4px hsl(0 0% 0% / 0.2),
-      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+      0 4px 12px -4px hsl(0 0% 0% / 0.2);
     color: hsl(var(--foreground));
   }
   
   .dark .glass-button-secondary:hover {
     background: hsl(0 0% 100% / 0.14);
-    border-color: hsl(0 0% 100% / 0.18);
+    border-color: hsl(0 0% 100% / 0.12);
     box-shadow: 
       0 4px 10px -2px hsl(0 0% 0% / 0.35),
-      0 6px 16px -4px hsl(0 0% 0% / 0.25),
-      inset 0 1px 0 hsl(0 0% 100% / 0.1);
+      0 6px 16px -4px hsl(0 0% 0% / 0.25);
   }
 
   /* =========================================================
@@ -637,11 +633,10 @@
 
   .dark .glass-tabs-list {
     background: var(--gradient-glass);
-    border: 1px solid hsl(0 0% 100% / 0.15);
+    border: 1px solid hsl(0 0% 100% / 0.08);
     box-shadow: 
       0 8px 32px hsl(0 0% 0% / 0.4),
-      0 2px 8px hsl(0 0% 5% / 0.2),
-      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+      0 2px 8px hsl(0 0% 5% / 0.2);
   }
 
   /* Active tab glow effect */
@@ -658,10 +653,8 @@
       hsl(0 0% 100% / 0.12) 0%,
       hsl(0 0% 100% / 0.06) 100%
     );
-    border: 1px solid hsl(0 0% 100% / 0.15);
-    box-shadow: 
-      0 4px 16px hsl(0 0% 0% / 0.5),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow: 0 4px 16px hsl(0 0% 0% / 0.5);
   }
 
   /* Glass Popover - for dropdowns, selects, tooltips, context menus */
@@ -671,11 +664,10 @@
   }
 
   .dark .glass-popover {
-    border-color: hsl(0 0% 100% / 0.15);
+    border-color: hsl(0 0% 100% / 0.08);
     box-shadow: 
       0 8px 32px hsl(0 0% 0% / 0.4),
-      0 2px 8px hsl(0 0% 5% / 0.2),
-      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+      0 2px 8px hsl(0 0% 5% / 0.2);
   }
 
   :not(.dark) .glass-popover {
@@ -693,11 +685,10 @@
   }
 
   .dark .glass-chart {
-    @apply border border-white/15;
+    @apply border border-white/[0.06];
     box-shadow: 
       0 8px 32px hsl(0 0% 0% / 0.4),
-      0 2px 8px hsl(0 0% 5% / 0.2),
-      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+      0 2px 8px hsl(0 0% 5% / 0.2);
   }
 
   :not(.dark) .glass-chart {
@@ -812,9 +803,7 @@
   }
 
   .dark .glass-card .glass-card {
-    box-shadow: 
-      0 4px 12px hsl(0 0% 0% / 0.25),
-      inset 0 1px 0 hsl(0 0% 100% / 0.05);
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.25);
   }
 
   /* =========================================================
@@ -855,21 +844,19 @@
   /* Dark mode: Dark glass tiles */
   .dark .glass-tile {
     background: hsl(0 0% 18% / 0.7);
-    border: 1px solid hsl(0 0% 100% / 0.1);
+    border: 1px solid hsl(0 0% 100% / 0.06);
     color: hsl(var(--foreground));
     box-shadow: 
       0 4px 16px hsl(0 0% 0% / 0.3),
-      0 1px 3px hsl(0 0% 0% / 0.2),
-      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+      0 1px 3px hsl(0 0% 0% / 0.2);
   }
 
   .dark .glass-tile:hover {
     background: hsl(0 0% 20% / 0.8);
-    border-color: hsl(0 0% 100% / 0.15);
+    border-color: hsl(0 0% 100% / 0.08);
     box-shadow: 
       0 6px 20px hsl(0 0% 0% / 0.4),
-      0 2px 6px hsl(0 0% 0% / 0.25),
-      inset 0 1px 0 hsl(0 0% 100% / 0.08);
+      0 2px 6px hsl(0 0% 0% / 0.25);
   }
 
   /* =========================================================
