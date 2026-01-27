@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestPsychologySnapshot, DecisionReadiness, DecisionOverlay, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
 import { DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
-import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, Minus, AlertCircle, Lightbulb, RefreshCw, AlertTriangle } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, Minus, Lightbulb, RefreshCw, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, getReadinessSeverity, getRiskSeverity } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 interface LensReadinessCardProps {
   symbol: string;
   lens: DecisionLens;
@@ -83,32 +82,31 @@ export function LensReadinessCard({
   lens,
   onRefresh
 }: LensReadinessCardProps) {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
   const isAdmin = user?.email === 'admin@czar.ing';
-  
   const {
     data: snapshot,
     isLoading,
     refetch
   } = useLatestPsychologySnapshot(symbol);
-
   const handleRefreshSnapshot = async () => {
     setIsRefreshing(true);
     try {
-      const { error } = await supabase.functions.invoke('record-psychology-snapshot', {
-        body: { 
+      const {
+        error
+      } = await supabase.functions.invoke('record-psychology-snapshot', {
+        body: {
           symbols: [symbol.toUpperCase()],
           periodType: 'hourly',
           forceRun: true
         }
       });
-      
       if (error) throw error;
-      
       toast.success(`Fresh snapshot triggered for ${symbol.toUpperCase()}`);
-      
+
       // Trigger refetch after a short delay to allow snapshot to be recorded
       setTimeout(() => {
         refetch();
@@ -155,43 +153,33 @@ export function LensReadinessCard({
   return <div className="p-4 md:p-5 h-full">
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
-        {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Key Concerns Card */}
-            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
-              <Card className="p-4 glass-card">
+            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <Card className="p-4 glass-card">
                 <div className="flex items-center gap-2 mb-2.5">
-                  <AlertCircle className="h-4 w-4 text-warning" />
+                  
                   <span className="text-sm font-medium">Key Concerns</span>
                 </div>
                 <ul className="space-y-1.5">
-                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
-                    <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
+                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
                       {cleanNarrativeText(concern)}
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
-              </Card>
-            )}
+              </Card>}
 
             {/* Recommended Actions Card */}
-            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
-              <Card className="p-4 glass-card">
+            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <Card className="p-4 glass-card">
                 <div className="flex items-center gap-2 mb-2.5">
                   <Lightbulb className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">Recommended Actions</span>
                 </div>
                 <ul className="space-y-1.5">
-                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
-                    <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
+                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
                       {cleanNarrativeText(action)}
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
-              </Card>
-            )}
-          </div>
-        )}
+              </Card>}
+          </div>}
 
         {/* Bottom Row: Readiness Score + Narratives (left) | Risk Score (right) */}
         <div className="grid grid-cols-1 md:grid-cols-[7fr_13fr] gap-4 md:gap-6">
@@ -285,11 +273,9 @@ export function LensReadinessCard({
         </div>
 
       {/* Admin-only refresh button */}
-      {isAdmin && (
-        <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border/30">
+      {isAdmin && <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border/30">
           {/* Fallback indicator - check if concerns follow the fallback pattern */}
-          {overlay?.dominant_concerns?.some(c => c.startsWith("Retail discussion centers on")) && (
-            <Tooltip>
+          {overlay?.dominant_concerns?.some(c => c.startsWith("Retail discussion centers on")) && <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-1.5 text-xs text-warning/80">
                   <AlertTriangle className="h-3.5 w-3.5" />
@@ -299,19 +285,11 @@ export function LensReadinessCard({
               <TooltipContent side="left">
                 <p className="text-xs">AI generation failed — using fallback data</p>
               </TooltipContent>
-            </Tooltip>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefreshSnapshot}
-            disabled={isRefreshing}
-            className="text-xs text-muted-foreground hover:text-foreground gap-1.5"
-          >
+            </Tooltip>}
+          <Button variant="ghost" size="sm" onClick={handleRefreshSnapshot} disabled={isRefreshing} className="text-xs text-muted-foreground hover:text-foreground gap-1.5">
             <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
             {isRefreshing ? "Refreshing..." : "Refresh Snapshot"}
           </Button>
-        </div>
-      )}
+        </div>}
     </div>;
 }
