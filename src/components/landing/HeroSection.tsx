@@ -68,8 +68,8 @@ export function HeroSection() {
                     delay: 0.2,
                   },
                   marginBottom: {
-                    duration: 2.5,
-                    ease: [0.3, 0.0, 0.2, 1],
+                    duration: 0.8,
+                    ease: [0.25, 0.4, 0.25, 1],
                   },
                 }}
               >
