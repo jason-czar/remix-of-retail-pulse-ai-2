@@ -85,15 +85,15 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   
   return (
     <>
-      <div className="relative">
+      <div className="relative max-w-full">
         {/* Left scroll fade indicator */}
-        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background/80 to-transparent pointer-events-none z-10 rounded-l-2xl md:hidden" />
+        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background/80 to-transparent pointer-events-none z-10 rounded-l-2xl" />
         
         {/* Right scroll fade indicator */}
-        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background/80 to-transparent pointer-events-none z-10 rounded-r-2xl md:hidden" />
+        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background/80 to-transparent pointer-events-none z-10 rounded-r-2xl" />
         
         <div className={cn(
-          "relative inline-flex items-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto md:mx-0 scrollbar-hide mx-[4px]",
+          "relative inline-flex items-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
           // Liquid Glass styling - subtle and seamless
           "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
           "backdrop-blur-[20px] backdrop-saturate-[140%]",
