@@ -1,24 +1,36 @@
 import { supabase } from "@/integrations/supabase/client";
+import { cachedApiCall, CACHE_TTL } from "./api-cache";
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stocktwits-proxy`;
 
-async function callApi(action: string, params: Record<string, string> = {}) {
-  const queryParams = new URLSearchParams({ action, ...params });
-  
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  const response = await fetch(`${EDGE_FUNCTION_URL}?${queryParams.toString()}`, {
-    headers: {
-      'Authorization': `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  });
-  
-  if (!response.ok) {
-    throw new Error(`API error: ${response.statusText}`);
+async function callApi(action: string, params: Record<string, string> = {}, skipCache = false) {
+  const fetchData = async () => {
+    const queryParams = new URLSearchParams({ action, ...params });
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    const response = await fetch(`${EDGE_FUNCTION_URL}?${queryParams.toString()}`, {
+      headers: {
+        'Authorization': `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+    
+    return response.json();
+  };
+
+  // Skip cache for certain operations or when explicitly requested
+  if (skipCache) {
+    return fetchData();
   }
-  
-  return response.json();
+
+  // Use cached API call with appropriate TTL
+  const ttl = CACHE_TTL[action as keyof typeof CACHE_TTL] ?? 30000;
+  return cachedApiCall(action, params, fetchData, ttl);
 }
 
 export interface TrendingSymbol {
@@ -197,7 +209,9 @@ export const stocktwitsApi = {
       if (cursor?.created_at) params.cursor_created_at = cursor.created_at;
       if (cursor?.id) params.cursor_id = cursor.id;
       
-      const response = await callApi('messages', params);
+      // Skip cache for paginated requests (cursor-based) since they're unique
+      const skipCache = !!cursor;
+      const response = await callApi('messages', params, skipCache);
       
       // The API returns { messages: [...], total: number, has_more: boolean, next_cursor: {...} }
       const data = response?.messages || response?.data || response;
@@ -666,3 +680,6 @@ function filterDataByTimeRange(data: any[], timeRange: string): any[] {
   // Reverse to get chronological order (oldest first)
   return filtered.reverse();
 }
+
+// Re-export cache utilities for external use
+export { apiCache, CACHE_TTL } from './api-cache';
