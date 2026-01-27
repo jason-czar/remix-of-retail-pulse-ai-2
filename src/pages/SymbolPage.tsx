@@ -339,9 +339,14 @@ export default function SymbolPage() {
                       <Skeleton className="h-4 w-3/4" />
                     </div>
                   ) : (
-                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed pr-10">
+                    <motion.p 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      className="text-sm md:text-base text-muted-foreground leading-relaxed pr-10"
+                    >
                       <FormattedSummary text={summary} />
-                    </p>
+                    </motion.p>
                   )}
                 </div>
               </DecisionQuestionHeader>
@@ -403,11 +408,16 @@ export default function SymbolPage() {
                       <Skeleton className="h-4 w-3/4" />
                     </div>
                   ) : (
-                    <div className="flex-1">
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
+                      className="flex-1"
+                    >
                       <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                         <FormattedSummary text={summary} />
                       </p>
-                    </div>
+                    </motion.div>
                   )}
                 </Card>
               </motion.div>
