@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { useLatestPsychologySnapshot, DecisionReadiness, DecisionOverlay, NarrativeOutcome } from "@/hooks/use-psychology-snapshot";
 import { DecisionLens, getLensDisplayName } from "@/components/DecisionLensSelector";
 import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, Minus, RefreshCw, AlertTriangle } from "lucide-react";
@@ -153,7 +154,9 @@ export function LensReadinessCard({
   return <div className="p-4 md:p-5 h-full">
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
-        {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-start">
+        {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <>
+          <Separator className="mb-6 opacity-50" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-start">
             {/* Key Concerns Card */}
             {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <Card className="p-4 glass-card">
                 <div className="flex items-center gap-2 mb-3">
@@ -179,7 +182,8 @@ export function LensReadinessCard({
                     </li>)}
                 </ul>
               </Card>}
-          </div>}
+          </div>
+        </>}
 
         {/* Bottom Row: Readiness Score + Narratives (left) | Risk Score (right) */}
         <div className="grid grid-cols-1 md:grid-cols-[7fr_13fr] gap-4 md:gap-6 pt-[63px]">
