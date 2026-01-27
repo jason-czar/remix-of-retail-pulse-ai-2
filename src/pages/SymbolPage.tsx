@@ -343,13 +343,12 @@ export default function SymbolPage() {
                         <TooltipTrigger asChild>
                           <Button 
                             variant="ghost" 
-                            size="sm" 
+                            size="icon" 
                             onClick={handleRegenerate} 
                             disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} 
-                            className="inline-flex ml-2 h-7 px-2 text-muted-foreground hover:text-foreground align-middle"
+                            className="inline-flex ml-2 h-7 w-7 text-muted-foreground hover:text-foreground align-middle"
                           >
                             <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
-                            <span className="ml-1.5 text-xs hidden sm:inline">Generate a fresh analysis</span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
