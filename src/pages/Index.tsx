@@ -10,7 +10,6 @@ import { IntelligencePatternsSection } from "@/components/landing/IntelligencePa
 import { CredibilitySection } from "@/components/landing/CredibilitySection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
 import { CursorLight } from "@/components/landing/CursorLight";
-import { CinematicIntro } from "@/components/landing/CinematicIntro";
 
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
@@ -48,9 +47,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen cursor-light-enabled relative">
-      {/* Cinematic intro overlay - dark to light reveal */}
-      <CinematicIntro />
-      
       {/* Theme-aware background images with smooth crossfade animation */}
       <div 
         className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
