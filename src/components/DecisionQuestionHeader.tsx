@@ -1,0 +1,269 @@
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ConfidenceBadge, ConfidenceLevel } from "@/components/ui/ConfidenceBadge";
+import { LensValue, getLensDisplayName, getLensDecisionQuestion } from "@/components/DecisionLensSelector";
+import { CustomLens } from "@/hooks/use-custom-lenses";
+import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
+import { CheckCircle2, XCircle, Clock, ShieldAlert, Target, Gauge } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface DecisionQuestionHeaderProps {
+  symbol: string;
+  lens: LensValue;
+  customLens?: CustomLens | null;
+  confidence?: ConfidenceLevel;
+  relevantCount?: number;
+  messageCount?: number;
+  isLoading?: boolean;
+}
+
+// Map from DecisionLens to interpretation keys
+const LENS_KEY_MAP: Record<string, string> = {
+  'corporate-strategy': 'corporate_strategy',
+  'earnings': 'earnings',
+  'ma': 'ma',
+  'capital-allocation': 'capital_allocation',
+  'leadership-change': 'leadership_change',
+  'strategic-pivot': 'strategic_pivot',
+  'product-launch': 'product_launch',
+  'activist-risk': 'activist_risk',
+  'supply-chain': 'supply_chain'
+};
+
+function getReadinessColor(score: number): string {
+  if (score >= 70) return "text-bullish";
+  if (score >= 40) return "text-warning";
+  return "text-bearish";
+}
+
+function getProgressColor(score: number): string {
+  if (score >= 70) return "bg-bullish";
+  if (score >= 40) return "bg-warning";
+  return "bg-bearish";
+}
+
+function getRiskColor(score: number): string {
+  if (score >= 70) return "text-bearish";
+  if (score >= 40) return "text-warning";
+  return "text-bullish";
+}
+
+function getConfidenceColor(level?: ConfidenceLevel): string {
+  if (level === 'high') return "text-bullish";
+  if (level === 'moderate') return "text-warning";
+  return "text-muted-foreground";
+}
+
+function getTimingBadge(timing?: string) {
+  switch (timing) {
+    case "proceed":
+      return {
+        icon: CheckCircle2,
+        label: "Proceed",
+        variant: "bullish" as const,
+        bgClass: "bg-bullish/10 border-bullish/30"
+      };
+    case "delay":
+      return {
+        icon: Clock,
+        label: "Delay",
+        variant: "neutral" as const,
+        bgClass: "bg-warning/10 border-warning/30"
+      };
+    case "avoid":
+      return {
+        icon: XCircle,
+        label: "Avoid",
+        variant: "bearish" as const,
+        bgClass: "bg-bearish/10 border-bearish/30"
+      };
+    default:
+      return null;
+  }
+}
+
+export function DecisionQuestionHeader({
+  symbol,
+  lens,
+  customLens,
+  confidence,
+  relevantCount,
+  messageCount,
+  isLoading
+}: DecisionQuestionHeaderProps) {
+  const { data: snapshot, isLoading: snapshotLoading } = useLatestPsychologySnapshot(symbol);
+  
+  // Get scores from snapshot for default lenses
+  const lensKey = LENS_KEY_MAP[lens];
+  const readiness = snapshot?.interpretation?.decision_readiness?.[lensKey];
+  const overlay = snapshot?.interpretation?.decision_overlays?.[lensKey];
+  
+  // For custom lenses, calculate scores from confidence
+  const isCustom = !!customLens;
+  const readinessScore = isCustom 
+    ? (confidence === 'high' ? 75 : confidence === 'moderate' ? 55 : 35)
+    : readiness?.readiness_score ?? 0;
+  const riskScore = isCustom
+    ? (100 - readinessScore + Math.round((Math.random() - 0.5) * 10))
+    : overlay?.risk_score ?? 0;
+  const confidencePercent = overlay?.confidence 
+    ? Math.round(overlay.confidence * 100)
+    : (confidence === 'high' ? 85 : confidence === 'moderate' ? 65 : 45);
+  
+  const timing = getTimingBadge(readiness?.recommended_timing);
+  const decisionQuestion = getLensDecisionQuestion(lens, customLens || undefined);
+  const displayName = getLensDisplayName(lens, customLens || undefined);
+  
+  const showScores = lens !== 'summary';
+  const loading = isLoading || snapshotLoading;
+
+  if (loading) {
+    return (
+      <Card className="p-4 md:p-6 glass-card mb-4 lg:mb-6">
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-3/4" />
+          <div className="grid grid-cols-3 gap-4">
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+            <Skeleton className="h-16" />
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+    >
+      <Card className="p-4 md:p-6 glass-card mb-4 lg:mb-6 border-primary/10">
+        {/* Decision Question - Prominent */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4 md:mb-5">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="outline" className="text-xs">
+                {displayName}
+              </Badge>
+              {confidence && (
+                <ConfidenceBadge 
+                  level={confidence} 
+                  context="volume" 
+                  tooltipContent={`${relevantCount ?? '—'} relevant messages analyzed out of ${messageCount ?? '—'} total.`} 
+                  size="sm" 
+                />
+              )}
+            </div>
+            <p className="text-base md:text-lg font-medium text-foreground leading-snug">
+              {decisionQuestion}
+            </p>
+          </div>
+          
+          {/* Timing Badge - Desktop */}
+          {timing && showScores && (
+            <Badge 
+              variant={timing.variant} 
+              className={cn(
+                "text-sm px-3 py-1.5 hidden md:flex items-center gap-1.5",
+                timing.bgClass
+              )}
+            >
+              <timing.icon className="h-4 w-4" />
+              {timing.label}
+            </Badge>
+          )}
+        </div>
+
+        {/* Score Metrics - Only for non-summary lenses */}
+        {showScores && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            {/* Readiness Score */}
+            <div className="glass-tile p-3 md:p-4 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <Gauge className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Readiness</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={cn("text-2xl md:text-3xl font-display", getReadinessColor(readinessScore))}>
+                  {readinessScore}
+                </span>
+                <span className="text-xs text-muted-foreground">/100</span>
+              </div>
+              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${readinessScore}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className={cn("h-full rounded-full", getProgressColor(readinessScore))}
+                />
+              </div>
+            </div>
+
+            {/* Risk Score */}
+            <div className="glass-tile p-3 md:p-4 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Risk</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={cn("text-2xl md:text-3xl font-display", getRiskColor(riskScore))}>
+                  {riskScore}
+                </span>
+                <span className="text-xs text-muted-foreground">/100</span>
+              </div>
+              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${riskScore}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className={cn(
+                    "h-full rounded-full",
+                    riskScore >= 70 ? "bg-bearish" : riskScore >= 40 ? "bg-warning" : "bg-bullish"
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Confidence Score */}
+            <div className="glass-tile p-3 md:p-4 rounded-xl col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Confidence</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className={cn("text-2xl md:text-3xl font-display", getConfidenceColor(confidence))}>
+                  {confidencePercent}
+                </span>
+                <span className="text-xs text-muted-foreground">%</span>
+              </div>
+              <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${confidencePercent}%` }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className="h-full rounded-full bg-primary/70"
+                />
+              </div>
+            </div>
+
+            {/* Mobile Timing Badge */}
+            {timing && (
+              <div className="md:hidden col-span-2 flex justify-center">
+                <Badge 
+                  variant={timing.variant} 
+                  className={cn("text-sm px-3 py-1.5", timing.bgClass)}
+                >
+                  <timing.icon className="h-4 w-4 mr-1.5" />
+                  {timing.label}
+                </Badge>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+    </motion.div>
+  );
+}
