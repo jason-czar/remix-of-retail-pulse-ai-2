@@ -151,7 +151,7 @@ export function LensReadinessCard({
   }
   const timing = getTimingBadge(readiness.recommended_timing);
   const TimingIcon = timing.icon;
-  return <div className="p-4 md:p-5 h-full py-0 px-[25px]">
+  return <div className="p-4 md:p-5 h-full py-0 px-[57px]">
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <>
@@ -167,7 +167,7 @@ export function LensReadinessCard({
         }} transition={{
           duration: 0.4,
           ease: "easeOut"
-        }} className="relative overflow-hidden rounded-2xl p-7
+        }} className="relative overflow-hidden rounded-2xl p-5 pb-6
                   bg-gradient-to-br from-warning/[0.08] via-warning/[0.04] to-transparent
                   dark:from-warning/[0.12] dark:via-warning/[0.06] dark:to-transparent
                   border border-warning/20 dark:border-warning/25
@@ -181,7 +181,7 @@ export function LensReadinessCard({
                 <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-warning/15 dark:bg-warning/20">
                   <AlertTriangle className="h-4 w-4 text-warning" />
                 </div>
-                <div className="relative flex items-center justify-center mb-6">
+                <div className="relative flex items-center justify-center mb-4">
                   <span className="text-base font-semibold tracking-tight">Key Concerns</span>
                 </div>
                 <ul className="relative space-y-3 px-3">
@@ -202,7 +202,7 @@ export function LensReadinessCard({
           duration: 0.4,
           ease: "easeOut",
           delay: 0.1
-        }} className="relative overflow-hidden rounded-2xl p-7
+        }} className="relative overflow-hidden rounded-2xl p-5 pb-6
                   bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent
                   dark:from-primary/[0.12] dark:via-primary/[0.06] dark:to-transparent
                   border border-primary/20 dark:border-primary/25
@@ -216,7 +216,7 @@ export function LensReadinessCard({
                 <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-primary/15 dark:bg-primary/20">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
                 </div>
-                <div className="relative flex items-center justify-center mb-6">
+                <div className="relative flex items-center justify-center mb-4">
                   <span className="text-base font-semibold tracking-tight">Recommended Actions</span>
                 </div>
                 <ul className="relative space-y-3 px-3">
@@ -241,7 +241,7 @@ export function LensReadinessCard({
         duration: 0.4,
         ease: "easeOut",
         delay: 0.15
-      }} className="relative overflow-hidden rounded-2xl p-7
+      }} className="relative overflow-hidden rounded-2xl p-5 pb-6
                 bg-gradient-to-br from-bearish/[0.08] via-bearish/[0.04] to-transparent
                 dark:from-bearish/[0.12] dark:via-bearish/[0.06] dark:to-transparent
                 border border-bearish/20 dark:border-bearish/25
@@ -255,7 +255,7 @@ export function LensReadinessCard({
               <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-bearish/15 dark:bg-bearish/20">
                 <TrendingDown className="h-4 w-4 text-bearish" />
               </div>
-              <div className="relative flex items-center justify-center mb-6">
+              <div className="relative flex items-center justify-center mb-4">
                 <span className="text-base font-semibold tracking-tight">Blocking</span>
               </div>
               <div className="relative flex flex-wrap justify-center gap-2">
@@ -276,7 +276,7 @@ export function LensReadinessCard({
         duration: 0.4,
         ease: "easeOut",
         delay: 0.2
-      }} className="relative overflow-hidden rounded-2xl p-7
+      }} className="relative overflow-hidden rounded-2xl p-5 pb-6
                 bg-gradient-to-br from-bullish/[0.08] via-bullish/[0.04] to-transparent
                 dark:from-bullish/[0.12] dark:via-bullish/[0.06] dark:to-transparent
                 border border-bullish/20 dark:border-bullish/25
@@ -290,7 +290,7 @@ export function LensReadinessCard({
               <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-bullish/15 dark:bg-bullish/20">
                 <TrendingUp className="h-4 w-4 text-bullish" />
               </div>
-              <div className="relative flex items-center justify-center mb-6">
+              <div className="relative flex items-center justify-center mb-4">
                 <span className="text-base font-semibold tracking-tight">Supportive</span>
               </div>
               <div className="relative flex flex-wrap justify-center gap-2">
