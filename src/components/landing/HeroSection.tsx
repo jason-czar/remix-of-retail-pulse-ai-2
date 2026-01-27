@@ -46,13 +46,7 @@ export function HeroSection() {
 
             {/* Content wrapper with dynamic height - centers headline during initial phase */}
             <motion.div
-              className="flex flex-col items-center leading-tight "
-              style={{
-                justifyContent: animationPhase === "expanded" ? "flex-start" : "center",
-              }}
-              animate={{
-                height: "100%",
-              }}
+              className="flex flex-col items-center justify-center leading-tight h-full gap-6"
               transition={{
                 duration: 0.8,
                 ease: [0.25, 0.4, 0.25, 1],
@@ -68,7 +62,6 @@ export function HeroSection() {
                 animate={{
                   opacity: animationPhase !== "waiting" ? 1 : 0,
                   y: animationPhase !== "waiting" ? 0 : 20,
-                  marginBottom: animationPhase === "expanded" ? "1.5rem" : "0",
                 }}
                 transition={{
                   opacity: {
@@ -78,10 +71,6 @@ export function HeroSection() {
                   y: {
                     duration: 0.6,
                     delay: 0.2,
-                  },
-                  marginBottom: {
-                    duration: 0.8,
-                    ease: [0.25, 0.4, 0.25, 1],
                   },
                 }}
               >
