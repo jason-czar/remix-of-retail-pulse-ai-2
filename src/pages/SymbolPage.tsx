@@ -229,8 +229,19 @@ export default function SymbolPage() {
           )}
         </AnimatePresence>
 
-        {/* Section divider */}
-        <Separator className="my-6 md:my-8 glass-divider" />
+        {/* Section divider - animated with charts */}
+        <AnimatePresence>
+          {decisionLens === 'summary' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <Separator className="my-6 md:my-8 glass-divider" />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* AI Summary + Readiness Card Side-by-Side with lens transition animation */}
         <AnimatePresence mode="wait">
