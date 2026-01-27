@@ -155,22 +155,25 @@ export function LensReadinessCard({
 
         {/* Top Row: Key Concerns Card (left) and Recommended Actions Card (right) */}
         {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && <>
-          <Separator className="my-6 opacity-50" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 items-stretch">
+          <Separator className="mb-6 opacity-50" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4 items-stretch">
             {/* Key Concerns Card */}
-            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="relative overflow-hidden rounded-2xl p-5 
+            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <motion.div initial={{
+          opacity: 0,
+          y: 8
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.4,
+          ease: "easeOut"
+        }} className="relative overflow-hidden rounded-2xl p-5 
                   bg-gradient-to-br from-warning/[0.08] via-warning/[0.04] to-transparent
                   dark:from-warning/[0.12] dark:via-warning/[0.06] dark:to-transparent
                   border border-warning/20 dark:border-warning/25
                   shadow-[0_4px_24px_-4px_hsl(var(--warning)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
                   dark:shadow-[0_4px_24px_-4px_hsl(var(--warning)/0.25)]
-                  backdrop-blur-xl"
-              >
+                  backdrop-blur-xl">
                 {/* Subtle glow accent */}
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-warning/10 dark:bg-warning/15 rounded-full blur-3xl pointer-events-none" />
                 
@@ -181,32 +184,30 @@ export function LensReadinessCard({
                   <span className="text-base font-semibold tracking-tight">Key Concerns</span>
                 </div>
                 <ul className="relative space-y-3">
-                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
-                    <li 
-                      key={idx} 
-                      className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-warning/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--warning)/0.5)]"
-                    >
+                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-warning/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--warning)/0.5)]">
                       {cleanNarrativeText(concern)}
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
-              </motion.div>
-            )}
+              </motion.div>}
 
             {/* Recommended Actions Card */}
-            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
-                className="relative overflow-hidden rounded-2xl p-5 
+            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <motion.div initial={{
+          opacity: 0,
+          y: 8
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.4,
+          ease: "easeOut",
+          delay: 0.1
+        }} className="relative overflow-hidden rounded-2xl p-5 
                   bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent
                   dark:from-primary/[0.12] dark:via-primary/[0.06] dark:to-transparent
                   border border-primary/20 dark:border-primary/25
                   shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
                   dark:shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.25)]
-                  backdrop-blur-xl"
-              >
+                  backdrop-blur-xl">
                 {/* Subtle glow accent */}
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 dark:bg-primary/15 rounded-full blur-3xl pointer-events-none" />
                 
@@ -217,36 +218,34 @@ export function LensReadinessCard({
                   <span className="text-base font-semibold tracking-tight">Recommended Actions</span>
                 </div>
                 <ul className="relative space-y-3">
-                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
-                    <li 
-                      key={idx} 
-                      className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-primary/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--primary)/0.5)]"
-                    >
+                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-primary/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--primary)/0.5)]">
                       {cleanNarrativeText(action)}
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
-              </motion.div>
-            )}
+              </motion.div>}
           </div>
         </>}
 
         {/* Blocking and Supportive Narratives */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-0">
           {/* Blocking Narratives */}
-          {readiness.blocking_narratives.length > 0 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut", delay: 0.15 }}
-              className="relative overflow-hidden rounded-2xl p-5 
+          {readiness.blocking_narratives.length > 0 && <motion.div initial={{
+        opacity: 0,
+        y: 8
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.4,
+        ease: "easeOut",
+        delay: 0.15
+      }} className="relative overflow-hidden rounded-2xl p-5 
                 bg-gradient-to-br from-bearish/[0.08] via-bearish/[0.04] to-transparent
                 dark:from-bearish/[0.12] dark:via-bearish/[0.06] dark:to-transparent
                 border border-bearish/20 dark:border-bearish/25
                 shadow-[0_4px_24px_-4px_hsl(var(--bearish)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
                 dark:shadow-[0_4px_24px_-4px_hsl(var(--bearish)/0.25)]
-                backdrop-blur-xl"
-            >
+                backdrop-blur-xl">
               {/* Subtle glow accent */}
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-bearish/10 dark:bg-bearish/15 rounded-full blur-3xl pointer-events-none" />
               
@@ -257,33 +256,30 @@ export function LensReadinessCard({
                 <span className="text-base font-semibold tracking-tight">Blocking</span>
               </div>
               <div className="relative flex flex-wrap gap-2">
-                {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => (
-                  <Badge 
-                    key={idx} 
-                    variant="outline" 
-                    className="text-xs border-bearish/40 text-bearish bg-bearish/10 px-2.5 py-1 rounded-lg"
-                  >
+                {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-bearish/40 text-bearish bg-bearish/10 px-2.5 py-1 rounded-lg">
                     {cleanNarrativeText(narrative)}
-                  </Badge>
-                ))}
+                  </Badge>)}
               </div>
-            </motion.div>
-          )}
+            </motion.div>}
 
           {/* Supportive Narratives */}
-          {readiness.supportive_narratives.length > 0 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut", delay: 0.2 }}
-              className="relative overflow-hidden rounded-2xl p-5 
+          {readiness.supportive_narratives.length > 0 && <motion.div initial={{
+        opacity: 0,
+        y: 8
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.4,
+        ease: "easeOut",
+        delay: 0.2
+      }} className="relative overflow-hidden rounded-2xl p-5 
                 bg-gradient-to-br from-bullish/[0.08] via-bullish/[0.04] to-transparent
                 dark:from-bullish/[0.12] dark:via-bullish/[0.06] dark:to-transparent
                 border border-bullish/20 dark:border-bullish/25
                 shadow-[0_4px_24px_-4px_hsl(var(--bullish)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
                 dark:shadow-[0_4px_24px_-4px_hsl(var(--bullish)/0.25)]
-                backdrop-blur-xl"
-            >
+                backdrop-blur-xl">
               {/* Subtle glow accent */}
               <div className="absolute -top-12 -right-12 w-32 h-32 bg-bullish/10 dark:bg-bullish/15 rounded-full blur-3xl pointer-events-none" />
               
@@ -294,26 +290,17 @@ export function LensReadinessCard({
                 <span className="text-base font-semibold tracking-tight">Supportive</span>
               </div>
               <div className="relative flex flex-wrap gap-2">
-                {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => (
-                  <Badge 
-                    key={idx} 
-                    variant="outline" 
-                    className="text-xs border-bullish/40 text-bullish bg-bullish/10 px-2.5 py-1 rounded-lg"
-                  >
+                {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-bullish/40 text-bullish bg-bullish/10 px-2.5 py-1 rounded-lg">
                     {cleanNarrativeText(narrative)}
-                  </Badge>
-                ))}
+                  </Badge>)}
               </div>
-            </motion.div>
-          )}
+            </motion.div>}
         </div>
 
         {/* Delay recommendation */}
-        {readiness.recommended_delay && readiness.recommended_delay !== "None" && (
-          <p className="text-xs text-muted-foreground italic mt-3">
+        {readiness.recommended_delay && readiness.recommended_delay !== "None" && <p className="text-xs text-muted-foreground italic mt-3 my-[22px]">
             Recommended delay: {readiness.recommended_delay}
-          </p>
-        )}
+          </p>}
 
       {/* Admin-only refresh button */}
       {isAdmin && <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border/30">
