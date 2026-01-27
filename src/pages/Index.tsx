@@ -12,22 +12,12 @@ import { CredibilitySection } from "@/components/landing/CredibilitySection";
 import { FinalCTASection } from "@/components/landing/FinalCTASection";
 import { CursorLight } from "@/components/landing/CursorLight";
 
-const INTRO_SESSION_KEY = "landing-intro-shown";
-
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
-  const [introComplete, setIntroComplete] = useState(false);
-  const { setTheme, resolvedTheme } = useTheme();
+  const { setTheme } = useTheme();
 
-  // One-time cinematic intro: dark → light transition
+  // Cinematic intro: dark → light transition on every visit
   useEffect(() => {
-    const introShown = sessionStorage.getItem(INTRO_SESSION_KEY);
-    
-    if (introShown) {
-      setIntroComplete(true);
-      return;
-    }
-
     // Force dark mode for intro
     setTheme("dark");
 
@@ -36,15 +26,8 @@ const Index = () => {
       setTheme("light");
     }, 2000);
 
-    // Mark intro as complete after full sequence (2s dark + 1.5s transition)
-    const completeTimer = setTimeout(() => {
-      sessionStorage.setItem(INTRO_SESSION_KEY, "true");
-      setIntroComplete(true);
-    }, 3500);
-
     return () => {
       clearTimeout(transitionTimer);
-      clearTimeout(completeTimer);
     };
   }, [setTheme]);
 
