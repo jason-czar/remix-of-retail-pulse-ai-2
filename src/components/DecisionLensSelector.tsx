@@ -63,6 +63,17 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   
+  // Combine default and custom lenses
+  const allLensOptions: LensOption[] = [
+    ...defaultLensOptions,
+    ...customLenses.map((lens) => ({
+      value: lens.slug,
+      label: lens.name,
+      isCustom: true,
+      customLens: lens,
+    })),
+  ];
+  
   // Check scroll state
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -89,16 +100,47 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
     };
   }, [customLenses]);
   
-  // Combine default and custom lenses
-  const allLensOptions: LensOption[] = [
-    ...defaultLensOptions,
-    ...customLenses.map((lens) => ({
-      value: lens.slug,
-      label: lens.name,
-      isCustom: true,
-      customLens: lens,
-    })),
-  ];
+  // Keyboard navigation for switching lenses with arrow keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger when user is typing in an input or textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+      
+      // Only handle left/right arrow keys
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+        return;
+      }
+      
+      const currentIndex = allLensOptions.findIndex(opt => opt.value === value);
+      if (currentIndex === -1) return;
+      
+      let newIndex: number;
+      if (e.key === 'ArrowLeft') {
+        newIndex = currentIndex === 0 ? allLensOptions.length - 1 : currentIndex - 1;
+      } else {
+        newIndex = currentIndex === allLensOptions.length - 1 ? 0 : currentIndex + 1;
+      }
+      
+      const newOption = allLensOptions[newIndex];
+      onChange(newOption.value, newOption.customLens);
+      
+      // Scroll the selected lens into view
+      setTimeout(() => {
+        const container = scrollContainerRef.current;
+        const buttons = container?.querySelectorAll('button');
+        const targetButton = buttons?.[newIndex];
+        if (targetButton && container) {
+          targetButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }, 50);
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [value, allLensOptions, onChange]);
   
   const handleDeleteConfirm = async () => {
     if (lensToDelete) {
