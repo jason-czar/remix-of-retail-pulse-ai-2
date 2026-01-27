@@ -158,9 +158,8 @@ export function LensReadinessCard({
           <Separator className="mb-6 opacity-50" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 items-start">
             {/* Key Concerns Card */}
-            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <Card className="p-4 glass-card">
+            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <div className="glass-tile p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
-                  
                   <span className="text-base font-medium">Key Concerns</span>
                 </div>
                 <ul className="space-y-2">
@@ -168,12 +167,11 @@ export function LensReadinessCard({
                       {cleanNarrativeText(concern)}
                     </li>)}
                 </ul>
-              </Card>}
+              </div>}
 
             {/* Recommended Actions Card */}
-            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <Card className="p-4 glass-card">
+            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <div className="glass-tile p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-3">
-                  
                   <span className="text-base font-medium">Recommended Actions</span>
                 </div>
                 <ul className="space-y-2">
@@ -181,7 +179,7 @@ export function LensReadinessCard({
                       {cleanNarrativeText(action)}
                     </li>)}
                 </ul>
-              </Card>}
+              </div>}
           </div>
         </>}
 
