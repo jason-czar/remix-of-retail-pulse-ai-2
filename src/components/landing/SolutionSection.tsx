@@ -4,8 +4,6 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from "./ScrollReveal";
 export function SolutionSection() {
   return (
     <section className="py-20 lg:py-28 relative">
-      {/* Subtle background glow */}
-      <div className="absolute inset-0 bg-gradient-glow opacity-50 pointer-events-none" />
       
       <div className="container mx-auto px-4 relative">
         <div className="max-w-5xl mx-auto">
