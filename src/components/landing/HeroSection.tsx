@@ -86,7 +86,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
-                    transition={{ duration: 2.5, ease: [0.25, 0.1, 0.25, 1] }}
+                    transition={{ duration: 2.5, ease: [0.3, 0.0, 0.2, 1] }}
                   >
                     <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
                       Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered
@@ -97,7 +97,7 @@ export function HeroSection() {
                       className="flex flex-row flex-nowrap items-center justify-center gap-3 max-w-full overflow-visible py-0 sm:gap-[17px]"
                       initial={{ opacity: 0, y: 24 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 2.5, delay: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                      transition={{ duration: 2.5, delay: 0.2, ease: [0.3, 0.0, 0.2, 1] }}
                     >
                       <Link to="/symbol/NVDA" className="shrink-0">
                         <Button
