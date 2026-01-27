@@ -191,7 +191,7 @@ export default function SymbolPage() {
                 <Skeleton className="h-5 md:h-6 w-24 md:w-32" />
               </div> : <div>
                 <div className="flex items-center gap-2 md:gap-3 flex-wrap mb-2">
-                  <h1 className="text-2xl md:text-4xl font-display">${symbol}</h1>
+                  <h1 className="text-2xl md:text-4xl font-display">{symbol}</h1>
                   <Badge variant={data.trend}>{data.trend}</Badge>
                   {data.badges.includes("trending") && <Badge variant="trending">
                       <TrendingUp className="h-3 w-3 mr-1" />
