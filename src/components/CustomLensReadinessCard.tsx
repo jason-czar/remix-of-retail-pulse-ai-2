@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomLens } from "@/hooks/use-custom-lenses";
 import { LensSummaryData } from "@/hooks/use-decision-lens-summary";
-import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, AlertCircle, Lightbulb, RefreshCw } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, TrendingUp, TrendingDown, AlertCircle, Lightbulb, RefreshCw, AlertTriangle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -347,7 +348,21 @@ export function CustomLensReadinessCard({
 
       {/* Admin-only refresh button */}
       {isAdmin && symbol && (
-        <div className="flex justify-end mt-4 pt-3 border-t border-border/30">
+        <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-border/30">
+          {/* Fallback indicator - check if concerns follow the fallback pattern */}
+          {concerns.some(c => c.startsWith("Retail discussion centers on")) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1.5 text-xs text-warning/80">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <span>Fallback</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p className="text-xs">AI generation failed — using fallback data</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           <Button
             variant="ghost"
             size="sm"
