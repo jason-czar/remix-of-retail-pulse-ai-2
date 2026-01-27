@@ -20,6 +20,14 @@ export interface AlertTypeConfig {
   defaultThreshold?: number;
   thresholdLabel?: string;
   thresholdMax?: number;
+  /** What this alert monitors - shown to users */
+  monitors: string;
+  /** How the alert is evaluated - shown to users */
+  evaluationLogic: string;
+  /** Whether this is a recommended/popular alert */
+  recommended?: boolean;
+  /** Short tagline for quick-pick cards */
+  tagline?: string;
 }
 
 // Sentiment-based alerts
@@ -31,6 +39,10 @@ export const SENTIMENT_ALERT_TYPES: AlertTypeConfig[] = [
     description: "Alert when sentiment rises sharply",
     category: "sentiment",
     needsThreshold: false,
+    monitors: "Bullish message ratio vs. 24-hour average",
+    evaluationLogic: "Triggers when bullish sentiment increases 15%+ within 2 hours",
+    recommended: true,
+    tagline: "Catch momentum early",
   },
   { 
     value: "sentiment_drop", 
@@ -39,6 +51,10 @@ export const SENTIMENT_ALERT_TYPES: AlertTypeConfig[] = [
     description: "Alert when sentiment falls sharply",
     category: "sentiment",
     needsThreshold: false,
+    monitors: "Bearish message ratio vs. 24-hour average",
+    evaluationLogic: "Triggers when bearish sentiment increases 15%+ within 2 hours",
+    recommended: true,
+    tagline: "Don't miss reversals",
   },
   { 
     value: "bullish_threshold", 
@@ -50,6 +66,8 @@ export const SENTIMENT_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 70,
     thresholdLabel: "Bullish % Threshold",
     thresholdMax: 100,
+    monitors: "Percentage of bullish messages in latest batch",
+    evaluationLogic: "Triggers when bullish messages exceed your set threshold",
   },
   { 
     value: "bearish_threshold", 
@@ -61,6 +79,8 @@ export const SENTIMENT_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 70,
     thresholdLabel: "Bearish % Threshold",
     thresholdMax: 100,
+    monitors: "Percentage of bearish messages in latest batch",
+    evaluationLogic: "Triggers when bearish messages exceed your set threshold",
   },
 ];
 
@@ -76,6 +96,10 @@ export const VOLUME_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 200,
     thresholdLabel: "Volume % Above Average",
     thresholdMax: 1000,
+    monitors: "Message count vs. 7-day hourly average",
+    evaluationLogic: "Triggers when current hour volume exceeds average by your threshold %",
+    recommended: true,
+    tagline: "Spot unusual activity",
   },
 ];
 
@@ -91,6 +115,10 @@ export const EMOTION_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 25,
     thresholdLabel: "FOMO Score Threshold",
     thresholdMax: 100,
+    monitors: "FOMO emotion score from AI message analysis",
+    evaluationLogic: "Triggers when FOMO score exceeds threshold (higher = stronger signal)",
+    recommended: true,
+    tagline: "Watch for FOMO tops",
   },
   { 
     value: "greed_surge", 
@@ -102,6 +130,8 @@ export const EMOTION_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 25,
     thresholdLabel: "Greed Score Threshold",
     thresholdMax: 100,
+    monitors: "Greed emotion score from AI message analysis",
+    evaluationLogic: "Triggers when greed score exceeds threshold (often precedes corrections)",
   },
   { 
     value: "fear_spike", 
@@ -113,6 +143,10 @@ export const EMOTION_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 30,
     thresholdLabel: "Fear Score Threshold",
     thresholdMax: 100,
+    monitors: "Fear emotion score from AI message analysis",
+    evaluationLogic: "Triggers when fear score exceeds threshold (panic selling indicator)",
+    recommended: true,
+    tagline: "Catch panic selling",
   },
   { 
     value: "capitulation_signal", 
@@ -124,6 +158,8 @@ export const EMOTION_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 15,
     thresholdLabel: "Capitulation Score Threshold",
     thresholdMax: 100,
+    monitors: "Capitulation pattern from combined fear + volume + sentiment",
+    evaluationLogic: "Triggers when capitulation score exceeds threshold (potential reversal)",
   },
   { 
     value: "euphoria_extreme", 
@@ -135,6 +171,8 @@ export const EMOTION_ALERT_TYPES: AlertTypeConfig[] = [
     defaultThreshold: 20,
     thresholdLabel: "Euphoria Score Threshold",
     thresholdMax: 100,
+    monitors: "Euphoria emotion score from AI message analysis",
+    evaluationLogic: "Triggers when euphoria peaks (historically precedes pullbacks)",
   },
 ];
 
@@ -144,6 +182,9 @@ export const ALL_ALERT_TYPES: AlertTypeConfig[] = [
   ...VOLUME_ALERT_TYPES,
   ...EMOTION_ALERT_TYPES,
 ];
+
+// Recommended alerts for quick setup
+export const RECOMMENDED_ALERTS = ALL_ALERT_TYPES.filter(a => a.recommended);
 
 // Helper functions
 export function getAlertTypeConfig(type: string): AlertTypeConfig | undefined {
