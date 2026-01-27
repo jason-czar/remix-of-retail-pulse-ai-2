@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 export function HeroSection() {
   const [animationPhase, setAnimationPhase] = useState<"waiting" | "centered" | "expanded">("waiting");
@@ -78,62 +78,48 @@ export function HeroSection() {
                 </span>
               </motion.h1>
 
-              {/* Subheading - fades in after expansion */}
-              <motion.p
-                className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8"
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: animationPhase === "expanded" ? 1 : 0,
-                  y: animationPhase === "expanded" ? 0 : 20,
-                }}
-                transition={{
-                  duration: 0.6,
-                  delay: 0.3,
-                  ease: [0.25, 0.4, 0.25, 1],
-                }}
-              >
-                Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered in
-                real-time for strategic decision-making.
-              </motion.p>
+              {/* Only mount subtext + buttons after expansion so the headline can truly center */}
+              <AnimatePresence initial={false}>
+                {animationPhase === "expanded" ? (
+                  <motion.div
+                    key="expanded-content"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 16 }}
+                    transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+                  >
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+                      Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered
+                      in real-time for strategic decision-making.
+                    </p>
 
-              {/* Buttons - fade in after subheading */}
-              <motion.div
-                className="flex flex-row flex-nowrap items-center justify-center gap-3 max-w-full overflow-visible py-0 sm:gap-[17px]"
-                initial={{
-                  opacity: 0,
-                  y: 20,
-                }}
-                animate={{
-                  opacity: animationPhase === "expanded" ? 1 : 0,
-                  y: animationPhase === "expanded" ? 0 : 20,
-                }}
-                transition={{
-                  duration: 0.6,
-                  delay: 0.5,
-                  ease: [0.25, 0.4, 0.25, 1],
-                }}
-              >
-                <Link to="/symbol/NVDA" className="shrink-0">
-                  <Button
-                    size="lg"
-                    className="px-5 sm:px-8 rounded-full glass-button-primary shadow-[0_4px_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_8px_28px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    View NVDA
-                  </Button>
-                </Link>
-                <Link to="/learn-more" className="shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="px-5 sm:px-8 rounded-full glass-button-secondary shadow-[0_4px_16px_hsl(0_0%_0%/0.08)] dark:shadow-[0_4px_20px_hsl(0_0%_0%/0.5)] hover:shadow-[0_8px_24px_hsl(0_0%_0%/0.12)] dark:hover:shadow-[0_8px_28px_hsl(0_0%_0%/0.6)] hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    Learn More
-                  </Button>
-                </Link>
-              </motion.div>
+                    <motion.div
+                      className="flex flex-row flex-nowrap items-center justify-center gap-3 max-w-full overflow-visible py-0 sm:gap-[17px]"
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.4, 0.25, 1] }}
+                    >
+                      <Link to="/symbol/NVDA" className="shrink-0">
+                        <Button
+                          size="lg"
+                          className="px-5 sm:px-8 rounded-full glass-button-primary shadow-[0_4px_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_8px_28px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all duration-300"
+                        >
+                          View NVDA
+                        </Button>
+                      </Link>
+                      <Link to="/learn-more" className="shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="lg"
+                          className="px-5 sm:px-8 rounded-full glass-button-secondary shadow-[0_4px_16px_hsl(0_0%_0%/0.08)] dark:shadow-[0_4px_20px_hsl(0_0%_0%/0.5)] hover:shadow-[0_8px_24px_hsl(0_0%_0%/0.12)] dark:hover:shadow-[0_8px_28px_hsl(0_0%_0%/0.6)] hover:-translate-y-0.5 transition-all duration-300"
+                        >
+                          Learn More
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
           </motion.div>
         </div>
