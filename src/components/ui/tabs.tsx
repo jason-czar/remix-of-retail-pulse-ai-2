@@ -5,12 +5,39 @@ const Tabs = TabsPrimitive.Root;
 const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>>(({
   className,
   ...props
-}, ref) => <TabsPrimitive.List ref={ref} className={cn("relative overflow-visible inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground bg-white/72 dark:bg-[hsl(0_0%_12%/0.45)] backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.08] py-0 rounded-full my-0 px-[7px] shadow-none", className)} {...props} />);
+}, ref) => <TabsPrimitive.List ref={ref} className={cn(
+  "relative overflow-visible inline-flex h-auto items-center justify-center gap-1.5 text-muted-foreground rounded-2xl py-2 px-3",
+  // Liquid Glass styling matching decision lens selector
+  "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[160%]",
+  "border border-black/[0.08] dark:border-white/[0.1]",
+  "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)]",
+  "dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),0_1px_4px_rgba(0,0,0,0.15)]",
+  // Top edge highlight for glass refraction effect
+  "before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:z-10 before:rounded-t-2xl",
+  "before:bg-gradient-to-r before:from-transparent before:via-white/50 before:to-transparent",
+  "dark:before:via-white/20",
+  className
+)} {...props} />);
 TabsList.displayName = TabsPrimitive.List.displayName;
+
 const TabsTrigger = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Trigger>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>>(({
   className,
   ...props
-}, ref) => <TabsPrimitive.Trigger ref={ref} className={cn("inline-flex items-center justify-center whitespace-nowrap text-sm rounded-full ring-offset-background transition-all duration-200 text-muted-foreground hover:text-foreground/80 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:dark:glass-tabs-trigger-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-0 font-normal mx-0 px-3 py-1.5", className)} {...props} />);
+}, ref) => <TabsPrimitive.Trigger ref={ref} className={cn(
+  "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium rounded-full ring-offset-background transition-all duration-200 px-4 py-1.5",
+  "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
+  // Active state - Light mode
+  "data-[state=active]:bg-white data-[state=active]:text-foreground",
+  "data-[state=active]:shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
+  "data-[state=active]:border data-[state=active]:border-black/[0.06]",
+  // Active state - Dark mode
+  "dark:data-[state=active]:bg-white/[0.12] dark:data-[state=active]:text-foreground",
+  "dark:data-[state=active]:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+  "dark:data-[state=active]:border-white/[0.12]",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  className
+)} {...props} />);
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 const TabsContent = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Content>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>>(({
   className,
