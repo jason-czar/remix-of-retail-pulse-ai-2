@@ -43,7 +43,27 @@ export default function SymbolPage() {
   
   // Extract symbol from URL path as fallback (handles static routes like /symbol/AAPL)
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
-  const [activeTab, setActiveTab] = useState<string>('narratives');
+  
+  // Initialize active chart tab from URL query param or default to 'narratives'
+  const validTabs = ['narratives', 'emotions', 'sentiment', 'momentum'];
+  const initialTab = searchParams.get('chart') || 'narratives';
+  const [activeTab, setActiveTabState] = useState<string>(
+    validTabs.includes(initialTab) ? initialTab : 'narratives'
+  );
+  
+  // Wrapper to update URL when chart tab changes
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      if (tab === 'narratives') {
+        newParams.delete('chart');
+      } else {
+        newParams.set('chart', tab);
+      }
+      return newParams;
+    }, { replace: true });
+  };
   
   // Initialize time range from URL query param or default to '1D'
   const validTimeRanges: TimeRange[] = ['1H', '6H', '1D', '24H', '7D', '30D'];
@@ -213,7 +233,7 @@ export default function SymbolPage() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
             >
-              <Tabs defaultValue="narratives" className="mb-6 md:mb-8" onValueChange={v => setActiveTab(v)} data-tour="chart-tabs">
+              <Tabs value={activeTab} className="mb-6 md:mb-8" onValueChange={setActiveTab} data-tour="chart-tabs">
                 {/* Chart content first */}
                 <TabsContent value="narratives" className="mt-0 mb-3 md:mb-4">
                   <div className="-mx-4 md:mx-0">
