@@ -184,7 +184,7 @@ export function LensReadinessCard({
                   <span className="text-base font-semibold tracking-tight">Key Concerns</span>
                 </div>
                 <ul className="relative space-y-3">
-                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-warning/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--warning)/0.5)]">
+                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[15px] text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[9px] before:w-2 before:h-2 before:bg-warning/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--warning)/0.5)]">
                       {cleanNarrativeText(concern)}
                     </li>)}
                 </ul>
@@ -218,7 +218,7 @@ export function LensReadinessCard({
                   <span className="text-base font-semibold tracking-tight">Recommended Actions</span>
                 </div>
                 <ul className="relative space-y-3">
-                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-sm text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[7px] before:w-2 before:h-2 before:bg-primary/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--primary)/0.5)]">
+                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[15px] text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[9px] before:w-2 before:h-2 before:bg-primary/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--primary)/0.5)]">
                       {cleanNarrativeText(action)}
                     </li>)}
                 </ul>
