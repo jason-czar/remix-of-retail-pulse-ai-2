@@ -344,7 +344,7 @@ export default function SymbolPage() {
                 duration: 0.4,
                 ease: "easeOut"
               }}>
-                      <p className="text-[13px] md:text-sm text-foreground/80 leading-[1.7] tracking-[-0.01em] inline">
+                      <p className="text-sm md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em] inline">
                         <FormattedSummary text={summary} />
                       </p>
                       {isAdmin && (
@@ -425,7 +425,7 @@ export default function SymbolPage() {
                 duration: 0.4,
                 ease: "easeOut"
               }} className="flex-1">
-                      <p className="text-[13px] md:text-sm text-foreground/80 leading-[1.7] tracking-[-0.01em]">
+                      <p className="text-sm md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
                         <FormattedSummary text={summary} />
                       </p>
                     </motion.div>}
