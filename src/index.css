@@ -547,15 +547,13 @@
 
   .dark .glass-list-item {
     background: hsl(0 0% 100% / 0.04);
-    border: 1px solid hsl(0 0% 100% / 0.06);
+    border: 1px solid hsl(0 0% 100% / 0.04);
   }
 
   .dark .glass-list-item:hover {
     background: hsl(0 0% 100% / 0.08);
-    border-color: hsl(0 0% 100% / 0.1);
-    box-shadow: 
-      0 4px 16px hsl(0 0% 0% / 0.25),
-      inset 0 1px 0 hsl(0 0% 100% / 0.06);
+    border-color: hsl(0 0% 100% / 0.06);
+    box-shadow: 0 4px 16px hsl(0 0% 0% / 0.25);
   }
 
   :not(.dark) .glass-list-item {
