@@ -182,7 +182,7 @@ export function LensReadinessCard({
           </div>}
 
         {/* Bottom Row: Readiness Score + Narratives (left) | Risk Score (right) */}
-        <div className="grid grid-cols-1 md:grid-cols-[7fr_13fr] gap-4 md:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-[7fr_13fr] gap-4 md:gap-6 pt-[63px]">
           {/* Left Column: Readiness Score + Narratives */}
           <div className="flex flex-col min-w-0">
             {/* Readiness Score with progress bar */}
