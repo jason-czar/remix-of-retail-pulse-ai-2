@@ -255,7 +255,7 @@ export function LensReadinessCard({
                   <TrendingDown className="h-4 w-4 text-bearish" />
                 </div>
               </div>
-              <div className="relative flex flex-wrap gap-2">
+              <div className="relative flex flex-wrap justify-center gap-2">
                 {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-bearish/40 text-bearish bg-bearish/10 px-2.5 py-1 rounded-lg">
                     {cleanNarrativeText(narrative)}
                   </Badge>)}
@@ -289,7 +289,7 @@ export function LensReadinessCard({
                   <TrendingUp className="h-4 w-4 text-bullish" />
                 </div>
               </div>
-              <div className="relative flex flex-wrap gap-2">
+              <div className="relative flex flex-wrap justify-center gap-2">
                 {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-bullish/40 text-bullish bg-bullish/10 px-2.5 py-1 rounded-lg">
                     {cleanNarrativeText(narrative)}
                   </Badge>)}
