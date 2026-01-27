@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -13,6 +13,19 @@ import { CursorLight } from "@/components/landing/CursorLight";
 
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  // Parallax scroll handler with throttling for performance
+  const handleScroll = useCallback(() => {
+    requestAnimationFrame(() => {
+      setScrollY(window.scrollY);
+    });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     // Lazy load background images
@@ -45,16 +58,27 @@ const Index = () => {
     loadImages();
   }, []);
 
+  // Parallax transform - background moves at 30% of scroll speed
+  const parallaxTransform = `translateY(${scrollY * 0.3}px) scale(1.1)`;
+
   return (
-    <div className="min-h-screen cursor-light-enabled relative">
-      {/* Theme-aware background images with smooth crossfade animation */}
+    <div className="min-h-screen cursor-light-enabled relative overflow-x-hidden">
+      {/* Theme-aware background images with smooth crossfade and parallax */}
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
-        style={{ backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined }}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-out ${bgLoaded ? 'dark:opacity-0 opacity-100' : 'opacity-0'}`}
+        style={{ 
+          backgroundImage: bgLoaded ? "var(--landing-bg-light)" : undefined,
+          transform: parallaxTransform,
+          willChange: "transform"
+        }}
       />
       <div 
-        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out ${bgLoaded ? 'scale-100 blur-0' : 'scale-105 blur-sm'} ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
-        style={{ backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined }}
+        className={`fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ease-out ${bgLoaded ? 'dark:opacity-100 opacity-0' : 'opacity-0'}`}
+        style={{ 
+          backgroundImage: bgLoaded ? "var(--landing-bg-dark)" : undefined,
+          transform: parallaxTransform,
+          willChange: "transform"
+        }}
       />
       <CursorLight />
       <Header />
