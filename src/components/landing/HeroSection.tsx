@@ -44,20 +44,8 @@ export function HeroSection() {
             {/* Subtle top accent glow */}
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-t-2xl" />
 
-            {/* Content wrapper with dynamic height - centers headline during initial phase */}
-            <motion.div
-              className="flex flex-col items-center leading-tight "
-              style={{
-                justifyContent: animationPhase === "expanded" ? "flex-start" : "center",
-              }}
-              animate={{
-                height: "100%",
-              }}
-              transition={{
-                duration: 0.8,
-                ease: [0.25, 0.4, 0.25, 1],
-              }}
-            >
+          {/* Content wrapper - fits to content naturally */}
+          <div className="flex flex-col items-center leading-tight">
               {/* Main headline - starts centered, animates up */}
               <motion.h1
                 className="text-3xl md:text-4xl lg:text-5xl font-display font-medium leading-tight"
@@ -146,7 +134,7 @@ export function HeroSection() {
                   </Button>
                 </Link>
               </motion.div>
-            </motion.div>
+            </div>
           </motion.div>
         </div>
       </div>
