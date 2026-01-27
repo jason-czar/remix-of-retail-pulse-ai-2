@@ -86,13 +86,17 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   return (
     <>
       <div className={cn(
-        "inline-flex items-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto md:mx-0 scrollbar-hide mx-[4px]",
+        "relative inline-flex items-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto md:mx-0 scrollbar-hide mx-[4px]",
         // Liquid Glass styling matching sidebars
         "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
         "backdrop-blur-[28px] backdrop-saturate-[160%]",
         "border border-black/[0.08] dark:border-white/[0.1]",
         "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)]",
-        "dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),0_1px_4px_rgba(0,0,0,0.15)]"
+        "dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),0_1px_4px_rgba(0,0,0,0.15)]",
+        // Top edge highlight for glass refraction effect
+        "before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:z-10 before:rounded-t-2xl",
+        "before:bg-gradient-to-r before:from-transparent before:via-white/50 before:to-transparent",
+        "dark:before:via-white/20"
       )}>
         {allLensOptions.map((option) => (
           <div key={option.value} className="relative flex items-center shrink-0">
