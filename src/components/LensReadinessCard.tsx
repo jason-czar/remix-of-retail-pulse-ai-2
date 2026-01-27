@@ -164,9 +164,48 @@ export function LensReadinessCard({
           </Badge>
         </div>
 
-        {/* Two-column layout - 35/65 split */}
+        {/* Top Row: Key Concerns (left) and Recommended Actions (right) */}
+        {overlay && (overlay.dominant_concerns?.length > 0 || overlay.recommended_actions?.length > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 pb-4 border-b border-border/30">
+            {/* Key Concerns */}
+            {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <AlertCircle className="h-4 w-4 text-warning" />
+                  <span className="text-sm font-medium">Key Concerns</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => (
+                    <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
+                      {cleanNarrativeText(concern)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Recommended Actions */}
+            {overlay.recommended_actions && overlay.recommended_actions.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2.5">
+                  <Lightbulb className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Recommended Actions</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => (
+                    <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
+                      {cleanNarrativeText(action)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Bottom Row: Readiness Score + Narratives (left) | Risk Score (right) */}
         <div className="grid grid-cols-1 md:grid-cols-[7fr_13fr] gap-4 md:gap-6">
-          {/* Left Column: Readiness Score + Narratives (35%) */}
+          {/* Left Column: Readiness Score + Narratives */}
           <div className="flex flex-col min-w-0">
             {/* Readiness Score with progress bar */}
             <div>
@@ -243,8 +282,8 @@ export function LensReadinessCard({
               </div>}
           </div>
 
-          {/* Right Column: Risk, Concerns, Actions (65%) */}
-          {overlay && <div className="md:border-l md:border-border/40 md:pl-6 space-y-4 min-w-0">
+          {/* Right Column: Risk Score only */}
+          {overlay && <div className="md:border-l md:border-border/40 md:pl-6 min-w-0">
               {/* Risk Score - inline header */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Risk Score</span>
@@ -252,34 +291,8 @@ export function LensReadinessCard({
                   {overlay.risk_score}/100
                 </span>
               </div>
-
-              {/* Key Concerns - compact */}
-              {overlay.dominant_concerns && overlay.dominant_concerns.length > 0 && <div>
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <AlertCircle className="h-4 w-4 text-warning" />
-                    <span className="text-sm font-medium">Key Concerns</span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-warning/60 before:rounded-full">
-                        {cleanNarrativeText(concern)}
-                      </li>)}
-                  </ul>
-                </div>}
-
-              {/* Recommended Actions - compact */}
-              {overlay.recommended_actions && overlay.recommended_actions.length > 0 && <div>
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <Lightbulb className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Recommended Actions</span>
-                  </div>
-                  <ul className="space-y-1.5">
-                    {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[13px] text-muted-foreground pl-4 relative before:absolute before:left-0 before:top-[7px] before:w-1.5 before:h-1.5 before:bg-primary/60 before:rounded-full">
-                        {cleanNarrativeText(action)}
-                      </li>)}
-                  </ul>
-                </div>}
             </div>}
-      </div>
+        </div>
 
       {/* Admin-only refresh button */}
       {isAdmin && (
