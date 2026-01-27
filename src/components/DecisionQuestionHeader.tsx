@@ -237,12 +237,16 @@ export function DecisionQuestionHeader({
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
-                <div className="relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
+                <div className="group relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${readinessScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn("h-full rounded-full", PROGRESS_COLORS.readiness)}
+                    className={cn(
+                      "h-full rounded-full transition-shadow duration-300",
+                      PROGRESS_COLORS.readiness,
+                      "group-hover:shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
+                    )}
                   />
                 </div>
               </div>
@@ -258,12 +262,16 @@ export function DecisionQuestionHeader({
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
-                <div className="relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
+                <div className="group relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn("h-full rounded-full", PROGRESS_COLORS.risk)}
+                    className={cn(
+                      "h-full rounded-full transition-shadow duration-300",
+                      PROGRESS_COLORS.risk,
+                      "group-hover:shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
+                    )}
                   />
                 </div>
               </div>
@@ -279,12 +287,16 @@ export function DecisionQuestionHeader({
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
                 </div>
-                <div className="relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
+                <div className="group relative h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${confidencePercent}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn("h-full rounded-full", PROGRESS_COLORS.confidence)}
+                    className={cn(
+                      "h-full rounded-full transition-shadow duration-300",
+                      PROGRESS_COLORS.confidence,
+                      "group-hover:shadow-[0_0_8px_hsl(var(--primary)/0.55)]"
+                    )}
                   />
                 </div>
               </div>
