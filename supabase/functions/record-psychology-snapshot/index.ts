@@ -1107,22 +1107,33 @@ async function generateInterpretationLayer(
     .map(([name, s]) => `${name}${s.strength ? ` (${s.strength})` : ''}`)
     .join(", ") || "none";
 
-  const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        {
-          role: "system",
-          content: `You are a senior consulting analyst generating decision-support intelligence. Provide actionable, executive-ready analysis. CRITICAL: Do not overweight recent/hourly data. Prefer narratives that persist across weekly and monthly timeframes for strategic decisions.`,
+  // Retry logic with exponential backoff for AI interpretation
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [1000, 2000, 4000]; // 1s, 2s, 4s
+  
+  let lastError: Error | null = null;
+  let aiData: any = null;
+  
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      console.log(`${symbol}: AI interpretation attempt ${attempt + 1}/${MAX_RETRIES}`);
+      
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableApiKey}`,
+          "Content-Type": "application/json",
         },
-        {
-          role: "user",
-          content: `Generate comprehensive decision intelligence for ${symbol.toUpperCase()}.
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: `You are a senior consulting analyst generating decision-support intelligence. Provide actionable, executive-ready analysis. CRITICAL: Do not overweight recent/hourly data. Prefer narratives that persist across weekly and monthly timeframes for strategic decisions.`,
+            },
+            {
+              role: "user",
+              content: `Generate comprehensive decision intelligence for ${symbol.toUpperCase()}.
 
 CRITICAL TEMPORAL GOVERNANCE RULES:
 1. Do NOT overweight information from the most recent period
@@ -1183,85 +1194,102 @@ Generate:
    - primary_risk: main risk identified (prefer structural risks)
    - dominant_emotion: key emotion driving sentiment
    - action_bias: recommended stance`,
-        },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "generate_interpretation",
-            description: "Generate decision overlays and readiness assessments for 8 lenses",
-            parameters: {
-              type: "object",
-              properties: {
-                // Overlays for all 8 lenses
-                earnings_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                ma_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                capital_allocation_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                corporate_strategy_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                leadership_change_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                strategic_pivot_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                product_launch_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                activist_risk_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
-                // Readiness for all 8 lenses
-                earnings_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                ma_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                capital_allocation_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                corporate_strategy_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                leadership_change_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                strategic_pivot_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                product_launch_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                activist_risk_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
-                // Summary
-                one_liner: { type: "string" },
-                primary_risk: { type: "string" },
-                dominant_emotion: { type: "string" },
-                action_bias: { type: "string" },
-              },
-              required: [
-                "earnings_overlay", "earnings_readiness",
-                "ma_overlay", "ma_readiness",
-                "capital_allocation_overlay", "capital_allocation_readiness",
-                "corporate_strategy_overlay", "corporate_strategy_readiness",
-                "leadership_change_overlay", "leadership_change_readiness",
-                "strategic_pivot_overlay", "strategic_pivot_readiness",
-                "product_launch_overlay", "product_launch_readiness",
-                "activist_risk_overlay", "activist_risk_readiness",
-                "one_liner", "primary_risk", "dominant_emotion", "action_bias"
-              ],
             },
-          },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "generate_interpretation" } },
-    }),
-  });
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "generate_interpretation",
+                description: "Generate decision overlays and readiness assessments for 8 lenses",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    // Overlays for all 8 lenses
+                    earnings_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    ma_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    capital_allocation_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    corporate_strategy_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    leadership_change_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    strategic_pivot_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    product_launch_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    activist_risk_overlay: { type: "object", properties: { risk_score: { type: "number" }, dominant_concerns: { type: "array", items: { type: "string" } }, recommended_focus: { type: "array", items: { type: "string" } }, recommended_actions: { type: "array", items: { type: "string" } } } },
+                    // Readiness for all 8 lenses
+                    earnings_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    ma_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    capital_allocation_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    corporate_strategy_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    leadership_change_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    strategic_pivot_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    product_launch_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    activist_risk_readiness: { type: "object", properties: { readiness_score: { type: "number" }, blocking_narratives: { type: "array", items: { type: "string" } }, supportive_narratives: { type: "array", items: { type: "string" } }, recommended_timing: { type: "string" }, recommended_delay: { type: "string" } } },
+                    // Summary
+                    one_liner: { type: "string" },
+                    primary_risk: { type: "string" },
+                    dominant_emotion: { type: "string" },
+                    action_bias: { type: "string" },
+                  },
+                  required: [
+                    "earnings_overlay", "earnings_readiness",
+                    "ma_overlay", "ma_readiness",
+                    "capital_allocation_overlay", "capital_allocation_readiness",
+                    "corporate_strategy_overlay", "corporate_strategy_readiness",
+                    "leadership_change_overlay", "leadership_change_readiness",
+                    "strategic_pivot_overlay", "strategic_pivot_readiness",
+                    "product_launch_overlay", "product_launch_readiness",
+                    "activist_risk_overlay", "activist_risk_readiness",
+                    "one_liner", "primary_risk", "dominant_emotion", "action_bias"
+                  ],
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "generate_interpretation" } },
+        }),
+      });
 
-  if (!aiResponse.ok) {
-    const errorText = await aiResponse.text();
-    console.error("AI interpretation failed:", aiResponse.status, errorText);
-    // Return minimal interpretation on failure
-    return {
-      decision_overlays: {},
-      decision_readiness: {},
-      snapshot_summary: {
-        one_liner: `Market psychology analysis for ${symbol} completed with limited interpretation.`,
-        primary_risk: "Analysis incomplete",
-        dominant_emotion: emotions[0]?.emotion || "Unknown",
-        action_bias: "Monitor",
-        confidence: 0.5,
-      },
-    };
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        const isRetryable = aiResponse.status === 429 || aiResponse.status === 503 || aiResponse.status >= 500;
+        
+        console.warn(`${symbol}: AI attempt ${attempt + 1} failed with ${aiResponse.status}: ${errorText.slice(0, 200)}`);
+        
+        if (isRetryable && attempt < MAX_RETRIES - 1) {
+          console.log(`${symbol}: Retrying in ${RETRY_DELAYS[attempt]}ms...`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt]));
+          continue;
+        }
+        
+        // Non-retryable error or exhausted retries
+        lastError = new Error(`AI interpretation failed: ${aiResponse.status}`);
+        break;
+      }
+
+      aiData = await aiResponse.json();
+      console.log(`${symbol}: AI interpretation response received on attempt ${attempt + 1}`);
+      break; // Success - exit retry loop
+      
+    } catch (fetchError) {
+      console.error(`${symbol}: AI fetch error on attempt ${attempt + 1}:`, fetchError);
+      lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+      
+      if (attempt < MAX_RETRIES - 1) {
+        console.log(`${symbol}: Retrying in ${RETRY_DELAYS[attempt]}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt]));
+      }
+    }
   }
-
-  const aiData = await aiResponse.json();
-  console.log(`${symbol}: AI interpretation response received`);
+  
+  // If all retries failed, use fallback
+  if (!aiData) {
+    console.error(`${symbol}: All ${MAX_RETRIES} AI attempts failed, using fallback interpretation. Last error:`, lastError?.message);
+    return generateFallbackInterpretation(symbol, narratives, emotions, dataConfidence.score);
+  }
   
   const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
   
   if (!toolCall?.function?.arguments) {
-    console.error(`${symbol}: No tool call in AI response`, JSON.stringify(aiData).slice(0, 500));
-    // Return with defaults based on observed state
+    console.error(`${symbol}: No tool call in AI response after ${MAX_RETRIES} attempts`, JSON.stringify(aiData).slice(0, 500));
     return generateFallbackInterpretation(symbol, narratives, emotions, dataConfidence.score);
   }
 
