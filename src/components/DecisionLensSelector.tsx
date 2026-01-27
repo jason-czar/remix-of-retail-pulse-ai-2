@@ -42,7 +42,7 @@ interface DecisionLensSelectorProps {
 
 const defaultLensOptions: LensOption[] = [
   { value: 'summary', label: 'Summary' },
-  { value: 'corporate-strategy', label: 'Corporate Strategy Insights' },
+  { value: 'corporate-strategy', label: 'Corporate Strategy' },
   { value: 'earnings', label: 'Earnings' },
   { value: 'ma', label: 'M&A' },
   { value: 'capital-allocation', label: 'Capital Allocation' },
