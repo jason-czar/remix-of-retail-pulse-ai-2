@@ -36,28 +36,13 @@ const LENS_KEY_MAP: Record<string, string> = {
   'supply-chain': 'supply_chain'
 };
 
-function getReadinessColor(score: number): string {
-  if (score >= 70) return "text-bullish";
-  if (score >= 40) return "text-warning";
-  return "text-bearish";
+// All scores use primary (blue) color for consistency
+function getScoreColor(): string {
+  return "text-primary";
 }
 
-function getProgressColor(score: number): string {
-  if (score >= 70) return "bg-bullish";
-  if (score >= 40) return "bg-warning";
-  return "bg-bearish";
-}
-
-function getRiskColor(score: number): string {
-  if (score >= 70) return "text-bearish";
-  if (score >= 40) return "text-warning";
-  return "text-bullish";
-}
-
-function getConfidenceColor(level?: ConfidenceLevel): string {
-  if (level === 'high') return "text-bullish";
-  if (level === 'moderate') return "text-warning";
-  return "text-muted-foreground";
+function getProgressBarColor(): string {
+  return "bg-primary";
 }
 
 function getTimingBadge(timing?: string) {
@@ -244,7 +229,7 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Readiness</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
-                  <span className={cn("text-xl lg:text-3xl font-display", getReadinessColor(readinessScore))}>
+                  <span className={cn("text-xl lg:text-3xl font-display", getScoreColor())}>
                     {readinessScore}
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
@@ -254,7 +239,7 @@ export function DecisionQuestionHeader({
                     initial={{ width: 0 }}
                     animate={{ width: `${readinessScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn("h-full rounded-full", getProgressColor(readinessScore))}
+                    className={cn("h-full rounded-full", getProgressBarColor())}
                   />
                 </div>
               </div>
@@ -265,7 +250,7 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Risk</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
-                  <span className={cn("text-xl lg:text-3xl font-display", getRiskColor(riskScore))}>
+                  <span className={cn("text-xl lg:text-3xl font-display", getScoreColor())}>
                     {riskScore}
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
@@ -275,10 +260,7 @@ export function DecisionQuestionHeader({
                     initial={{ width: 0 }}
                     animate={{ width: `${riskScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full",
-                      riskScore >= 70 ? "bg-bearish" : riskScore >= 40 ? "bg-warning" : "bg-bullish"
-                    )}
+                    className={cn("h-full rounded-full", getProgressBarColor())}
                   />
                 </div>
               </div>
@@ -289,7 +271,7 @@ export function DecisionQuestionHeader({
                   <span className="text-[10px] lg:text-xs text-muted-foreground">Confidence</span>
                 </div>
                 <div className="flex items-baseline gap-0.5 lg:gap-1">
-                  <span className={cn("text-xl lg:text-3xl font-display", getConfidenceColor(confidence))}>
+                  <span className={cn("text-xl lg:text-3xl font-display", getScoreColor())}>
                     {confidencePercent}
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
