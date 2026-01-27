@@ -7,20 +7,20 @@ export function CinematicIntro() {
   const [phase, setPhase] = useState<IntroPhase>("atmospheric");
 
   useEffect(() => {
-    // Phase 1 → 2: Atmospheric layer fades to reveal dark mode (400ms)
+    // Phase 1 → 2: Atmospheric layer fades after 1.4s
     const darkRevealTimer = setTimeout(() => {
       setPhase("dark-reveal");
-    }, 400);
+    }, 1400);
 
-    // Phase 2 → 3: Hold dark mode, then start light transition (1.5s later)
+    // Phase 2 → 3: Hold dark mode for 1.5s, then start light transition
     const lightTransitionTimer = setTimeout(() => {
       setPhase("light-transition");
-    }, 1900); // 400ms + 1500ms
+    }, 2900); // 1400ms + 1500ms
 
     // Phase 3 → Complete: Remove from DOM after light transition finishes
     const completeTimer = setTimeout(() => {
       setPhase("complete");
-    }, 3400); // 1900ms + 1500ms for smooth transition
+    }, 4400); // 2900ms + 1500ms for smooth dissolve
 
     return () => {
       clearTimeout(darkRevealTimer);
