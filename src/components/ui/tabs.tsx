@@ -7,16 +7,13 @@ const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, R
   ...props
 }, ref) => <TabsPrimitive.List ref={ref} className={cn(
   "relative overflow-visible inline-flex h-auto items-center justify-center gap-1.5 text-muted-foreground rounded-2xl py-2 px-3",
-  // Liquid Glass styling matching decision lens selector
-  "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
-  "backdrop-blur-[28px] backdrop-saturate-[160%]",
-  "border border-black/[0.08] dark:border-white/[0.1]",
-  "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)]",
-  "dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),0_1px_4px_rgba(0,0,0,0.15)]",
-  // Top edge highlight for glass refraction effect
-  "before:absolute before:inset-x-0 before:top-0 before:h-[1px] before:z-10 before:rounded-t-2xl",
-  "before:bg-gradient-to-r before:from-transparent before:via-white/50 before:to-transparent",
-  "dark:before:via-white/20",
+  // Liquid Glass styling - subtle and seamless
+  "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
+  "backdrop-blur-[20px] backdrop-saturate-[140%]",
+  "border border-black/[0.04] dark:border-white/[0.06]",
+  // Minimal shadow - just enough depth without boxy appearance
+  "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
+  "dark:shadow-none",
   className
 )} {...props} />);
 TabsList.displayName = TabsPrimitive.List.displayName;
