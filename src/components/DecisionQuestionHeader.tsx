@@ -166,56 +166,51 @@ export function DecisionQuestionHeader({
       <Card className="p-4 md:p-5 glass-card mb-4 lg:mb-6 border-primary/10">
         {/* Single row layout: Question left, Scores right */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Left: Decision Question with badges inline */}
+          {/* Left: Decision Question */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4">
-              {/* Question Text */}
-              <p className="text-base md:text-lg font-medium text-foreground leading-snug text-balance flex-1 min-w-0">
-                {decisionQuestion}
-              </p>
-              
-              {/* Badges Row - Right aligned on desktop */}
-              <div className="flex items-center gap-2 shrink-0">
-                <Badge variant="outline" className="text-xs shrink-0">
-                  {displayName}
-                </Badge>
-                {confidence && (
-                  <ConfidenceBadge 
-                    level={confidence} 
-                    context="volume" 
-                    tooltipContent={`${relevantCount ?? '—'} relevant messages analyzed out of ${messageCount ?? '—'} total.`} 
-                    size="sm" 
-                  />
+            <div className="flex items-center gap-2 mb-1.5">
+              <Badge variant="outline" className="text-xs shrink-0">
+                {displayName}
+              </Badge>
+              {confidence && (
+                <ConfidenceBadge 
+                  level={confidence} 
+                  context="volume" 
+                  tooltipContent={`${relevantCount ?? '—'} relevant messages analyzed out of ${messageCount ?? '—'} total.`} 
+                  size="sm" 
+                />
+              )}
+              {/* Copy Link Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopyLink}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                title="Copy shareable link"
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5 text-bullish" />
+                ) : (
+                  <Link2 className="h-3.5 w-3.5" />
                 )}
-                {/* Copy Link Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleCopyLink}
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
-                  title="Copy shareable link"
-                >
-                  {copied ? (
-                    <Check className="h-3.5 w-3.5 text-bullish" />
-                  ) : (
-                    <Link2 className="h-3.5 w-3.5" />
+              </Button>
+              {/* Timing Badge - Inline */}
+              {timing && showScores && (
+                <Badge 
+                  variant={timing.variant} 
+                  className={cn(
+                    "text-xs px-2 py-0.5 hidden md:flex items-center gap-1 shrink-0",
+                    timing.bgClass
                   )}
-                </Button>
-                {/* Timing Badge */}
-                {timing && showScores && (
-                  <Badge 
-                    variant={timing.variant} 
-                    className={cn(
-                      "text-xs px-2.5 py-1 flex items-center gap-1 shrink-0",
-                      timing.bgClass
-                    )}
-                  >
-                    <timing.icon className="h-3 w-3" />
-                    {timing.label}
-                  </Badge>
-                )}
-              </div>
+                >
+                  <timing.icon className="h-3 w-3" />
+                  {timing.label}
+                </Badge>
+              )}
             </div>
+            <p className="text-base md:text-lg font-medium text-foreground leading-snug text-balance">
+              {decisionQuestion}
+            </p>
           </div>
 
           {/* Right: Condensed Score Tiles */}
@@ -292,6 +287,19 @@ export function DecisionQuestionHeader({
             </div>
           )}
         </div>
+
+        {/* Mobile Timing Badge - Below on small screens */}
+        {timing && showScores && (
+          <div className="md:hidden flex justify-center mt-3">
+            <Badge 
+              variant={timing.variant} 
+              className={cn("text-sm px-3 py-1.5", timing.bgClass)}
+            >
+              <timing.icon className="h-4 w-4 mr-1.5" />
+              {timing.label}
+            </Badge>
+          </div>
+        )}
       </Card>
     </motion.div>
   );
