@@ -36,10 +36,10 @@ export function HeroSection() {
               y: 0,
               scale: 1,
             }}
-            transition={{
-              duration: 0.7,
-              ease: [0.25, 0.4, 0.25, 1],
-            }}
+          transition={{
+            duration: 2.5,
+            ease: [0.3, 0.0, 0.2, 1],
+          }}
           >
             {/* Subtle top accent glow */}
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent rounded-t-2xl" />
