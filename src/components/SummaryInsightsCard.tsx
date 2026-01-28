@@ -113,7 +113,7 @@ export function SummaryInsightsCard({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="p-5 md:p-6"
+      className="p-5 md:p-6 pb-6 md:pb-8 border-b border-border/30"
       data-tour="intelligence-summary"
     >
       {/* Header: Question + Score Tiles */}
