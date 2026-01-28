@@ -123,7 +123,7 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
         {/* Starter prompt chips - hidden for now */}
         <div
           className={cn(
-            "relative flex items-end gap-2 p-2 w-full max-w-xl",
+            "relative flex items-end gap-2 p-2 w-full max-w-3xl",
             // Liquid Glass styling
             "rounded-2xl",
             "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
