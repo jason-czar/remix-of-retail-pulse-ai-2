@@ -45,13 +45,6 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
-      {/* Avatar - only for user messages */}
-      {isUser && (
-        <div className="flex items-center justify-center w-7 h-7 rounded-full shrink-0 bg-primary/20 text-primary">
-          <User className="h-3.5 w-3.5" />
-        </div>
-      )}
-
       {/* Message content */}
       <div
         className={cn(
@@ -64,7 +57,7 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
             "rounded-2xl px-3.5 py-2.5",
             isUser
               ? [
-                  "bg-primary/10 dark:bg-primary/20",
+                  "bg-[#0F83FF]/20 dark:bg-[#0F83FF]/25",
                   "text-foreground",
                   "rounded-tr-md",
                 ]
