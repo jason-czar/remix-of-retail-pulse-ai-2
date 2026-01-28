@@ -1936,14 +1936,16 @@ w-[120vw]
               </div>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-2">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-card/50 border border-border">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/60 dark:bg-[hsl(0_0%_15%/0.55)] backdrop-blur-[20px] backdrop-saturate-[140%] border border-black/[0.08] dark:border-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
                 <div className="flex items-center gap-3">
-                  <TrendingUp className="h-5 w-5 text-primary" />
+                  <div className="p-1.5 rounded-lg bg-primary/10">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">Hourly Narrative Breakdown</span>
-                      <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs">independent</span>
-                      <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs">
+                      <span className="px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/[0.08] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08] text-primary text-xs">independent</span>
+                      <span className="px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/[0.08] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08] text-muted-foreground text-xs">
                         {historyData?.data.length || 0} snapshots
                       </span>
                     </div>
@@ -1960,7 +1962,7 @@ w-[120vw]
                 </div>
                 <div className="flex items-center gap-3">
                   {timeRange === "1D" && <MarketSessionSelector session={marketSession} onSessionChange={setMarketSession} />}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-white/50 dark:bg-white/[0.06] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08]">
                     <DollarSign className="h-4 w-4" style={{
                     color: showPriceOverlay ? priceLineColor : "hsl(var(--muted-foreground))"
                   }} />
@@ -1969,7 +1971,7 @@ w-[120vw]
                     backgroundColor: showPriceOverlay ? priceLineColor : undefined
                   }} />
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching} className="h-8 px-3 text-xs">
+                  <Button variant="glass-pill" size="sm" onClick={() => refetch()} disabled={isFetching} className="h-8 px-3 text-xs">
                     <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
                     {isFetching ? "Refreshing..." : "Refresh"}
                   </Button>

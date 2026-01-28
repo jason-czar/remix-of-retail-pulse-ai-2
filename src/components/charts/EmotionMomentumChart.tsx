@@ -178,7 +178,7 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
   return (
     <div className="space-y-6">
       {/* Header with market signal */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-3 rounded-xl bg-white/60 dark:bg-[hsl(0_0%_15%/0.55)] backdrop-blur-[20px] backdrop-saturate-[140%] border border-black/[0.08] dark:border-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary/10">
             <Zap className="h-5 w-5 text-primary" />
@@ -197,7 +197,7 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant={showSignalsOnly ? "secondary" : "outline"}
+            variant={showSignalsOnly ? "secondary" : "glass-pill"}
             size="sm"
             onClick={() => setShowSignalsOnly(!showSignalsOnly)}
             className="text-xs"
@@ -205,12 +205,12 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
             <AlertTriangle className="h-3.5 w-3.5 mr-1" />
             Signals Only
           </Button>
-          <div className="flex gap-1 border rounded-lg p-0.5">
+          <div className="flex gap-1 p-0.5 rounded-full bg-white/50 dark:bg-white/[0.06] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08]">
             <Button
               variant={viewMode === "velocity" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setViewMode("velocity")}
-              className="h-7 px-2"
+              className="h-7 px-2 rounded-full"
             >
               <BarChart3 className="h-4 w-4" />
             </Button>
@@ -218,7 +218,7 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
               variant={viewMode === "timeline" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setViewMode("timeline")}
-              className="h-7 px-2"
+              className="h-7 px-2 rounded-full"
             >
               <LineChartIcon className="h-4 w-4" />
             </Button>
@@ -228,19 +228,23 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
 
       {/* Market Signal Alert */}
       {data.marketSignal && (
-        <Card className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <div className={`p-4 rounded-xl backdrop-blur-[16px] backdrop-saturate-[140%] border-l-4 ${
+          data.marketSignal.type.includes("top") || data.marketSignal.type.includes("overbought") 
+            ? "border-l-bearish bg-bearish/5 dark:bg-bearish/10 border border-bearish/20" 
+            : "border-l-bullish bg-bullish/5 dark:bg-bullish/10 border border-bullish/20"
+        }`}>
           <div className="flex items-start gap-3">
             <AlertTriangle className={`h-5 w-5 mt-0.5 ${
               data.marketSignal.type.includes("top") || data.marketSignal.type.includes("overbought") 
-                ? "text-red-400" 
-                : "text-emerald-400"
+                ? "text-bearish" 
+                : "text-bullish"
             }`} />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold">
                   {data.marketSignal.type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
                 </span>
-                <Badge variant={getSignalBadgeVariant(data.marketSignal.type)}>
+                <Badge variant={getSignalBadgeVariant(data.marketSignal.type)} className="rounded-full">
                   {data.marketSignal.confidence}% confidence
                 </Badge>
               </div>
@@ -249,38 +253,38 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
               </p>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Divergence Alerts */}
       {data.divergences.length > 0 && (
         <div className="grid gap-3 md:grid-cols-2">
           {data.divergences.slice(0, 4).map((div, idx) => (
-            <Card 
+            <div 
               key={idx} 
-              className={`p-3 border-l-4 ${
+              className={`p-3 rounded-xl backdrop-blur-[16px] backdrop-saturate-[140%] border-l-4 ${
                 div.type === "bullish_divergence" 
-                  ? "border-l-emerald-500 bg-emerald-500/5" 
+                  ? "border-l-bullish bg-bullish/5 dark:bg-bullish/10 border border-bullish/20" 
                   : div.type === "bearish_divergence"
-                  ? "border-l-red-500 bg-red-500/5"
-                  : "border-l-blue-500 bg-blue-500/5"
+                  ? "border-l-bearish bg-bearish/5 dark:bg-bearish/10 border border-bearish/20"
+                  : "border-l-primary bg-primary/5 dark:bg-primary/10 border border-primary/20"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-medium uppercase tracking-wide">
                   {div.type.replace(/_/g, " ")}
                 </span>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs rounded-full">
                   {div.confidence}%
                 </Badge>
               </div>
               <p className="text-sm">{div.description}</p>
               {div.signal && (
-                <Badge className="mt-2 text-xs" variant="secondary">
+                <Badge className="mt-2 text-xs rounded-full" variant="secondary">
                   {div.signal}
                 </Badge>
               )}
-            </Card>
+            </div>
           ))}
         </div>
       )}
@@ -501,7 +505,7 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
           .filter((e) => e.isSignal)
           .slice(0, 5)
           .map((m) => (
-            <Card key={m.emotion} className="p-3">
+            <div key={m.emotion} className="p-3 rounded-xl bg-white/60 dark:bg-[hsl(0_0%_15%/0.55)] backdrop-blur-[16px] backdrop-saturate-[140%] border border-black/[0.08] dark:border-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
               <div className="flex items-center justify-between mb-1">
                 <span
                   className="text-xs font-medium"
@@ -515,7 +519,7 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
                 <span className="text-lg font-semibold">{m.currentScore}</span>
                 <span
                   className={`text-xs ${
-                    m.velocity > 0 ? "text-emerald-400" : m.velocity < 0 ? "text-red-400" : "text-muted-foreground"
+                    m.velocity > 0 ? "text-bullish" : m.velocity < 0 ? "text-bearish" : "text-muted-foreground"
                   }`}
                 >
                   {m.velocity > 0 ? "+" : ""}
@@ -523,11 +527,11 @@ export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartP
                 </span>
               </div>
               {m.isExtreme && (
-                <Badge variant="destructive" className="text-[10px] mt-1">
+                <Badge variant="destructive" className="text-[10px] mt-1 rounded-full">
                   Extreme
                 </Badge>
               )}
-            </Card>
+            </div>
           ))}
       </div>
     </div>
