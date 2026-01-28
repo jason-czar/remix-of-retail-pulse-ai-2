@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, Sparkles, Trash2 } from "lucide-react";
+import { PanelRightClose, Send, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -154,7 +154,7 @@ export function AskDeriveStreetPanel() {
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={closePanel}>
-                  <X className="h-5 w-5" />
+                  <PanelRightClose className="h-5 w-5" />
                 </Button>
               </div>
 
@@ -285,7 +285,7 @@ export function AskDeriveStreetPanel() {
                   onClick={closePanel}
                   className="h-7 w-7"
                 >
-                  <X className="h-4 w-4" />
+                  <PanelRightClose className="h-4 w-4" />
                 </Button>
               </div>
             </div>
