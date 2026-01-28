@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +26,25 @@ export function ChatHistorySidebar({
   onSelectSymbol,
   onDeleteConversation,
 }: ChatHistorySidebarProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Listen for storage changes to refresh the list
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setRefreshKey(prev => prev + 1);
+    };
+
+    // Also refresh periodically to catch local changes
+    const interval = setInterval(handleStorageChange, 1000);
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   const conversations = useMemo(() => {
     if (typeof window === "undefined") return [];
     
@@ -37,7 +56,7 @@ export function ChatHistorySidebar({
       const previews: ConversationPreview[] = [];
       
       for (const [symbol, messages] of Object.entries(all)) {
-        if (messages.length === 0) continue;
+        if (!messages || messages.length === 0) continue;
         
         // Find first user message for preview
         const firstUserMessage = messages.find(m => m.role === "user");
@@ -60,7 +79,18 @@ export function ChatHistorySidebar({
     } catch {
       return [];
     }
-  }, []);
+  }, [refreshKey]);
+
+  // Filter conversations based on search query
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) return conversations;
+    
+    const query = searchQuery.toLowerCase().replace(/^\$/, ""); // Remove $ prefix if present
+    return conversations.filter(conv => 
+      conv.symbol.toLowerCase().includes(query) ||
+      conv.preview.toLowerCase().includes(query)
+    );
+  }, [conversations, searchQuery]);
 
   const formatTime = (date: Date) => {
     const now = new Date();
@@ -79,6 +109,8 @@ export function ChatHistorySidebar({
   const handleDelete = (e: React.MouseEvent, symbol: string) => {
     e.stopPropagation();
     onDeleteConversation(symbol);
+    // Force refresh after deletion
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -93,24 +125,43 @@ export function ChatHistorySidebar({
         "bg-black/[0.02] dark:bg-white/[0.02]"
       )}
     >
-      {/* Header */}
-      <div className="p-3 border-b border-black/[0.04] dark:border-white/[0.06]">
+      {/* Header with search */}
+      <div className="p-3 border-b border-black/[0.04] dark:border-white/[0.06] space-y-2">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           History
         </h4>
+        {/* Search input */}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground/60" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search..."
+            className={cn(
+              "w-full pl-7 pr-2 py-1.5 text-xs",
+              "bg-black/[0.03] dark:bg-white/[0.06]",
+              "border border-transparent",
+              "rounded-lg",
+              "placeholder:text-muted-foreground/50",
+              "focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/20",
+              "transition-colors duration-150"
+            )}
+          />
+        </div>
       </div>
 
       {/* Conversation list */}
       <ScrollArea className="flex-1">
-        {conversations.length === 0 ? (
+        {filteredConversations.length === 0 ? (
           <div className="p-4 text-center">
             <p className="text-xs text-muted-foreground">
-              No previous conversations
+              {searchQuery ? "No matching conversations" : "No previous conversations"}
             </p>
           </div>
         ) : (
           <div className="py-1">
-            {conversations.map((conv, index) => (
+            {filteredConversations.map((conv, index) => (
               <motion.button
                 key={conv.symbol}
                 initial={{ opacity: 0, x: -10 }}
@@ -136,7 +187,7 @@ export function ChatHistorySidebar({
                             : "text-foreground"
                         )}
                       >
-                        ${conv.symbol}
+                        {conv.symbol}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
                         · {conv.messageCount}
@@ -167,6 +218,15 @@ export function ChatHistorySidebar({
           </div>
         )}
       </ScrollArea>
+
+      {/* Conversation count footer */}
+      {conversations.length > 0 && (
+        <div className="p-2 border-t border-black/[0.04] dark:border-white/[0.06]">
+          <p className="text-[10px] text-muted-foreground/60 text-center">
+            {filteredConversations.length} of {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+      )}
     </motion.div>
   );
 }
