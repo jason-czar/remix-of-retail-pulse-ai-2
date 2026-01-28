@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { useAskDeriveStreetStream } from "@/hooks/use-ask-derive-street";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useMessagesSidebar } from "@/contexts/MessagesSidebarContext";
 
 const STARTER_PROMPTS = [
   "Why is {SYMBOL} consolidating here?",
@@ -28,6 +30,14 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
+  
+  // Get sidebar widths for proper centering
+  const { state: sidebarState, sidebarWidth: leftSidebarWidth } = useSidebar();
+  const { isOpen: messagesSidebarOpen, sidebarWidth: messagesSidebarWidth } = useMessagesSidebar();
+  
+  const isLeftExpanded = sidebarState === "expanded";
+  const leftOffset = isLeftExpanded ? leftSidebarWidth + 12 : 64;
+  const rightOffset = messagesSidebarOpen ? messagesSidebarWidth + 24 : 16;
 
   // Rotate placeholder prompts
   useEffect(() => {
@@ -77,17 +87,21 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      style={!isMobile ? { 
+        left: `${leftOffset}px`, 
+        right: `${rightOffset}px` 
+      } : undefined}
       className={cn(
         "fixed z-40",
         // Position: centered at bottom, above footer
         isMobile 
           ? "bottom-20 left-4 right-4" 
-          : "bottom-6 left-0 right-0 w-full max-w-xl mx-auto px-4",
+          : "bottom-6 flex flex-col items-center",
         className
       )}
     >
       {/* Starter prompt chips */}
-      <div className="flex flex-wrap gap-1.5 justify-center mb-2 px-2">
+      <div className="flex flex-wrap gap-1.5 justify-center mb-2 px-2 max-w-xl">
         {STARTER_PROMPTS.slice(0, isMobile ? 3 : 4).map((prompt, index) => {
           const resolvedPrompt = prompt.replace("{SYMBOL}", symbol.toUpperCase());
           return (
@@ -118,7 +132,7 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
 
       <div
         className={cn(
-          "relative flex items-end gap-2 p-2",
+          "relative flex items-end gap-2 p-2 w-full max-w-xl",
           // Liquid Glass styling
           "rounded-2xl",
           "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
