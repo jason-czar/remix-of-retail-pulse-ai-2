@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, MessageCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
@@ -23,7 +23,7 @@ interface AskDeriveStreetBarProps {
 }
 
 export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
-  const { symbol, isOpen, isStreaming } = useAskDeriveStreet();
+  const { symbol, isOpen, setIsOpen, isStreaming } = useAskDeriveStreet();
   const { sendMessage } = useAskDeriveStreetStream();
   const [input, setInput] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -73,97 +73,138 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
     }
   }, [input]);
 
-  // Don't show bar when panel is open
-  if (isOpen) return null;
-
   const handlePromptClick = (prompt: string) => {
     const resolvedPrompt = prompt.replace("{SYMBOL}", symbol.toUpperCase());
     sendMessage(resolvedPrompt);
   };
 
-  return (
+  // Toggle button (always visible in bottom right)
+  const ToggleButton = () => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 20 }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      style={!isMobile ? { 
-        left: `${leftOffset}px`, 
-        right: `${rightOffset}px` 
-      } : undefined}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         "fixed z-40",
-        // Position: centered at bottom, above footer
-        isMobile 
-          ? "bottom-20 left-4 right-4" 
-          : "bottom-6 flex flex-col items-center",
-        className
+        isMobile ? "bottom-20 right-4" : "bottom-6 right-6"
       )}
     >
-      {/* Starter prompt chips - hidden for now */}
-      <div
+      <Button
+        size="icon"
+        onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative flex items-end gap-2 p-2 w-full max-w-xl",
-          // Liquid Glass styling
-          "rounded-2xl",
-          "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
-          "backdrop-blur-[28px] backdrop-saturate-[160%]",
-          "border border-black/[0.08] dark:border-white/[0.1]",
-          "shadow-[0_8px_32px_rgba(0,0,0,0.1),0_2px_8px_rgba(0,0,0,0.05)]",
-          "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
-          // Focus ring
-          isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
+          "h-12 w-12 rounded-full",
+          "bg-primary hover:bg-primary/90",
+          "text-primary-foreground",
+          "shadow-[0_4px_20px_rgba(0,113,227,0.4)]",
+          "hover:shadow-[0_6px_24px_rgba(0,113,227,0.5)]",
+          "transition-all duration-200"
         )}
       >
-        {/* Brand icon */}
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 shrink-0 mb-0.5">
-          <Sparkles className="h-4 w-4 text-primary" />
-        </div>
+        {isOpen ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <MessageCircle className="h-5 w-5" />
+        )}
+      </Button>
+    </motion.div>
+  );
 
-        {/* Input area */}
-        <div className="flex-1 relative">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder={currentPlaceholder}
-            rows={1}
-            className={cn(
-              "w-full resize-none bg-transparent",
-              "text-sm leading-relaxed",
-              "placeholder:text-muted-foreground/60",
-              "focus:outline-none",
-              "min-h-[36px] max-h-[120px] py-2 px-1"
-            )}
-            disabled={isStreaming}
-          />
-        </div>
+  // When panel is open, only show the toggle button
+  if (isOpen) {
+    return <ToggleButton />;
+  }
 
-        {/* Send button */}
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={handleSubmit}
-          disabled={!input.trim() || isStreaming}
+  return (
+    <>
+      {/* Toggle button */}
+      <ToggleButton />
+      
+      {/* Input bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        style={!isMobile ? { 
+          left: `${leftOffset}px`, 
+          right: `${rightOffset}px` 
+        } : undefined}
+        className={cn(
+          "fixed z-40",
+          // Position: centered at bottom, above footer
+          isMobile 
+            ? "bottom-20 left-4 right-4" 
+            : "bottom-6 flex flex-col items-center",
+          className
+        )}
+      >
+        {/* Starter prompt chips - hidden for now */}
+        <div
           className={cn(
-            "h-8 w-8 shrink-0 rounded-full mb-0.5",
-            "bg-primary/10 hover:bg-primary/20",
-            "text-primary",
-            "disabled:opacity-40 disabled:cursor-not-allowed",
-            "transition-all duration-200"
+            "relative flex items-end gap-2 p-2 w-full max-w-xl",
+            // Liquid Glass styling
+            "rounded-2xl",
+            "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
+            "backdrop-blur-[28px] backdrop-saturate-[160%]",
+            "border border-black/[0.08] dark:border-white/[0.1]",
+            "shadow-[0_8px_32px_rgba(0,0,0,0.1),0_2px_8px_rgba(0,0,0,0.05)]",
+            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
+            // Focus ring
+            isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
           )}
         >
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
+          {/* Brand icon */}
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 shrink-0 mb-0.5">
+            <Sparkles className="h-4 w-4 text-primary" />
+          </div>
 
-      {/* Subtle hint text */}
-      <p className="text-[10px] text-muted-foreground/50 text-center mt-1.5 px-2">
-        Ask about {symbol} • Grounded in DeriveStreet intelligence
-      </p>
-    </motion.div>
+          {/* Input area */}
+          <div className="flex-1 relative">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder={currentPlaceholder}
+              rows={1}
+              className={cn(
+                "w-full resize-none bg-transparent",
+                "text-sm leading-relaxed",
+                "placeholder:text-muted-foreground/60",
+                "focus:outline-none",
+                "min-h-[36px] max-h-[120px] py-2 px-1"
+              )}
+              disabled={isStreaming}
+            />
+          </div>
+
+          {/* Send button */}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleSubmit}
+            disabled={!input.trim() || isStreaming}
+            className={cn(
+              "h-8 w-8 shrink-0 rounded-full mb-0.5",
+              "bg-primary/10 hover:bg-primary/20",
+              "text-primary",
+              "disabled:opacity-40 disabled:cursor-not-allowed",
+              "transition-all duration-200"
+            )}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Subtle hint text */}
+        <p className="text-[10px] text-muted-foreground/50 text-center mt-1.5 px-2">
+          Ask about {symbol} • Grounded in DeriveStreet intelligence
+        </p>
+      </motion.div>
+    </>
   );
 }
