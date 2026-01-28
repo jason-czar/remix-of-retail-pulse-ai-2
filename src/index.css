@@ -230,6 +230,7 @@
       opacity 2000ms ease-out !important;
   }
 
+  /* Ambient gradient disabled
   body::before {
     content: '';
     position: fixed;
@@ -241,6 +242,7 @@
     pointer-events: none;
     z-index: -1;
   }
+  */
 
   html {
     scroll-behavior: smooth;
