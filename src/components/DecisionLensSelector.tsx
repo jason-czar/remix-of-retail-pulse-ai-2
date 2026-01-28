@@ -188,13 +188,13 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                 "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full ring-offset-background transition-all duration-200",
                 value === option.value
                   ? [
-                      // Light mode: frosted white with subtle depth
+                      // Light mode: frosted white with subtle depth + blue bottom glow
                       "bg-white text-foreground",
-                      "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                      "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),0_4px_12px_-2px_rgba(0,113,227,0.25),inset_0_1px_0_rgba(255,255,255,0.9)]",
                       "border border-black/[0.06]",
-                      // Dark mode: subtle glass elevation without white bleed
+                      // Dark mode: subtle glass elevation + blue bottom glow
                       "dark:bg-white/[0.12] dark:text-foreground",
-                      "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                      "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),0_4px_14px_-2px_rgba(0,113,227,0.35)]",
                       "dark:border-white/[0.12]"
                     ]
                   : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
