@@ -270,6 +270,16 @@ export function AskDeriveStreetPanel() {
   return (
     <AnimatePresence>
       {isOpen && (
+        <>
+          {/* Invisible backdrop for double-click to close */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onDoubleClick={closePanel}
+            className="fixed inset-0 z-30"
+            style={{ pointerEvents: "auto" }}
+          />
         <motion.aside
           initial={{ 
             x: "100%", 
@@ -443,6 +453,7 @@ export function AskDeriveStreetPanel() {
             </div>
           </div>
         </motion.aside>
+        </>
       )}
     </AnimatePresence>
   );
