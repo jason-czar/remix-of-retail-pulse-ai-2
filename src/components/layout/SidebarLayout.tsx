@@ -136,16 +136,18 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
 export function SidebarLayout({ children, rightSidebar }: SidebarLayoutProps) {
   const isMobile = useIsMobile();
 
-  // Mobile: Use the original Header navigation
+  // Mobile: Use the original Header navigation (still needs AskDeriveStreetProvider for pages that use the hook)
   if (isMobile) {
     return (
-      <div className="min-h-screen flex flex-col w-full">
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
-      </div>
+      <AskDeriveStreetProvider>
+        <div className="min-h-screen flex flex-col w-full">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
+      </AskDeriveStreetProvider>
     );
   }
 
