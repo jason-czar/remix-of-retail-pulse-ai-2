@@ -305,7 +305,7 @@ function SymbolPageContent() {
                   </div>}
 
                 {/* Unified row: TabsList + TimeRangeSelector */}
-                <div className="flex-col justify-between gap-3 px-0 flex md:flex-row">
+                <div className="flex-col justify-between gap-3 px-0 flex md:flex-row mt-4 md:mt-6">
                   <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
                     <TabsList className="w-max md:w-auto">
                       <TabsTrigger value="narratives" className="text-xs">Narratives</TabsTrigger>
