@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { useAskDeriveStreetStream } from "@/hooks/use-ask-derive-street";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSidebar } from "@/components/ui/sidebar";
 
 const STARTER_PROMPTS = [
   "Why is {SYMBOL} consolidating here?",
@@ -24,16 +23,11 @@ interface AskDeriveStreetBarProps {
 export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   const { symbol, isOpen, openPanel, closePanel, panelWidth, isStreaming } = useAskDeriveStreet();
   const { sendMessage } = useAskDeriveStreetStream();
-  const { state: sidebarState, sidebarWidth: leftSidebarWidth } = useSidebar();
   const [input, setInput] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
-  
-  // Calculate offset to center in main content area (account for left sidebar)
-  // When sidebar is expanded, shift right by half the sidebar width to center in remaining space
-  const leftOffset = sidebarState === "expanded" ? leftSidebarWidth / 2 : 0;
 
   // Rotate placeholder prompts
   useEffect(() => {
@@ -117,13 +111,12 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        style={!isMobile ? { left: `calc(50% + ${leftOffset}px)` } : undefined}
         className={cn(
           "fixed z-40",
-          // Position: centered in main content area
+          // Position: right-aligned
           isMobile 
             ? "bottom-20 left-4 right-4" 
-            : "bottom-6 -translate-x-1/2 w-full max-w-xl flex flex-col items-center",
+            : "bottom-6 right-6 w-full max-w-xl flex flex-col items-center",
           className
         )}
       >
@@ -131,13 +124,13 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
         <div
           className={cn(
             "relative flex items-end gap-2 p-2 w-full",
-            // Liquid Glass styling
+            // Liquid Glass styling - more transparent
             "rounded-2xl",
-            "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
+            "bg-white/65 dark:bg-[hsl(0_0%_12%/0.38)]",
             "backdrop-blur-[28px] backdrop-saturate-[160%]",
-            "border border-black/[0.08] dark:border-white/[0.1]",
-            "shadow-[0_8px_32px_rgba(0,0,0,0.1),0_2px_8px_rgba(0,0,0,0.05)]",
-            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
+            "border border-black/[0.06] dark:border-white/[0.08]",
+            "shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]",
+            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),0_2px_8px_rgba(0,0,0,0.15)]",
             // Focus ring
             isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
           )}
