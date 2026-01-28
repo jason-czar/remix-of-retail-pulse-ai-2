@@ -40,6 +40,9 @@ interface AskDeriveStreetContextType {
   clearConversation: () => void;
   addMessage: (message: Omit<ConversationMessage, "id" | "timestamp">) => string;
   updateMessage: (id: string, content: string) => void;
+  isHistoryOpen: boolean;
+  setIsHistoryOpen: (open: boolean) => void;
+  deleteConversationForSymbol: (symbol: string) => void;
 }
 
 const AskDeriveStreetContext = createContext<AskDeriveStreetContextType | null>(null);
@@ -57,6 +60,7 @@ export function AskDeriveStreetProvider({ children, symbol: initialSymbol = "" }
   const [isStreaming, setIsStreaming] = useState(false);
   const [symbol, setSymbolState] = useState(initialSymbol);
   const [intelligenceContext, setIntelligenceContext] = useState<IntelligenceContext>({});
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const messagesSidebar = useMessagesSidebar();
 
@@ -147,6 +151,20 @@ export function AskDeriveStreetProvider({ children, symbol: initialSymbol = "" }
     }
   }, [symbol]);
 
+  const deleteConversationForSymbol = useCallback((targetSymbol: string) => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const all = JSON.parse(stored);
+      delete all[targetSymbol.toUpperCase()];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+      // If we deleted the current symbol's conversation, clear it
+      if (targetSymbol.toUpperCase() === symbol.toUpperCase()) {
+        setConversation([]);
+      }
+    }
+  }, [symbol]);
+
   const addMessage = useCallback((message: Omit<ConversationMessage, "id" | "timestamp">) => {
     const id = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newMessage: ConversationMessage = {
@@ -186,6 +204,9 @@ export function AskDeriveStreetProvider({ children, symbol: initialSymbol = "" }
         clearConversation,
         addMessage,
         updateMessage,
+        isHistoryOpen,
+        setIsHistoryOpen,
+        deleteConversationForSymbol,
       }}
     >
       {children}
@@ -222,7 +243,10 @@ export function useAskDeriveStreetSafe() {
       setIntelligenceContext: () => {},
       clearConversation: () => {},
       addMessage: () => "",
-      updateMessage: () => {},
+      updateMessage: () => "",
+      isHistoryOpen: false,
+      setIsHistoryOpen: () => {},
+      deleteConversationForSymbol: () => {},
     };
   }
   return context;
