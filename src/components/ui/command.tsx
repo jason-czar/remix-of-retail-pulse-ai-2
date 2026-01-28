@@ -29,13 +29,13 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
       <DialogContent 
         className={cn(
           "overflow-hidden p-0 gap-0",
-          // Light mode: clean white glass
-          "bg-white/95 backdrop-blur-xl",
+          // Light mode: Liquid Glass
+          "bg-white/90 backdrop-blur-[28px] backdrop-saturate-[140%]",
           "border border-black/[0.08]",
-          "shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)]",
-          // Dark mode: dark glass
-          "dark:bg-[hsl(0_0%_18%/0.95)] dark:border-white/15",
-          "dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]",
+          "shadow-[0_12px_48px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.6)]",
+          // Dark mode: Liquid Glass
+          "dark:bg-[hsl(0_0%_12%/0.92)] dark:border-white/[0.1]",
+          "dark:shadow-[0_12px_48px_rgba(0,0,0,0.5),0_4px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.04)]",
           "rounded-2xl"
         )}
       >
@@ -53,24 +53,26 @@ const CommandInput = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div 
     className={cn(
-      "flex items-center mx-3 mt-3 mb-2 px-3 rounded-lg",
-      // Light mode glass-input styling
-      "bg-[hsl(0_0%_100%/0.85)] border border-[hsl(var(--border)/0.6)]",
-      "shadow-[inset_0_1px_2px_hsl(0_0%_0%/0.04),0_1px_0_hsl(0_0%_100%/0.8)]",
-      // Dark mode glass-input styling
-      "dark:bg-[hsl(0_0%_8%/0.75)] dark:border-[hsl(0_0%_100%/0.12)]",
+      "flex items-center mx-3 mt-3 mb-2 px-4 rounded-xl",
+      // Light mode: glass-input styling
+      "bg-white/60 backdrop-blur-[8px]",
+      "border border-black/[0.08]",
+      "shadow-[inset_0_1px_2px_rgba(0,0,0,0.04),0_1px_0_rgba(255,255,255,0.6)]",
+      // Dark mode: glass-input styling
+      "dark:bg-white/[0.06] dark:border-white/[0.1]",
+      "dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)]",
       // Focus-within state
-      "focus-within:border-[hsl(var(--ring))] focus-within:shadow-[0_0_0_3px_hsl(var(--ring)/0.15),0_1px_2px_hsl(0_0%_0%/0.05)]",
-      "dark:focus-within:shadow-[0_0_0_3px_hsl(var(--ring)/0.25),inset_0_1px_0_hsl(0_0%_100%/0.04)]",
+      "focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/20",
+      "dark:focus-within:border-primary/50 dark:focus-within:ring-primary/30",
       "transition-all duration-200"
     )} 
     cmdk-input-wrapper=""
   >
-    <Search className="mr-3 h-5 w-5 shrink-0 text-muted-foreground/70" />
+    <Search className="mr-3 h-5 w-5 shrink-0 text-muted-foreground/60" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        "flex h-11 w-full bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground/60 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-12 w-full bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -131,11 +133,13 @@ const CommandItem = React.forwardRef<
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-xl px-3 py-2.5 text-sm outline-none transition-colors",
+      "relative flex cursor-pointer select-none items-center rounded-xl px-3 py-3 text-sm outline-none transition-all duration-150",
       "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-      // Liquid glass hover/selected states
-      "data-[selected='true']:bg-black/[0.04] dark:data-[selected='true']:bg-white/[0.08]",
+      // Light mode: Liquid glass hover/selected states
+      "data-[selected='true']:bg-black/[0.05]",
       "data-[selected=true]:text-foreground",
+      // Dark mode: Liquid glass hover/selected states
+      "dark:data-[selected='true']:bg-white/[0.08]",
       className,
     )}
     {...props}

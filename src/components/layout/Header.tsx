@@ -84,26 +84,27 @@ export function Header() {
                         </Avatar>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56 backdrop-blur-xl bg-white/95 dark:bg-popover/95 border-black/[0.08] dark:border-white/[0.08]" align="end">
-                      <div className="px-2 py-1.5">
+                    <DropdownMenuContent 
+                      className="w-56 rounded-xl bg-white/90 dark:bg-[hsl(0_0%_12%/0.92)] backdrop-blur-[28px] backdrop-saturate-[140%] border-black/[0.08] dark:border-white/[0.1] shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)]" 
+                      align="end"
+                    >
+                      <div className="px-3 py-2.5">
                         <p className="text-sm font-medium">{user.email}</p>
                         <p className="text-xs text-muted-foreground">Free Plan</p>
                       </div>
-                      <DropdownMenuSeparator className="bg-black/[0.06] dark:bg-white/[0.06]" />
-                      <DropdownMenuItem asChild>
+                      <DropdownMenuSeparator className="bg-black/[0.06] dark:bg-white/[0.08]" />
+                      <DropdownMenuItem asChild className="rounded-lg mx-1 focus:bg-black/[0.05] dark:focus:bg-white/[0.08]">
                         <Link to="/settings" className="flex items-center">
-                          
                           Settings
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
+                      <DropdownMenuItem asChild className="rounded-lg mx-1 focus:bg-black/[0.05] dark:focus:bg-white/[0.08]">
                         <Link to="/api-docs" className="flex items-center">
-                          
                           API
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-black/[0.06] dark:bg-white/[0.06]" />
-                      <DropdownMenuItem onClick={handleSignOut} className="text-bearish">
+                      <DropdownMenuSeparator className="bg-black/[0.06] dark:bg-white/[0.08]" />
+                      <DropdownMenuItem onClick={handleSignOut} className="text-bearish rounded-lg mx-1 focus:bg-bearish/10">
                         <LogOut className="mr-2 h-4 w-4" />
                         Sign out
                       </DropdownMenuItem>
