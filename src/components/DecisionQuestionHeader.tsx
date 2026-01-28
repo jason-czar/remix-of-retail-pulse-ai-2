@@ -155,7 +155,7 @@ export function DecisionQuestionHeader({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="p-5 md:p-6"
+      className="p-5 md:p-6 pt-8 md:pt-10"
       data-tour="intelligence-summary"
     >
         {/* Question on top, badges below */}
