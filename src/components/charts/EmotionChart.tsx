@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
+import { CHART_SIDE_PANEL, CHART_SIDE_PANEL_MOBILE } from "@/lib/chart-constants";
 
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
@@ -152,8 +153,8 @@ function EmotionSidePanel({
   // Professional monochromatic card styling matching LensReadinessCard
   const baseClasses = "relative overflow-hidden rounded-2xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl";
   const containerClasses = isMobile 
-    ? `w-[calc(100%-10px)] mx-[5px] p-4 ${baseClasses}`
-    : `w-[343px] flex-shrink-0 p-5 ${baseClasses}`;
+    ? `${CHART_SIDE_PANEL_MOBILE.WIDTH_CLASS} ${CHART_SIDE_PANEL_MOBILE.MARGIN_CLASS} p-4 ${baseClasses}`
+    : `w-[${CHART_SIDE_PANEL.WIDTH}px] flex-shrink-0 p-5 ${baseClasses}`;
   
   // Animation variants for entrance
   const panelVariants = {
@@ -170,7 +171,9 @@ function EmotionSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        isMobile ? "w-[calc(100%-10px)] mx-[5px] p-4" : "w-[343px] flex-shrink-0 p-5",
+        isMobile 
+          ? `${CHART_SIDE_PANEL_MOBILE.WIDTH_CLASS} ${CHART_SIDE_PANEL_MOBILE.MARGIN_CLASS} p-4` 
+          : `w-[${CHART_SIDE_PANEL.WIDTH}px] flex-shrink-0 p-5`,
         baseClasses, "flex items-center justify-center"
       )}>
         <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>

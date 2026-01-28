@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { motion } from "framer-motion";
+import { CHART_SIDE_PANEL } from "@/lib/chart-constants";
 
 interface SentimentChartProps {
   symbol: string;
@@ -62,7 +63,7 @@ function SentimentSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        "w-[343px] flex-shrink-0 p-5 hidden md:flex items-center justify-center",
+        `w-[${CHART_SIDE_PANEL.WIDTH}px] flex-shrink-0 p-5 hidden md:flex items-center justify-center`,
         baseClasses
       )}>
         <p className="text-base text-muted-foreground text-center">
@@ -85,7 +86,7 @@ function SentimentSidePanel({
         animate="animate"
         transition={transitionConfig}
         className={cn(
-          "w-[343px] flex-shrink-0 p-5 hidden md:block",
+          `w-[${CHART_SIDE_PANEL.WIDTH}px] flex-shrink-0 p-5 hidden md:block`,
           baseClasses
         )}
       >
@@ -123,7 +124,7 @@ function SentimentSidePanel({
       animate="animate"
       transition={transitionConfig}
       className={cn(
-        "w-[343px] flex-shrink-0 p-5 hidden md:block",
+        `w-[${CHART_SIDE_PANEL.WIDTH}px] flex-shrink-0 p-5 hidden md:block`,
         baseClasses
       )}
     >
