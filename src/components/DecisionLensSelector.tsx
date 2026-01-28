@@ -193,62 +193,95 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
           "dark:shadow-none"
         )}>
-        {allLensOptions.map((option) => (
-          <div key={option.value} className="relative flex items-center shrink-0">
-            <button
-              className={cn(
-                "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full ring-offset-background transition-all duration-200",
-                value === option.value
-                  ? [
-                      // Light mode: frosted white with subtle depth
-                      "bg-white text-foreground",
-                      "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
-                      "border border-black/[0.06]",
-                      // Dark mode: subtle glass elevation without white bleed
-                      "dark:bg-white/[0.12] dark:text-foreground",
-                      "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
-                      "dark:border-white/[0.12]"
-                    ]
-                  : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
-                option.isCustom && "pr-7"
+        {allLensOptions.map((option, index) => {
+          // Calculate animation delay: sweep left-to-right, then right-to-left
+          const totalItems = allLensOptions.length;
+          const baseDelay = 0.8; // Start after container animation
+          const itemDuration = 0.06; // Time between each tab highlight
+          // Forward pass (left to right): index * itemDuration
+          // Backward pass (right to left): (totalItems - 1 - index) * itemDuration + totalItems * itemDuration
+          const forwardDelay = baseDelay + index * itemDuration;
+          const backwardDelay = baseDelay + (totalItems * itemDuration) + (totalItems - 1 - index) * itemDuration;
+          
+          return (
+            <div key={option.value} className="relative flex items-center shrink-0">
+              {/* Blue glow overlay for wave animation */}
+              <motion.div
+                className="absolute inset-0 rounded-full pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: [0, 0.6, 0, 0, 0.6, 0],
+                  boxShadow: [
+                    "0 0 0 0 rgba(0, 113, 227, 0)",
+                    "0 0 12px 2px rgba(0, 113, 227, 0.5), inset 0 0 8px rgba(0, 113, 227, 0.3)",
+                    "0 0 0 0 rgba(0, 113, 227, 0)",
+                    "0 0 0 0 rgba(0, 113, 227, 0)",
+                    "0 0 12px 2px rgba(0, 113, 227, 0.5), inset 0 0 8px rgba(0, 113, 227, 0.3)",
+                    "0 0 0 0 rgba(0, 113, 227, 0)"
+                  ]
+                }}
+                transition={{
+                  duration: 0.5,
+                  times: [0, 0.15, 0.3, 0.5, 0.65, 0.8],
+                  delay: forwardDelay,
+                  ease: "easeOut"
+                }}
+              />
+              <button
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full ring-offset-background transition-all duration-200",
+                  value === option.value
+                    ? [
+                        // Light mode: frosted white with subtle depth
+                        "bg-white text-foreground",
+                        "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                        "border border-black/[0.06]",
+                        // Dark mode: subtle glass elevation without white bleed
+                        "dark:bg-white/[0.12] dark:text-foreground",
+                        "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                        "dark:border-white/[0.12]"
+                      ]
+                    : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
+                  option.isCustom && "pr-7"
+                )}
+                onClick={() => onChange(option.value, option.customLens)}
+              >
+                {option.label}
+              </button>
+              
+              {/* Custom lens dropdown menu */}
+              {option.isCustom && option.customLens && value === option.value && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0.5 h-5 w-5 p-0 rounded-full hover:bg-white/10"
+                    >
+                      <MoreHorizontal className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-32">
+                    <DropdownMenuItem onClick={() => setEditingLens(option.customLens!)}>
+                      <Pencil className="h-3.5 w-3.5 mr-2" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setLensToDelete(option.customLens!);
+                        setDeleteDialogOpen(true);
+                      }}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
-              onClick={() => onChange(option.value, option.customLens)}
-            >
-              {option.label}
-            </button>
-            
-            {/* Custom lens dropdown menu */}
-            {option.isCustom && option.customLens && value === option.value && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0.5 h-5 w-5 p-0 rounded-full hover:bg-white/10"
-                  >
-                    <MoreHorizontal className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-32">
-                  <DropdownMenuItem onClick={() => setEditingLens(option.customLens!)}>
-                    <Pencil className="h-3.5 w-3.5 mr-2" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      setLensToDelete(option.customLens!);
-                      setDeleteDialogOpen(true);
-                    }}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
         
         {/* Create new lens button (only for logged-in users) */}
         {user && (
