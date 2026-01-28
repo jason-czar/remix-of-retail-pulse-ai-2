@@ -99,7 +99,7 @@ export function SymbolPageSkeleton() {
       </StaggeredGroup>
 
       {/* Narrative Coherence Section */}
-      <StaggeredGroup className="mb-8 md:mb-12 mt-8 md:mt-10" staggerDelay={0.1} initialDelay={0.5}>
+      <StaggeredGroup className="mb-8 md:mb-12 mt-12 md:mt-16" staggerDelay={0.1} initialDelay={0.5}>
         <StaggeredItem>
           <Skeleton className="h-6 w-44 mb-4" />
         </StaggeredItem>
