@@ -172,7 +172,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
         <div 
           ref={scrollContainerRef}
           className={cn(
-            "relative inline-flex items-center gap-1.5 rounded-2xl py-0 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
+            "relative inline-flex items-center gap-1.5 rounded-2xl py-2.5 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
             // Liquid Glass styling - subtle and seamless
             "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]",
             "backdrop-blur-[20px] backdrop-saturate-[140%]",
