@@ -100,7 +100,7 @@ export function AskDeriveStreetBar({
     // Position: right-aligned
     isMobile ? "bottom-20 left-4 right-4" : "bottom-6 right-6 w-full max-w-xl flex flex-col items-center", className)}>
         {/* Starter prompt chips - hidden for now */}
-        <div className={cn("relative flex items-center gap-2 py-1.5 w-full rounded-xl bg-white/45 dark:bg-[hsl(0_0%_12%/0.26)] backdrop-blur-[28px] backdrop-saturate-[160%] border border-black/[0.05] dark:border-white/[0.06] shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.2),0_1px_4px_rgba(0,0,0,0.1)] px-[13px] pr-[13px] pl-[21px] pt-[10px]",
+        <div className={cn("relative flex items-center gap-2 py-1.5 w-full rounded-xl bg-white/45 dark:bg-[hsl(0_0%_12%/0.26)] backdrop-blur-[18px] backdrop-saturate-[160%] border border-black/[0.05] dark:border-white/[0.06] shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.2),0_1px_4px_rgba(0,0,0,0.1)] px-[13px] pr-[13px] pl-[21px] pt-[10px]",
       // Focus ring
       isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background")}>
           {/* Input area */}
