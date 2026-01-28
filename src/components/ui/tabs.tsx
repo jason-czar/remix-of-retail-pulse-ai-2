@@ -8,7 +8,7 @@ const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, R
 }, ref) => <TabsPrimitive.List ref={ref} className={cn(
   "relative overflow-visible inline-flex h-auto items-center justify-center gap-1.5 text-muted-foreground rounded-2xl py-2 px-3",
   // Liquid Glass styling - subtle and seamless
-  "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
+  "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]",
   "backdrop-blur-[20px] backdrop-saturate-[140%]",
   "border border-black/[0.04] dark:border-white/[0.06]",
   // Minimal shadow - just enough depth without boxy appearance
