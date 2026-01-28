@@ -176,16 +176,17 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
         <motion.div 
           key={mountId}
           ref={scrollContainerRef}
-          initial={{ opacity: 0, y: -8, scale: 0.98 }}
+          initial={{ opacity: 0, y: -8, scale: 0.98, boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}
           animate={{ 
             opacity: 1, 
             y: 0, 
             scale: 1,
             boxShadow: [
               "0 1px 2px rgba(0,0,0,0.02)",
-              "0 1px 2px rgba(0,0,0,0.02)",
-              "0 0 20px 4px rgba(0, 113, 227, 0.25), 0 0 40px 8px rgba(0, 113, 227, 0.15)",
-              "0 0 20px 4px rgba(0, 113, 227, 0.25), 0 0 40px 8px rgba(0, 113, 227, 0.15)",
+              "0 0 8px 2px rgba(0, 113, 227, 0.1)",
+              "0 0 24px 6px rgba(0, 113, 227, 0.3), 0 0 48px 12px rgba(0, 113, 227, 0.15)",
+              "0 0 24px 6px rgba(0, 113, 227, 0.3), 0 0 48px 12px rgba(0, 113, 227, 0.15)",
+              "0 0 8px 2px rgba(0, 113, 227, 0.1)",
               "0 1px 2px rgba(0,0,0,0.02)"
             ]
           }}
@@ -194,10 +195,10 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             y: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
             scale: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
             boxShadow: { 
-              duration: 1.8, 
-              delay: 0.8,
-              times: [0, 0.15, 0.35, 0.75, 1],
-              ease: "easeInOut"
+              duration: 2.2, 
+              delay: 0.9,
+              times: [0, 0.12, 0.35, 0.65, 0.88, 1],
+              ease: [0.4, 0, 0.2, 1]
             }
           }}
           className={cn(
@@ -209,8 +210,8 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
         )}>
         {allLensOptions.map((option, index) => {
           // Calculate animation delay: single sweep left-to-right
-          const baseDelay = 1.2; // Delay so user notices selector first
-          const itemDuration = 0.06; // Faster wave between tabs
+          const baseDelay = 1.1; // Delay so user notices selector first
+          const itemDuration = 0.07; // Smooth wave timing
           const animationDelay = baseDelay + index * itemDuration;
           
           return (
@@ -219,32 +220,34 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
               className="relative flex items-center shrink-0"
               initial={{ scale: 1 }}
               animate={{
-                scale: [1, 1.06, 1]
+                scale: [1, 1.05, 1]
               }}
               transition={{
-                duration: 0.35,
-                times: [0, 0.4, 1],
+                duration: 0.5,
+                times: [0, 0.35, 1],
                 delay: animationDelay,
-                ease: "easeOut"
+                ease: [0.4, 0, 0.2, 1]
               }}
             >
               {/* Blue glow overlay for wave animation */}
               <motion.div
                 className="absolute inset-0 rounded-full pointer-events-none"
-                initial={{ opacity: 0 }}
+                initial={{ opacity: 0, boxShadow: "0 0 0 0 rgba(0, 113, 227, 0)" }}
                 animate={{
-                  opacity: [0, 0.7, 0],
+                  opacity: [0, 0.5, 0.8, 0.5, 0],
                   boxShadow: [
                     "0 0 0 0 rgba(0, 113, 227, 0)",
-                    "0 0 16px 4px rgba(0, 113, 227, 0.6), inset 0 0 10px rgba(0, 113, 227, 0.35)",
+                    "0 0 8px 2px rgba(0, 113, 227, 0.3), inset 0 0 4px rgba(0, 113, 227, 0.15)",
+                    "0 0 18px 5px rgba(0, 113, 227, 0.5), inset 0 0 12px rgba(0, 113, 227, 0.3)",
+                    "0 0 8px 2px rgba(0, 113, 227, 0.3), inset 0 0 4px rgba(0, 113, 227, 0.15)",
                     "0 0 0 0 rgba(0, 113, 227, 0)"
                   ]
                 }}
                 transition={{
-                  duration: 0.35,
-                  times: [0, 0.4, 1],
+                  duration: 0.6,
+                  times: [0, 0.2, 0.4, 0.7, 1],
                   delay: animationDelay,
-                  ease: "easeOut"
+                  ease: [0.4, 0, 0.2, 1]
                 }}
               />
               <motion.button
@@ -267,13 +270,13 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                 onClick={() => onChange(option.value, option.customLens)}
                 initial={{ color: "inherit" }}
                 animate={{
-                  color: ["inherit", "#0071E3", "inherit"]
+                  color: ["inherit", "inherit", "#0071E3", "inherit", "inherit"]
                 }}
                 transition={{
-                  duration: 0.35,
-                  times: [0, 0.4, 1],
+                  duration: 0.6,
+                  times: [0, 0.2, 0.4, 0.7, 1],
                   delay: animationDelay,
-                  ease: "easeOut"
+                  ease: [0.4, 0, 0.2, 1]
                 }}
               >
                 {option.label}
