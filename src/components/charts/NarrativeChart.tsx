@@ -1935,8 +1935,8 @@ w-[120vw]
 -ml-[8vw] -mr-[12vw]
       md:w-full md:mx-0
     ">
-          {/* Header - Collapsible - Hidden for now */}
-          <Collapsible defaultOpen={false} className="mb-2 hidden">
+          {/* Header - Collapsible */}
+          <Collapsible defaultOpen={false} className="mb-2">
             <CollapsibleTrigger asChild>
               <div className="flex items-center justify-end p-1 cursor-pointer rounded transition-colors bg-[#292929]/0">
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
