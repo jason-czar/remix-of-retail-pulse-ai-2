@@ -23,7 +23,7 @@ import { ConfidenceBadge } from "@/components/ui/ConfidenceBadge";
 import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { DecisionQuestionHeader } from "@/components/DecisionQuestionHeader";
 import { CustomLensReadinessCard } from "@/components/CustomLensReadinessCard";
-import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
+import { PsychologyOverviewCard, ContinueToLensButton } from "@/components/PsychologyOverviewCard";
 import { SummaryInsightsCard } from "@/components/SummaryInsightsCard";
 import { MessagesSidebar } from "@/components/layout/MessagesSidebar";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
@@ -432,6 +432,14 @@ function SymbolPageContent() {
             ease: "easeOut"
           }} className="mt-8 md:mt-[50px]">
                 <PsychologyOverviewCard symbol={symbol} hideMetricTiles />
+              </motion.div>
+
+              {/* Continue to Decision Lens Navigation */}
+              <motion.div layout transition={{
+            duration: 0.3,
+            ease: "easeOut"
+          }} className="mt-4 md:mt-6">
+                <ContinueToLensButton />
               </motion.div>
             </motion.div>}
         </AnimatePresence>

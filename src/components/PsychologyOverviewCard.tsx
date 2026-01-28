@@ -29,14 +29,10 @@ const glassTileClasses = cn(
 );
 
 export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: PsychologyOverviewCardProps) {
-  const [, setSearchParams] = useSearchParams();
   const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol);
   const { data: symbolStats } = useSymbolStats(symbol);
   const { data: sentimentHistory } = useSentimentHistory(symbol, 7);
 
-  const handleNavigateToLens = () => {
-    setSearchParams({ lens: 'corporate-strategy' });
-  };
   if (isLoading) {
     return (
       <div className={glassCardClasses}>
@@ -236,23 +232,41 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
             </motion.div>
           </div>
         )}
-
-        {/* Continue to Decision Lens navigation */}
-        <motion.button
-          onClick={handleNavigateToLens}
-          className="mt-4 pt-4 border-t border-border/30 w-full flex items-center justify-between group cursor-pointer"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-        >
-          <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-            Continue to Decision Lens: <span className="font-medium text-foreground">Corporate Strategy</span>
-          </span>
-          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/50 dark:bg-white/[0.08] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08] group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-        </motion.button>
       </div>
     </div>
+  );
+}
+
+// Separate navigation component for continuing to next lens
+export function ContinueToLensButton() {
+  const [, setSearchParams] = useSearchParams();
+
+  const handleNavigateToLens = () => {
+    setSearchParams({ lens: 'corporate-strategy' });
+  };
+
+  return (
+    <motion.button
+      onClick={handleNavigateToLens}
+      className={cn(
+        "w-full flex items-center justify-between group cursor-pointer",
+        "rounded-2xl p-4 md:p-5",
+        "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+        "backdrop-blur-[28px] backdrop-saturate-[140%]",
+        "border border-black/[0.08] dark:border-white/[0.06]",
+        "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]",
+        "hover:border-primary/20 transition-all"
+      )}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.1 }}
+    >
+      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+        Continue to Decision Lens: <span className="font-medium text-foreground">Corporate Strategy</span>
+      </span>
+      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground shadow-sm group-hover:shadow-md transition-all">
+        <ArrowRight className="h-4 w-4" />
+      </div>
+    </motion.button>
   );
 }
