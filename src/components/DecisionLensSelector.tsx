@@ -177,21 +177,35 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           key={mountId}
           ref={scrollContainerRef}
           initial={{ opacity: 0, y: -8, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0, 
+            scale: 1,
+            boxShadow: [
+              "0 1px 2px rgba(0,0,0,0.02)",
+              "0 1px 2px rgba(0,0,0,0.02)",
+              "0 0 20px 4px rgba(0, 113, 227, 0.25), 0 0 40px 8px rgba(0, 113, 227, 0.15)",
+              "0 0 20px 4px rgba(0, 113, 227, 0.25), 0 0 40px 8px rgba(0, 113, 227, 0.15)",
+              "0 1px 2px rgba(0,0,0,0.02)"
+            ]
+          }}
           transition={{ 
-            duration: 0.5, 
-            delay: 0.3,
-            ease: [0.25, 0.4, 0.25, 1]
+            opacity: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
+            y: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
+            scale: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
+            boxShadow: { 
+              duration: 1.8, 
+              delay: 0.8,
+              times: [0, 0.15, 0.35, 0.75, 1],
+              ease: "easeInOut"
+            }
           }}
           className={cn(
             "relative inline-flex items-center gap-1.5 rounded-2xl py-2.5 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
             // Liquid Glass styling - subtle and seamless
             "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]",
             "backdrop-blur-[20px] backdrop-saturate-[140%]",
-            "border border-black/[0.04] dark:border-white/[0.06]",
-            // Minimal shadow
-          "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
-          "dark:shadow-none"
+            "border border-black/[0.04] dark:border-white/[0.06]"
         )}>
         {allLensOptions.map((option, index) => {
           // Calculate animation delay: single sweep left-to-right
