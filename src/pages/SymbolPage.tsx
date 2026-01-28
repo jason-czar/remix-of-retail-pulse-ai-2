@@ -35,7 +35,7 @@ import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
+import { TimeRangeSelector, TimeRange } from "@/components/TimeRangeSelector";
 export default function SymbolPage() {
   const {
     symbol: paramSymbol
@@ -524,35 +524,6 @@ function MetricCard({
           {Math.abs(change)}%{suffix}
         </div>}
     </Card>;
-}
-function TimeRangeSelector({
-  value,
-  onChange
-}: {
-  value: TimeRange;
-  onChange: (v: TimeRange) => void;
-}) {
-  const labels: Record<TimeRange, string> = {
-    '1H': '1H',
-    '6H': '6H',
-    '1D': 'Today',
-    '24H': '24H',
-    '7D': '7D',
-    '30D': '30D'
-  };
-  return <div className={cn("relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
-  // Liquid Glass styling - subtle and seamless
-  "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]", "backdrop-blur-[20px] backdrop-saturate-[140%]", "border border-black/[0.04] dark:border-white/[0.06]",
-  // Minimal shadow - just enough depth without boxy appearance
-  "shadow-[0_1px_2px_rgba(0,0,0,0.02)]", "dark:shadow-none")}>
-      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", range === value ? [
-    // Light mode: frosted white with subtle depth
-    "bg-white text-foreground", "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]", "border border-black/[0.06]",
-    // Dark mode: subtle glass elevation
-    "dark:bg-white/[0.12] dark:text-foreground", "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]", "dark:border-white/[0.12]"] : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]")}>
-          {labels[range]}
-        </button>)}
-    </div>;
 }
 
 // Markdown-style text formatter supporting bold, italics, and bullet points
