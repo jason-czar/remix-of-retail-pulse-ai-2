@@ -542,7 +542,7 @@ function TimeRangeSelector({
   };
   return <div className={cn("relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
   // Liquid Glass styling - subtle and seamless
-  "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]", "backdrop-blur-[20px] backdrop-saturate-[140%]", "border border-black/[0.04] dark:border-white/[0.06]",
+  "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]", "backdrop-blur-[20px] backdrop-saturate-[140%]", "border border-black/[0.04] dark:border-white/[0.06]",
   // Minimal shadow - just enough depth without boxy appearance
   "shadow-[0_1px_2px_rgba(0,0,0,0.02)]", "dark:shadow-none")}>
       {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", range === value ? [
