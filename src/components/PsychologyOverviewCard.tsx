@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
@@ -6,11 +5,27 @@ import { useSymbolStats } from "@/hooks/use-stocktwits";
 import { useSentimentHistory } from "@/hooks/use-sentiment-history";
 import { AlertTriangle, TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface PsychologyOverviewCardProps {
   symbol: string;
   hideMetricTiles?: boolean; // Hide Sentiment Score, Message Volume, 7D Trend tiles
 }
+
+const glassCardClasses = cn(
+  "rounded-2xl p-4 md:p-5 h-full",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassTileClasses = cn(
+  "rounded-xl p-4 flex flex-col",
+  "bg-white/45 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-black/[0.06] dark:border-white/[0.04]"
+);
 
 export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: PsychologyOverviewCardProps) {
   const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol);
@@ -19,7 +34,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
 
   if (isLoading) {
     return (
-      <Card className="p-4 md:p-5 glass-card h-full">
+      <div className={glassCardClasses}>
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Skeleton className="h-5 w-40" />
@@ -37,15 +52,15 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
             <Skeleton className="h-16 w-full" />
           </div>
         </div>
-      </Card>
+      </div>
     );
   }
 
   if (!snapshot) {
     return (
-      <Card className="p-4 md:p-5 glass-card h-full">
+      <div className={glassCardClasses}>
         <p className="text-sm text-muted-foreground">No psychology data available.</p>
-      </Card>
+      </div>
     );
   }
 
@@ -79,7 +94,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
   };
 
   return (
-    <Card className="p-4 md:p-5 glass-card border-primary/10">
+    <div className={glassCardClasses}>
       <div className="flex flex-col">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <h3 className="font-semibold text-sm md:text-base">Psychology Overview</h3>
@@ -117,7 +132,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
         <div className="grid grid-cols-2 gap-3 mb-3">
           {summary.dominant_emotion && (
             <motion.div 
-              className="glass-tile p-4 flex flex-col"
+              className={glassTileClasses}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 }}
@@ -130,7 +145,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
           )}
           {summary.primary_risk && (
             <motion.div 
-              className="glass-tile p-4 flex flex-col"
+              className={glassTileClasses}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
@@ -148,7 +163,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
           <div className="grid grid-cols-3 gap-3">
             {/* Sentiment Score tile */}
             <motion.div 
-              className="glass-tile p-4 flex flex-col"
+              className={glassTileClasses}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 }}
@@ -178,7 +193,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
 
             {/* Message Volume tile */}
             <motion.div 
-              className="glass-tile p-4 flex flex-col"
+              className={glassTileClasses}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
@@ -201,7 +216,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
 
             {/* 7D Trend tile */}
             <motion.div 
-              className="glass-tile p-4 flex flex-col"
+              className={glassTileClasses}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.25 }}
@@ -217,6 +232,6 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
