@@ -40,13 +40,15 @@ import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { AskDeriveStreetBar } from "@/components/ask/AskDeriveStreetBar";
 import { AskDeriveStreetPanel } from "@/components/ask/AskDeriveStreetPanel";
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
-
 export default function SymbolPage() {
   return <SymbolPageContent />;
 }
-
 function SymbolPageContent() {
-  const { symbol: paramSymbol } = useParams<{ symbol: string }>();
+  const {
+    symbol: paramSymbol
+  } = useParams<{
+    symbol: string;
+  }>();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -54,13 +56,15 @@ function SymbolPageContent() {
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
 
   // Initialize Ask context with symbol
-  const { setSymbol, setIntelligenceContext } = useAskDeriveStreet();
+  const {
+    setSymbol,
+    setIntelligenceContext
+  } = useAskDeriveStreet();
 
   // Sync symbol to Ask context
   useEffect(() => {
     setSymbol(symbol);
   }, [symbol, setSymbol]);
-
   const validTabs = ['narratives', 'emotions', 'sentiment', 'momentum'];
   const initialTab = searchParams.get('chart') || 'narratives';
   const [activeTab, setActiveTabState] = useState<string>(validTabs.includes(initialTab) ? initialTab : 'narratives');
@@ -195,11 +199,10 @@ function SymbolPageContent() {
         lensSummary: lensSummaryData.summary,
         lensConfidence: lensSummaryData.confidence,
         activeLens: getLensDisplayName(decisionLens, activeCustomLens || undefined),
-        dataTimestamp: new Date().toISOString(),
+        dataTimestamp: new Date().toISOString()
       });
     }
   }, [lensSummaryData, decisionLens, activeCustomLens, setIntelligenceContext]);
-
   const data = stats || {
     symbol,
     name: symbol,
@@ -405,17 +408,7 @@ function SymbolPageContent() {
           duration: 0.25,
           ease: "easeOut"
         }} className="space-y-4 lg:space-y-6">
-              <SummaryInsightsCard
-                symbol={symbol}
-                confidence={lensSummaryData?.confidence}
-                relevantCount={lensSummaryData?.relevantCount}
-                messageCount={lensSummaryData?.messageCount}
-                isLoading={lensSummaryLoading}
-                isRegenerating={isRegenerating}
-                isFetching={lensSummaryFetching}
-                isAdmin={isAdmin}
-                onRegenerate={handleRegenerate}
-              >
+              <SummaryInsightsCard symbol={symbol} confidence={lensSummaryData?.confidence} relevantCount={lensSummaryData?.relevantCount} messageCount={lensSummaryData?.messageCount} isLoading={lensSummaryLoading} isRegenerating={isRegenerating} isFetching={lensSummaryFetching} isAdmin={isAdmin} onRegenerate={handleRegenerate}>
                 <p className="text-sm md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
                   <FormattedSummary text={summary} />
                 </p>
@@ -423,9 +416,9 @@ function SymbolPageContent() {
 
               {/* Psychology Overview Card - without metric tiles since they're in the header */}
               <motion.div layout transition={{
-                duration: 0.3,
-                ease: "easeOut"
-              }} className="mt-8 md:mt-10">
+            duration: 0.3,
+            ease: "easeOut"
+          }} className="mt-8 md:mt-[50px]">
                 <PsychologyOverviewCard symbol={symbol} hideMetricTiles />
               </motion.div>
             </motion.div>}
