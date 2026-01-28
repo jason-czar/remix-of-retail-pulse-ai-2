@@ -452,7 +452,7 @@ function SymbolPageContent() {
         </AnimatePresence>
 
         {/* Narrative Coherence Score */}
-        <Collapsible defaultOpen={false} className="mb-8 md:mb-12 mt-8 md:mt-10">
+        <Collapsible defaultOpen={false} className="mb-8 md:mb-12 mt-12 md:mt-16">
           <CollapsibleTrigger className="flex items-center gap-2 w-full group">
             <h3 className="text-lg font-semibold">Narrative Coherence</h3>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
