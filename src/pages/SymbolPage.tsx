@@ -24,7 +24,6 @@ import { LensReadinessCard } from "@/components/LensReadinessCard";
 import { DecisionQuestionHeader } from "@/components/DecisionQuestionHeader";
 import { CustomLensReadinessCard } from "@/components/CustomLensReadinessCard";
 import { PsychologyOverviewCard } from "@/components/PsychologyOverviewCard";
-import { SummaryInsightsCard } from "@/components/SummaryInsightsCard";
 import { MessagesSidebar } from "@/components/layout/MessagesSidebar";
 import { NarrativeImpactHistorySection } from "@/components/NarrativeImpactHistorySection";
 import { NarrativeCoherenceCard } from "@/components/NarrativeCoherenceCard";
@@ -390,7 +389,7 @@ function SymbolPageContent() {
             </motion.div>}
         </AnimatePresence>
 
-        {/* Summary lens - Uses unified header and SummaryInsightsCard */}
+        {/* Summary lens - Keep original separate card layout */}
         <AnimatePresence mode="wait">
           {decisionLens === 'summary' && <motion.div key={decisionLens} initial={{
           opacity: 0,
@@ -404,8 +403,64 @@ function SymbolPageContent() {
         }} transition={{
           duration: 0.25,
           ease: "easeOut"
-        }}>
-              <SummaryInsightsCard symbol={symbol} />
+        }} className="space-y-4 lg:space-y-6">
+              {/* Intelligence Summary Card for Summary lens */}
+              <motion.div layout transition={{
+            duration: 0.3,
+            ease: "easeOut"
+          }}>
+                <Card className="p-4 md:p-5 glass-card flex flex-col" data-tour="intelligence-summary">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] md:text-xs">
+                        {getLensDisplayName(decisionLens, activeCustomLens || undefined)}
+                      </Badge>
+                      {lensSummaryData?.confidence && <ConfidenceBadge level={lensSummaryData.confidence} context="volume" tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} size="sm" />}
+                    </div>
+                    {isAdmin && <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
+                            <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
+                            <span className="sr-only">Regenerate</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Generate a fresh analysis</p>
+                        </TooltipContent>
+                      </Tooltip>}
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground/70 mb-3 italic">
+                    {getLensDecisionQuestion(decisionLens, activeCustomLens || undefined)}
+                  </p>
+                  
+                  {lensSummaryLoading || isRegenerating ? <div className="space-y-3 flex-1">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-[95%]" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div> : <motion.div initial={{
+                opacity: 0
+              }} animate={{
+                opacity: 1
+              }} transition={{
+                duration: 0.4,
+                ease: "easeOut"
+              }} className="flex-1">
+                      <p className="text-sm md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
+                        <FormattedSummary text={summary} />
+                      </p>
+                    </motion.div>}
+                </Card>
+              </motion.div>
+
+              {/* Readiness Card */}
+              <motion.div layout transition={{
+            duration: 0.3,
+            ease: "easeOut"
+          }}>
+                <PsychologyOverviewCard symbol={symbol} />
+              </motion.div>
             </motion.div>}
         </AnimatePresence>
 
