@@ -311,7 +311,7 @@ export function AskDeriveStreetPanel() {
                 }
           }
           className={cn(
-            "fixed right-3 top-3 bottom-3 z-40",
+            "fixed right-3 top-[4.5rem] bottom-3 z-40",
             "flex overflow-hidden",
             // Liquid Glass styling matching MessagesSidebar
             "rounded-2xl",
