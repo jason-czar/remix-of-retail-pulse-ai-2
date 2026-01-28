@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { useAskDeriveStreetStream } from "@/hooks/use-ask-derive-street";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const STARTER_PROMPTS = [
   "Why is {SYMBOL} consolidating here?",
@@ -23,11 +24,15 @@ interface AskDeriveStreetBarProps {
 export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   const { symbol, isOpen, openPanel, closePanel, panelWidth, isStreaming } = useAskDeriveStreet();
   const { sendMessage } = useAskDeriveStreetStream();
+  const { state: sidebarState, sidebarWidth: leftSidebarWidth } = useSidebar();
   const [input, setInput] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
+  
+  // Calculate offset to center in main content area (account for left sidebar)
+  const leftOffset = sidebarState === "expanded" ? leftSidebarWidth / 2 : 32;
 
   // Rotate placeholder prompts
   useEffect(() => {
@@ -111,19 +116,20 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        style={!isMobile ? { left: `calc(50% + ${leftOffset}px)` } : undefined}
         className={cn(
           "fixed z-40",
-          // Position: centered at bottom
+          // Position: centered in main content area
           isMobile 
             ? "bottom-20 left-4 right-4" 
-            : "bottom-6 left-1/2 -translate-x-1/2 w-full max-w-3xl flex flex-col items-center",
+            : "bottom-6 -translate-x-1/2 w-full max-w-xl flex flex-col items-center",
           className
         )}
       >
         {/* Starter prompt chips - hidden for now */}
         <div
           className={cn(
-            "relative flex items-end gap-2 p-2 w-full max-w-3xl",
+            "relative flex items-end gap-2 p-2 w-full",
             // Liquid Glass styling
             "rounded-2xl",
             "bg-white/92 dark:bg-[hsl(0_0%_12%/0.55)]",
