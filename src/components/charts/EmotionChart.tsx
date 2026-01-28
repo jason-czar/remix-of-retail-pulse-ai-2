@@ -146,17 +146,8 @@ function EmotionSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
-  // Track data changes for animation
-  const [animationKey, setAnimationKey] = useState(0);
-  const prevDataRef = useRef<EmotionSidePanelData | null>(null);
-  
-  useEffect(() => {
-    // Trigger animation when data changes on mobile
-    if (isMobile && data && prevDataRef.current !== data && data.label !== prevDataRef.current?.label) {
-      setAnimationKey(prev => prev + 1);
-    }
-    prevDataRef.current = data;
-  }, [data, isMobile]);
+  // Track data changes for animation key
+  const animationKey = data?.label ?? 'empty';
   
   // Professional monochromatic card styling matching LensReadinessCard
   const baseClasses = "relative overflow-hidden rounded-2xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl";
@@ -164,10 +155,17 @@ function EmotionSidePanel({
     ? `w-[calc(100%-10px)] mx-[5px] p-4 ${baseClasses}`
     : `w-[280px] flex-shrink-0 p-5 ${baseClasses}`;
   
-  // Animation classes for mobile panel updates
-  const animationClasses = isMobile 
-    ? "transition-all duration-200 ease-out" 
-    : "";
+  // Animation variants for entrance
+  const panelVariants = {
+    initial: { opacity: 0, y: 6 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -4 }
+  };
+  
+  const transitionConfig = {
+    duration: 0.35,
+    ease: "easeOut" as const
+  };
 
   if (!data) {
     return (
@@ -185,7 +183,14 @@ function EmotionSidePanel({
   // Handle empty slots
   if (data.isEmpty) {
     return (
-      <div key={animationKey} className={cn(containerClasses, animationClasses, isMobile && "animate-[pulse_0.3s_ease-out]")}>
+      <motion.div 
+        key={`empty-${animationKey}`}
+        variants={panelVariants}
+        initial="initial"
+        animate="animate"
+        transition={transitionConfig}
+        className={containerClasses}
+      >
         <span className={cn("font-semibold text-foreground tracking-tight", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
         <p className={cn("text-muted-foreground", isMobile ? "text-sm mt-1" : "text-base mt-2")}>
           No data available yet
@@ -203,25 +208,24 @@ function EmotionSidePanel({
             </span>
           </div>
         )}
-      </div>
+      </motion.div>
     );
   }
   
   return (
-    <div 
+    <motion.div 
       key={animationKey}
-      className={cn(
-        containerClasses,
-        animationClasses,
-        isMobile && isHovering && "animate-[pulse_0.3s_ease-out]"
-      )}
+      variants={panelVariants}
+      initial="initial"
+      animate="animate"
+      transition={transitionConfig}
+      className={containerClasses}
     >
       {/* Time Header */}
       <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
         <span className={cn(
           "font-semibold text-foreground tracking-tight",
-          isMobile ? "text-base" : "text-lg",
-          isMobile && "transition-opacity duration-150"
+          isMobile ? "text-base" : "text-lg"
         )}>{data.label}</span>
         {data.totalScore > 0 && (
           <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
@@ -235,8 +239,7 @@ function EmotionSidePanel({
       {data.price != null && (
         <div className={cn(
           "flex items-center gap-2 border-b border-border/30",
-          isMobile ? "mb-3 pb-2" : "mb-4 pb-3",
-          isMobile && "transition-all duration-150"
+          isMobile ? "mb-3 pb-2" : "mb-4 pb-3"
         )}>
           <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{ color: priceColor }} />
           <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{ color: priceColor }}>
@@ -251,7 +254,7 @@ function EmotionSidePanel({
           <div className={cn("flex items-center justify-between mb-1.5", isMobile ? "text-xs" : "text-sm")}>
             <span className="text-muted-foreground">Relative Intensity</span>
             <span className={cn(
-              "font-medium transition-colors duration-150",
+              "font-medium",
               data.intensityPercent >= 80 ? "text-warning" : 
               data.intensityPercent >= 50 ? "text-primary" : "text-muted-foreground"
             )}>
@@ -259,13 +262,15 @@ function EmotionSidePanel({
             </span>
           </div>
           <div className={cn("bg-muted/20 dark:bg-white/5 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
-            <div 
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(data.intensityPercent, 100)}%` }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               className={cn(
-                "h-full rounded-full transition-all duration-200",
+                "h-full rounded-full",
                 data.intensityPercent >= 80 ? "bg-warning" : 
                 data.intensityPercent >= 50 ? "bg-primary" : "bg-muted-foreground/50"
               )}
-              style={{ width: `${Math.min(data.intensityPercent, 100)}%` }}
             />
           </div>
         </div>
@@ -276,18 +281,23 @@ function EmotionSidePanel({
         <div className={cn("border-t border-border/30", isMobile ? "space-y-2 pt-3" : "space-y-3 pt-4")}>
           <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Signal Emotions:</div>
           {data.emotions.map((emotion, idx) => (
-            <div key={idx} className={cn(
-              "flex items-center",
-              isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base",
-              isMobile && "transition-all duration-150"
-            )}>
+            <motion.div 
+              key={idx} 
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: idx * 0.05, ease: "easeOut" }}
+              className={cn(
+                "flex items-center",
+                isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base"
+              )}
+            >
               <div 
-                className={cn("rounded-sm flex-shrink-0 transition-colors duration-150", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} 
+                className={cn("rounded-sm flex-shrink-0", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} 
                 style={{ backgroundColor: emotion.color }}
               />
               <span className={cn("text-foreground/80 dark:text-foreground/75 flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>{emotion.name}</span>
               <span className={cn("text-muted-foreground font-medium tabular-nums", isMobile ? "text-xs" : "text-sm")}>{emotion.score}</span>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
@@ -300,7 +310,7 @@ function EmotionSidePanel({
           </span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

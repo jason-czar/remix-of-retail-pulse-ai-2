@@ -307,11 +307,26 @@ function NarrativeSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
+  // Track data changes for animation key
+  const animationKey = data?.label ?? 'empty';
+  
   // Professional monochromatic card styling matching LensReadinessCard
   const baseClasses = "relative overflow-hidden rounded-2xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl";
   const containerClasses = isMobile 
     ? `w-[calc(100%-10px)] mx-[5px] p-4 ${baseClasses}` 
     : `w-[312px] flex-shrink-0 p-5 ${baseClasses}`;
+  
+  // Animation variants for entrance
+  const panelVariants = {
+    initial: { opacity: 0, y: 6 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -4 }
+  };
+  
+  const transitionConfig = {
+    duration: 0.35,
+    ease: "easeOut" as const
+  };
   
   if (!data) {
     return <div className={cn(
@@ -324,7 +339,14 @@ function NarrativeSidePanel({
 
   // Handle gap placeholders
   if (data.isGap) {
-    return <div className={cn(containerClasses, "!border-dashed !border-warning/50")}>
+    return <motion.div 
+      key={`gap-${animationKey}`}
+      variants={panelVariants}
+      initial="initial"
+      animate="animate"
+      transition={transitionConfig}
+      className={cn(containerClasses, "!border-dashed !border-warning/50")}
+    >
         <div className={cn("flex items-center gap-2", isMobile ? "mb-2" : "mb-3")}>
           <AlertTriangle className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-warning")} />
           <span className={cn("font-semibold text-warning", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
@@ -335,12 +357,19 @@ function NarrativeSidePanel({
         <p className={cn("text-warning/80", isMobile ? "text-xs mt-2" : "text-sm mt-3")}>
           Click "Fill Gaps" to fetch historical data.
         </p>
-      </div>;
+      </motion.div>;
   }
 
   // Handle empty hours
   if (data.isEmpty) {
-    return <div className={containerClasses}>
+    return <motion.div 
+      key={`empty-${animationKey}`}
+      variants={panelVariants}
+      initial="initial"
+      animate="animate"
+      transition={transitionConfig}
+      className={containerClasses}
+    >
         <span className={cn("font-semibold text-foreground", isMobile ? "text-base" : "text-lg")}>
           {data.label}
         </span>
@@ -360,10 +389,17 @@ function NarrativeSidePanel({
         {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/30">
             <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
           </div>}
-      </div>;
+      </motion.div>;
   }
   
-  return <div className={containerClasses}>
+  return <motion.div 
+    key={animationKey}
+    variants={panelVariants}
+    initial="initial"
+    animate="animate"
+    transition={transitionConfig}
+    className={containerClasses}
+  >
       <div className="">
         {/* Time/Date Header with Messages and Price */}
         <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
@@ -395,17 +431,28 @@ function NarrativeSidePanel({
               </span>
             </div>
             <div className={cn("bg-muted/20 dark:bg-white/5 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
-              <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{
-            backgroundColor: data.volumePercent >= 80 ? "#007BFF" : undefined,
-            width: `${Math.min(data.volumePercent, 100)}%`
-          }} />
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(data.volumePercent, 100)}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className={cn("h-full rounded-full", data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} 
+                style={{
+                  backgroundColor: data.volumePercent >= 80 ? "#007BFF" : undefined,
+                }} 
+              />
             </div>
           </div>}
 
         {/* Top Narratives */}
         {data.segments.length > 0 && <div className={cn("border-t border-border/30", isMobile ? "space-y-2 pt-3" : "space-y-3 pt-4")}>
             <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Top Narratives:</div>
-            {data.segments.map((segment, idx) => <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
+            {data.segments.map((segment, idx) => <motion.div 
+                key={idx} 
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.05, ease: "easeOut" }}
+                className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}
+              >
                 
                 <span className={cn("text-foreground/80 dark:text-foreground/75 flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>
                   {segment.name}
@@ -416,7 +463,7 @@ function NarrativeSidePanel({
                 <span className={cn("px-2 py-0.5 rounded-md border font-medium", isMobile ? "text-[9px]" : "text-[11px]", getSentimentBadge(segment.sentiment))}>
                   {segment.sentiment}
                 </span>
-              </div>)}
+              </motion.div>)}
           </div>}
 
         {/* Default indicator - only on desktop */}
@@ -424,7 +471,7 @@ function NarrativeSidePanel({
             <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
           </div>}
       </div>
-    </div>;
+    </motion.div>;
 }
 
 // Helper to extract segments from a data point
