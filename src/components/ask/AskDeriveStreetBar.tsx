@@ -23,7 +23,7 @@ interface AskDeriveStreetBarProps {
 }
 
 export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
-  const { symbol, isOpen, setIsOpen, isStreaming } = useAskDeriveStreet();
+  const { symbol, isOpen, openPanel, closePanel, isStreaming } = useAskDeriveStreet();
   const { sendMessage } = useAskDeriveStreetStream();
   const [input, setInput] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -92,7 +92,7 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
     >
       <Button
         size="icon"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => isOpen ? closePanel() : openPanel()}
         className={cn(
           "h-12 w-12 rounded-full",
           "bg-primary hover:bg-primary/90",
