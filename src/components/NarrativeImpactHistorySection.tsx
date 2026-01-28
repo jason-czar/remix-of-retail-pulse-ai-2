@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +10,21 @@ import { FlaskConical, TrendingUp, TrendingDown, BarChart3, ChevronDown, Chevron
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Cell, ReferenceLine } from "recharts";
+
+// Liquid Glass styling constants
+const glassCardClasses = cn(
+  "rounded-2xl p-4 md:p-5 overflow-hidden",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassTileClasses = cn(
+  "p-3 rounded-xl",
+  "bg-[#F3F3F7] dark:bg-white/[0.04]",
+  "border border-black/[0.02] dark:border-white/[0.04]"
+);
 interface NarrativeImpactHistorySectionProps {
   symbol: string;
 }
@@ -78,7 +92,7 @@ function NarrativeImpactCard({
   const isExperimental = episode_count < 5;
   const displayMove = median_price_move_10d ?? avg_price_move_10d;
   const MoveIcon = displayMove && displayMove > 0 ? TrendingUp : TrendingDown;
-  return <Card className="glass-card overflow-hidden">
+  return <div className={glassCardClasses}>
       <div className="p-4 cursor-pointer hover:bg-secondary/30 transition-colors" onClick={onToggle}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -167,7 +181,7 @@ function NarrativeImpactCard({
             </div>
           </motion.div>}
       </AnimatePresence>
-    </Card>;
+    </div>;
 }
 function MetricBlock({
   label,
@@ -182,7 +196,7 @@ function MetricBlock({
   tooltip?: string;
   highlight?: boolean;
 }) {
-  const content = <div className={cn("p-3 rounded-lg bg-secondary/50", highlight && "ring-1 ring-primary/30")}>
+  const content = <div className={cn(glassTileClasses, highlight && "ring-1 ring-primary/30")}>
       <div className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
         {label}
         {tooltip && <Info className="h-2.5 w-2.5" />}
@@ -306,7 +320,7 @@ function OutcomeDistributionChart({
     confidence: o.confidence_label
   }));
   if (chartData.length < 2) return null;
-  return <Card className="glass-card p-4">
+  return <div className={glassCardClasses}>
       <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
         <BarChart3 className="h-4 w-4 text-primary" />
         Narrative Impact Overview
@@ -338,7 +352,7 @@ function OutcomeDistributionChart({
       <p className="text-[10px] text-muted-foreground text-center mt-2">
         Median 10-day price move by narrative (opacity indicates confidence level)
       </p>
-    </Card>;
+    </div>;
 }
 export function NarrativeImpactHistorySection({
   symbol
@@ -393,7 +407,7 @@ export function NarrativeImpactHistorySection({
     return null;
   }
   if (outcomes.length === 0) {
-    return <Card className="glass-card p-6">
+    return <div className={glassCardClasses}>
         <div className="flex items-center gap-3 text-muted-foreground">
           <BarChart3 className="h-5 w-5" />
           <div>
@@ -401,7 +415,7 @@ export function NarrativeImpactHistorySection({
             <p className="text-sm">No narrative outcome data available yet. Data accumulates as narratives complete their cycles.</p>
           </div>
         </div>
-      </Card>;
+      </div>;
   }
   const highConfidenceCount = outcomes.filter(o => o.confidence_label === 'high').length;
   const moderateCount = outcomes.filter(o => o.confidence_label === 'moderate').length;
