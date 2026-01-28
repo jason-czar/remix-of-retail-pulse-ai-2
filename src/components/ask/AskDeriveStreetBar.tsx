@@ -115,9 +115,7 @@ export function AskDeriveStreetBar({
         </div>
 
         {/* Subtle hint text */}
-        <p className="text-[10px] text-muted-foreground/50 text-center mt-1.5 px-2">
-          Ask about {symbol} • Grounded in DeriveStreet intelligence
-        </p>
+        
       </motion.div>
     </>;
 }
