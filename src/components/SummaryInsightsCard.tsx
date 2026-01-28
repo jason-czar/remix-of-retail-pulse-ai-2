@@ -117,7 +117,7 @@ export function SummaryInsightsCard({
       data-tour="intelligence-summary"
     >
       {/* Header: Question + Score Tiles */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 lg:gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
         {/* Left: Decision Question */}
         <div className="flex-1 min-w-0">
           {/* Decision Question */}
