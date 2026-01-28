@@ -90,24 +90,56 @@ export function DecisionQuestionHeader({
   const lensKey = LENS_KEY_MAP[lens];
   const readiness = snapshot?.interpretation?.decision_readiness?.[lensKey];
   const overlay = snapshot?.interpretation?.decision_overlays?.[lensKey];
+  const snapshotSummary = snapshot?.interpretation?.snapshot_summary;
+  const dataConfidence = snapshot?.data_confidence;
   
-  // For custom lenses, calculate scores from confidence
+  // For Summary lens, calculate aggregate scores from snapshot
+  const isSummary = lens === 'summary';
   const isCustom = !!customLens;
-  const readinessScore = isCustom 
-    ? (confidence === 'high' ? 75 : confidence === 'moderate' ? 55 : 35)
-    : readiness?.readiness_score ?? 0;
-  const riskScore = isCustom
-    ? (100 - readinessScore + Math.round((Math.random() - 0.5) * 10))
-    : overlay?.risk_score ?? 0;
-  const confidencePercent = overlay?.confidence 
-    ? Math.round(overlay.confidence * 100)
-    : (confidence === 'high' ? 85 : confidence === 'moderate' ? 65 : 45);
   
-  const timing = getTimingBadge(readiness?.recommended_timing);
+  // Calculate scores based on lens type
+  let readinessScore = 0;
+  let riskScore = 0;
+  let confidencePercent = 0;
+  
+  if (isSummary && snapshot) {
+    // For summary, use aggregate metrics from snapshot
+    const allReadinessScores = Object.values(snapshot.interpretation?.decision_readiness || {})
+      .map((r: any) => r?.readiness_score ?? 0)
+      .filter((s: number) => s > 0);
+    const allRiskScores = Object.values(snapshot.interpretation?.decision_overlays || {})
+      .map((o: any) => o?.risk_score ?? 0)
+      .filter((s: number) => s > 0);
+    
+    readinessScore = allReadinessScores.length > 0 
+      ? Math.round(allReadinessScores.reduce((a, b) => a + b, 0) / allReadinessScores.length)
+      : 0;
+    riskScore = allRiskScores.length > 0
+      ? Math.round(allRiskScores.reduce((a, b) => a + b, 0) / allRiskScores.length)
+      : 0;
+    confidencePercent = dataConfidence?.score 
+      ? Math.round(dataConfidence.score * 100)
+      : (confidence === 'high' ? 85 : confidence === 'moderate' ? 65 : 45);
+  } else if (isCustom) {
+    // For custom lenses, calculate from confidence level
+    readinessScore = confidence === 'high' ? 75 : confidence === 'moderate' ? 55 : 35;
+    riskScore = 100 - readinessScore + Math.round((Math.random() - 0.5) * 10);
+    confidencePercent = confidence === 'high' ? 85 : confidence === 'moderate' ? 65 : 45;
+  } else {
+    // For standard lenses, use lens-specific scores
+    readinessScore = readiness?.readiness_score ?? 0;
+    riskScore = overlay?.risk_score ?? 0;
+    confidencePercent = overlay?.confidence 
+      ? Math.round(overlay.confidence * 100)
+      : (confidence === 'high' ? 85 : confidence === 'moderate' ? 65 : 45);
+  }
+  
+  const timing = isSummary ? null : getTimingBadge(readiness?.recommended_timing);
   const decisionQuestion = getLensDecisionQuestion(lens, customLens || undefined);
   const displayName = getLensDisplayName(lens, customLens || undefined);
   
-  const showScores = lens !== 'summary';
+  // Show scores for all lenses including summary
+  const showScores = true;
   const loading = isLoading || snapshotLoading;
 
   const handleCopyLink = async () => {
