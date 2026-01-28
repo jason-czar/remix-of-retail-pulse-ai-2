@@ -3,9 +3,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { useSymbolStats } from "@/hooks/use-stocktwits";
 import { useSentimentHistory } from "@/hooks/use-sentiment-history";
-import { AlertTriangle, TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "react-router-dom";
 
 interface PsychologyOverviewCardProps {
   symbol: string;
@@ -28,10 +29,14 @@ const glassTileClasses = cn(
 );
 
 export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: PsychologyOverviewCardProps) {
+  const [, setSearchParams] = useSearchParams();
   const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol);
   const { data: symbolStats } = useSymbolStats(symbol);
   const { data: sentimentHistory } = useSentimentHistory(symbol, 7);
 
+  const handleNavigateToLens = () => {
+    setSearchParams({ lens: 'corporate-strategy' });
+  };
   if (isLoading) {
     return (
       <div className={glassCardClasses}>
@@ -231,6 +236,22 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
             </motion.div>
           </div>
         )}
+
+        {/* Continue to Decision Lens navigation */}
+        <motion.button
+          onClick={handleNavigateToLens}
+          className="mt-4 pt-4 border-t border-border/30 w-full flex items-center justify-between group cursor-pointer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+        >
+          <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+            Continue to Decision Lens: <span className="font-medium text-foreground">Corporate Strategy</span>
+          </span>
+          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white/50 dark:bg-white/[0.08] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08] group-hover:bg-primary/10 group-hover:border-primary/20 transition-all">
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </motion.button>
       </div>
     </div>
   );
