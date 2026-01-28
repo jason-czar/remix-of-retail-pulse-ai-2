@@ -35,7 +35,7 @@ import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { TimeRangeSelector, TimeRange } from "@/components/TimeRangeSelector";
+type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 export default function SymbolPage() {
   const {
     symbol: paramSymbol
@@ -161,7 +161,9 @@ export default function SymbolPage() {
     refetch: refetchLensSummary
   } = useDecisionLensSummary(symbol, decisionLens, activeCustomLens);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const isAdmin = user?.email === 'admin@czar.ing';
   const handleRegenerate = async () => {
     setIsRegenerating(true);
@@ -227,7 +229,7 @@ export default function SymbolPage() {
         </div>
 
         {/* Decision Lens Selector - Sticky below header */}
-        <div className="sticky top-14 z-30 -mx-4 px-4 py-3 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5" data-tour="decision-lens">
+        <div className="sticky top-14 z-30 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5 py-0" data-tour="decision-lens">
           <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
         </div>
 
@@ -347,8 +349,7 @@ export default function SymbolPage() {
                       <p className="text-sm md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em] inline">
                         <FormattedSummary text={summary} />
                       </p>
-                      {isAdmin && (
-                        <Tooltip>
+                      {isAdmin && <Tooltip>
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="inline-flex ml-2 h-7 w-7 text-muted-foreground hover:text-foreground align-middle">
                               <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
@@ -357,8 +358,7 @@ export default function SymbolPage() {
                           <TooltipContent>
                             <p>Generate a fresh analysis</p>
                           </TooltipContent>
-                        </Tooltip>
-                      )}
+                        </Tooltip>}
                     </motion.div>}
                 </div>
               </DecisionQuestionHeader>
@@ -393,8 +393,7 @@ export default function SymbolPage() {
                       </Badge>
                       {lensSummaryData?.confidence && <ConfidenceBadge level={lensSummaryData.confidence} context="volume" tooltipContent={`${lensSummaryData.relevantCount ?? '—'} relevant messages analyzed out of ${lensSummaryData.messageCount ?? '—'} total.`} size="sm" />}
                     </div>
-                    {isAdmin && (
-                      <Tooltip>
+                    {isAdmin && <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" size="sm" onClick={handleRegenerate} disabled={isRegenerating || lensSummaryLoading || lensSummaryFetching} className="h-7 px-2 text-muted-foreground hover:text-foreground">
                             <RefreshCw className={cn("h-3.5 w-3.5", (isRegenerating || lensSummaryFetching) && "animate-spin")} />
@@ -404,8 +403,7 @@ export default function SymbolPage() {
                         <TooltipContent>
                           <p>Generate a fresh analysis</p>
                         </TooltipContent>
-                      </Tooltip>
-                    )}
+                      </Tooltip>}
                   </div>
                   
                   <p className="text-xs text-muted-foreground/70 mb-3 italic">
@@ -469,11 +467,16 @@ export default function SymbolPage() {
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-4">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: -10
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.25,
+            ease: "easeOut"
+          }}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 <NarrativeCoherenceCard symbol={symbol} />
                 <NCSTrendChart symbol={symbol} />
@@ -524,6 +527,35 @@ function MetricCard({
           {Math.abs(change)}%{suffix}
         </div>}
     </Card>;
+}
+function TimeRangeSelector({
+  value,
+  onChange
+}: {
+  value: TimeRange;
+  onChange: (v: TimeRange) => void;
+}) {
+  const labels: Record<TimeRange, string> = {
+    '1H': '1H',
+    '6H': '6H',
+    '1D': 'Today',
+    '24H': '24H',
+    '7D': '7D',
+    '30D': '30D'
+  };
+  return <div className={cn("relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
+  // Liquid Glass styling - subtle and seamless
+  "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]", "backdrop-blur-[20px] backdrop-saturate-[140%]", "border border-black/[0.04] dark:border-white/[0.06]",
+  // Minimal shadow - just enough depth without boxy appearance
+  "shadow-[0_1px_2px_rgba(0,0,0,0.02)]", "dark:shadow-none")}>
+      {(["1H", "6H", "1D", "24H", "7D", "30D"] as const).map(range => <button key={range} onClick={() => onChange(range)} className={cn("inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0", range === value ? [
+    // Light mode: frosted white with subtle depth
+    "bg-white text-foreground", "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]", "border border-black/[0.06]",
+    // Dark mode: subtle glass elevation
+    "dark:bg-white/[0.12] dark:text-foreground", "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]", "dark:border-white/[0.12]"] : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]")}>
+          {labels[range]}
+        </button>)}
+    </div>;
 }
 
 // Markdown-style text formatter supporting bold, italics, and bullet points
