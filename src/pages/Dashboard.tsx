@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +15,26 @@ import { useAlerts, Alert } from "@/hooks/use-alerts";
 import { useMarketOverview } from "@/hooks/use-market-overview";
 import { formatDistanceToNow } from "date-fns";
 import { getAlertTypeLabel, getAlertTypeIcon, isEmotionAlert } from "@/lib/alert-types";
+import { cn } from "@/lib/utils";
+
+// Shared Liquid Glass card styles
+const glassCardClasses = cn(
+  "rounded-2xl p-6",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]",
+  "dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
+);
+
+const glassListItemClasses = cn(
+  "rounded-xl p-3",
+  "bg-[#F3F3F7] dark:bg-white/[0.04]",
+  "border border-black/[0.04] dark:border-white/[0.04]",
+  "hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
+  "transition-colors duration-200"
+);
+
 export default function Dashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [watchlistManagerOpen, setWatchlistManagerOpen] = useState(false);
@@ -52,6 +71,7 @@ export default function Dashboard() {
     };
   });
   const isLoading = trendingLoading || watchlistLoading;
+  
   return <>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
@@ -62,7 +82,16 @@ export default function Dashboard() {
           </div>
           
           <div className="flex gap-3">
-            <Button variant="outline" className="w-64 justify-start text-muted-foreground" onClick={() => setSearchOpen(true)}>
+            <Button 
+              variant="outline" 
+              className={cn(
+                "w-64 justify-start text-muted-foreground",
+                "bg-white/50 dark:bg-white/[0.06]",
+                "border-black/[0.08] dark:border-white/[0.08]",
+                "hover:bg-black/[0.04] dark:hover:bg-white/[0.08]"
+              )} 
+              onClick={() => setSearchOpen(true)}
+            >
               <Search className="h-4 w-4 mr-2" />
               Search symbols...
               <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
@@ -71,7 +100,14 @@ export default function Dashboard() {
             </Button>
             <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
             <Link to="/analytics">
-              <Button variant="outline">
+              <Button 
+                variant="outline"
+                className={cn(
+                  "bg-white/50 dark:bg-white/[0.06]",
+                  "border-black/[0.08] dark:border-white/[0.08]",
+                  "hover:bg-black/[0.04] dark:hover:bg-white/[0.08]"
+                )}
+              >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Analytics
               </Button>
@@ -83,13 +119,19 @@ export default function Dashboard() {
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Watchlist */}
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
-                  
                   Your Watchlist
                 </h2>
-                <Button variant="ghost" size="sm" onClick={() => setWatchlistManagerOpen(true)}>Manage</Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                  onClick={() => setWatchlistManagerOpen(true)}
+                >
+                  Manage
+                </Button>
               </div>
               <WatchlistManager open={watchlistManagerOpen} onOpenChange={setWatchlistManagerOpen} />
               
@@ -109,10 +151,10 @@ export default function Dashboard() {
                     compact
                   /> : watchlistData.map(item => <WatchlistItem key={item.symbol} {...item} />)}
               </div>
-            </Card>
+            </div>
 
             {/* Market Overview */}
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Market Sentiment Overview</h2>
                 <Badge variant="glow">
@@ -129,7 +171,7 @@ export default function Dashboard() {
                     {sectors.slice(0, 3).map(sector => <OverviewCard key={sector.label} label={sector.label} value={sector.value} trend={sector.trend} change={sector.change} />)}
                   </>}
               </div>
-            </Card>
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -141,7 +183,7 @@ export default function Dashboard() {
             <PsychologyHistoryChart days={30} />
 
             {/* Alerts */}
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Bell className="h-5 w-5 text-primary" />
@@ -151,7 +193,7 @@ export default function Dashboard() {
                     </Badge>}
                 </h2>
                 <Link to="/settings">
-                  <Button variant="ghost" size="sm">View All</Button>
+                  <Button variant="ghost" size="sm" className="hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">View All</Button>
                 </Link>
               </div>
               
@@ -172,17 +214,17 @@ export default function Dashboard() {
                     compact
                   /> : alerts.slice(0, 3).map(alert => <RealAlertItem key={alert.id} alert={alert} />)}
               </div>
-            </Card>
+            </div>
 
             {/* Trending Now */}
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-bullish" />
                   Trending Now
                 </h2>
                 <Link to="/trending">
-                  <Button variant="ghost" size="sm">See All</Button>
+                  <Button variant="ghost" size="sm" className="hover:bg-black/[0.04] dark:hover:bg-white/[0.06]">See All</Button>
                 </Link>
               </div>
               
@@ -191,17 +233,19 @@ export default function Dashboard() {
                 length: 4
               }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />) : trending.length > 0 ? trending.slice(0, 4).map(item => <TrendingItem key={item.symbol} symbol={item.symbol} sentiment={item.sentiment} volume={formatVolume(item.volume)} trend={item.trend} />) : <p className="text-sm text-muted-foreground">No trending data available</p>}
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
     </>;
 }
+
 function formatVolume(volume: number): string {
   if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`;
   if (volume >= 1000) return `${(volume / 1000).toFixed(0)}K`;
   return volume.toString();
 }
+
 function WatchlistItem({
   symbol,
   name,
@@ -217,7 +261,11 @@ function WatchlistItem({
 }) {
   const TrendIcon = trend === "bullish" ? TrendingUp : TrendingDown;
   const ChangeIcon = change >= 0 ? ArrowUpRight : ArrowDownRight;
-  return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-3 glass-list-item group">
+  return (
+    <Link 
+      to={`/symbol/${symbol}`} 
+      className={cn(glassListItemClasses, "flex items-center justify-between group")}
+    >
       <div className="flex items-center gap-4">
         <div>
           <div className="font-semibold group-hover:text-primary transition-colors">
@@ -239,14 +287,17 @@ function WatchlistItem({
           </div>
         </div>
         
-        <div className="w-16 h-2 bg-secondary rounded-full overflow-hidden">
-          <div className={`h-full rounded-full ${trend === "bullish" ? "bg-gradient-bullish" : "bg-gradient-bearish"}`} style={{
-          width: `${sentiment}%`
-        }} />
+        <div className="w-16 h-2 bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full ${trend === "bullish" ? "bg-gradient-bullish" : "bg-gradient-bearish"}`} 
+            style={{ width: `${sentiment}%` }} 
+          />
         </div>
       </div>
-    </Link>;
+    </Link>
+  );
 }
+
 function OverviewCard({
   label,
   value,
@@ -259,7 +310,12 @@ function OverviewCard({
   change: number;
 }) {
   const ChangeIcon = change >= 0 ? ArrowUpRight : ArrowDownRight;
-  return <Card className="p-4 bg-secondary/40 dark:bg-white/[0.04] backdrop-blur-sm rounded-lg border border-border/30 dark:border-white/[0.06]">
+  return (
+    <div className={cn(
+      "p-4 rounded-xl",
+      "bg-[#F3F3F7] dark:bg-white/[0.04]",
+      "border border-black/[0.04] dark:border-white/[0.04]"
+    )}>
       <div className="text-sm text-muted-foreground mb-2">{label}</div>
       <div className="flex items-center gap-2 mb-1">
         <span className="text-2xl font-display">{value}</span>
@@ -269,8 +325,10 @@ function OverviewCard({
         <ChangeIcon className="h-3 w-3" />
         {Math.abs(change)}% (24h)
       </div>
-    </Card>;
+    </div>
+  );
 }
+
 function RealAlertItem({
   alert
 }: {
@@ -288,7 +346,11 @@ function RealAlertItem({
     }
     return "No threshold set";
   };
-  return <Link to={`/symbol/${alert.symbol}`} className="block p-3 glass-list-item">
+  return (
+    <Link 
+      to={`/symbol/${alert.symbol}`} 
+      className={cn(glassListItemClasses, "block")}
+    >
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded ${isEmotion ? "bg-accent/20 text-accent" : "bg-primary/20 text-primary"}`}>
@@ -305,8 +367,10 @@ function RealAlertItem({
         {typeLabel}
       </div>
       <div className="text-sm text-muted-foreground">{getMessage()}</div>
-    </Link>;
+    </Link>
+  );
 }
+
 function TrendingItem({
   symbol,
   sentiment,
@@ -319,7 +383,11 @@ function TrendingItem({
   trend: "bullish" | "bearish" | "neutral";
 }) {
   const TrendIcon = trend === "bullish" ? TrendingUp : TrendingDown;
-  return <Link to={`/symbol/${symbol}`} className="flex items-center justify-between p-2 glass-list-item group">
+  return (
+    <Link 
+      to={`/symbol/${symbol}`} 
+      className={cn(glassListItemClasses, "flex items-center justify-between group")}
+    >
       <div className="flex items-center gap-3">
         <TrendIcon className={`h-4 w-4 ${trend === "bullish" ? "text-bullish" : "text-bearish"}`} />
         <span className="font-semibold group-hover:text-primary transition-colors">
@@ -330,5 +398,6 @@ function TrendingItem({
         <span className="text-sm">{sentiment}</span>
         <span className="text-xs text-muted-foreground">{volume} msgs</span>
       </div>
-    </Link>;
+    </Link>
+  );
 }
