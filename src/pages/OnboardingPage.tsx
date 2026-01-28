@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Zap, 
@@ -19,6 +18,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Step = "plan" | "profile" | "api-key";
 
@@ -51,6 +51,28 @@ const plans = [
     popular: false
   }
 ];
+
+const glassCardClasses = cn(
+  "rounded-2xl p-6",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassTileClasses = cn(
+  "rounded-xl p-4",
+  "bg-white/45 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-black/[0.06] dark:border-white/[0.04]"
+);
+
+const glassInputClasses = cn(
+  "bg-white/50 dark:bg-white/[0.06]",
+  "backdrop-blur-[8px]",
+  "border-black/[0.08] dark:border-white/[0.08]",
+  "focus:border-primary/30 dark:focus:border-primary/40"
+);
 
 export default function OnboardingPage() {
   const [step, setStep] = useState<Step>("plan");
@@ -140,19 +162,19 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-glow opacity-30" />
-      
       <div className="w-full max-w-4xl relative">
         {/* Progress indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {["plan", "profile", "api-key"].map((s, idx) => (
             <div key={s} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step === s ? "bg-primary text-primary-foreground" :
-                ["plan", "profile", "api-key"].indexOf(step) > idx ? "bg-bullish text-bullish-foreground" :
-                "bg-secondary text-muted-foreground"
-              }`}>
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                step === s 
+                  ? "bg-primary text-primary-foreground" 
+                  : ["plan", "profile", "api-key"].indexOf(step) > idx 
+                    ? "bg-bullish text-bullish-foreground" 
+                    : "bg-white/50 dark:bg-white/[0.08] text-muted-foreground border border-black/[0.08] dark:border-white/[0.06]"
+              )}>
                 {["plan", "profile", "api-key"].indexOf(step) > idx ? (
                   <Check className="h-4 w-4" />
                 ) : (
@@ -160,9 +182,12 @@ export default function OnboardingPage() {
                 )}
               </div>
               {idx < 2 && (
-                <div className={`w-16 h-0.5 ${
-                  ["plan", "profile", "api-key"].indexOf(step) > idx ? "bg-bullish" : "bg-secondary"
-                }`} />
+                <div className={cn(
+                  "w-16 h-0.5 transition-colors",
+                  ["plan", "profile", "api-key"].indexOf(step) > idx 
+                    ? "bg-bullish" 
+                    : "bg-black/[0.08] dark:bg-white/[0.08]"
+                )} />
               )}
             </div>
           ))}
@@ -180,11 +205,14 @@ export default function OnboardingPage() {
 
             <div className="grid md:grid-cols-3 gap-4">
               {plans.map((plan) => (
-                <Card 
+                <div 
                   key={plan.id}
-                  className={`p-6 cursor-pointer transition-all hover:-translate-y-1 glass-card ${
-                    plan.popular ? "border-primary shadow-glow" : ""
-                  } ${selectedPlan === plan.id ? "ring-2 ring-primary" : ""}`}
+                  className={cn(
+                    glassCardClasses,
+                    "cursor-pointer transition-all hover:-translate-y-1",
+                    plan.popular && "border-primary shadow-[0_0_20px_rgba(0,113,227,0.15)]",
+                    selectedPlan === plan.id && "ring-2 ring-primary"
+                  )}
                   onClick={() => handlePlanSelect(plan.id)}
                 >
                   {plan.popular && (
@@ -213,7 +241,7 @@ export default function OnboardingPage() {
                   >
                     Select {plan.name}
                   </Button>
-                </Card>
+                </div>
               ))}
             </div>
           </div>
@@ -221,7 +249,7 @@ export default function OnboardingPage() {
 
         {/* Step: Profile Details */}
         {step === "profile" && (
-          <Card className="max-w-md mx-auto p-8 glass-card animate-fade-in">
+          <div className={cn(glassCardClasses, "max-w-md mx-auto p-8 animate-fade-in")}>
             <div className="flex items-center gap-2 mb-6">
               <Button variant="ghost" size="icon" onClick={() => setStep("plan")}>
                 <ArrowLeft className="h-4 w-4" />
@@ -230,7 +258,7 @@ export default function OnboardingPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-secondary/30">
+              <div className={glassTileClasses}>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Selected Plan</span>
                   <Badge variant="glow" className="capitalize">{selectedPlan}</Badge>
@@ -245,7 +273,7 @@ export default function OnboardingPage() {
                   placeholder="Your company name"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  className="bg-secondary/50"
+                  className={glassInputClasses}
                 />
               </div>
 
@@ -265,12 +293,12 @@ export default function OnboardingPage() {
                 )}
               </Button>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* Step: API Key */}
         {step === "api-key" && (
-          <Card className="max-w-lg mx-auto p-8 glass-card animate-fade-in">
+          <div className={cn(glassCardClasses, "max-w-lg mx-auto p-8 animate-fade-in")}>
             <div className="text-center mb-6">
               <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
                 <Zap className="h-8 w-8 text-primary" />
@@ -281,7 +309,7 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            <div className="p-4 rounded-lg bg-secondary/50 mb-6">
+            <div className={cn(glassTileClasses, "mb-6")}>
               <div className="flex items-center gap-2">
                 <code className="flex-1 font-mono text-sm break-all">
                   {showApiKey ? apiKey : "•".repeat(apiKey.length)}
@@ -295,8 +323,12 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-lg border border-chart-5/30 bg-chart-5/10 mb-6">
-              <p className="text-sm text-chart-5">
+            <div className={cn(
+              "rounded-xl p-4 mb-6",
+              "bg-warning/10 dark:bg-warning/5",
+              "border border-warning/30 dark:border-warning/20"
+            )}>
+              <p className="text-sm text-warning">
                 ⚠️ Make sure to copy your API key now. You won't be able to see it again!
               </p>
             </div>
@@ -305,7 +337,7 @@ export default function OnboardingPage() {
               Go to Dashboard
               <ArrowRight className="h-4 w-4" />
             </Button>
-          </Card>
+          </div>
         )}
       </div>
     </div>
