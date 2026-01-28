@@ -116,7 +116,7 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
           // Position: centered at bottom
           isMobile 
             ? "bottom-20 left-4 right-4" 
-            : "bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center",
+            : "bottom-6 left-1/2 -translate-x-1/2 w-full max-w-3xl flex flex-col items-center",
           className
         )}
       >
