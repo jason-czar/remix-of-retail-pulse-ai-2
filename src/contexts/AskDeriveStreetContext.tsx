@@ -46,7 +46,7 @@ const AskDeriveStreetContext = createContext<AskDeriveStreetContextType | null>(
 
 const STORAGE_KEY = "derivestreet:conversations";
 const WIDTH_STORAGE_KEY = "derivestreet:ask-panel-width";
-const DEFAULT_PANEL_WIDTH = 360;
+const DEFAULT_PANEL_WIDTH = 480;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 480;
 
