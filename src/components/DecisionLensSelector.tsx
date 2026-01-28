@@ -195,8 +195,8 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
         )}>
         {allLensOptions.map((option, index) => {
           // Calculate animation delay: single sweep left-to-right
-          const baseDelay = 1.2; // Increased delay so user notices selector first
-          const itemDuration = 0.1; // Time between each tab highlight
+          const baseDelay = 1.2; // Delay so user notices selector first
+          const itemDuration = 0.06; // Faster wave between tabs
           const animationDelay = baseDelay + index * itemDuration;
           
           return (
@@ -208,7 +208,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                 scale: [1, 1.06, 1]
               }}
               transition={{
-                duration: 0.4,
+                duration: 0.35,
                 times: [0, 0.4, 1],
                 delay: animationDelay,
                 ease: "easeOut"
@@ -227,13 +227,13 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                   ]
                 }}
                 transition={{
-                  duration: 0.4,
+                  duration: 0.35,
                   times: [0, 0.4, 1],
                   delay: animationDelay,
                   ease: "easeOut"
                 }}
               />
-              <button
+              <motion.button
                 className={cn(
                   "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full ring-offset-background transition-all duration-200",
                   value === option.value
@@ -251,9 +251,19 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                   option.isCustom && "pr-7"
                 )}
                 onClick={() => onChange(option.value, option.customLens)}
+                initial={{ color: "inherit" }}
+                animate={{
+                  color: ["inherit", "#0071E3", "inherit"]
+                }}
+                transition={{
+                  duration: 0.35,
+                  times: [0, 0.4, 1],
+                  delay: animationDelay,
+                  ease: "easeOut"
+                }}
               >
                 {option.label}
-              </button>
+              </motion.button>
               
               {/* Custom lens dropdown menu */}
               {option.isCustom && option.customLens && value === option.value && (
