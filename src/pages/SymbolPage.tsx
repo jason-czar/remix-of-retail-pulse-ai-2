@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SentimentChart } from "@/components/charts/SentimentChart";
@@ -446,7 +446,14 @@ function SymbolPageContent() {
 
         {/* Narrative Coherence Score */}
         <Collapsible defaultOpen={false} className="mb-8 md:mb-12 mt-12 md:mt-16">
-          <CollapsibleTrigger className="flex items-center gap-2 w-full group">
+          <CollapsibleTrigger className={cn(
+            "flex items-center gap-2 w-full group px-4 py-3 rounded-xl",
+            "bg-white/45 dark:bg-white/[0.04]",
+            "backdrop-blur-[12px]",
+            "border border-black/[0.04] dark:border-white/[0.04]",
+            "transition-all duration-200",
+            "hover:bg-white/60 dark:hover:bg-white/[0.06]"
+          )}>
             <h3 className="text-lg font-semibold">Narrative Coherence</h3>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </CollapsibleTrigger>
@@ -488,6 +495,15 @@ function SymbolPageContent() {
       <AskDeriveStreetPanel />
     </>;
 }
+// Liquid Glass styling constants
+const glassCardClasses = cn(
+  "rounded-2xl p-3 md:p-4",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
 function MetricCard({
   label,
   value,
@@ -504,7 +520,7 @@ function MetricCard({
   trend?: "bullish" | "bearish" | "neutral";
 }) {
   const ChangeIcon = change && change >= 0 ? ArrowUpRight : ArrowDownRight;
-  return <Card className="p-3 md:p-4 glass-card">
+  return <div className={glassCardClasses}>
       <div className="text-xs md:text-sm text-muted-foreground mb-1">{label}</div>
       <div className="flex items-center gap-1.5 md:gap-2">
         <span className="text-lg md:text-2xl font-display">{value}</span>
@@ -514,7 +530,7 @@ function MetricCard({
           <ChangeIcon className="h-3 w-3 md:h-4 md:w-4" />
           {Math.abs(change)}%{suffix}
         </div>}
-    </Card>;
+    </div>;
 }
 function TimeRangeSelector({
   value,
