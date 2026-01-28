@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MessagesSidebarProvider, useMessagesSidebar } from "@/contexts/MessagesSidebarContext";
-import { useAskDeriveStreetSafe } from "@/contexts/AskDeriveStreetContext";
+import { AskDeriveStreetProvider, useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -35,7 +35,7 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
   const navigate = useNavigate();
   const { state, sidebarWidth: leftSidebarWidth } = useSidebar();
   const { isOpen: messagesSidebarOpen, sidebarWidth: messagesSidebarWidth } = useMessagesSidebar();
-  const { isOpen: askPanelOpen, panelWidth: askPanelWidth } = useAskDeriveStreetSafe();
+  const { isOpen: askPanelOpen, panelWidth: askPanelWidth } = useAskDeriveStreet();
   
   const isLeftExpanded = state === "expanded";
   // Calculate padding to center content between sidebars
@@ -150,17 +150,19 @@ export function SidebarLayout({ children, rightSidebar }: SidebarLayoutProps) {
   // Desktop: Use sidebar navigation with overlay sidebar (doesn't push content)
   return (
     <MessagesSidebarProvider>
-      <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen flex flex-col w-full relative">
-          {/* Sidebar as fixed overlay */}
-          <AppSidebar />
-          
-          {/* Main content with offset for both sidebars */}
-          <DesktopLayoutContent rightSidebar={rightSidebar}>
-            {children}
-          </DesktopLayoutContent>
-        </div>
-      </SidebarProvider>
+      <AskDeriveStreetProvider>
+        <SidebarProvider defaultOpen={true}>
+          <div className="min-h-screen flex flex-col w-full relative">
+            {/* Sidebar as fixed overlay */}
+            <AppSidebar />
+            
+            {/* Main content with offset for both sidebars */}
+            <DesktopLayoutContent rightSidebar={rightSidebar}>
+              {children}
+            </DesktopLayoutContent>
+          </div>
+        </SidebarProvider>
+      </AskDeriveStreetProvider>
     </MessagesSidebarProvider>
   );
 }

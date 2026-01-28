@@ -35,21 +35,13 @@ import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { AskDeriveStreetProvider, useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
+import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { AskDeriveStreetBar } from "@/components/ask/AskDeriveStreetBar";
 import { AskDeriveStreetPanel } from "@/components/ask/AskDeriveStreetPanel";
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 
 export default function SymbolPage() {
-  const { symbol: paramSymbol } = useParams<{ symbol: string }>();
-  const location = useLocation();
-  const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
-
-  return (
-    <AskDeriveStreetProvider symbol={symbol}>
-      <SymbolPageContent />
-    </AskDeriveStreetProvider>
-  );
+  return <SymbolPageContent />;
 }
 
 function SymbolPageContent() {
