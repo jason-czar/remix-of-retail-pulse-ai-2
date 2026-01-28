@@ -307,25 +307,32 @@ function NarrativeSidePanel({
   isHovering: boolean;
   isMobile?: boolean;
 }) {
-  // Base classes differ between mobile (condensed with margins) and desktop (fixed width)
-  const containerClasses = isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card" : "w-[312px] flex-shrink-0 p-5 glass-card";
+  // Professional monochromatic card styling matching LensReadinessCard
+  const baseClasses = "relative overflow-hidden rounded-2xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl";
+  const containerClasses = isMobile 
+    ? `w-[calc(100%-10px)] mx-[5px] p-4 ${baseClasses}` 
+    : `w-[312px] flex-shrink-0 p-5 ${baseClasses}`;
+  
   if (!data) {
-    return <div className={cn(isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[312px] flex-shrink-0 p-5", "glass-card flex items-center justify-center")}>
+    return <div className={cn(
+      isMobile ? "w-[calc(100%-10px)] mx-[5px] p-4" : "w-[312px] flex-shrink-0 p-5", 
+      baseClasses, "flex items-center justify-center"
+    )}>
         <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>No data available</p>
       </div>;
   }
 
   // Handle gap placeholders
   if (data.isGap) {
-    return <div className={cn(containerClasses, "!border-dashed !border-amber-500/50")}>
+    return <div className={cn(containerClasses, "!border-dashed !border-warning/50")}>
         <div className={cn("flex items-center gap-2", isMobile ? "mb-2" : "mb-3")}>
-          <AlertTriangle className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-amber-500")} />
-          <span className={cn("font-semibold text-amber-500", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
+          <AlertTriangle className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-warning")} />
+          <span className={cn("font-semibold text-warning", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
         </div>
         <p className={cn("text-muted-foreground", isMobile ? "text-sm" : "text-base")}>
           No data available for this date.
         </p>
-        <p className={cn("text-amber-500/80", isMobile ? "text-xs mt-2" : "text-sm mt-3")}>
+        <p className={cn("text-warning/80", isMobile ? "text-xs mt-2" : "text-sm mt-3")}>
           Click "Fill Gaps" to fetch historical data.
         </p>
       </div>;
@@ -334,13 +341,13 @@ function NarrativeSidePanel({
   // Handle empty hours
   if (data.isEmpty) {
     return <div className={containerClasses}>
-        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
+        <span className={cn("font-semibold text-foreground", isMobile ? "text-base" : "text-lg")}>
           {data.label}
         </span>
         <p className={cn("text-muted-foreground", isMobile ? "text-sm mt-1" : "text-base mt-2")}>
           No data available yet
         </p>
-        {data.price != null && <div className={cn("flex items-center gap-2 border-t border-border/50 dark:border-white/10", isMobile ? "mt-2 pt-2" : "mt-3 pt-3")}>
+        {data.price != null && <div className={cn("flex items-center gap-2 border-t border-border/30", isMobile ? "mt-2 pt-2" : "mt-3 pt-3")}>
             <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{
           color: priceColor
         }} />
@@ -350,16 +357,17 @@ function NarrativeSidePanel({
               ${data.price.toFixed(2)}
             </span>
           </div>}
-        {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+        {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/30">
             <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
           </div>}
       </div>;
   }
-  return <div className={cn("", containerClasses, !isHovering && !isMobile && "ring-1 ring-primary/20")}>
+  
+  return <div className={containerClasses}>
       <div className="">
         {/* Time/Date Header with Messages and Price */}
         <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
-          <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>
+          <span className={cn("font-semibold text-foreground tracking-tight", isMobile ? "text-base" : "text-lg")}>
             {data.label}
           </span>
           {data.totalMessages > 0 && <div className={cn("flex items-center gap-1", isMobile ? "text-xs" : "text-sm gap-1.5")}>
@@ -377,8 +385,8 @@ function NarrativeSidePanel({
         </div>
 
         {/* Relative Activity Bar */}
-        {data.volumePercent > 0 && <div className={isMobile ? "mb-2" : "mb-3"}>
-            <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
+        {data.volumePercent > 0 && <div className={isMobile ? "mb-3" : "mb-4"}>
+            <div className={cn("flex items-center justify-between mb-1.5", isMobile ? "text-xs" : "text-sm")}>
               <span className="text-muted-foreground">Relative Activity</span>
               <span className={cn("font-medium", data.volumePercent >= 50 ? "text-primary" : "text-muted-foreground")} style={data.volumePercent >= 80 ? {
             color: "#007BFF"
@@ -386,7 +394,7 @@ function NarrativeSidePanel({
                 {data.volumePercent.toFixed(0)}%
               </span>
             </div>
-            <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
+            <div className={cn("bg-muted/20 dark:bg-white/5 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
               <div className={cn("h-full rounded-full transition-all", data.volumePercent >= 50 ? "bg-primary" : "bg-muted-foreground/50")} style={{
             backgroundColor: data.volumePercent >= 80 ? "#007BFF" : undefined,
             width: `${Math.min(data.volumePercent, 100)}%`
@@ -395,24 +403,24 @@ function NarrativeSidePanel({
           </div>}
 
         {/* Top Narratives */}
-        {data.segments.length > 0 && <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
+        {data.segments.length > 0 && <div className={cn("border-t border-border/30", isMobile ? "space-y-2 pt-3" : "space-y-3 pt-4")}>
             <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Top Narratives:</div>
             {data.segments.map((segment, idx) => <div key={idx} className={cn("flex items-center", isMobile ? "gap-1.5 text-xs" : "gap-2.5 text-base")}>
                 
-                <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>
+                <span className={cn("text-foreground/80 dark:text-foreground/75 flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>
                   {segment.name}
                 </span>
-                <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>
+                <span className={cn("text-muted-foreground font-medium tabular-nums", isMobile ? "text-xs" : "text-sm")}>
                   {segment.count}
                 </span>
-                <span className={cn("px-1.5 py-0.5 rounded border", isMobile ? "text-[8px]" : "text-[10px]", getSentimentBadge(segment.sentiment))}>
+                <span className={cn("px-2 py-0.5 rounded-md border font-medium", isMobile ? "text-[9px]" : "text-[11px]", getSentimentBadge(segment.sentiment))}>
                   {segment.sentiment}
                 </span>
               </div>)}
           </div>}
 
         {/* Default indicator - only on desktop */}
-        {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+        {!isHovering && !isMobile && <div className="mt-4 pt-3 border-t border-border/30">
             <span className="text-sm text-muted-foreground italic">Showing latest • Hover chart to explore</span>
           </div>}
       </div>
