@@ -425,7 +425,7 @@ function SymbolPageContent() {
               <motion.div layout transition={{
                 duration: 0.3,
                 ease: "easeOut"
-              }}>
+              }} className="mt-8 md:mt-10">
                 <PsychologyOverviewCard symbol={symbol} hideMetricTiles />
               </motion.div>
             </motion.div>}
