@@ -4,6 +4,36 @@ import { ArrowRight, Building2, Handshake, Users, TrendingUp, ChevronDown, Chevr
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { cn } from "@/lib/utils";
+
+// Glass styling utilities
+const glassCardClasses = cn(
+  "rounded-2xl p-6",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassTileClasses = cn(
+  "rounded-xl p-5",
+  "bg-white/50 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-black/[0.06] dark:border-white/[0.05]"
+);
+
+const glassHeroClasses = cn(
+  "rounded-3xl p-8 md:p-12",
+  "bg-white/70 dark:bg-[hsl(0_0%_12%/0.6)]",
+  "backdrop-blur-[32px] backdrop-saturate-[150%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_12px_48px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.03)]"
+);
+
+const glassSectionClasses = cn(
+  "bg-white/30 dark:bg-white/[0.02]",
+  "backdrop-blur-[8px]"
+);
 
 // Case study data
 const caseStudies = [
@@ -107,7 +137,7 @@ const CaseStudiesSection = () => {
           {displayedStudies.map((study, index) => (
             <div
               key={index}
-              className="rounded-xl p-6 flex flex-col h-full glass-card"
+              className={cn(glassCardClasses, "flex flex-col h-full")}
             >
               {/* Category Badge */}
               <span className={`inline-flex self-start px-2.5 py-1 rounded-md text-xs font-medium text-primary-foreground ${study.categoryColor} mb-4`}>
@@ -171,7 +201,13 @@ const CaseStudiesSection = () => {
         <div className="flex justify-center mt-10">
           <button
             onClick={() => setShowAll(!showAll)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted hover:bg-muted/80 text-sm font-medium text-foreground transition-colors"
+            className={cn(
+              "inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-foreground transition-all",
+              "bg-white/60 dark:bg-white/[0.08]",
+              "backdrop-blur-[12px] backdrop-saturate-[120%]",
+              "border border-black/[0.08] dark:border-white/[0.06]",
+              "hover:bg-white/80 dark:hover:bg-white/[0.12]"
+            )}
           >
             {showAll ? "Show Less" : "Show More"}
             {showAll ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -196,40 +232,44 @@ const LearnMorePage = () => {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="py-16 md:py-24 px-4 border-b border-border/30">
-          <div className="container max-w-3xl mx-auto">
-            <p className="text-sm font-medium text-primary mb-4 tracking-wide uppercase">
-              How Retail Sentiment Becomes Strategic Intelligence
-            </p>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-6">
-              Retail Sentiment Is No Longer Noise — It's a Leading Indicator
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-              Retail investor conversations increasingly influence short-term volatility, narrative momentum, 
-              deal reception, leadership credibility, and capital allocation outcomes. Derive Street exists 
-              to translate those conversations into structured, decision-grade intelligence — not raw sentiment dashboards.
-            </p>
+          <div className="container max-w-4xl mx-auto">
+            <div className={glassHeroClasses}>
+              <p className="text-sm font-medium text-primary mb-4 tracking-wide uppercase">
+                How Retail Sentiment Becomes Strategic Intelligence
+              </p>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-6">
+                Retail Sentiment Is No Longer Noise — It's a Leading Indicator
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+                Retail investor conversations increasingly influence short-term volatility, narrative momentum, 
+                deal reception, leadership credibility, and capital allocation outcomes. Derive Street exists 
+                to translate those conversations into structured, decision-grade intelligence — not raw sentiment dashboards.
+              </p>
+            </div>
           </div>
         </section>
 
         {/* The Core Insight */}
-        <section className="py-16 md:py-20 px-4 border-b border-border/30 bg-muted/30">
+        <section className={cn("py-16 md:py-20 px-4 border-b border-border/30", glassSectionClasses)}>
           <div className="container max-w-3xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-              Institutional Research Explains the Past.<br />
-              <span className="text-primary">Retail Narratives Reveal What's Next.</span>
-            </h2>
-            <div className="space-y-6 text-muted-foreground leading-relaxed">
-              <p>
-                Analysts model fundamentals. Price reflects execution. But narratives determine reaction.
-              </p>
-              <p>
-                Retail investors surface expectations before announcements, skepticism before deals fail, 
-                and conviction before momentum accelerates. They reveal the interpretive layer — the story 
-                investors tell themselves about what's happening and what it means.
-              </p>
-              <p className="text-foreground font-medium">
-                Derive Street captures that layer before it appears in price.
-              </p>
+            <div className={glassCardClasses}>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+                Institutional Research Explains the Past.<br />
+                <span className="text-primary">Retail Narratives Reveal What's Next.</span>
+              </h2>
+              <div className="space-y-6 text-muted-foreground leading-relaxed">
+                <p>
+                  Analysts model fundamentals. Price reflects execution. But narratives determine reaction.
+                </p>
+                <p>
+                  Retail investors surface expectations before announcements, skepticism before deals fail, 
+                  and conviction before momentum accelerates. They reveal the interpretive layer — the story 
+                  investors tell themselves about what's happening and what it means.
+                </p>
+                <p className="text-foreground font-medium">
+                  Derive Street captures that layer before it appears in price.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -245,16 +285,28 @@ const LearnMorePage = () => {
                 Simple bullish/bearish metrics tell you direction. Narrative intelligence tells you <em>why</em>.
               </p>
               <div className="grid md:grid-cols-2 gap-6 my-8">
-                <div className="p-5 rounded-lg bg-muted/50 border border-border/30">
+                <div className={glassTileClasses}>
                   <h3 className="font-semibold text-foreground mb-3">What We Track</h3>
                   <ul className="space-y-2 text-sm">
-                    <li>• Dominant belief clusters</li>
-                    <li>• Narrative prevalence across conversations</li>
-                    <li>• Narrative momentum (accelerating vs decaying)</li>
-                    <li>• Emotional drivers (fear vs conviction vs excitement)</li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      Dominant belief clusters
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      Narrative prevalence across conversations
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      Narrative momentum (accelerating vs decaying)
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                      Emotional drivers (fear vs conviction vs excitement)
+                    </li>
                   </ul>
                 </div>
-                <div className="p-5 rounded-lg bg-muted/50 border border-border/30">
+                <div className={glassTileClasses}>
                   <h3 className="font-semibold text-foreground mb-3">The Question We Answer</h3>
                   <p className="text-sm">
                     We don't ask "are investors bullish?"<br /><br />
@@ -267,7 +319,7 @@ const LearnMorePage = () => {
         </section>
 
         {/* The Psychology Layer */}
-        <section className="py-16 md:py-20 px-4 border-b border-border/30 bg-muted/30">
+        <section className={cn("py-16 md:py-20 px-4 border-b border-border/30", glassSectionClasses)}>
           <div className="container max-w-3xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
               Retail Psychology Moves Faster Than Models
@@ -277,7 +329,7 @@ const LearnMorePage = () => {
                 Derive Street analyzes emotion composition — fear, greed, frustration, confidence — 
                 and distinguishes conviction from sarcasm from low-signal chatter.
               </p>
-              <div className="p-5 rounded-lg border border-border/30 bg-background my-8">
+              <div className={cn(glassTileClasses, "my-8")}>
                 <h3 className="font-semibold text-foreground mb-3">Key Behavioral Patterns</h3>
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-start gap-3">
@@ -315,16 +367,16 @@ const LearnMorePage = () => {
               <div className="my-8 space-y-4">
                 <h3 className="font-semibold text-foreground">In Practice</h3>
                 <ul className="space-y-3 text-sm">
-                  <li className="p-4 rounded-lg bg-muted/30 border border-border/30">
+                  <li className={cn(glassTileClasses, "p-4")}>
                     M&A skepticism detected weeks before official announcement
                   </li>
-                  <li className="p-4 rounded-lg bg-muted/30 border border-border/30">
+                  <li className={cn(glassTileClasses, "p-4")}>
                     Capital allocation narratives turning negative before earnings
                   </li>
-                  <li className="p-4 rounded-lg bg-muted/30 border border-border/30">
+                  <li className={cn(glassTileClasses, "p-4")}>
                     Leadership credibility erosion visible in conversation patterns
                   </li>
-                  <li className="p-4 rounded-lg bg-muted/30 border border-border/30">
+                  <li className={cn(glassTileClasses, "p-4")}>
                     Competitive repositioning signals emerging from investor discourse
                   </li>
                 </ul>
@@ -334,7 +386,7 @@ const LearnMorePage = () => {
         </section>
 
         {/* From Consulting to Software */}
-        <section className="py-16 md:py-20 px-4 border-b border-border/30 bg-muted/30">
+        <section className={cn("py-16 md:py-20 px-4 border-b border-border/30", glassSectionClasses)}>
           <div className="container max-w-3xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
               From Bespoke Consulting to Autonomous Intelligence
@@ -345,13 +397,13 @@ const LearnMorePage = () => {
                 Derive Street automates the same logic — continuously and objectively.
               </p>
               <div className="grid sm:grid-cols-3 gap-4 my-8">
-                <div className="p-4 rounded-lg bg-background border border-border/30 text-center">
+                <div className={cn(glassTileClasses, "text-center")}>
                   <p className="text-sm font-medium text-foreground">No analyst bias</p>
                 </div>
-                <div className="p-4 rounded-lg bg-background border border-border/30 text-center">
+                <div className={cn(glassTileClasses, "text-center")}>
                   <p className="text-sm font-medium text-foreground">No selective reading</p>
                 </div>
-                <div className="p-4 rounded-lg bg-background border border-border/30 text-center">
+                <div className={cn(glassTileClasses, "text-center")}>
                   <p className="text-sm font-medium text-foreground">No lag</p>
                 </div>
               </div>
@@ -368,8 +420,8 @@ const LearnMorePage = () => {
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-8">
               Who This Is For
             </h2>
-            <div className="grid gap-8">
-              <div className="flex gap-4">
+            <div className="grid gap-6">
+              <div className={cn(glassTileClasses, "flex gap-4")}>
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Building2 className="w-5 h-5 text-primary" />
                 </div>
@@ -380,7 +432,7 @@ const LearnMorePage = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex gap-4">
+              <div className={cn(glassTileClasses, "flex gap-4")}>
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Handshake className="w-5 h-5 text-primary" />
                 </div>
@@ -391,7 +443,7 @@ const LearnMorePage = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex gap-4">
+              <div className={cn(glassTileClasses, "flex gap-4")}>
                 <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Users className="w-5 h-5 text-primary" />
                 </div>
@@ -407,28 +459,30 @@ const LearnMorePage = () => {
         </section>
 
         {/* What This Is Not */}
-        <section className="py-16 md:py-20 px-4 border-b border-border/30 bg-muted/30">
+        <section className={cn("py-16 md:py-20 px-4 border-b border-border/30", glassSectionClasses)}>
           <div className="container max-w-3xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-              What This Platform Is Not
-            </h2>
-            <ul className="space-y-3 text-muted-foreground mb-8">
-              <li className="flex items-center gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                Not social listening software
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                Not retail trading signals
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                Not hype-driven sentiment dashboards
-              </li>
-            </ul>
-            <p className="text-foreground font-medium">
-              Derive Street exists to provide clarity, foresight, and decision confidence — not noise.
-            </p>
+            <div className={glassCardClasses}>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+                What This Platform Is Not
+              </h2>
+              <ul className="space-y-3 text-muted-foreground mb-8">
+                <li className="flex items-center gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                  Not social listening software
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                  Not retail trading signals
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                  Not hype-driven sentiment dashboards
+                </li>
+              </ul>
+              <p className="text-foreground font-medium">
+                Derive Street exists to provide clarity, foresight, and decision confidence — not noise.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -438,26 +492,28 @@ const LearnMorePage = () => {
         {/* Closing */}
         <section className="py-16 md:py-24 px-4">
           <div className="container max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
-              Executives Don't Need More Data.<br />
-              <span className="text-primary">They Need Foresight.</span>
-            </h2>
-            <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Derive Street delivers structured intelligence from the fastest-moving investor segment 
-              in the market — so decisions are informed before reactions occur.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="gap-2">
-                <Link to="/symbol/AAPL">
-                  See an Example
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/signup">
-                  Get Started
-                </Link>
-              </Button>
+            <div className={cn(glassHeroClasses, "text-center")}>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6">
+                Executives Don't Need More Data.<br />
+                <span className="text-primary">They Need Foresight.</span>
+              </h2>
+              <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
+                Derive Street delivers structured intelligence from the fastest-moving investor segment 
+                in the market — so decisions are informed before reactions occur.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="gap-2">
+                  <Link to="/symbol/AAPL">
+                    See an Example
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link to="/signup">
+                    Get Started
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
