@@ -75,9 +75,9 @@ export function AskDeriveStreetBar({
         </div>}
     </button>;
 
-  // When panel is open, only show the edge tab
+  // When panel is open, hide the bar completely (no edge tab needed)
   if (isOpen) {
-    return <EdgeTab />;
+    return null;
   }
   return <>
       {/* Edge tab toggle */}
