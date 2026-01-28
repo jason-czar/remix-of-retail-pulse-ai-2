@@ -404,7 +404,7 @@ function SymbolPageContent() {
         }} transition={{
           duration: 0.25,
           ease: "easeOut"
-        }}>
+        }} className="space-y-4 lg:space-y-6">
               <Card className="glass-card overflow-hidden">
                 <SummaryInsightsCard
                   symbol={symbol}
@@ -422,6 +422,14 @@ function SymbolPageContent() {
                   </p>
                 </SummaryInsightsCard>
               </Card>
+
+              {/* Psychology Overview Card - without metric tiles since they're in the header */}
+              <motion.div layout transition={{
+                duration: 0.3,
+                ease: "easeOut"
+              }}>
+                <PsychologyOverviewCard symbol={symbol} hideMetricTiles />
+              </motion.div>
             </motion.div>}
         </AnimatePresence>
 

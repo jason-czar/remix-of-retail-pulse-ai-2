@@ -9,9 +9,10 @@ import { motion } from "framer-motion";
 
 interface PsychologyOverviewCardProps {
   symbol: string;
+  hideMetricTiles?: boolean; // Hide Sentiment Score, Message Volume, 7D Trend tiles
 }
 
-export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) {
+export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: PsychologyOverviewCardProps) {
   const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol);
   const { data: symbolStats } = useSymbolStats(symbol);
   const { data: sentimentHistory } = useSentimentHistory(symbol, 7);
@@ -142,77 +143,79 @@ export function PsychologyOverviewCard({ symbol }: PsychologyOverviewCardProps) 
           )}
         </div>
 
-        {/* Bottom row - 3 tiles */}
-        <div className="grid grid-cols-3 gap-3">
-          {/* Sentiment Score tile */}
-          <motion.div 
-            className="glass-tile p-4 flex flex-col"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-          >
-            <span className="text-xs text-muted-foreground mb-1.5">
-              Sentiment Score
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{symbolStats?.sentiment ?? '--'}</span>
-              {sentimentIsPositive ? (
-                <TrendingUp className="h-4 w-4 text-bullish" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-bearish" />
-              )}
-            </div>
-            <div className="flex items-center gap-1 mt-1">
-              {sentimentIsPositive ? (
-                <ArrowUpRight className="h-3 w-3 text-bullish" />
-              ) : (
-                <ArrowDownRight className="h-3 w-3 text-bearish" />
-              )}
-              <span className={`text-xs ${sentimentIsPositive ? 'text-bullish' : 'text-bearish'}`}>
-                {Math.abs(sentimentChange).toFixed(1)}%
+        {/* Bottom row - 3 tiles (hidden when hideMetricTiles is true) */}
+        {!hideMetricTiles && (
+          <div className="grid grid-cols-3 gap-3">
+            {/* Sentiment Score tile */}
+            <motion.div 
+              className="glass-tile p-4 flex flex-col"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+            >
+              <span className="text-xs text-muted-foreground mb-1.5">
+                Sentiment Score
               </span>
-            </div>
-          </motion.div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{symbolStats?.sentiment ?? '--'}</span>
+                {sentimentIsPositive ? (
+                  <TrendingUp className="h-4 w-4 text-bullish" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-bearish" />
+                )}
+              </div>
+              <div className="flex items-center gap-1 mt-1">
+                {sentimentIsPositive ? (
+                  <ArrowUpRight className="h-3 w-3 text-bullish" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3 text-bearish" />
+                )}
+                <span className={`text-xs ${sentimentIsPositive ? 'text-bullish' : 'text-bearish'}`}>
+                  {Math.abs(sentimentChange).toFixed(1)}%
+                </span>
+              </div>
+            </motion.div>
 
-          {/* Message Volume tile */}
-          <motion.div 
-            className="glass-tile p-4 flex flex-col"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <span className="text-xs text-muted-foreground mb-1.5">
-              Message Volume
-            </span>
-            <span className="text-sm font-medium">{symbolStats?.volume ?? '--'}</span>
-            <div className="flex items-center gap-1 mt-1">
-              {volumeIsPositive ? (
-                <ArrowUpRight className="h-3 w-3 text-bullish" />
-              ) : (
-                <ArrowDownRight className="h-3 w-3 text-bearish" />
-              )}
-              <span className={`text-xs ${volumeIsPositive ? 'text-bullish' : 'text-bearish'}`}>
-                {Math.abs(volumeChange).toFixed(0)}% (24h)
+            {/* Message Volume tile */}
+            <motion.div 
+              className="glass-tile p-4 flex flex-col"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <span className="text-xs text-muted-foreground mb-1.5">
+                Message Volume
               </span>
-            </div>
-          </motion.div>
+              <span className="text-sm font-medium">{symbolStats?.volume ?? '--'}</span>
+              <div className="flex items-center gap-1 mt-1">
+                {volumeIsPositive ? (
+                  <ArrowUpRight className="h-3 w-3 text-bullish" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3 text-bearish" />
+                )}
+                <span className={`text-xs ${volumeIsPositive ? 'text-bullish' : 'text-bearish'}`}>
+                  {Math.abs(volumeChange).toFixed(0)}% (24h)
+                </span>
+              </div>
+            </motion.div>
 
-          {/* 7D Trend tile */}
-          <motion.div 
-            className="glass-tile p-4 flex flex-col"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.25 }}
-          >
-            <span className="text-xs text-muted-foreground mb-1.5">
-              7D Trend
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{getTrendLabel()}</span>
-              {getTrendIcon()}
-            </div>
-          </motion.div>
-        </div>
+            {/* 7D Trend tile */}
+            <motion.div 
+              className="glass-tile p-4 flex flex-col"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.25 }}
+            >
+              <span className="text-xs text-muted-foreground mb-1.5">
+                7D Trend
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{getTrendLabel()}</span>
+                {getTrendIcon()}
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </Card>
   );
