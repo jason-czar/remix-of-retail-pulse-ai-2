@@ -42,14 +42,14 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
       }}
       className={cn(
         "flex gap-3",
-        isUser ? "flex-row-reverse" : "flex-row"
+        isUser ? "justify-end" : "flex-row"
       )}
     >
       {/* Message content */}
       <div
         className={cn(
-          "flex-1 space-y-1",
-          isUser ? "max-w-[85%] items-end" : "items-start"
+          "space-y-1",
+          isUser ? "max-w-[85%] flex flex-col items-end" : "flex-1 items-start"
         )}
       >
         <div
@@ -58,8 +58,9 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
             isUser
               ? [
                   "bg-[#0F83FF]",
-                  "text-foreground",
+                  "text-white",
                   "rounded-tr-md",
+                  "w-fit",
                 ]
               : [
                   "bg-transparent",
