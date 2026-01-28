@@ -353,10 +353,10 @@ export function AskDeriveStreetPanel() {
                     onClick={() => setIsHistoryOpen(!isHistoryOpen)}
                     className={cn(
                       "h-7 w-7",
-                      isHistoryOpen && "bg-primary/10 text-primary"
+                      isHistoryOpen && "bg-[#0F83FF]/10"
                     )}
                   >
-                    <Menu className="h-3.5 w-3.5" />
+                    <Menu className="h-3.5 w-3.5 text-[#0F83FF]" />
                   </Button>
                   <div>
                     <h3 className="font-semibold text-sm">Ask DeriveStreet</h3>
@@ -368,10 +368,10 @@ export function AskDeriveStreetPanel() {
                     variant="ghost"
                     size="icon"
                     onClick={handleNewChat}
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                    className="h-7 w-7"
                     title="New chat"
                   >
-                    <SquarePen className="h-3.5 w-3.5" />
+                    <SquarePen className="h-3.5 w-3.5 text-[#0F83FF]" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -379,7 +379,7 @@ export function AskDeriveStreetPanel() {
                     onClick={closePanel}
                     className="h-7 w-7"
                   >
-                    <PanelRightClose className="h-4 w-4" />
+                    <PanelRightClose className="h-4 w-4 text-[#0F83FF]" />
                   </Button>
                 </div>
               </div>
