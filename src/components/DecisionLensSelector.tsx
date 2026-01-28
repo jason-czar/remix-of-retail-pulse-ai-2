@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Plus, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,9 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  
+  // Memoize the initial mount ID to ensure animation only runs on page load
+  const mountId = useMemo(() => Date.now(), []);
   
   // Combine default and custom lenses
   const allLensOptions: LensOption[] = [
@@ -169,8 +173,16 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           canScrollRight ? "opacity-100" : "opacity-0"
         )} />
         
-        <div 
+        <motion.div 
+          key={mountId}
           ref={scrollContainerRef}
+          initial={{ opacity: 0, y: -8, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ 
+            duration: 0.5, 
+            delay: 0.3,
+            ease: [0.25, 0.4, 0.25, 1]
+          }}
           className={cn(
             "relative inline-flex items-center gap-1.5 rounded-2xl py-2.5 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
             // Liquid Glass styling - subtle and seamless
@@ -253,7 +265,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             <TooltipContent>Create custom lens</TooltipContent>
           </Tooltip>
         )}
-        </div>
+        </motion.div>
       </div>
       
       {/* Edit dialog */}
