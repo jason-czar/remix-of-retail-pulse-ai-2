@@ -64,7 +64,7 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
               : [
                   "bg-transparent",
                   "text-foreground",
-                  "px-0",
+                  "px-4",
                 ]
           )}
         >
