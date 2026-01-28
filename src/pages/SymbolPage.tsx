@@ -439,7 +439,7 @@ function SymbolPageContent() {
             duration: 0.3,
             ease: "easeOut"
           }} className="mt-4 md:mt-6">
-                <ContinueToLensButton />
+                <ContinueToLensButton currentLens="summary" />
               </motion.div>
             </motion.div>}
         </AnimatePresence>
@@ -461,6 +461,18 @@ function SymbolPageContent() {
           delay: 0.1
         }}>
               {activeCustomLens ? <CustomLensReadinessCard customLens={activeCustomLens} summaryData={lensSummaryData} isLoading={lensSummaryLoading} symbol={symbol} onRefresh={() => refetchLensSummary()} /> : <LensReadinessCard symbol={symbol} lens={decisionLens as DecisionLens} />}
+              
+              {/* Continue to next Decision Lens - only for default lenses, not custom */}
+              {!activeCustomLens && (
+                <motion.div 
+                  className="mt-4 md:mt-6"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                >
+                  <ContinueToLensButton currentLens={decisionLens} />
+                </motion.div>
+              )}
             </motion.div>}
         </AnimatePresence>
 

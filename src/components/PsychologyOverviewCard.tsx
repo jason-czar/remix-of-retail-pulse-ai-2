@@ -237,12 +237,53 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: Psyc
   );
 }
 
+// Lens navigation order (default lenses only)
+const LENS_ORDER = [
+  'summary',
+  'corporate-strategy', 
+  'earnings',
+  'ma',
+  'capital-allocation',
+  'leadership-change',
+  'strategic-pivot',
+  'product-launch',
+  'activist-risk',
+] as const;
+
+const LENS_DISPLAY_NAMES: Record<string, string> = {
+  'summary': 'Summary',
+  'corporate-strategy': 'Corporate Strategy',
+  'earnings': 'Earnings',
+  'ma': 'M&A',
+  'capital-allocation': 'Capital Allocation',
+  'leadership-change': 'Leadership',
+  'strategic-pivot': 'Strategic Pivot',
+  'product-launch': 'Product Launch',
+  'activist-risk': 'Activist Risk',
+};
+
+interface ContinueToLensButtonProps {
+  currentLens: string;
+}
+
 // Separate navigation component for continuing to next lens
-export function ContinueToLensButton() {
+export function ContinueToLensButton({ currentLens }: ContinueToLensButtonProps) {
   const [, setSearchParams] = useSearchParams();
 
+  // Find next lens in sequence
+  const currentIndex = LENS_ORDER.indexOf(currentLens as typeof LENS_ORDER[number]);
+  const nextIndex = currentIndex + 1;
+  
+  // If we're at the last lens (activist-risk), don't show the button
+  if (nextIndex >= LENS_ORDER.length) {
+    return null;
+  }
+  
+  const nextLens = LENS_ORDER[nextIndex];
+  const nextLensName = LENS_DISPLAY_NAMES[nextLens];
+
   const handleNavigateToLens = () => {
-    setSearchParams({ lens: 'corporate-strategy' });
+    setSearchParams({ lens: nextLens });
   };
 
   return (
@@ -262,7 +303,7 @@ export function ContinueToLensButton() {
       transition={{ duration: 0.3, delay: 0.1 }}
     >
       <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-        Continue to Decision Lens: <span className="font-medium text-foreground">Corporate Strategy</span>
+        Continue to Decision Lens: <span className="font-medium text-foreground">{nextLensName}</span>
       </span>
       <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground shadow-sm group-hover:shadow-md transition-all">
         <ArrowRight className="h-4 w-4" />
