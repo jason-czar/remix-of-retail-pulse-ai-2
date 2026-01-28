@@ -194,14 +194,10 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           "dark:shadow-none"
         )}>
         {allLensOptions.map((option, index) => {
-          // Calculate animation delay: sweep left-to-right, then right-to-left
-          const totalItems = allLensOptions.length;
-          const baseDelay = 0.8; // Start after container animation
-          const itemDuration = 0.12; // Time between each tab highlight (slowed down)
-          // Forward pass (left to right): index * itemDuration
-          // Backward pass (right to left): start after forward completes
-          const forwardDelay = baseDelay + index * itemDuration;
-          const backwardDelay = baseDelay + (totalItems * itemDuration) + 0.15 + (totalItems - 1 - index) * itemDuration;
+          // Calculate animation delay: single sweep left-to-right
+          const baseDelay = 1.2; // Increased delay so user notices selector first
+          const itemDuration = 0.1; // Time between each tab highlight
+          const animationDelay = baseDelay + index * itemDuration;
           
           return (
             <motion.div 
@@ -209,12 +205,12 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
               className="relative flex items-center shrink-0"
               initial={{ scale: 1 }}
               animate={{
-                scale: [1, 1.08, 1, 1, 1.08, 1]
+                scale: [1, 1.06, 1]
               }}
               transition={{
-                duration: 0.7,
-                times: [0, 0.2, 0.4, 0.5, 0.7, 0.9],
-                delay: forwardDelay,
+                duration: 0.4,
+                times: [0, 0.4, 1],
+                delay: animationDelay,
                 ease: "easeOut"
               }}
             >
@@ -223,20 +219,17 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                 className="absolute inset-0 rounded-full pointer-events-none"
                 initial={{ opacity: 0 }}
                 animate={{
-                  opacity: [0, 0.7, 0, 0, 0.7, 0],
+                  opacity: [0, 0.7, 0],
                   boxShadow: [
-                    "0 0 0 0 rgba(0, 113, 227, 0)",
-                    "0 0 16px 4px rgba(0, 113, 227, 0.6), inset 0 0 10px rgba(0, 113, 227, 0.35)",
-                    "0 0 0 0 rgba(0, 113, 227, 0)",
                     "0 0 0 0 rgba(0, 113, 227, 0)",
                     "0 0 16px 4px rgba(0, 113, 227, 0.6), inset 0 0 10px rgba(0, 113, 227, 0.35)",
                     "0 0 0 0 rgba(0, 113, 227, 0)"
                   ]
                 }}
                 transition={{
-                  duration: 0.7,
-                  times: [0, 0.2, 0.4, 0.5, 0.7, 0.9],
-                  delay: forwardDelay,
+                  duration: 0.4,
+                  times: [0, 0.4, 1],
+                  delay: animationDelay,
                   ease: "easeOut"
                 }}
               />
