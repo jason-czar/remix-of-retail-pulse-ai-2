@@ -405,23 +405,21 @@ function SymbolPageContent() {
           duration: 0.25,
           ease: "easeOut"
         }} className="space-y-4 lg:space-y-6">
-              <Card className="glass-card overflow-hidden">
-                <SummaryInsightsCard
-                  symbol={symbol}
-                  confidence={lensSummaryData?.confidence}
-                  relevantCount={lensSummaryData?.relevantCount}
-                  messageCount={lensSummaryData?.messageCount}
-                  isLoading={lensSummaryLoading}
-                  isRegenerating={isRegenerating}
-                  isFetching={lensSummaryFetching}
-                  isAdmin={isAdmin}
-                  onRegenerate={handleRegenerate}
-                >
-                  <p className="text-sm md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
-                    <FormattedSummary text={summary} />
-                  </p>
-                </SummaryInsightsCard>
-              </Card>
+              <SummaryInsightsCard
+                symbol={symbol}
+                confidence={lensSummaryData?.confidence}
+                relevantCount={lensSummaryData?.relevantCount}
+                messageCount={lensSummaryData?.messageCount}
+                isLoading={lensSummaryLoading}
+                isRegenerating={isRegenerating}
+                isFetching={lensSummaryFetching}
+                isAdmin={isAdmin}
+                onRegenerate={handleRegenerate}
+              >
+                <p className="text-sm md:text-base text-foreground/80 leading-[1.7] tracking-[-0.01em]">
+                  <FormattedSummary text={summary} />
+                </p>
+              </SummaryInsightsCard>
 
               {/* Psychology Overview Card - without metric tiles since they're in the header */}
               <motion.div layout transition={{
