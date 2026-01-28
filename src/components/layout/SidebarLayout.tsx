@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MessagesSidebarProvider, useMessagesSidebar } from "@/contexts/MessagesSidebarContext";
+import { useAskDeriveStreetSafe } from "@/contexts/AskDeriveStreetContext";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -34,13 +35,18 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
   const navigate = useNavigate();
   const { state, sidebarWidth: leftSidebarWidth } = useSidebar();
   const { isOpen: messagesSidebarOpen, sidebarWidth: messagesSidebarWidth } = useMessagesSidebar();
+  const { isOpen: askPanelOpen, panelWidth: askPanelWidth } = useAskDeriveStreetSafe();
   
   const isLeftExpanded = state === "expanded";
   // Calculate padding to center content between sidebars
   // Left: sidebar width + small gap
   const leftPadding = isLeftExpanded ? leftSidebarWidth + 12 : 64; // 48px collapsed + 16px
-  // Right: when any right sidebar is open (messages sidebar handled via context)
-  const rightPadding = messagesSidebarOpen ? messagesSidebarWidth + 24 : 16;
+  // Right: when any right sidebar/panel is open (messages sidebar or ask panel)
+  const rightPadding = messagesSidebarOpen 
+    ? messagesSidebarWidth + 24 
+    : askPanelOpen 
+      ? askPanelWidth + 24 
+      : 16;
 
   const handleSignOut = async () => {
     await signOut();
