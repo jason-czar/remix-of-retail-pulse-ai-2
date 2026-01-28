@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -30,6 +29,31 @@ import HistoryBackfillUploader from "@/components/HistoryBackfillUploader";
 import ManualSnapshotTrigger from "@/components/ManualSnapshotTrigger";
 import AdminDataControls from "@/components/AdminDataControls";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+// Liquid Glass styling constants
+const glassCardClasses = cn(
+  "rounded-2xl p-6",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassListItemClasses = cn(
+  "rounded-xl p-4",
+  "bg-white/45 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px]",
+  "border border-black/[0.04] dark:border-white/[0.04]",
+  "transition-all duration-200",
+  "hover:bg-white/60 dark:hover:bg-white/[0.06]"
+);
+
+const glassInputClasses = cn(
+  "bg-white/50 dark:bg-white/[0.06]",
+  "backdrop-blur-[8px]",
+  "border-black/[0.06] dark:border-white/[0.06]"
+);
 
 interface ApiKey {
   id: string;
@@ -227,7 +251,12 @@ export default function SettingsPage() {
       <h1 className="text-3xl font-display mb-8">Settings</h1>
 
       <Tabs value={currentTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-6">
-          <TabsList>
+          <TabsList className={cn(
+            "bg-white/45 dark:bg-white/[0.06]",
+            "backdrop-blur-[12px] backdrop-saturate-[140%]",
+            "border border-black/[0.06] dark:border-white/[0.06]",
+            "p-1"
+          )}>
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="h-4 w-4" />
               Profile
@@ -256,12 +285,12 @@ export default function SettingsPage() {
 
           {/* Profile Tab */}
           <TabsContent value="profile">
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <h2 className="text-lg font-semibold mb-6">Profile Information</h2>
               <div className="space-y-4 max-w-md">
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input value={user?.email || ""} disabled className="bg-secondary/50" />
+                  <Input value={user?.email || ""} disabled className={cn(glassInputClasses, "opacity-60")} />
                 </div>
                 <div className="space-y-2">
                   <Label>Full Name</Label>
@@ -270,7 +299,7 @@ export default function SettingsPage() {
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Your full name"
                     maxLength={100}
-                    className="bg-secondary/50" 
+                    className={glassInputClasses} 
                   />
                 </div>
                 <div className="space-y-2">
@@ -280,7 +309,7 @@ export default function SettingsPage() {
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Your company (optional)"
                     maxLength={100}
-                    className="bg-secondary/50" 
+                    className={glassInputClasses} 
                   />
                 </div>
                 <Button 
@@ -298,12 +327,12 @@ export default function SettingsPage() {
                   )}
                 </Button>
               </div>
-            </Card>
+            </div>
           </TabsContent>
 
           {/* API Keys Tab */}
           <TabsContent value="api-keys">
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-lg font-semibold">API Keys</h2>
@@ -315,14 +344,22 @@ export default function SettingsPage() {
 
               {/* New API Key Alert */}
               {newApiKey && (
-                <div className="p-4 rounded-lg border border-chart-5/30 bg-chart-5/10 mb-6">
+                <div className={cn(
+                  "p-4 rounded-xl mb-6",
+                  "bg-warning/10 dark:bg-warning/5",
+                  "border border-warning/30",
+                  "backdrop-blur-[8px]"
+                )}>
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-chart-5 shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-chart-5 mb-2">
+                      <p className="text-sm font-medium text-warning mb-2">
                         Save your API key now — it won't be shown again!
                       </p>
-                      <div className="flex items-center gap-2 p-2 rounded bg-background/50">
+                      <div className={cn(
+                        "flex items-center gap-2 p-2 rounded-lg",
+                        "bg-white/50 dark:bg-white/[0.04]"
+                      )}>
                         <code className="text-sm font-mono flex-1">{newApiKey}</code>
                         <Button variant="ghost" size="sm" onClick={() => copyToClipboard(newApiKey)}>
                           <Copy className="h-4 w-4" />
@@ -348,7 +385,7 @@ export default function SettingsPage() {
                   placeholder="Key name (e.g., Production, Development)"
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  className="bg-secondary/50 max-w-xs"
+                  className={cn(glassInputClasses, "max-w-xs")}
                 />
                 <Button onClick={createApiKey} disabled={creatingKey}>
                   {creatingKey ? (
@@ -372,53 +409,55 @@ export default function SettingsPage() {
                   apiKeys.map((key) => (
                     <div 
                       key={key.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/30"
+                      className={glassListItemClasses}
                     >
-                      <div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{key.name}</span>
+                            <Badge variant={key.is_active ? "bullish" : "outline"}>
+                              {key.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            <span className="font-mono">{key.key_prefix}...</span>
+                            <span className="mx-2">•</span>
+                            Created {new Date(key.created_at).toLocaleDateString()}
+                            {key.last_used_at && (
+                              <>
+                                <span className="mx-2">•</span>
+                                Last used {new Date(key.last_used_at).toLocaleDateString()}
+                              </>
+                            )}
+                          </div>
+                        </div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{key.name}</span>
-                          <Badge variant={key.is_active ? "bullish" : "outline"}>
-                            {key.is_active ? "Active" : "Inactive"}
-                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => toggleApiKey(key.id, key.is_active)}
+                          >
+                            {key.is_active ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => deleteApiKey(key.id)}
+                            className="text-bearish hover:text-bearish"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          <span className="font-mono">{key.key_prefix}...</span>
-                          <span className="mx-2">•</span>
-                          Created {new Date(key.created_at).toLocaleDateString()}
-                          {key.last_used_at && (
-                            <>
-                              <span className="mx-2">•</span>
-                              Last used {new Date(key.last_used_at).toLocaleDateString()}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => toggleApiKey(key.id, key.is_active)}
-                        >
-                          {key.is_active ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => deleteApiKey(key.id)}
-                          className="text-bearish hover:text-bearish"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                   ))
                 )}
               </div>
-            </Card>
+            </div>
           </TabsContent>
 
           {/* Alerts Tab */}
@@ -435,7 +474,7 @@ export default function SettingsPage() {
 
           {/* Appearance Tab */}
           <TabsContent value="appearance">
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <h2 className="text-lg font-semibold mb-6">Appearance</h2>
               <div className="space-y-6">
                 <div>
@@ -446,17 +485,17 @@ export default function SettingsPage() {
                   <ThemeSwitcher />
                 </div>
               </div>
-            </Card>
+            </div>
           </TabsContent>
 
           {/* Subscription Tab */}
           <TabsContent value="subscription">
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <h2 className="text-lg font-semibold mb-6">Subscription & Usage</h2>
               
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Current Plan */}
-                <div className="p-4 rounded-lg bg-secondary/30">
+                <div className={glassListItemClasses}>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-sm text-muted-foreground">Current Plan</span>
                     <Badge variant="glow" className="capitalize">
@@ -469,16 +508,16 @@ export default function SettingsPage() {
                 </div>
 
                 {/* API Usage */}
-                <div className="p-4 rounded-lg bg-secondary/30">
+                <div className={glassListItemClasses}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm text-muted-foreground">API Calls Today</span>
                     <span className="font-mono">
                       {profile?.api_calls_today || 0} / {getPlanLimits(profile?.subscription_plan || "free")}
                     </span>
                   </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-2 bg-secondary/50 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-primary rounded-full"
+                      className="h-full bg-primary rounded-full transition-all duration-500"
                       style={{ 
                         width: `${Math.min(100, ((profile?.api_calls_today || 0) / getPlanLimits(profile?.subscription_plan || "free")) * 100)}%` 
                       }}
@@ -489,7 +528,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-            </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
