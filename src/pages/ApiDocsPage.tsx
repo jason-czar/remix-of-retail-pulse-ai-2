@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +22,7 @@ import {
   Activity,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const API_BASE_URL = "https://hteqootlqamsvkqgdtjw.supabase.co/functions/v1";
 
@@ -184,6 +184,28 @@ const endpoints: Endpoint[] = [
   },
 ];
 
+const glassCardClasses = cn(
+  "rounded-2xl p-6",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassTileClasses = cn(
+  "rounded-xl p-4",
+  "bg-white/45 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-black/[0.06] dark:border-white/[0.04]"
+);
+
+const glassCodeClasses = cn(
+  "rounded-lg p-4 overflow-x-auto text-sm font-mono",
+  "bg-white/50 dark:bg-white/[0.04]",
+  "backdrop-blur-[8px]",
+  "border border-black/[0.06] dark:border-white/[0.04]"
+);
+
 function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -196,7 +218,7 @@ function CodeBlock({ code }: { code: string }) {
 
   return (
     <div className="relative group">
-      <pre className="bg-secondary/50 rounded-lg p-4 overflow-x-auto text-sm font-mono">
+      <pre className={glassCodeClasses}>
         <code className="text-foreground/90">{code}</code>
       </pre>
       <Button
@@ -218,7 +240,11 @@ function CodeBlock({ code }: { code: string }) {
 function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
   return (
     <AccordionItem value={endpoint.path} className="border-b-0">
-      <AccordionTrigger className="hover:no-underline py-4 px-4 rounded-lg hover:bg-secondary/30 data-[state=open]:bg-secondary/30">
+      <AccordionTrigger className={cn(
+        "hover:no-underline py-4 px-4 rounded-xl transition-colors",
+        "hover:bg-white/30 dark:hover:bg-white/[0.03]",
+        "data-[state=open]:bg-white/40 dark:data-[state=open]:bg-white/[0.04]"
+      )}>
         <div className="flex items-center gap-3 text-left">
           <Badge
             variant={endpoint.method === "GET" ? "bullish" : "default"}
@@ -247,7 +273,11 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
                     key={param.name}
                     className="flex items-start gap-2 text-sm"
                   >
-                    <code className="px-1.5 py-0.5 bg-secondary rounded text-xs font-mono">
+                    <code className={cn(
+                      "px-1.5 py-0.5 rounded text-xs font-mono",
+                      "bg-white/50 dark:bg-white/[0.06]",
+                      "border border-black/[0.04] dark:border-white/[0.04]"
+                    )}>
                       {param.name}
                     </code>
                     <span className="text-muted-foreground">
@@ -290,136 +320,144 @@ export default function ApiDocsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-            <h1 className="text-3xl font-display mb-2 flex items-center gap-3">
-              <Code2 className="h-8 w-8 text-primary" />
-              API Documentation
-            </h1>
-            <p className="text-muted-foreground">
-              Integrate Derive Street data into your applications
-            </p>
-          </div>
-
-          <Link to="/settings/api-keys">
-            <Button variant="hero" className="gap-2">
-              <Key className="h-4 w-4" />
-              Get API Key
-            </Button>
-          </Link>
+          <h1 className="text-3xl font-display mb-2 flex items-center gap-3">
+            <Code2 className="h-8 w-8 text-primary" />
+            API Documentation
+          </h1>
+          <p className="text-muted-foreground">
+            Integrate Derive Street data into your applications
+          </p>
         </div>
 
-        {/* Quick Start */}
-        <Card className="p-6 glass-card mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Zap className="h-5 w-5 text-accent" />
-            Quick Start
-          </h2>
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              All API requests require authentication via an API key passed in the{" "}
-              <code className="px-1.5 py-0.5 bg-secondary rounded text-sm">
-                x-api-key
-              </code>{" "}
-              header.
-            </p>
-            <CodeBlock
-              code={`curl -X GET "${API_BASE_URL}/stocktwits-proxy?action=trending" \\
-  -H "x-api-key: siq_your_api_key_here"`}
-            />
-          </div>
-        </Card>
-
-        {/* Authentication */}
-        <Card className="p-6 glass-card mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Lock className="h-5 w-5 text-primary" />
-            Authentication
-          </h2>
-          <div className="space-y-4 text-muted-foreground">
-            <p>
-              API keys can be created and managed from your{" "}
-              <Link
-                to="/settings/api-keys"
-                className="text-primary hover:underline"
-              >
-                Settings page
-              </Link>
-              . Each key is prefixed with <code className="px-1.5 py-0.5 bg-secondary rounded text-sm">siq_</code> for easy identification.
-            </p>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-secondary/30">
-                <h4 className="font-medium text-foreground mb-2">Rate Limits</h4>
-                <ul className="space-y-1 text-sm">
-                  <li>
-                    <span className="font-medium text-foreground">Free:</span> 100 requests/day
-                  </li>
-                  <li>
-                    <span className="font-medium text-foreground">Professional:</span> 10,000 requests/day
-                  </li>
-                  <li>
-                    <span className="font-medium text-foreground">Enterprise:</span> Unlimited
-                  </li>
-                </ul>
-              </div>
-              <div className="p-4 rounded-lg bg-secondary/30">
-                <h4 className="font-medium text-foreground mb-2">Error Codes</h4>
-                <ul className="space-y-1 text-sm">
-                  <li>
-                    <code className="text-bearish">401</code> — Invalid or missing API key
-                  </li>
-                  <li>
-                    <code className="text-bearish">429</code> — Rate limit exceeded
-                  </li>
-                  <li>
-                    <code className="text-bearish">500</code> — Server error
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Endpoints */}
-        <Card className="p-6 glass-card">
-          <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-            <Activity className="h-5 w-5 text-primary" />
-            Endpoints
-          </h2>
-
-          <div className="grid md:grid-cols-4 gap-4 mb-6">
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Messages API</span>
-            </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30">
-              <TrendingUp className="h-5 w-5 text-bullish" />
-              <span className="text-sm font-medium">Trending API</span>
-            </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30">
-              <BarChart3 className="h-5 w-5 text-accent" />
-              <span className="text-sm font-medium">Sentiment API</span>
-            </div>
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30">
-              <Zap className="h-5 w-5 text-chart-5" />
-              <span className="text-sm font-medium">AI Analysis</span>
-            </div>
-          </div>
-
-          <Accordion type="single" collapsible className="space-y-2">
-            {endpoints.map((endpoint) => (
-              <EndpointCard key={endpoint.path} endpoint={endpoint} />
-            ))}
-          </Accordion>
-        </Card>
-
-        {/* SDKs Coming Soon */}
-        <Card className="mt-8 p-6 glass-card text-center">
-          <Code2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-          <h3 className="font-semibold mb-2">SDKs Coming Soon</h3>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto">
-            We're working on official SDKs for Python, JavaScript, and Go. In the meantime, 
-            use the REST API directly with any HTTP client.
-          </p>
-        </Card>
+        <Link to="/settings/api-keys">
+          <Button variant="hero" className="gap-2">
+            <Key className="h-4 w-4" />
+            Get API Key
+          </Button>
+        </Link>
       </div>
+
+      {/* Quick Start */}
+      <div className={cn(glassCardClasses, "mb-8")}>
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <Zap className="h-5 w-5 text-accent" />
+          Quick Start
+        </h2>
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            All API requests require authentication via an API key passed in the{" "}
+            <code className={cn(
+              "px-1.5 py-0.5 rounded text-sm",
+              "bg-white/50 dark:bg-white/[0.06]",
+              "border border-black/[0.04] dark:border-white/[0.04]"
+            )}>
+              x-api-key
+            </code>{" "}
+            header.
+          </p>
+          <CodeBlock
+            code={`curl -X GET "${API_BASE_URL}/stocktwits-proxy?action=trending" \\
+  -H "x-api-key: siq_your_api_key_here"`}
+          />
+        </div>
+      </div>
+
+      {/* Authentication */}
+      <div className={cn(glassCardClasses, "mb-8")}>
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <Lock className="h-5 w-5 text-primary" />
+          Authentication
+        </h2>
+        <div className="space-y-4 text-muted-foreground">
+          <p>
+            API keys can be created and managed from your{" "}
+            <Link
+              to="/settings/api-keys"
+              className="text-primary hover:underline"
+            >
+              Settings page
+            </Link>
+            . Each key is prefixed with <code className={cn(
+              "px-1.5 py-0.5 rounded text-sm",
+              "bg-white/50 dark:bg-white/[0.06]",
+              "border border-black/[0.04] dark:border-white/[0.04]"
+            )}>siq_</code> for easy identification.
+          </p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className={glassTileClasses}>
+              <h4 className="font-medium text-foreground mb-2">Rate Limits</h4>
+              <ul className="space-y-1 text-sm">
+                <li>
+                  <span className="font-medium text-foreground">Free:</span> 100 requests/day
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Professional:</span> 10,000 requests/day
+                </li>
+                <li>
+                  <span className="font-medium text-foreground">Enterprise:</span> Unlimited
+                </li>
+              </ul>
+            </div>
+            <div className={glassTileClasses}>
+              <h4 className="font-medium text-foreground mb-2">Error Codes</h4>
+              <ul className="space-y-1 text-sm">
+                <li>
+                  <code className="text-bearish">401</code> — Invalid or missing API key
+                </li>
+                <li>
+                  <code className="text-bearish">429</code> — Rate limit exceeded
+                </li>
+                <li>
+                  <code className="text-bearish">500</code> — Server error
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Endpoints */}
+      <div className={glassCardClasses}>
+        <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+          <Activity className="h-5 w-5 text-primary" />
+          Endpoints
+        </h2>
+
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+          <div className={cn(glassTileClasses, "flex items-center gap-2 p-3")}>
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <span className="text-sm font-medium">Messages API</span>
+          </div>
+          <div className={cn(glassTileClasses, "flex items-center gap-2 p-3")}>
+            <TrendingUp className="h-5 w-5 text-bullish" />
+            <span className="text-sm font-medium">Trending API</span>
+          </div>
+          <div className={cn(glassTileClasses, "flex items-center gap-2 p-3")}>
+            <BarChart3 className="h-5 w-5 text-accent" />
+            <span className="text-sm font-medium">Sentiment API</span>
+          </div>
+          <div className={cn(glassTileClasses, "flex items-center gap-2 p-3")}>
+            <Zap className="h-5 w-5 text-chart-5" />
+            <span className="text-sm font-medium">AI Analysis</span>
+          </div>
+        </div>
+
+        <Accordion type="single" collapsible className="space-y-2">
+          {endpoints.map((endpoint) => (
+            <EndpointCard key={endpoint.path} endpoint={endpoint} />
+          ))}
+        </Accordion>
+      </div>
+
+      {/* SDKs Coming Soon */}
+      <div className={cn(glassCardClasses, "mt-8 text-center")}>
+        <Code2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+        <h3 className="font-semibold mb-2">SDKs Coming Soon</h3>
+        <p className="text-muted-foreground text-sm max-w-md mx-auto">
+          We're working on official SDKs for Python, JavaScript, and Go. In the meantime, 
+          use the REST API directly with any HTTP client.
+        </p>
+      </div>
+    </div>
   );
 }
