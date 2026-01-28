@@ -91,7 +91,16 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
               {message.content}
             </p>
           ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <motion.div 
+              className="prose prose-sm dark:prose-invert max-w-none"
+              initial={{ clipPath: "inset(0 0 100% 0)" }}
+              animate={{ clipPath: "inset(0 0 0% 0)" }}
+              transition={{ 
+                duration: 1.2, 
+                ease: [0.25, 0.1, 0.25, 1],
+                delay: 0.15
+              }}
+            >
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -153,7 +162,7 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
               >
                 {message.content}
               </ReactMarkdown>
-            </div>
+            </motion.div>
           )}
         </div>
 
