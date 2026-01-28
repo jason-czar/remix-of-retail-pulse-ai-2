@@ -4,7 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceBadge, ConfidenceLevel } from "@/components/ui/ConfidenceBadge";
 import { useSymbolStats } from "@/hooks/use-stocktwits";
 import { useSentimentHistory } from "@/hooks/use-sentiment-history";
-import { TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight, RefreshCw, Link2, Check } from "lucide-react";
+import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
+import { TrendingUp, TrendingDown, Minus, ArrowUpRight, ArrowDownRight, RefreshCw, Link2, Check, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useState, ReactNode } from "react";
@@ -40,6 +41,7 @@ export function SummaryInsightsCard({
   const [copied, setCopied] = useState(false);
   const { data: symbolStats, isLoading: statsLoading } = useSymbolStats(symbol);
   const { data: sentimentHistory, isLoading: historyLoading } = useSentimentHistory(symbol, 7);
+  const { data: snapshot, isLoading: snapshotLoading } = useLatestPsychologySnapshot(symbol);
 
   // Sentiment change helpers
   const sentimentChange = symbolStats?.sentimentChange || 0;
@@ -62,6 +64,13 @@ export function SummaryInsightsCard({
     return <Minus className="h-4 w-4 text-muted-foreground" />;
   };
 
+  // Active signals from psychology snapshot
+  const activeSignals = snapshot?.observed_state?.signals
+    ? Object.entries(snapshot.observed_state.signals)
+        .filter(([_, signal]) => signal.active)
+        .map(([key]) => key.replace(/_/g, " "))
+    : [];
+
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -80,7 +89,7 @@ export function SummaryInsightsCard({
     }
   };
 
-  const loading = isLoading || statsLoading || historyLoading;
+  const loading = isLoading || statsLoading || historyLoading || snapshotLoading;
 
   if (loading && !children) {
     return (
@@ -173,6 +182,32 @@ export function SummaryInsightsCard({
               Summary
             </Badge>
           </div>
+
+          {/* Active Signals Row */}
+          {activeSignals.length > 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="flex items-center gap-3 flex-wrap mt-3 pt-3 border-t border-border/30"
+            >
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                <span className="text-xs font-medium text-warning">Active Signals</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {activeSignals.map((signal, idx) => (
+                  <Badge 
+                    key={idx} 
+                    variant="outline" 
+                    className="text-[10px] border-warning/30 text-warning bg-warning/5 capitalize"
+                  >
+                    {signal}
+                  </Badge>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Right: Score Tiles */}
