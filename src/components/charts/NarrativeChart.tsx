@@ -1946,23 +1946,23 @@ w-[120vw]
               }} barCategoryGap={0} barGap={0} onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
                   {/* SVG Defs for gradient fills */}
                   <defs>
-                    {/* Solid fill above previous close - consistent 0.15 opacity, clipped at baseline */}
+                    {/* Solid fill above previous close - consistent 0.09 opacity (reduced 40%), clipped at baseline */}
                     <linearGradient id="priceAboveGradient" x1="0" y1="0" x2="0" y2="1">
                       {priceGradientStops ? <>
-                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />
-                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.09} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.09} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
                           <stop offset="100%" stopColor="transparent" stopOpacity={0} />
-                        </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.15} />}
+                        </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.09} />}
                     </linearGradient>
-                    {/* Solid fill below previous close - consistent 0.15 opacity, clipped at baseline */}
+                    {/* Solid fill below previous close - consistent 0.09 opacity (reduced 40%), clipped at baseline */}
                     <linearGradient id="priceBelowGradient" x1="0" y1="0" x2="0" y2="1">
                       {priceGradientStops ? <>
                           <stop offset="0%" stopColor="transparent" stopOpacity={0} />
                           <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor="transparent" stopOpacity={0} />
-                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />
-                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />
-                        </> : <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.15} />}
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.09} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.09} />
+                        </> : <stop offset="0%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.09} />}
                     </linearGradient>
                     {/* Dynamic gradient for price line - green above previous close, red below */}
                     <linearGradient id="priceLineGradient" x1="0" y1="0" x2="0" y2="1">
@@ -1984,8 +1984,8 @@ w-[120vw]
                     </linearGradient>
                     {/* Pre-market extension fill - single color based on opening price position */}
                     {firstPriceData && <linearGradient id="priceExtensionFillGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={firstPriceData.color} stopOpacity={0.15} />
-                        <stop offset="100%" stopColor={firstPriceData.color} stopOpacity={0.15} />
+                        <stop offset="0%" stopColor={firstPriceData.color} stopOpacity={0.09} />
+                        <stop offset="100%" stopColor={firstPriceData.color} stopOpacity={0.09} />
                       </linearGradient>}
                   </defs>
                   <XAxis dataKey="time" stroke="hsl(215 20% 55%)" fontSize={11} tickLine={false} axisLine={false} interval={is5MinView ? 11 : 0} tick={({
