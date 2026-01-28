@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Sparkles, MessageCircle, X } from "lucide-react";
+import { Send, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
@@ -23,7 +23,7 @@ interface AskDeriveStreetBarProps {
 }
 
 export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
-  const { symbol, isOpen, openPanel, closePanel, isStreaming } = useAskDeriveStreet();
+  const { symbol, isOpen, openPanel, closePanel, panelWidth, isStreaming } = useAskDeriveStreet();
   const { sendMessage } = useAskDeriveStreetStream();
   const [input, setInput] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -73,53 +73,47 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
     }
   }, [input]);
 
-  const handlePromptClick = (prompt: string) => {
-    const resolvedPrompt = prompt.replace("{SYMBOL}", symbol.toUpperCase());
-    sendMessage(resolvedPrompt);
-  };
-
-  // Toggle button (always visible in bottom right)
-  const ToggleButton = () => (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+  // Edge tab component (like MessagesSidebar)
+  const EdgeTab = () => (
+    <button
+      onClick={() => isOpen ? closePanel() : openPanel()}
+      style={isOpen ? { right: `${panelWidth + 12}px` } : undefined}
       className={cn(
-        "fixed z-40",
-        isMobile ? "bottom-20 right-4" : "bottom-6 right-6"
+        "fixed right-0 z-50",
+        // Position below center to not overlap with messages tab
+        "top-[calc(50%+60px)] -translate-y-1/2",
+        "h-24 w-6 flex items-center justify-center",
+        // Blue appearance
+        "bg-primary/90 hover:bg-primary",
+        "backdrop-blur-lg",
+        "border border-r-0 border-primary/20",
+        "rounded-l-lg",
+        "shadow-[0_4px_12px_rgba(0,113,227,0.3)]",
+        "hover:shadow-[0_4px_16px_rgba(0,113,227,0.4)]",
+        "transition-all duration-200",
+        "hidden md:flex" // Hide on mobile, show on desktop
       )}
     >
-      <Button
-        size="icon"
-        onClick={() => isOpen ? closePanel() : openPanel()}
-        className={cn(
-          "h-12 w-12 rounded-full",
-          "bg-primary hover:bg-primary/90",
-          "text-primary-foreground",
-          "shadow-[0_4px_20px_rgba(0,113,227,0.4)]",
-          "hover:shadow-[0_6px_24px_rgba(0,113,227,0.5)]",
-          "transition-all duration-200"
-        )}
-      >
-        {isOpen ? (
-          <X className="h-5 w-5" />
-        ) : (
-          <MessageCircle className="h-5 w-5" />
-        )}
-      </Button>
-    </motion.div>
+      {isOpen ? (
+        <ChevronRight className="h-4 w-4 text-white" />
+      ) : (
+        <div className="flex flex-col items-center gap-1">
+          <Sparkles className="h-3.5 w-3.5 text-white" />
+          <ChevronLeft className="h-3 w-3 text-white" />
+        </div>
+      )}
+    </button>
   );
 
-  // When panel is open, only show the toggle button
+  // When panel is open, only show the edge tab
   if (isOpen) {
-    return <ToggleButton />;
+    return <EdgeTab />;
   }
 
   return (
     <>
-      {/* Toggle button */}
-      <ToggleButton />
+      {/* Edge tab toggle */}
+      <EdgeTab />
       
       {/* Input bar */}
       <motion.div
