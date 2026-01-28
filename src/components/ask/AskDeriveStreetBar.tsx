@@ -123,23 +123,18 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
         {/* Starter prompt chips - hidden for now */}
         <div
           className={cn(
-            "relative flex items-end gap-2 p-2 w-full",
-            // Liquid Glass styling - more transparent
-            "rounded-2xl",
-            "bg-white/65 dark:bg-[hsl(0_0%_12%/0.38)]",
+            "relative flex items-center gap-2 px-3 py-1.5 w-full",
+            // Liquid Glass styling - very transparent
+            "rounded-xl",
+            "bg-white/45 dark:bg-[hsl(0_0%_12%/0.26)]",
             "backdrop-blur-[28px] backdrop-saturate-[160%]",
-            "border border-black/[0.06] dark:border-white/[0.08]",
-            "shadow-[0_8px_32px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]",
-            "dark:shadow-[0_8px_32px_rgba(0,0,0,0.3),0_2px_8px_rgba(0,0,0,0.15)]",
+            "border border-black/[0.05] dark:border-white/[0.06]",
+            "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)]",
+            "dark:shadow-[0_4px_16px_rgba(0,0,0,0.2),0_1px_4px_rgba(0,0,0,0.1)]",
             // Focus ring
             isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
           )}
         >
-          {/* Brand icon */}
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 shrink-0 mb-0.5">
-            <Sparkles className="h-4 w-4 text-primary" />
-          </div>
-
           {/* Input area */}
           <div className="flex-1 relative">
             <textarea
@@ -156,7 +151,7 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
                 "text-sm leading-relaxed",
                 "placeholder:text-muted-foreground/60",
                 "focus:outline-none",
-                "min-h-[36px] max-h-[120px] py-2 px-1"
+                "min-h-[28px] max-h-[96px] py-1"
               )}
               disabled={isStreaming}
             />
@@ -169,14 +164,14 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
             onClick={handleSubmit}
             disabled={!input.trim() || isStreaming}
             className={cn(
-              "h-8 w-8 shrink-0 rounded-full mb-0.5",
+              "h-7 w-7 shrink-0 rounded-full",
               "bg-primary/10 hover:bg-primary/20",
               "text-primary",
               "disabled:opacity-40 disabled:cursor-not-allowed",
               "transition-all duration-200"
             )}
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
 
