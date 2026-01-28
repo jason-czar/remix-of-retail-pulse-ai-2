@@ -31,19 +31,19 @@ const Index = () => {
     // Desktop: Force dark mode for intro
     setTheme("dark");
 
-    // After 2.5s in dark mode, start transition to light mode
+    // After 3s in dark mode, start transition to light mode
     const transitionTimer = setTimeout(() => {
       setIsTransitioning(true);
       // Add transition class to body for smooth CSS transitions
       document.body.classList.add("theme-transitioning");
       setTheme("light");
-    }, 2500);
+    }, 3000);
 
-    // End transition state after crossfade completes (2.5s dark + 2s transition)
+    // End transition state after crossfade completes (3s dark + 2s transition)
     const endTransitionTimer = setTimeout(() => {
       setIsTransitioning(false);
       document.body.classList.remove("theme-transitioning");
-    }, 4500);
+    }, 5000);
 
     return () => {
       clearTimeout(transitionTimer);
