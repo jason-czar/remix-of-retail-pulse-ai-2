@@ -14,6 +14,7 @@ import { useMemo, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface SentimentChartProps {
   symbol: string;
@@ -31,7 +32,24 @@ interface SentimentSidePanelData {
   isEmpty: boolean;
 }
 
-// Persistent side panel component with liquid glass styling
+// Animation variants for side panel
+const panelVariants = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -4 }
+};
+
+const transitionConfig = {
+  duration: 0.35,
+  ease: "easeOut" as const
+};
+
+const listItemVariants = {
+  initial: { opacity: 0, x: -8 },
+  animate: { opacity: 1, x: 0 }
+};
+
+// Persistent side panel component with professional monochromatic styling
 function SentimentSidePanel({ 
   data, 
   isHovering 
@@ -39,11 +57,13 @@ function SentimentSidePanel({
   data: SentimentSidePanelData | null;
   isHovering: boolean;
 }) {
+  const baseClasses = "relative overflow-hidden rounded-2xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl";
+  
   if (!data) {
     return (
       <div className={cn(
         "w-[280px] flex-shrink-0 p-5 hidden md:flex items-center justify-center",
-        "glass-card"
+        baseClasses
       )}>
         <p className="text-base text-muted-foreground text-center">
           No data available
@@ -52,48 +72,64 @@ function SentimentSidePanel({
     );
   }
 
+  // Animation key based on data label
+  const animationKey = data?.label || 'default';
+
   // Handle empty slots
   if (data.isEmpty) {
     return (
-      <div className={cn(
-        "w-[280px] flex-shrink-0 p-5 hidden md:block",
-        "glass-card"
-      )}>
-        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
-        <p className="text-base text-muted-foreground mt-2">
+      <motion.div 
+        key={animationKey}
+        variants={panelVariants}
+        initial="initial"
+        animate="animate"
+        transition={transitionConfig}
+        className={cn(
+          "w-[280px] flex-shrink-0 p-5 hidden md:block",
+          baseClasses
+        )}
+      >
+        <span className="font-semibold text-lg text-foreground">{data.label}</span>
+        <p className="text-base text-foreground/60 mt-2">
           No data available yet
         </p>
         {!isHovering && (
-          <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
-            <span className="text-sm text-muted-foreground italic">
+          <div className="mt-4 pt-3 border-t border-border/30">
+            <span className="text-sm text-foreground/50 italic">
               Showing latest • Hover chart to explore
             </span>
           </div>
         )}
-      </div>
+      </motion.div>
     );
   }
 
   // Determine sentiment trend
   const getSentimentTrend = () => {
     if (data.sentiment === null) return { label: 'Neutral', icon: Minus, color: 'text-muted-foreground' };
-    if (data.sentiment >= 60) return { label: 'Bullish', icon: TrendingUp, color: 'text-emerald-400' };
-    if (data.sentiment <= 40) return { label: 'Bearish', icon: TrendingDown, color: 'text-red-400' };
-    return { label: 'Neutral', icon: Minus, color: 'text-blue-400' };
+    if (data.sentiment >= 60) return { label: 'Bullish', icon: TrendingUp, color: 'text-emerald-500 dark:text-emerald-400' };
+    if (data.sentiment <= 40) return { label: 'Bearish', icon: TrendingDown, color: 'text-red-500 dark:text-red-400' };
+    return { label: 'Neutral', icon: Minus, color: 'text-blue-500 dark:text-blue-400' };
   };
 
   const trend = getSentimentTrend();
   const TrendIcon = trend.icon;
   
   return (
-    <div className={cn(
-      "w-[280px] flex-shrink-0 p-5 hidden md:block",
-      "glass-card",
-      !isHovering && "ring-1 ring-primary/20"
-    )}>
+    <motion.div 
+      key={animationKey}
+      variants={panelVariants}
+      initial="initial"
+      animate="animate"
+      transition={transitionConfig}
+      className={cn(
+        "w-[280px] flex-shrink-0 p-5 hidden md:block",
+        baseClasses
+      )}
+    >
       {/* Time Header */}
       <div className="flex items-center justify-between mb-3">
-        <span className="font-semibold text-lg text-card-foreground">{data.label}</span>
+        <span className="font-semibold text-lg text-foreground">{data.label}</span>
         <div className={cn("flex items-center gap-1.5 text-sm", trend.color)}>
           <TrendIcon className="h-4 w-4" />
           <span className="font-medium">{trend.label}</span>
@@ -102,20 +138,20 @@ function SentimentSidePanel({
       
       {/* Sentiment Score */}
       {data.sentiment !== null && (
-        <div className="mb-4 pb-3 border-b border-border/50 dark:border-white/10">
-          <div className="text-sm text-muted-foreground mb-1">Sentiment Score</div>
+        <div className="mb-4 pb-3 border-b border-border/30">
+          <div className="text-sm text-foreground/60 mb-1">Sentiment Score</div>
           <div className="flex items-center gap-3">
             <span className="font-bold text-3xl" style={{ color: "hsl(168 84% 45%)" }}>
               {data.sentiment}
             </span>
             <div className="flex-1">
-              <div className="h-2 bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full rounded-full transition-all"
-                  style={{ 
-                    width: `${data.sentiment}%`,
-                    backgroundColor: "hsl(168 84% 45%)"
-                  }}
+              <div className="h-2 bg-muted/20 dark:bg-white/5 rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: "hsl(168 84% 45%)" }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${data.sentiment}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
             </div>
@@ -125,44 +161,56 @@ function SentimentSidePanel({
       
       {/* Bullish/Bearish Breakdown */}
       <div className="space-y-3 pt-2">
-        <div className="text-sm text-muted-foreground mb-2">Breakdown:</div>
+        <div className="text-sm text-foreground/60 mb-2">Breakdown:</div>
         
         {data.bullish !== null && (
-          <div className="flex items-center gap-3">
+          <motion.div 
+            className="flex items-center gap-3"
+            variants={listItemVariants}
+            initial="initial"
+            animate="animate"
+            transition={{ ...transitionConfig, delay: 0.05 }}
+          >
             <div 
               className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
               style={{ backgroundColor: "hsl(142 71% 45%)" }}
             />
-            <span className="text-card-foreground flex-1 text-sm">Bullish</span>
+            <span className="text-foreground/80 dark:text-foreground/75 flex-1 text-sm">Bullish</span>
             <span className="text-sm font-medium" style={{ color: "hsl(142 71% 45%)" }}>
               {data.bullish}
             </span>
-          </div>
+          </motion.div>
         )}
         
         {data.bearish !== null && (
-          <div className="flex items-center gap-3">
+          <motion.div 
+            className="flex items-center gap-3"
+            variants={listItemVariants}
+            initial="initial"
+            animate="animate"
+            transition={{ ...transitionConfig, delay: 0.1 }}
+          >
             <div 
               className="w-3.5 h-3.5 rounded-sm flex-shrink-0" 
               style={{ backgroundColor: "hsl(0 72% 51%)" }}
             />
-            <span className="text-card-foreground flex-1 text-sm">Bearish</span>
+            <span className="text-foreground/80 dark:text-foreground/75 flex-1 text-sm">Bearish</span>
             <span className="text-sm font-medium" style={{ color: "hsl(0 72% 51%)" }}>
               {data.bearish}
             </span>
-          </div>
+          </motion.div>
         )}
       </div>
       
       {/* Default indicator */}
       {!isHovering && (
-        <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
-          <span className="text-sm text-muted-foreground italic">
+        <div className="mt-4 pt-3 border-t border-border/30">
+          <span className="text-sm text-foreground/50 italic">
             Showing latest • Hover chart to explore
           </span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
