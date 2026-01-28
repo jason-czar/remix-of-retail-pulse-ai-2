@@ -66,6 +66,11 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   // Don't show bar when panel is open
   if (isOpen) return null;
 
+  const handlePromptClick = (prompt: string) => {
+    const resolvedPrompt = prompt.replace("{SYMBOL}", symbol.toUpperCase());
+    sendMessage(resolvedPrompt);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -81,6 +86,36 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
         className
       )}
     >
+      {/* Starter prompt chips */}
+      <div className="flex flex-wrap gap-1.5 justify-center mb-2 px-2">
+        {STARTER_PROMPTS.slice(0, isMobile ? 3 : 4).map((prompt, index) => {
+          const resolvedPrompt = prompt.replace("{SYMBOL}", symbol.toUpperCase());
+          return (
+            <motion.button
+              key={prompt}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 + 0.1 }}
+              onClick={() => handlePromptClick(prompt)}
+              disabled={isStreaming}
+              className={cn(
+                "px-2.5 py-1 text-[11px] rounded-full",
+                "bg-white/70 dark:bg-white/[0.08]",
+                "backdrop-blur-sm",
+                "border border-black/[0.06] dark:border-white/[0.08]",
+                "text-muted-foreground",
+                "hover:bg-primary/10 hover:text-primary hover:border-primary/20",
+                "transition-colors duration-200",
+                "disabled:opacity-40 disabled:cursor-not-allowed",
+                "max-w-[160px] truncate"
+              )}
+            >
+              {resolvedPrompt}
+            </motion.button>
+          );
+        })}
+      </div>
+
       <div
         className={cn(
           "relative flex items-end gap-2 p-2",
