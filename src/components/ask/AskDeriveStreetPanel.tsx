@@ -32,15 +32,19 @@ export function AskDeriveStreetPanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive or panel opens
   useEffect(() => {
-    if (scrollRef.current) {
-      const scrollElement = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]");
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
-      }
+    if (isOpen && scrollRef.current) {
+      // Small delay to ensure DOM is rendered
+      const timer = setTimeout(() => {
+        const scrollElement = scrollRef.current?.querySelector("[data-radix-scroll-area-viewport]");
+        if (scrollElement) {
+          scrollElement.scrollTop = scrollElement.scrollHeight;
+        }
+      }, 50);
+      return () => clearTimeout(timer);
     }
-  }, [conversation]);
+  }, [conversation, isOpen]);
 
   // Focus input when panel opens
   useEffect(() => {
