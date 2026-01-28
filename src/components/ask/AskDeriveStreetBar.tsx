@@ -80,8 +80,8 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
       style={isOpen ? { right: `${panelWidth + 12}px` } : undefined}
       className={cn(
         "fixed right-0 z-50",
-        // Position below center to not overlap with messages tab
-        "top-[calc(50%+60px)] -translate-y-1/2",
+        // Position well below messages tab to avoid overlap
+        "top-[calc(50%+120px)] -translate-y-1/2",
         "h-24 w-6 flex items-center justify-center",
         // Blue appearance
         "bg-primary/90 hover:bg-primary",
