@@ -945,7 +945,7 @@ function TimeSeriesNarrativeChart({
       </Collapsible>
 
       {/* Main content: Side Panel + Chart */}
-      <div className="flex md:gap-4 h-[calc(100%-60px)] pl-1">
+      <div className="flex md:gap-4 h-[calc(92%-55px)] pl-1">
         {/* Left Side Panel - Only on desktop */}
         {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
 
@@ -1986,7 +1986,7 @@ w-[120vw]
           </Collapsible>
 
           {/* Main content: Side Panel + Chart */}
-          <div className="flex md:gap-4 h-[calc(100%-60px)]">
+          <div className="flex md:gap-4 h-[calc(92%-55px)]">
             {/* Left Side Panel - Only on desktop */}
             {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
 
