@@ -32,7 +32,8 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   const isMobile = useIsMobile();
   
   // Calculate offset to center in main content area (account for left sidebar)
-  const leftOffset = sidebarState === "expanded" ? leftSidebarWidth / 2 : 32;
+  // When sidebar is expanded, shift right by half the sidebar width to center in remaining space
+  const leftOffset = sidebarState === "expanded" ? leftSidebarWidth / 2 : 0;
 
   // Rotate placeholder prompts
   useEffect(() => {
