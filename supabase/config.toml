@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.cleanup-narrative-data]
 verify_jwt = false
+
+[functions.ask-derive-street]
+verify_jwt = false

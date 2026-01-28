@@ -35,20 +35,39 @@ import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
 import { useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AskDeriveStreetProvider, useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
+import { AskDeriveStreetBar } from "@/components/ask/AskDeriveStreetBar";
+import { AskDeriveStreetPanel } from "@/components/ask/AskDeriveStreetPanel";
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
+
 export default function SymbolPage() {
-  const {
-    symbol: paramSymbol
-  } = useParams<{
-    symbol: string;
-  }>();
+  const { symbol: paramSymbol } = useParams<{ symbol: string }>();
+  const location = useLocation();
+  const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
+
+  return (
+    <AskDeriveStreetProvider symbol={symbol}>
+      <SymbolPageContent />
+    </AskDeriveStreetProvider>
+  );
+}
+
+function SymbolPageContent() {
+  const { symbol: paramSymbol } = useParams<{ symbol: string }>();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Extract symbol from URL path as fallback (handles static routes like /symbol/AAPL)
   const symbol = paramSymbol || location.pathname.split('/')[2] || "AAPL";
 
-  // Initialize active chart tab from URL query param or default to 'narratives'
+  // Initialize Ask context with symbol
+  const { setSymbol, setIntelligenceContext } = useAskDeriveStreet();
+
+  // Sync symbol to Ask context
+  useEffect(() => {
+    setSymbol(symbol);
+  }, [symbol, setSymbol]);
+
   const validTabs = ['narratives', 'emotions', 'sentiment', 'momentum'];
   const initialTab = searchParams.get('chart') || 'narratives';
   const [activeTab, setActiveTabState] = useState<string>(validTabs.includes(initialTab) ? initialTab : 'narratives');
@@ -175,6 +194,19 @@ export default function SymbolPage() {
     await refetchLensSummary();
     setIsRegenerating(false);
   };
+
+  // Sync intelligence context to Ask panel
+  useEffect(() => {
+    if (lensSummaryData?.summary) {
+      setIntelligenceContext({
+        lensSummary: lensSummaryData.summary,
+        lensConfidence: lensSummaryData.confidence,
+        activeLens: getLensDisplayName(decisionLens, activeCustomLens || undefined),
+        dataTimestamp: new Date().toISOString(),
+      });
+    }
+  }, [lensSummaryData, decisionLens, activeCustomLens, setIntelligenceContext]);
+
   const data = stats || {
     symbol,
     name: symbol,
@@ -498,6 +530,10 @@ export default function SymbolPage() {
       
       {/* Right sidebar - rendered directly as part of page content */}
       <MessagesSidebar symbol={symbol} messages={messages} isLoading={messagesLoading} />
+      
+      {/* Ask DeriveStreet - Bottom bar and panel */}
+      <AskDeriveStreetBar />
+      <AskDeriveStreetPanel />
     </>;
 }
 function MetricCard({
