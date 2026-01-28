@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -9,6 +8,21 @@ import { LineChart, Line, Area, XAxis, YAxis, ResponsiveContainer, Tooltip as Re
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Activity, AlertCircle } from "lucide-react";
+
+// Liquid Glass styling constants
+const glassCardClasses = cn(
+  "rounded-2xl p-3 md:p-4 h-full flex flex-col",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassToggleClasses = cn(
+  "bg-white/50 dark:bg-white/[0.06]",
+  "backdrop-blur-[8px]",
+  "rounded-lg p-0.5"
+);
 
 interface NCSTrendChartProps {
   symbol: string;
@@ -113,13 +127,13 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
   
   if (isLoading) {
     return (
-      <Card className="p-4 glass-card mt-4">
+      <div className={glassCardClasses}>
         <div className="flex items-center gap-2 mb-3">
           <Skeleton className="h-4 w-4 rounded" />
           <Skeleton className="h-4 w-32" />
         </div>
         <Skeleton className="h-[120px] w-full" />
-      </Card>
+      </div>
     );
   }
   
@@ -228,7 +242,7 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
   const interpretation = getInterpretation(stats);
   
   return (
-    <Card className="p-3 md:p-4 glass-card h-full flex flex-col border-border/30">
+    <div className={glassCardClasses}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -237,7 +251,7 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
         </div>
         
         {/* Range toggles */}
-        <div className="flex items-center gap-0.5 bg-secondary/50 rounded-md p-0.5">
+        <div className={glassToggleClasses}>
           {RANGE_OPTIONS.map(option => (
             <button
               key={option.value}
@@ -245,7 +259,7 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
               className={cn(
                 "px-2 py-0.5 text-[10px] font-medium rounded transition-colors",
                 range === option.value
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-white dark:bg-white/[0.12] text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -379,6 +393,6 @@ export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
           )}
         </>
       )}
-    </Card>
+    </div>
   );
 }

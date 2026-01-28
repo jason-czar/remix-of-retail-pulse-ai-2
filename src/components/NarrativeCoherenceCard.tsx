@@ -1,20 +1,27 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Progress } from "@/components/ui/progress";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { ConfidenceBadge, getConfidenceLevel, ConfidenceDrivers } from "@/components/ui/ConfidenceBadge";
 import { 
-  Activity, 
-  Target, 
-  AlertTriangle, 
-  TrendingUp, 
-  TrendingDown,
-  Minus,
-  Info 
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Liquid Glass styling constants
+const glassCardClasses = cn(
+  "rounded-2xl p-4 md:p-5 h-full flex flex-col",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassTileClasses = cn(
+  "p-3 rounded-xl",
+  "bg-[#F3F3F7] dark:bg-white/[0.04]",
+  "border border-black/[0.02] dark:border-white/[0.04]"
+);
 
 interface NarrativeCoherenceCardProps {
   symbol: string;
@@ -134,7 +141,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
   
   if (isLoading) {
     return (
-      <Card className="p-4 glass-card">
+      <div className={glassCardClasses}>
         <div className="flex items-center gap-3 mb-4">
           <Skeleton className="h-10 w-10 rounded-lg" />
           <div className="flex-1">
@@ -148,7 +155,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
           <Skeleton className="h-16" />
           <Skeleton className="h-16" />
         </div>
-      </Card>
+      </div>
     );
   }
   
@@ -167,7 +174,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
   const confidenceLevel = getConfidenceLevel(snapshot.data_confidence.score);
   
   return (
-    <Card className="p-4 md:p-5 glass-card h-full flex flex-col">
+    <div className={glassCardClasses}>
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="font-semibold text-sm md:text-base">Narrative Coherence</h3>
@@ -199,7 +206,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
       
       {/* Score bar */}
       <div className="mb-4">
-        <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+        <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary/50">
           <div 
             className={cn("h-full transition-all duration-500", getRiskBg(coherence.risk_level))}
             style={{ width: `${coherence.score}%` }}
@@ -213,7 +220,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-secondary/30">
+              <div className={glassTileClasses}>
                 <div className="text-[10px] text-muted-foreground mb-1">Focus</div>
                 <div className="text-sm font-medium">{Math.round((1 - coherence.entropy) * 100)}%</div>
               </div>
@@ -227,7 +234,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-secondary/30">
+              <div className={glassTileClasses}>
                 <div className="text-[10px] text-muted-foreground mb-1">Emotion Alignment</div>
                 <div className="text-sm font-medium">{Math.round(coherence.emotion_convergence * 100)}%</div>
               </div>
@@ -241,7 +248,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-secondary/30">
+              <div className={glassTileClasses}>
                 <div className="text-[10px] text-muted-foreground mb-1">Stability</div>
                 <div className="text-sm font-medium">{Math.round(coherence.velocity_stability * 100)}%</div>
               </div>
@@ -255,7 +262,7 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="p-3 rounded-lg bg-secondary/30">
+              <div className={glassTileClasses}>
                 <div className="text-[10px] text-muted-foreground mb-1">Top Narrative</div>
                 <div className="text-sm font-medium">{coherence.dominant_narrative_share.toFixed(0)}%</div>
               </div>
@@ -288,6 +295,6 @@ export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) 
       <div className="pt-3 mt-auto border-t border-border/30">
         <ConfidenceDrivers drivers={snapshot.data_confidence.drivers} />
       </div>
-    </Card>
+    </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,9 +7,27 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useHistoricalEpisodeMatcher, SimilarEpisode } from "@/hooks/use-historical-episode-matcher";
 import { ConfidenceBadge, getConfidenceLevel } from "@/components/ui/ConfidenceBadge";
 import { format } from "date-fns";
-import { History, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, Calendar, Target, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { History, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Liquid Glass styling constants
+const glassCardClasses = cn(
+  "rounded-2xl p-4 md:p-5",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassEpisodeCardClasses = cn(
+  "rounded-xl p-4",
+  "bg-white/45 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px]",
+  "border border-black/[0.04] dark:border-white/[0.04]",
+  "transition-all duration-200",
+  "hover:bg-white/60 dark:hover:bg-white/[0.06]"
+);
 interface HistoricalEpisodeMatcherProps {
   symbol: string;
 }
@@ -37,7 +54,7 @@ function EpisodeCard({
   const confidenceLevel = getConfidenceLevel(episode.similarity_score / 100);
   const OutcomeIcon5d = getOutcomeIcon(episode.price_change_after_5d);
   const OutcomeIcon10d = getOutcomeIcon(episode.price_change_after_10d);
-  return <Card className="p-4 glass-card hover:bg-secondary/50 transition-colors">
+  return <div className={glassEpisodeCardClasses}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-lg bg-primary/10 text-primary text-xs font-bold">
@@ -161,7 +178,7 @@ function EpisodeCard({
             </div>
           </motion.div>}
       </AnimatePresence>
-    </Card>;
+    </div>;
 }
 export function HistoricalEpisodeMatcher({
   symbol
@@ -178,7 +195,7 @@ export function HistoricalEpisodeMatcher({
     maxResults: 10
   });
   if (isLoading) {
-    return <Card className="p-4 md:p-5 glass-card">
+    return <div className={glassCardClasses}>
         <div className="flex items-center gap-3 mb-4">
           <Skeleton className="h-10 w-10 rounded-lg" />
           <div>
@@ -190,13 +207,13 @@ export function HistoricalEpisodeMatcher({
           <Skeleton className="h-40" />
           <Skeleton className="h-40" />
         </div>
-      </Card>;
+      </div>;
   }
   if (error) {
     return null;
   }
   if (!episodes || episodes.length === 0) {
-    return <Card className="p-4 md:p-5 glass-card">
+    return <div className={glassCardClasses}>
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 rounded-lg bg-muted">
             <History className="h-5 w-5 text-muted-foreground" />
@@ -209,7 +226,7 @@ export function HistoricalEpisodeMatcher({
         <p className="text-sm text-muted-foreground">
           As more psychology snapshots are recorded, similar historical patterns will appear here.
         </p>
-      </Card>;
+      </div>;
   }
   const displayedEpisodes = showAll ? episodes : episodes.slice(0, 3);
 
@@ -218,7 +235,7 @@ export function HistoricalEpisodeMatcher({
   const avgOutcome10d = episodesWithOutcomes.length > 0 ? episodesWithOutcomes.reduce((sum, e) => sum + (e.price_change_after_10d || 0), 0) / episodesWithOutcomes.length : null;
   const positiveCount = episodesWithOutcomes.filter(e => (e.price_change_after_10d || 0) > 0).length;
   return <Collapsible defaultOpen={false}>
-      <Card className="p-4 md:p-5 glass-card">
+      <div className={glassCardClasses}>
         {/* Header */}
         <CollapsibleTrigger className="flex items-center gap-2 w-full group">
           <div className="flex items-start justify-between flex-1">
@@ -262,9 +279,13 @@ export function HistoricalEpisodeMatcher({
             className="pt-4"
           >
             {/* Disclaimer */}
-            <div className="flex items-start gap-2 mb-4 p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-[10px] text-amber-400">
+            <div className={cn(
+              "flex items-start gap-2 mb-4 p-2 rounded-xl",
+              "bg-warning/5 dark:bg-warning/5",
+              "border border-warning/20"
+            )}>
+              <AlertTriangle className="h-3.5 w-3.5 text-warning mt-0.5 shrink-0" />
+              <p className="text-[10px] text-warning">
                 Historical patterns are descriptive only. Past behavior does not predict future outcomes.
               </p>
             </div>
@@ -282,6 +303,6 @@ export function HistoricalEpisodeMatcher({
               </div>}
           </motion.div>
         </CollapsibleContent>
-      </Card>
+      </div>
     </Collapsible>;
 }
