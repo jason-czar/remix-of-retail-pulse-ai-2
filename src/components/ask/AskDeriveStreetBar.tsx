@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Send, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { useAskDeriveStreetStream } from "@/hooks/use-ask-derive-street";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSidebar } from "@/components/ui/sidebar";
-import { useMessagesSidebar } from "@/contexts/MessagesSidebarContext";
 
 const STARTER_PROMPTS = [
   "Why is {SYMBOL} consolidating here?",
@@ -30,14 +28,6 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const isMobile = useIsMobile();
-  
-  // Get sidebar widths for proper centering
-  const { state: sidebarState, sidebarWidth: leftSidebarWidth } = useSidebar();
-  const { isOpen: messagesSidebarOpen, sidebarWidth: messagesSidebarWidth } = useMessagesSidebar();
-  
-  const isLeftExpanded = sidebarState === "expanded";
-  const leftOffset = isLeftExpanded ? leftSidebarWidth + 12 : 64;
-  const rightOffset = messagesSidebarOpen ? messagesSidebarWidth + 24 : 16;
 
   // Rotate placeholder prompts
   useEffect(() => {
@@ -121,16 +111,12 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        style={!isMobile ? { 
-          left: `${leftOffset}px`, 
-          right: `${rightOffset}px` 
-        } : undefined}
         className={cn(
           "fixed z-40",
-          // Position: centered at bottom, above footer
+          // Position: centered at bottom
           isMobile 
             ? "bottom-20 left-4 right-4" 
-            : "bottom-6 flex flex-col items-center",
+            : "bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center",
           className
         )}
       >
