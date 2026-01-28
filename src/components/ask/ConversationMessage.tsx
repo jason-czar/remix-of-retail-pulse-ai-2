@@ -32,9 +32,14 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      initial={{ opacity: 0, y: isUser ? -8 : 12, scale: isUser ? 1 : 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ 
+        duration: isUser ? 0.25 : 0.6, 
+        ease: isUser ? "easeOut" : [0.25, 0.46, 0.45, 0.94],
+        opacity: { duration: isUser ? 0.2 : 0.5 },
+        scale: { duration: isUser ? 0.2 : 0.45, ease: [0.34, 1.56, 0.64, 1] }
+      }}
       className={cn(
         "flex gap-3",
         isUser ? "flex-row-reverse" : "flex-row"
