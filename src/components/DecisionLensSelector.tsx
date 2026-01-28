@@ -183,10 +183,10 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             scale: 1,
             boxShadow: [
               "0 1px 2px rgba(0,0,0,0.02)",
-              "0 0 8px 2px rgba(0, 113, 227, 0.1)",
-              "0 0 24px 6px rgba(0, 113, 227, 0.3), 0 0 48px 12px rgba(0, 113, 227, 0.15)",
-              "0 0 24px 6px rgba(0, 113, 227, 0.3), 0 0 48px 12px rgba(0, 113, 227, 0.15)",
-              "0 0 8px 2px rgba(0, 113, 227, 0.1)",
+              "0 0 6px 1px rgba(0, 113, 227, 0.04)",
+              "0 0 12px 3px rgba(0, 113, 227, 0.12), 0 0 24px 6px rgba(0, 113, 227, 0.06)",
+              "0 0 12px 3px rgba(0, 113, 227, 0.12), 0 0 24px 6px rgba(0, 113, 227, 0.06)",
+              "0 0 6px 1px rgba(0, 113, 227, 0.04)",
               "0 1px 2px rgba(0,0,0,0.02)"
             ]
           }}
@@ -195,10 +195,10 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             y: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
             scale: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
             boxShadow: { 
-              duration: 2.2, 
+              duration: 2.8, 
               delay: 0.9,
-              times: [0, 0.12, 0.35, 0.65, 0.88, 1],
-              ease: [0.4, 0, 0.2, 1]
+              times: [0, 0.15, 0.4, 0.6, 0.85, 1],
+              ease: [0.25, 0.1, 0.25, 1]
             }
           }}
           className={cn(
@@ -234,20 +234,20 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                 className="absolute inset-0 rounded-full pointer-events-none"
                 initial={{ opacity: 0, boxShadow: "0 0 0 0 rgba(0, 113, 227, 0)" }}
                 animate={{
-                  opacity: [0, 0.5, 0.8, 0.5, 0],
+                  opacity: [0, 0.2, 0.32, 0.2, 0],
                   boxShadow: [
                     "0 0 0 0 rgba(0, 113, 227, 0)",
-                    "0 0 8px 2px rgba(0, 113, 227, 0.3), inset 0 0 4px rgba(0, 113, 227, 0.15)",
-                    "0 0 18px 5px rgba(0, 113, 227, 0.5), inset 0 0 12px rgba(0, 113, 227, 0.3)",
-                    "0 0 8px 2px rgba(0, 113, 227, 0.3), inset 0 0 4px rgba(0, 113, 227, 0.15)",
+                    "0 0 4px 1px rgba(0, 113, 227, 0.12), inset 0 0 2px rgba(0, 113, 227, 0.06)",
+                    "0 0 8px 2px rgba(0, 113, 227, 0.2), inset 0 0 5px rgba(0, 113, 227, 0.12)",
+                    "0 0 4px 1px rgba(0, 113, 227, 0.12), inset 0 0 2px rgba(0, 113, 227, 0.06)",
                     "0 0 0 0 rgba(0, 113, 227, 0)"
                   ]
                 }}
                 transition={{
-                  duration: 0.6,
-                  times: [0, 0.2, 0.4, 0.7, 1],
+                  duration: 0.8,
+                  times: [0, 0.25, 0.5, 0.75, 1],
                   delay: animationDelay,
-                  ease: [0.4, 0, 0.2, 1]
+                  ease: [0.25, 0.1, 0.25, 1]
                 }}
               />
               <motion.button
