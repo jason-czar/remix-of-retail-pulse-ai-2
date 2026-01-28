@@ -182,7 +182,7 @@ export function SummaryInsightsCard({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border border-border/50 bg-card/60 dark:bg-card/40"
+            className="relative px-3 py-2.5 lg:px-4 lg:py-3.5 lg:min-w-[120px]"
           >
             <div className="relative mb-1 lg:mb-1.5">
               <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Sentiment Score</span>
@@ -214,7 +214,7 @@ export function SummaryInsightsCard({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border border-border/50 bg-card/60 dark:bg-card/40"
+            className="relative px-3 py-2.5 lg:px-4 lg:py-3.5 lg:min-w-[120px]"
           >
             <div className="relative mb-1 lg:mb-1.5">
               <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Message Volume</span>
@@ -241,7 +241,7 @@ export function SummaryInsightsCard({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border border-border/50 bg-card/60 dark:bg-card/40"
+            className="relative px-3 py-2.5 lg:px-4 lg:py-3.5 lg:min-w-[120px]"
           >
             <div className="relative mb-1 lg:mb-1.5">
               <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">7D Trend</span>
