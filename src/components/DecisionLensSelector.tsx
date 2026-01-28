@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Plus, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,8 +63,6 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   
-  // Memoize the initial mount ID to ensure animation only runs on page load
-  const mountId = useMemo(() => Date.now(), []);
   
   // Combine default and custom lenses
   const allLensOptions: LensOption[] = [
@@ -173,34 +170,8 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           canScrollRight ? "opacity-100" : "opacity-0"
         )} />
         
-        <motion.div 
-          key={mountId}
+        <div 
           ref={scrollContainerRef}
-          initial={{ opacity: 0, y: -8, scale: 0.98, boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}
-          animate={{ 
-            opacity: 1, 
-            y: 0, 
-            scale: 1,
-            boxShadow: [
-              "0 1px 2px rgba(0,0,0,0.02)",
-              "0 0 6px 1px rgba(0, 113, 227, 0.04)",
-              "0 0 12px 3px rgba(0, 113, 227, 0.12), 0 0 24px 6px rgba(0, 113, 227, 0.06)",
-              "0 0 12px 3px rgba(0, 113, 227, 0.12), 0 0 24px 6px rgba(0, 113, 227, 0.06)",
-              "0 0 6px 1px rgba(0, 113, 227, 0.04)",
-              "0 1px 2px rgba(0,0,0,0.02)"
-            ]
-          }}
-          transition={{ 
-            opacity: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
-            y: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
-            scale: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
-            boxShadow: { 
-              duration: 4.5, 
-              delay: 0.9,
-              times: [0, 0.12, 0.35, 0.65, 0.88, 1],
-              ease: [0.16, 0.1, 0.16, 1]
-            }
-          }}
           className={cn(
             "relative inline-flex items-center gap-1.5 rounded-2xl py-2.5 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
             // Liquid Glass styling - subtle and seamless
@@ -208,49 +179,13 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             "backdrop-blur-[20px] backdrop-saturate-[140%]",
             "border border-black/[0.04] dark:border-white/[0.06]"
         )}>
-        {allLensOptions.map((option, index) => {
-          // Calculate animation delay: single sweep left-to-right
-          const baseDelay = 1.1; // Delay so user notices selector first
-          const itemDuration = 0.07; // Smooth wave timing
-          const animationDelay = baseDelay + index * itemDuration;
-          
+        {allLensOptions.map((option) => {
           return (
-            <motion.div 
+            <div 
               key={option.value} 
               className="relative flex items-center shrink-0"
-              initial={{ scale: 1 }}
-              animate={{
-                scale: [1, 1.05, 1]
-              }}
-              transition={{
-                duration: 0.5,
-                times: [0, 0.35, 1],
-                delay: animationDelay,
-                ease: [0.4, 0, 0.2, 1]
-              }}
             >
-              {/* Blue glow overlay for wave animation */}
-              <motion.div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                initial={{ opacity: 0, boxShadow: "0 0 0 0 rgba(0, 113, 227, 0)" }}
-                animate={{
-                  opacity: [0, 0.2, 0.32, 0.2, 0],
-                  boxShadow: [
-                    "0 0 0 0 rgba(0, 113, 227, 0)",
-                    "0 0 4px 1px rgba(0, 113, 227, 0.12), inset 0 0 2px rgba(0, 113, 227, 0.06)",
-                    "0 0 8px 2px rgba(0, 113, 227, 0.2), inset 0 0 5px rgba(0, 113, 227, 0.12)",
-                    "0 0 4px 1px rgba(0, 113, 227, 0.12), inset 0 0 2px rgba(0, 113, 227, 0.06)",
-                    "0 0 0 0 rgba(0, 113, 227, 0)"
-                  ]
-                }}
-                transition={{
-                  duration: 0.8,
-                  times: [0, 0.25, 0.5, 0.75, 1],
-                  delay: animationDelay,
-                  ease: [0.25, 0.1, 0.25, 1]
-                }}
-              />
-              <motion.button
+              <button
                 className={cn(
                   "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full ring-offset-background transition-all duration-200",
                   value === option.value
@@ -268,19 +203,9 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                   option.isCustom && "pr-7"
                 )}
                 onClick={() => onChange(option.value, option.customLens)}
-                initial={{ color: "inherit" }}
-                animate={{
-                  color: ["inherit", "inherit", "#0071E3", "inherit", "inherit"]
-                }}
-                transition={{
-                  duration: 0.6,
-                  times: [0, 0.2, 0.4, 0.7, 1],
-                  delay: animationDelay,
-                  ease: [0.4, 0, 0.2, 1]
-                }}
               >
                 {option.label}
-              </motion.button>
+              </button>
               
               {/* Custom lens dropdown menu */}
               {option.isCustom && option.customLens && value === option.value && (
@@ -312,7 +237,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-            </motion.div>
+            </div>
           );
         })}
         
@@ -331,7 +256,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             <TooltipContent>Create custom lens</TooltipContent>
           </Tooltip>
         )}
-        </motion.div>
+        </div>
       </div>
       
       {/* Edit dialog */}
