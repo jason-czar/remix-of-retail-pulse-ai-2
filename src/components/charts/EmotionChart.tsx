@@ -153,7 +153,7 @@ function EmotionSidePanel({
   const baseClasses = "relative overflow-hidden rounded-2xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl";
   const containerClasses = isMobile 
     ? `w-[calc(100%-10px)] mx-[5px] p-4 ${baseClasses}`
-    : `w-[308px] flex-shrink-0 p-5 ${baseClasses}`;
+    : `w-[343px] flex-shrink-0 p-5 ${baseClasses}`;
   
   // Animation variants for entrance
   const panelVariants = {
@@ -170,7 +170,7 @@ function EmotionSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        isMobile ? "w-[calc(100%-10px)] mx-[5px] p-4" : "w-[308px] flex-shrink-0 p-5",
+        isMobile ? "w-[calc(100%-10px)] mx-[5px] p-4" : "w-[343px] flex-shrink-0 p-5",
         baseClasses, "flex items-center justify-center"
       )}>
         <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>

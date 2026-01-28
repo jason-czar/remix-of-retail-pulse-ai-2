@@ -62,7 +62,7 @@ function SentimentSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        "w-[308px] flex-shrink-0 p-5 hidden md:flex items-center justify-center",
+        "w-[343px] flex-shrink-0 p-5 hidden md:flex items-center justify-center",
         baseClasses
       )}>
         <p className="text-base text-muted-foreground text-center">
@@ -85,7 +85,7 @@ function SentimentSidePanel({
         animate="animate"
         transition={transitionConfig}
         className={cn(
-          "w-[308px] flex-shrink-0 p-5 hidden md:block",
+          "w-[343px] flex-shrink-0 p-5 hidden md:block",
           baseClasses
         )}
       >
@@ -123,7 +123,7 @@ function SentimentSidePanel({
       animate="animate"
       transition={transitionConfig}
       className={cn(
-        "w-[308px] flex-shrink-0 p-5 hidden md:block",
+        "w-[343px] flex-shrink-0 p-5 hidden md:block",
         baseClasses
       )}
     >
