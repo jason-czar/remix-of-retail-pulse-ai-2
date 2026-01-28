@@ -221,12 +221,12 @@
   body.theme-transitioning,
   body.theme-transitioning * {
     transition: 
-      background-color 2000ms ease-out,
-      border-color 2000ms ease-out,
-      color 2000ms ease-out,
-      fill 2000ms ease-out,
-      stroke 2000ms ease-out,
-      box-shadow 2000ms ease-out,
+      background-color 2500ms ease-out,
+      border-color 2500ms ease-out,
+      color 2500ms ease-out,
+      fill 2500ms ease-out,
+      stroke 2500ms ease-out,
+      box-shadow 2500ms ease-out,
       opacity 2000ms ease-out !important;
   }
 
