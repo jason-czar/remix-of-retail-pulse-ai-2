@@ -49,9 +49,9 @@ const AskDeriveStreetContext = createContext<AskDeriveStreetContextType | null>(
 
 const STORAGE_KEY = "derivestreet:conversations";
 const WIDTH_STORAGE_KEY = "derivestreet:ask-panel-width";
-const DEFAULT_PANEL_WIDTH = 480;
+const DEFAULT_PANEL_WIDTH = 720;
 const MIN_WIDTH = 320;
-const MAX_WIDTH = 480;
+const MAX_WIDTH = 720;
 
 export function AskDeriveStreetProvider({ children, symbol: initialSymbol = "" }: { children: ReactNode; symbol?: string }) {
   const [isOpen, setIsOpenState] = useState(false);
