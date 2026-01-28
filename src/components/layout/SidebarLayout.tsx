@@ -41,12 +41,14 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
   // Calculate padding to center content between sidebars
   // Left: sidebar width + small gap
   const leftPadding = isLeftExpanded ? leftSidebarWidth + 12 : 64; // 48px collapsed + 16px
-  // Right: when any right sidebar/panel is open (messages sidebar or ask panel)
+  // Right padding for content: when any right sidebar/panel is open (messages sidebar or ask panel)
   const rightPadding = messagesSidebarOpen 
     ? messagesSidebarWidth + 24 
     : askPanelOpen 
       ? askPanelWidth + 24 
       : 16;
+  // Header only responds to messages sidebar, not ask panel (which floats over header)
+  const headerRightPadding = messagesSidebarOpen ? messagesSidebarWidth + 24 : 16;
 
   const handleSignOut = async () => {
     await signOut();
@@ -63,7 +65,7 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
         {/* Top bar with search, theme, and user - full width with its own padding */}
         <header 
           className="sticky top-0 z-40 flex h-14 items-center gap-4 bg-transparent transition-[padding] duration-300 ease-out"
-          style={{ paddingLeft: `${leftPadding}px`, paddingRight: `${rightPadding}px` }}
+          style={{ paddingLeft: `${leftPadding}px`, paddingRight: `${headerRightPadding}px` }}
         >
           <div className="flex-1" />
           
