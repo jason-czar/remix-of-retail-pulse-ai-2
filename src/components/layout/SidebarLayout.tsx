@@ -33,14 +33,14 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { state, sidebarWidth: leftSidebarWidth } = useSidebar();
-  const { isOpen: rightSidebarOpen, sidebarWidth: rightSidebarWidth } = useMessagesSidebar();
+  const { isOpen: messagesSidebarOpen, sidebarWidth: messagesSidebarWidth } = useMessagesSidebar();
   
   const isLeftExpanded = state === "expanded";
   // Calculate padding to center content between sidebars
   // Left: sidebar width + small gap
   const leftPadding = isLeftExpanded ? leftSidebarWidth + 12 : 64; // 48px collapsed + 16px
-  // Right: only when messages sidebar is open
-  const rightPadding = rightSidebarOpen ? rightSidebarWidth + 24 : 16;
+  // Right: when any right sidebar is open (messages sidebar handled via context)
+  const rightPadding = messagesSidebarOpen ? messagesSidebarWidth + 24 : 16;
 
   const handleSignOut = async () => {
     await signOut();
