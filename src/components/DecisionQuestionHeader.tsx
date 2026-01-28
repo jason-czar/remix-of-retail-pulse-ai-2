@@ -47,51 +47,25 @@ function getRiskColor(score: number): string {
 function getConfidenceColor(score: number): string {
   return getConfidenceSeverity(score).textClass;
 }
-
-function getReadinessProgressColor(score: number): string {
-  return getReadinessSeverity(score).bgClass;
-}
-
-function getRiskProgressColor(score: number): string {
-  return getRiskSeverity(score).bgClass;
-}
-
-function getConfidenceProgressColor(score: number): string {
-  return getConfidenceSeverity(score).bgClass;
-}
-
-// Get HSL color for gradient/glow effects
-function getSeverityHsl(score: number, type: 'readiness' | 'risk' | 'confidence'): string {
-  const severity = type === 'risk' 
-    ? getRiskSeverity(score) 
-    : type === 'readiness' 
-      ? getReadinessSeverity(score) 
-      : getConfidenceSeverity(score);
-  return severity.hsl;
-}
-
 function getTimingBadge(timing?: string) {
   switch (timing) {
     case "proceed":
       return {
         icon: CheckCircle2,
         label: "Proceed",
-        variant: "bullish" as const,
-        bgClass: "bg-bullish/10 border-bullish/30"
+        iconClass: "text-bullish"
       };
     case "delay":
       return {
         icon: Clock,
         label: "Delay",
-        variant: "neutral" as const,
-        bgClass: "bg-warning/10 border-warning/30"
+        iconClass: "text-warning"
       };
     case "avoid":
       return {
         icon: XCircle,
         label: "Avoid",
-        variant: "bearish" as const,
-        bgClass: "bg-bearish/10 border-bearish/30"
+        iconClass: "text-bearish"
       };
     default:
       return null;
@@ -216,28 +190,15 @@ export function DecisionQuestionHeader({
                   <Link2 className="h-3.5 w-3.5" />
                 )}
               </Button>
-              {/* Timing Badge - Animated */}
+              {/* Timing Badge - Neutral outline with colored icon */}
               {timing && showScores && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ 
-                    duration: 0.4, 
-                    delay: 0.3,
-                    ease: [0.34, 1.56, 0.64, 1] // Slight overshoot for emphasis
-                  }}
+                <Badge 
+                  variant="outline" 
+                  className="text-xs px-2.5 py-1 hidden md:flex items-center gap-1.5 shrink-0 font-medium"
                 >
-                  <Badge 
-                    variant={timing.variant} 
-                    className={cn(
-                      "text-xs px-2.5 py-1 hidden md:flex items-center gap-1.5 shrink-0 font-semibold",
-                      timing.bgClass
-                    )}
-                  >
-                    <timing.icon className="h-3.5 w-3.5" />
-                    {timing.label}
-                  </Badge>
-                </motion.div>
+                  <timing.icon className={cn("h-3.5 w-3.5", timing.iconClass)} />
+                  {timing.label}
+                </Badge>
               )}
               {/* Lens Name Badge - After Timing */}
               <Badge variant="outline" className="text-xs shrink-0">
@@ -254,18 +215,8 @@ export function DecisionQuestionHeader({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.08) 0%, hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.03) 50%, transparent 100%)`,
-                  borderColor: `hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.2)`,
-                  boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.03)`
-                }}
+                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border border-border/50 bg-card/60 dark:bg-card/40"
               >
-                {/* Glow accent */}
-                <div 
-                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none"
-                  style={{ background: `hsl(${getSeverityHsl(confidencePercent, 'confidence')})` }}
-                />
                 <div className="relative mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Confidence</span>
                 </div>
@@ -275,18 +226,12 @@ export function DecisionQuestionHeader({
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">%</span>
                 </div>
-                <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
+                <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${confidencePercent}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full transition-shadow duration-300",
-                      getConfidenceProgressColor(confidencePercent)
-                    )}
-                    style={{
-                      boxShadow: `0 0 8px hsl(${getSeverityHsl(confidencePercent, 'confidence')} / 0.5)`
-                    }}
+                    className="h-full rounded-full bg-muted-foreground/40"
                   />
                 </div>
               </motion.div>
@@ -296,18 +241,8 @@ export function DecisionQuestionHeader({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.15 }}
-                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.08) 0%, hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.03) 50%, transparent 100%)`,
-                  borderColor: `hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.2)`,
-                  boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.03)`
-                }}
+                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border border-border/50 bg-card/60 dark:bg-card/40"
               >
-                {/* Glow accent */}
-                <div 
-                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none"
-                  style={{ background: `hsl(${getSeverityHsl(readinessScore, 'readiness')})` }}
-                />
                 <div className="relative mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Readiness</span>
                 </div>
@@ -317,18 +252,12 @@ export function DecisionQuestionHeader({
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
-                <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
+                <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${readinessScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full transition-shadow duration-300",
-                      getReadinessProgressColor(readinessScore)
-                    )}
-                    style={{
-                      boxShadow: `0 0 8px hsl(${getSeverityHsl(readinessScore, 'readiness')} / 0.5)`
-                    }}
+                    className="h-full rounded-full bg-muted-foreground/40"
                   />
                 </div>
               </motion.div>
@@ -338,18 +267,8 @@ export function DecisionQuestionHeader({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
-                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${getSeverityHsl(riskScore, 'risk')} / 0.08) 0%, hsl(${getSeverityHsl(riskScore, 'risk')} / 0.03) 50%, transparent 100%)`,
-                  borderColor: `hsl(${getSeverityHsl(riskScore, 'risk')} / 0.2)`,
-                  boxShadow: `0 4px 20px -4px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.15), inset 0 0 20px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.03)`
-                }}
+                className="relative overflow-hidden px-3 py-2.5 lg:px-4 lg:py-3.5 rounded-xl lg:rounded-2xl lg:min-w-[120px] backdrop-blur-xl border border-border/50 bg-card/60 dark:bg-card/40"
               >
-                {/* Glow accent */}
-                <div 
-                  className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-30 pointer-events-none"
-                  style={{ background: `hsl(${getSeverityHsl(riskScore, 'risk')})` }}
-                />
                 <div className="relative mb-1 lg:mb-1.5">
                   <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Risk</span>
                 </div>
@@ -359,18 +278,12 @@ export function DecisionQuestionHeader({
                   </span>
                   <span className="text-[10px] lg:text-xs text-muted-foreground">/100</span>
                 </div>
-                <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2 cursor-pointer">
+                <div className="relative group h-1 lg:h-1.5 w-full overflow-hidden rounded-full bg-secondary/50 mt-1.5 lg:mt-2">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${riskScore}%` }}
                     transition={{ duration: 0.6, ease: "easeOut" }}
-                    className={cn(
-                      "h-full rounded-full transition-shadow duration-300",
-                      getRiskProgressColor(riskScore)
-                    )}
-                    style={{
-                      boxShadow: `0 0 8px hsl(${getSeverityHsl(riskScore, 'risk')} / 0.5)`
-                    }}
+                    className="h-full rounded-full bg-muted-foreground/40"
                   />
                 </div>
               </motion.div>
@@ -382,10 +295,10 @@ export function DecisionQuestionHeader({
         {timing && showScores && (
           <div className="md:hidden flex justify-center mt-3">
             <Badge 
-              variant={timing.variant} 
-              className={cn("text-sm px-3 py-1.5", timing.bgClass)}
+              variant="outline" 
+              className="text-sm px-3 py-1.5 font-medium"
             >
-              <timing.icon className="h-4 w-4 mr-1.5" />
+              <timing.icon className={cn("h-4 w-4 mr-1.5", timing.iconClass)} />
               {timing.label}
             </Badge>
           </div>

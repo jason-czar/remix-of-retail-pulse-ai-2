@@ -168,24 +168,18 @@ export function LensReadinessCard({
           duration: 0.4,
           ease: "easeOut"
         }} className="relative overflow-hidden rounded-2xl p-5 pb-6
-                  bg-gradient-to-br from-warning/[0.08] via-warning/[0.04] to-transparent
-                  dark:from-warning/[0.12] dark:via-warning/[0.06] dark:to-transparent
-                  border border-warning/20 dark:border-warning/25
-                  shadow-[0_4px_24px_-4px_hsl(var(--warning)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
-                  dark:shadow-[0_4px_24px_-4px_hsl(var(--warning)/0.25)]
+                  bg-card/60 dark:bg-card/40
+                  border border-border/50
                   backdrop-blur-xl">
-                {/* Subtle glow accent */}
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-warning/10 dark:bg-warning/15 rounded-full blur-3xl pointer-events-none" />
-                
                 {/* Icon positioned top-right */}
-                <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-warning/15 dark:bg-warning/20">
+                <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-muted">
                   <AlertTriangle className="h-4 w-4 text-warning" />
                 </div>
                 <div className="relative flex items-center justify-center mb-4">
                   <span className="text-base font-semibold tracking-tight">Key Concerns</span>
                 </div>
                 <ul className="relative space-y-3 px-3">
-                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[15px] text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[9px] before:w-2 before:h-2 before:bg-warning/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--warning)/0.5)]">
+                  {overlay.dominant_concerns.slice(0, 3).map((concern, idx) => <li key={idx} className="text-[15px] text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[9px] before:w-2 before:h-2 before:bg-warning/70 before:rounded-full">
                       {cleanNarrativeText(concern)}
                     </li>)}
                 </ul>
@@ -203,24 +197,18 @@ export function LensReadinessCard({
           ease: "easeOut",
           delay: 0.1
         }} className="relative overflow-hidden rounded-2xl p-5 pb-6
-                  bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent
-                  dark:from-primary/[0.12] dark:via-primary/[0.06] dark:to-transparent
-                  border border-primary/20 dark:border-primary/25
-                  shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
-                  dark:shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.25)]
+                  bg-card/60 dark:bg-card/40
+                  border border-border/50
                   backdrop-blur-xl">
-                {/* Subtle glow accent */}
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 dark:bg-primary/15 rounded-full blur-3xl pointer-events-none" />
-                
                 {/* Icon positioned top-right */}
-                <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-primary/15 dark:bg-primary/20">
+                <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-muted">
                   <CheckCircle2 className="h-4 w-4 text-primary" />
                 </div>
                 <div className="relative flex items-center justify-center mb-4">
                   <span className="text-base font-semibold tracking-tight">Recommended Actions</span>
                 </div>
                 <ul className="relative space-y-3 px-3">
-                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[15px] text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[9px] before:w-2 before:h-2 before:bg-primary/70 before:rounded-full before:shadow-[0_0_6px_hsl(var(--primary)/0.5)]">
+                  {overlay.recommended_actions.slice(0, 3).map((action, idx) => <li key={idx} className="text-[15px] text-foreground/80 dark:text-foreground/75 pl-5 relative before:absolute before:left-0 before:top-[9px] before:w-2 before:h-2 before:bg-primary/70 before:rounded-full">
                       {cleanNarrativeText(action)}
                     </li>)}
                 </ul>
@@ -242,24 +230,18 @@ export function LensReadinessCard({
         ease: "easeOut",
         delay: 0.15
       }} className="relative overflow-hidden rounded-2xl p-5 pb-6
-                bg-gradient-to-br from-bearish/[0.08] via-bearish/[0.04] to-transparent
-                dark:from-bearish/[0.12] dark:via-bearish/[0.06] dark:to-transparent
-                border border-bearish/20 dark:border-bearish/25
-                shadow-[0_4px_24px_-4px_hsl(var(--bearish)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
-                dark:shadow-[0_4px_24px_-4px_hsl(var(--bearish)/0.25)]
+                bg-card/60 dark:bg-card/40
+                border border-border/50
                 backdrop-blur-xl">
-              {/* Subtle glow accent */}
-              <div className="absolute -top-12 -right-12 w-32 h-32 bg-bearish/10 dark:bg-bearish/15 rounded-full blur-3xl pointer-events-none" />
-              
               {/* Icon positioned top-right */}
-              <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-bearish/15 dark:bg-bearish/20">
+              <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-muted">
                 <TrendingDown className="h-4 w-4 text-bearish" />
               </div>
               <div className="relative flex items-center justify-center mb-4">
                 <span className="text-base font-semibold tracking-tight">Blocking</span>
               </div>
               <div className="relative flex flex-wrap justify-center gap-2">
-                {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-bearish/40 text-bearish bg-bearish/10 px-2.5 py-1 rounded-lg">
+                {readiness.blocking_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-border text-bearish px-2.5 py-1 rounded-lg">
                     {cleanNarrativeText(narrative)}
                   </Badge>)}
               </div>
@@ -277,24 +259,18 @@ export function LensReadinessCard({
         ease: "easeOut",
         delay: 0.2
       }} className="relative overflow-hidden rounded-2xl p-5 pb-6
-                bg-gradient-to-br from-bullish/[0.08] via-bullish/[0.04] to-transparent
-                dark:from-bullish/[0.12] dark:via-bullish/[0.06] dark:to-transparent
-                border border-bullish/20 dark:border-bullish/25
-                shadow-[0_4px_24px_-4px_hsl(var(--bullish)/0.15),inset_0_1px_0_hsl(0_0%_100%/0.08)]
-                dark:shadow-[0_4px_24px_-4px_hsl(var(--bullish)/0.25)]
+                bg-card/60 dark:bg-card/40
+                border border-border/50
                 backdrop-blur-xl">
-              {/* Subtle glow accent */}
-              <div className="absolute -top-12 -right-12 w-32 h-32 bg-bullish/10 dark:bg-bullish/15 rounded-full blur-3xl pointer-events-none" />
-              
               {/* Icon positioned top-right */}
-              <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-bullish/15 dark:bg-bullish/20">
+              <div className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-xl bg-muted">
                 <TrendingUp className="h-4 w-4 text-bullish" />
               </div>
               <div className="relative flex items-center justify-center mb-4">
                 <span className="text-base font-semibold tracking-tight">Supportive</span>
               </div>
               <div className="relative flex flex-wrap justify-center gap-2">
-                {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-bullish/40 text-bullish bg-bullish/10 px-2.5 py-1 rounded-lg">
+                {readiness.supportive_narratives.slice(0, 3).map((narrative, idx) => <Badge key={idx} variant="outline" className="text-xs border-border text-bullish px-2.5 py-1 rounded-lg">
                     {cleanNarrativeText(narrative)}
                   </Badge>)}
               </div>
