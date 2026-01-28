@@ -174,7 +174,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           className={cn(
             "relative inline-flex items-center gap-1.5 rounded-2xl py-2.5 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
             // Liquid Glass styling - subtle and seamless
-            "bg-white/80 dark:bg-[hsl(0_0%_15%/0.45)]",
+            "bg-white/60 dark:bg-[hsl(0_0%_15%/0.45)]",
             "backdrop-blur-[20px] backdrop-saturate-[140%]",
             "border border-black/[0.04] dark:border-white/[0.06]",
             // Minimal shadow
