@@ -6,23 +6,24 @@ import { Button } from "@/components/ui/button";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { useAskDeriveStreetStream } from "@/hooks/use-ask-derive-street";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-const STARTER_PROMPTS = [
-  "Why is {SYMBOL} consolidating here?",
-  "What could cause a breakout?",
-  "What risks are retail ignoring?",
-  "What changed today?",
-  "How do retail traders feel about earnings?",
-  "Is sentiment turning?",
-];
-
+const STARTER_PROMPTS = ["Why is {SYMBOL} consolidating here?", "What could cause a breakout?", "What risks are retail ignoring?", "What changed today?", "How do retail traders feel about earnings?", "Is sentiment turning?"];
 interface AskDeriveStreetBarProps {
   className?: string;
 }
-
-export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
-  const { symbol, isOpen, openPanel, closePanel, panelWidth, isStreaming } = useAskDeriveStreet();
-  const { sendMessage } = useAskDeriveStreetStream();
+export function AskDeriveStreetBar({
+  className
+}: AskDeriveStreetBarProps) {
+  const {
+    symbol,
+    isOpen,
+    openPanel,
+    closePanel,
+    panelWidth,
+    isStreaming
+  } = useAskDeriveStreet();
+  const {
+    sendMessage
+  } = useAskDeriveStreetStream();
   const [input, setInput] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
@@ -32,22 +33,18 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   // Rotate placeholder prompts
   useEffect(() => {
     if (isFocused || input) return; // Don't rotate when focused or has input
-    
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % STARTER_PROMPTS.length);
-    }, 4000);
 
+    const interval = setInterval(() => {
+      setPlaceholderIndex(prev => (prev + 1) % STARTER_PROMPTS.length);
+    }, 4000);
     return () => clearInterval(interval);
   }, [isFocused, input]);
-
   const currentPlaceholder = STARTER_PROMPTS[placeholderIndex].replace("{SYMBOL}", symbol.toUpperCase());
-
   const handleSubmit = () => {
     if (!input.trim() || isStreaming) return;
     sendMessage(input.trim());
     setInput("");
   };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -64,113 +61,55 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
   }, [input]);
 
   // Edge tab component (like MessagesSidebar)
-  const EdgeTab = () => (
-    <button
-      onClick={() => isOpen ? closePanel() : openPanel()}
-      style={isOpen ? { right: `${panelWidth + 12}px` } : undefined}
-      className={cn(
-        "fixed right-0 z-50",
-        // Position well below messages tab to avoid overlap
-        "top-[calc(50%+120px)] -translate-y-1/2",
-        "h-24 w-6 flex items-center justify-center",
-        // Blue appearance
-        "bg-primary/90 hover:bg-primary",
-        "backdrop-blur-lg",
-        "border border-r-0 border-primary/20",
-        "rounded-l-lg",
-        "shadow-[0_4px_12px_rgba(0,113,227,0.3)]",
-        "hover:shadow-[0_4px_16px_rgba(0,113,227,0.4)]",
-        "transition-all duration-200",
-        "hidden md:flex" // Hide on mobile, show on desktop
-      )}
-    >
-      {isOpen ? (
-        <ChevronRight className="h-4 w-4 text-white" />
-      ) : (
-        <div className="flex flex-col items-center gap-1">
+  const EdgeTab = () => <button onClick={() => isOpen ? closePanel() : openPanel()} style={isOpen ? {
+    right: `${panelWidth + 12}px`
+  } : undefined} className={cn("fixed right-0 z-50",
+  // Position well below messages tab to avoid overlap
+  "top-[calc(50%+120px)] -translate-y-1/2", "h-24 w-6 flex items-center justify-center",
+  // Blue appearance
+  "bg-primary/90 hover:bg-primary", "backdrop-blur-lg", "border border-r-0 border-primary/20", "rounded-l-lg", "shadow-[0_4px_12px_rgba(0,113,227,0.3)]", "hover:shadow-[0_4px_16px_rgba(0,113,227,0.4)]", "transition-all duration-200", "hidden md:flex" // Hide on mobile, show on desktop
+  )}>
+      {isOpen ? <ChevronRight className="h-4 w-4 text-white" /> : <div className="flex flex-col items-center gap-1">
           <Sparkles className="h-3.5 w-3.5 text-white" />
           <ChevronLeft className="h-3 w-3 text-white" />
-        </div>
-      )}
-    </button>
-  );
+        </div>}
+    </button>;
 
   // When panel is open, only show the edge tab
   if (isOpen) {
     return <EdgeTab />;
   }
-
-  return (
-    <>
+  return <>
       {/* Edge tab toggle */}
       <EdgeTab />
       
       {/* Input bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className={cn(
-          "fixed z-40",
-          // Position: right-aligned
-          isMobile 
-            ? "bottom-20 left-4 right-4" 
-            : "bottom-6 right-6 w-full max-w-xl flex flex-col items-center",
-          className
-        )}
-      >
+      <motion.div initial={{
+      opacity: 0,
+      y: 20
+    }} animate={{
+      opacity: 1,
+      y: 0
+    }} exit={{
+      opacity: 0,
+      y: 20
+    }} transition={{
+      duration: 0.3,
+      ease: [0.16, 1, 0.3, 1]
+    }} className={cn("fixed z-40",
+    // Position: right-aligned
+    isMobile ? "bottom-20 left-4 right-4" : "bottom-6 right-6 w-full max-w-xl flex flex-col items-center", className)}>
         {/* Starter prompt chips - hidden for now */}
-        <div
-          className={cn(
-            "relative flex items-center gap-2 px-3 py-1.5 w-full",
-            // Liquid Glass styling - very transparent
-            "rounded-xl",
-            "bg-white/45 dark:bg-[hsl(0_0%_12%/0.26)]",
-            "backdrop-blur-[28px] backdrop-saturate-[160%]",
-            "border border-black/[0.05] dark:border-white/[0.06]",
-            "shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)]",
-            "dark:shadow-[0_4px_16px_rgba(0,0,0,0.2),0_1px_4px_rgba(0,0,0,0.1)]",
-            // Focus ring
-            isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
-          )}
-        >
+        <div className={cn("relative flex items-center gap-2 py-1.5 w-full rounded-xl bg-white/45 dark:bg-[hsl(0_0%_12%/0.26)] backdrop-blur-[28px] backdrop-saturate-[160%] border border-black/[0.05] dark:border-white/[0.06] shadow-[0_4px_16px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.2),0_1px_4px_rgba(0,0,0,0.1)] px-[13px] pr-[13px] pl-[21px] pt-[10px]",
+      // Focus ring
+      isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background")}>
           {/* Input area */}
           <div className="flex-1 relative">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              placeholder={currentPlaceholder}
-              rows={1}
-              className={cn(
-                "w-full resize-none bg-transparent",
-                "text-sm leading-relaxed",
-                "placeholder:text-muted-foreground/60",
-                "focus:outline-none",
-                "min-h-[28px] max-h-[96px] py-1"
-              )}
-              disabled={isStreaming}
-            />
+            <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder={currentPlaceholder} rows={1} className={cn("w-full resize-none bg-transparent", "text-sm leading-relaxed", "placeholder:text-muted-foreground/60", "focus:outline-none", "min-h-[28px] max-h-[96px] py-1")} disabled={isStreaming} />
           </div>
 
           {/* Send button */}
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={handleSubmit}
-            disabled={!input.trim() || isStreaming}
-            className={cn(
-              "h-7 w-7 shrink-0 rounded-full",
-              "bg-primary/10 hover:bg-primary/20",
-              "text-primary",
-              "disabled:opacity-40 disabled:cursor-not-allowed",
-              "transition-all duration-200"
-            )}
-          >
+          <Button size="icon" variant="ghost" onClick={handleSubmit} disabled={!input.trim() || isStreaming} className={cn("h-7 w-7 shrink-0 rounded-full", "bg-primary/10 hover:bg-primary/20", "text-primary", "disabled:opacity-40 disabled:cursor-not-allowed", "transition-all duration-200")}>
             <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -180,6 +119,5 @@ export function AskDeriveStreetBar({ className }: AskDeriveStreetBarProps) {
           Ask about {symbol} • Grounded in DeriveStreet intelligence
         </p>
       </motion.div>
-    </>
-  );
+    </>;
 }
