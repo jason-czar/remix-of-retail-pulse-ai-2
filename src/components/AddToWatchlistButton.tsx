@@ -65,12 +65,12 @@ export function AddToWatchlistButton({
   if (variant === "icon") {
     return (
       <Button
-        variant="ghost"
+        variant="glass-pill"
         size="icon"
         onClick={handleToggle}
         disabled={isLoading}
         className={cn(
-          "transition-colors",
+          "h-10 w-10 rounded-full transition-colors",
           isInWatchlist && "text-chart-5",
           className
         )}

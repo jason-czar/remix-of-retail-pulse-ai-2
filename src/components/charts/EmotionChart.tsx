@@ -775,7 +775,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
 
           {/* Collapsible content - contains all header details and controls */}
           <CollapsibleContent>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4 pb-3 border-b border-border/30">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 md:mb-4 p-3 rounded-xl bg-white/60 dark:bg-[hsl(0_0%_15%/0.55)] backdrop-blur-[20px] backdrop-saturate-[140%] border border-black/[0.08] dark:border-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
               <div className="flex items-center gap-2 md:gap-3 flex-1">
                 <div className="p-1.5 md:p-2 rounded-lg bg-primary/10 shrink-0">
                   <Brain className="h-4 w-4 md:h-5 md:w-5 text-primary" />
@@ -784,7 +784,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="font-semibold text-sm md:text-base">Market Psychology</h4>
                     {historyData?.data && historyData.data.length > 0 && (
-                      <span className="px-1.5 md:px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px] md:text-xs">
+                      <span className="px-1.5 md:px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/[0.08] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08] text-muted-foreground text-[10px] md:text-xs">
                         {historyData.data.length} snapshots
                       </span>
                     )}
@@ -801,7 +801,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                 )}
                 
                 {showPriceToggle && (
-                  <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 md:gap-2 px-2.5 py-1.5 rounded-full bg-white/50 dark:bg-white/[0.06] backdrop-blur-sm border border-black/[0.06] dark:border-white/[0.08] shrink-0">
                     <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: showPriceOverlay ? priceLineColor : 'hsl(var(--muted-foreground))' }} />
                     <Switch
                       checked={showPriceOverlay}
@@ -813,7 +813,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
                 )}
                 
                 <Button 
-                  variant="ghost" 
+                  variant="glass-pill" 
                   size="sm" 
                   onClick={() => refetch()}
                   disabled={isFetching}
