@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Check, X, Users, Briefcase, Crown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const tiers = [
   {
@@ -16,7 +17,6 @@ const tiers = [
       "Customer owns interpretation",
     ],
     buyer: "Analyst, Manager, or Ops / Investor Relations",
-    accent: "from-blue-500/20 to-cyan-500/20",
     iconBg: "bg-blue-500/10",
     iconColor: "text-blue-500",
   },
@@ -33,7 +33,6 @@ const tiers = [
       "You own interpretation",
     ],
     buyer: "Director, VP, Head of Strategy / Comms / IR",
-    accent: "from-primary/20 to-violet-500/20",
     iconBg: "bg-primary/10",
     iconColor: "text-primary",
     popular: true,
@@ -52,7 +51,6 @@ const tiers = [
       "Executive-level accountability",
     ],
     buyer: "C-suite (CEO, CFO, CCO) or Board",
-    accent: "from-amber-500/20 to-orange-500/20",
     iconBg: "bg-amber-500/10",
     iconColor: "text-amber-500",
   },
@@ -81,6 +79,32 @@ const comparisonFeatures = [
     { name: "Executive-level accountability", platform: false, managed: false, executive: true },
   ]},
 ];
+
+const glassCardClasses = cn(
+  "rounded-2xl p-6 md:p-8",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]",
+  "transition-all duration-300",
+  "hover:shadow-[0_12px_48px_rgba(0,0,0,0.08)]",
+  "hover:-translate-y-1"
+);
+
+const glassTableClasses = cn(
+  "rounded-2xl overflow-hidden",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassCTAClasses = cn(
+  "rounded-2xl p-8",
+  "bg-white/45 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-primary/20 dark:border-primary/15"
+);
 
 function FeatureCheck({ included }: { included: boolean }) {
   return included ? (
@@ -112,15 +136,11 @@ export default function PricingPage() {
           {tiers.map((tier) => (
             <div
               key={tier.name}
-              className={`relative group rounded-2xl p-6 md:p-8 transition-all duration-300
-                bg-white/92 dark:bg-[hsl(0_0%_20%/0.65)]
-                backdrop-blur-xl
-                border border-black/[0.08] dark:border-white/[0.15]
-                shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]
-                hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_12px_48px_rgba(0,0,0,0.4)]
-                hover:-translate-y-1
-                ${tier.popular ? "ring-2 ring-primary/50 dark:ring-primary/40" : ""}
-              `}
+              className={cn(
+                glassCardClasses,
+                "relative group",
+                tier.popular && "ring-2 ring-primary/50 dark:ring-primary/40"
+              )}
             >
               {/* Popular Badge */}
               {tier.popular && (
@@ -132,8 +152,8 @@ export default function PricingPage() {
               )}
 
               {/* Icon */}
-              <div className={`inline-flex p-3 rounded-xl ${tier.iconBg} mb-4`}>
-                <tier.icon className={`h-6 w-6 ${tier.iconColor}`} />
+              <div className={cn("inline-flex p-3 rounded-xl mb-4", tier.iconBg)}>
+                <tier.icon className={cn("h-6 w-6", tier.iconColor)} />
               </div>
 
               {/* Tier Name */}
@@ -159,7 +179,7 @@ export default function PricingPage() {
               </ul>
 
               {/* Buyer Section */}
-              <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.08]">
+              <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.06]">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">
                   Ideal Buyer
                 </p>
@@ -175,14 +195,9 @@ export default function PricingPage() {
             Feature <span className="text-gradient">Comparison</span>
           </h2>
           
-          <div className="rounded-2xl overflow-hidden
-            bg-white/92 dark:bg-[hsl(0_0%_20%/0.65)]
-            backdrop-blur-xl
-            border border-black/[0.08] dark:border-white/[0.15]
-            shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]
-          ">
+          <div className={glassTableClasses}>
             {/* Table Header */}
-            <div className="grid grid-cols-4 gap-4 p-4 md:p-6 border-b border-black/[0.06] dark:border-white/[0.08] bg-black/[0.02] dark:bg-white/[0.02]">
+            <div className="grid grid-cols-4 gap-4 p-4 md:p-6 border-b border-black/[0.06] dark:border-white/[0.06] bg-white/30 dark:bg-white/[0.02]">
               <div className="font-medium text-muted-foreground">Features</div>
               <div className="text-center">
                 <div className="font-display font-semibold text-blue-500">Platform</div>
@@ -202,7 +217,7 @@ export default function PricingPage() {
             {comparisonFeatures.map((category, catIdx) => (
               <div key={category.category}>
                 {/* Category Header */}
-                <div className="px-4 md:px-6 py-3 bg-black/[0.03] dark:bg-white/[0.03] border-b border-black/[0.04] dark:border-white/[0.04]">
+                <div className="px-4 md:px-6 py-3 bg-white/20 dark:bg-white/[0.02] border-b border-black/[0.04] dark:border-white/[0.04]">
                   <span className="text-sm font-medium">{category.category}</span>
                 </div>
                 
@@ -210,11 +225,11 @@ export default function PricingPage() {
                 {category.features.map((feature, idx) => (
                   <div 
                     key={feature.name}
-                    className={`grid grid-cols-4 gap-4 px-4 md:px-6 py-3 ${
-                      idx !== category.features.length - 1 || catIdx !== comparisonFeatures.length - 1
-                        ? "border-b border-black/[0.04] dark:border-white/[0.04]"
-                        : ""
-                    }`}
+                    className={cn(
+                      "grid grid-cols-4 gap-4 px-4 md:px-6 py-3",
+                      (idx !== category.features.length - 1 || catIdx !== comparisonFeatures.length - 1) &&
+                        "border-b border-black/[0.04] dark:border-white/[0.04]"
+                    )}
                   >
                     <div className="text-sm text-muted-foreground">{feature.name}</div>
                     <div><FeatureCheck included={feature.platform} /></div>
@@ -229,7 +244,7 @@ export default function PricingPage() {
 
         {/* CTA Section */}
         <div className="text-center mt-16 max-w-2xl mx-auto">
-          <div className="rounded-2xl p-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
+          <div className={glassCTAClasses}>
             <h2 className="text-xl md:text-2xl font-display mb-3">
               Ready to see intelligence in action?
             </h2>
