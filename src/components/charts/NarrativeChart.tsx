@@ -1930,7 +1930,7 @@ function HourlyStackedNarrativeChart({
       {/*  <div className="h-[380px] md:h-[520px] -mx-4 px-0 md:mx-0 md:px-0">   */}
       <div className="w-full overflow-x-clip">
         <div className="
-      h-[380px] md:h-[520px]
+      min-h-[320px] h-auto
 w-[120vw]
 -ml-[8vw] -mr-[12vw]
       md:w-full md:mx-0
@@ -1986,7 +1986,7 @@ w-[120vw]
           </Collapsible>
 
           {/* Main content: Side Panel + Chart */}
-          <div className="flex md:gap-4 h-[calc(92%-55px)]">
+          <div className="flex md:gap-4 h-[320px] md:h-[420px]">
             {/* Left Side Panel - Only on desktop */}
             {!isMobileDevice && <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} />}
 
