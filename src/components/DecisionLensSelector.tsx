@@ -195,10 +195,10 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             y: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
             scale: { duration: 0.5, delay: 0.3, ease: [0.25, 0.4, 0.25, 1] },
             boxShadow: { 
-              duration: 2.8, 
+              duration: 4.5, 
               delay: 0.9,
-              times: [0, 0.15, 0.4, 0.6, 0.85, 1],
-              ease: [0.25, 0.1, 0.25, 1]
+              times: [0, 0.12, 0.35, 0.65, 0.88, 1],
+              ease: [0.16, 0.1, 0.16, 1]
             }
           }}
           className={cn(
