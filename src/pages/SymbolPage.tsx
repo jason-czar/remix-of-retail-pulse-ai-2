@@ -253,7 +253,7 @@ function SymbolPageContent() {
         </div>
 
         {/* Decision Lens Selector - Sticky below header */}
-        <div className="sticky top-14 z-30 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-3 md:mb-5 py-0" data-tour="decision-lens">
+        <div className="sticky top-14 z-30 -mx-4 px-4 overflow-x-auto scrollbar-hide md:mx-0 md:px-0 md:overflow-visible mb-4 md:mb-6 py-0" data-tour="decision-lens">
           <DecisionLensSelector value={decisionLens} onChange={handleLensChange} />
         </div>
 
@@ -274,25 +274,25 @@ function SymbolPageContent() {
         }}>
               <Tabs value={activeTab} className="mb-6 md:mb-8 overflow-visible " onValueChange={setActiveTab} data-tour="chart-tabs">
                 {/* Chart content first */}
-                <TabsContent value="narratives" className="mt-0 mb-3 md:mb-4">
+                <TabsContent value="narratives" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
                     <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
                   </div>
                 </TabsContent>
 
-                <TabsContent value="emotions" className="mt-0 mb-3 md:mb-4">
+                <TabsContent value="emotions" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
                     <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
                   </div>
                 </TabsContent>
 
-                <TabsContent value="sentiment" className="mt-0 mb-3 md:mb-4">
+                <TabsContent value="sentiment" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
                     <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
                   </div>
                 </TabsContent>
 
-                <TabsContent value="momentum" className="mt-0 mb-3 md:mb-4">
+                <TabsContent value="momentum" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
                     <EmotionMomentumChart symbol={symbol} days={7} />
                   </div>
@@ -300,7 +300,7 @@ function SymbolPageContent() {
 
                 {/* Selectors below charts */}
                 {/* Mobile: TimeRangeSelector above tabs */}
-                {activeTab !== 'momentum' && <div className="flex justify-center mb-3 md:hidden">
+                {activeTab !== 'momentum' && <div className="flex justify-center mb-1.5 md:hidden">
                     <TimeRangeSelector value={timeRange} onChange={setTimeRange} />
                   </div>}
 
