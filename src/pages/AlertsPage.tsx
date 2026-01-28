@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -12,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Bell,
   BellOff,
@@ -39,8 +37,34 @@ import {
 } from "@/lib/alert-types";
 import { CreateAlertDialog } from "@/components/alerts/CreateAlertDialog";
 import { format, formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 type AlertFilter = "all" | "active" | "paused" | "emotion" | "sentiment";
+
+const ALERT_FILTERS: readonly AlertFilter[] = ['all', 'active', 'paused', 'emotion', 'sentiment'];
+const FILTER_LABELS: Record<AlertFilter, string> = {
+  all: 'All',
+  active: 'Active',
+  paused: 'Paused',
+  emotion: 'Emotion',
+  sentiment: 'Sentiment'
+};
+
+// Shared Liquid Glass styles
+const glassCardClasses = cn(
+  "rounded-2xl",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]",
+  "dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
+);
+
+const glassTileClasses = cn(
+  "rounded-xl p-4",
+  "bg-[#F3F3F7] dark:bg-white/[0.04]",
+  "border border-black/[0.04] dark:border-white/[0.04]"
+);
 
 function AlertTableRow({ alert }: { alert: Alert }) {
   const toggleAlert = useToggleAlert();
@@ -68,7 +92,7 @@ function AlertTableRow({ alert }: { alert: Alert }) {
   };
 
   return (
-    <TableRow className="group glass-list-item">
+    <TableRow className="group border-b border-black/[0.04] dark:border-white/[0.04] hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors">
       <TableCell>
         <div className="flex items-center gap-3">
           <div
@@ -146,7 +170,7 @@ function AlertTableRow({ alert }: { alert: Alert }) {
             size="icon"
             onClick={handleDelete}
             disabled={deleteAlert.isPending}
-            className="text-muted-foreground hover:text-destructive"
+            className="text-muted-foreground hover:text-destructive hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
           >
             {deleteAlert.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -201,7 +225,16 @@ export default function AlertsPage() {
 
           <div className="flex items-center gap-3">
             <Link to="/settings">
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className={cn(
+                  "gap-2",
+                  "bg-white/50 dark:bg-white/[0.06]",
+                  "border-black/[0.08] dark:border-white/[0.08]",
+                  "hover:bg-black/[0.04] dark:hover:bg-white/[0.08]"
+                )}
+              >
                 <Settings className="h-4 w-4" />
                 Settings
               </Button>
@@ -212,7 +245,7 @@ export default function AlertsPage() {
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="p-4 glass-card">
+          <div className={glassTileClasses}>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/20">
                 <Bell className="h-5 w-5 text-primary" />
@@ -222,8 +255,8 @@ export default function AlertsPage() {
                 <p className="text-sm text-muted-foreground">Total Alerts</p>
               </div>
             </div>
-          </Card>
-          <Card className="p-4 glass-card">
+          </div>
+          <div className={glassTileClasses}>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-bullish/20">
                 <Zap className="h-5 w-5 text-bullish" />
@@ -233,8 +266,8 @@ export default function AlertsPage() {
                 <p className="text-sm text-muted-foreground">Active</p>
               </div>
             </div>
-          </Card>
-          <Card className="p-4 glass-card">
+          </div>
+          <div className={glassTileClasses}>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-accent/20">
                 <Zap className="h-5 w-5 text-accent" />
@@ -244,8 +277,8 @@ export default function AlertsPage() {
                 <p className="text-sm text-muted-foreground">Emotion Signals</p>
               </div>
             </div>
-          </Card>
-          <Card className="p-4 glass-card">
+          </div>
+          <div className={glassTileClasses}>
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-muted">
                 <BellOff className="h-5 w-5 text-muted-foreground" />
@@ -257,25 +290,44 @@ export default function AlertsPage() {
                 <p className="text-sm text-muted-foreground">Paused</p>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters - Liquid Glass Style */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
-          <Tabs
-            value={filter}
-            onValueChange={(v) => setFilter(v as AlertFilter)}
-          >
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="paused">Paused</TabsTrigger>
-              <TabsTrigger value="emotion" className="text-accent data-[state=active]:text-accent">
-                Emotion
-              </TabsTrigger>
-              <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className={cn(
+            "relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
+            "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]",
+            "backdrop-blur-[20px] backdrop-saturate-[140%]",
+            "border border-black/[0.04] dark:border-white/[0.06]",
+            "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
+            "dark:shadow-none"
+          )}>
+            {ALERT_FILTERS.map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0",
+                  f === filter
+                    ? [
+                        "bg-white text-foreground",
+                        "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                        "border border-black/[0.06]",
+                        "dark:bg-white/[0.12] dark:text-foreground",
+                        "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                        "dark:border-white/[0.12]"
+                      ]
+                    : [
+                        "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
+                        f === 'emotion' && "text-accent hover:text-accent"
+                      ]
+                )}
+              >
+                {FILTER_LABELS[f]}
+              </button>
+            ))}
+          </div>
 
           <div className="text-sm text-muted-foreground ml-auto">
             Showing {filteredAlerts.length} alert
@@ -283,11 +335,11 @@ export default function AlertsPage() {
           </div>
         </div>
 
-        {/* Table */}
-        <Card>
+        {/* Table - Liquid Glass Card */}
+        <div className={cn(glassCardClasses, "overflow-hidden")}>
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="border-b border-black/[0.06] dark:border-white/[0.06] hover:bg-transparent">
                 <TableHead>Symbol</TableHead>
                 <TableHead>Alert Type</TableHead>
                 <TableHead>Status</TableHead>
@@ -299,7 +351,7 @@ export default function AlertsPage() {
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
+                  <TableRow key={i} className="border-b border-black/[0.04] dark:border-white/[0.04]">
                     <TableCell>
                       <Skeleton className="h-10 w-24" />
                     </TableCell>
@@ -370,10 +422,10 @@ export default function AlertsPage() {
               )}
             </TableBody>
           </Table>
-        </Card>
+        </div>
 
-        {/* Quick Tips */}
-        <Card className="mt-8 p-6 glass-card">
+        {/* Quick Tips - Liquid Glass Card */}
+        <div className={cn(glassCardClasses, "mt-8 p-6")}>
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Zap className="h-5 w-5 text-accent" />
             Alert Types
@@ -412,7 +464,7 @@ export default function AlertsPage() {
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       </div>
     </>
   );
