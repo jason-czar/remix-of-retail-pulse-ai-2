@@ -112,6 +112,18 @@ function SymbolPageContent() {
   const [activeCustomLens, setActiveCustomLens] = useState<CustomLens | null>(null);
   const queryClient = useQueryClient();
 
+  // Sync decision lens state when URL query param changes externally
+  useEffect(() => {
+    const urlLens = searchParams.get('lens') || 'summary';
+    if (urlLens !== decisionLens) {
+      setDecisionLens(urlLens);
+      // Reset custom lens when switching via URL (custom lenses need full context)
+      if (!urlLens.startsWith('custom-')) {
+        setActiveCustomLens(null);
+      }
+    }
+  }, [searchParams]);
+
   // Calculate date range based on selection (timezone-aware)
   const {
     start,
