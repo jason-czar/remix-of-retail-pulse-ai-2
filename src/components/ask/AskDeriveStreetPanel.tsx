@@ -271,13 +271,18 @@ export function AskDeriveStreetPanel() {
     <AnimatePresence>
       {isOpen && (
         <motion.aside
-          initial={{ x: "100%" }}
-          animate={{ x: 0, width: totalWidth }}
-          exit={{ x: "100%" }}
+          initial={{ x: "100%", opacity: 0.8 }}
+          animate={{ x: 0, width: totalWidth, opacity: 1 }}
+          exit={{ x: "100%", opacity: 0.8 }}
           transition={
             isResizing
               ? { duration: 0 }
-              : { type: "spring", damping: 25, stiffness: 200 }
+              : { 
+                  type: "spring", 
+                  damping: 18, 
+                  stiffness: 280,
+                  mass: 0.8
+                }
           }
           className={cn(
             "fixed right-3 top-3 bottom-3 z-40",
