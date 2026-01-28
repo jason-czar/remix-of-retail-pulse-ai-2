@@ -45,27 +45,18 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
         isUser ? "flex-row-reverse" : "flex-row"
       )}
     >
-      {/* Avatar */}
-      <div
-        className={cn(
-          "flex items-center justify-center w-7 h-7 rounded-full shrink-0",
-          isUser
-            ? "bg-primary/20 text-primary"
-            : "bg-gradient-to-br from-primary/30 to-primary/10 text-primary"
-        )}
-      >
-        {isUser ? (
+      {/* Avatar - only for user messages */}
+      {isUser && (
+        <div className="flex items-center justify-center w-7 h-7 rounded-full shrink-0 bg-primary/20 text-primary">
           <User className="h-3.5 w-3.5" />
-        ) : (
-          <Sparkles className="h-3.5 w-3.5" />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Message content */}
       <div
         className={cn(
-          "flex-1 max-w-[85%] space-y-1",
-          isUser ? "items-end" : "items-start"
+          "flex-1 space-y-1",
+          isUser ? "max-w-[85%] items-end" : "items-start"
         )}
       >
         <div
@@ -78,9 +69,9 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
                   "rounded-tr-md",
                 ]
               : [
-                  "bg-black/[0.03] dark:bg-white/[0.06]",
+                  "bg-transparent",
                   "text-foreground",
-                  "rounded-tl-md",
+                  "px-0",
                 ]
           )}
         >
