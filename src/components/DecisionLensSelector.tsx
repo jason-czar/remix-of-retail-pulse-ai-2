@@ -197,32 +197,45 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           // Calculate animation delay: sweep left-to-right, then right-to-left
           const totalItems = allLensOptions.length;
           const baseDelay = 0.8; // Start after container animation
-          const itemDuration = 0.06; // Time between each tab highlight
+          const itemDuration = 0.12; // Time between each tab highlight (slowed down)
           // Forward pass (left to right): index * itemDuration
-          // Backward pass (right to left): (totalItems - 1 - index) * itemDuration + totalItems * itemDuration
+          // Backward pass (right to left): start after forward completes
           const forwardDelay = baseDelay + index * itemDuration;
-          const backwardDelay = baseDelay + (totalItems * itemDuration) + (totalItems - 1 - index) * itemDuration;
+          const backwardDelay = baseDelay + (totalItems * itemDuration) + 0.15 + (totalItems - 1 - index) * itemDuration;
           
           return (
-            <div key={option.value} className="relative flex items-center shrink-0">
+            <motion.div 
+              key={option.value} 
+              className="relative flex items-center shrink-0"
+              initial={{ scale: 1 }}
+              animate={{
+                scale: [1, 1.08, 1, 1, 1.08, 1]
+              }}
+              transition={{
+                duration: 0.7,
+                times: [0, 0.2, 0.4, 0.5, 0.7, 0.9],
+                delay: forwardDelay,
+                ease: "easeOut"
+              }}
+            >
               {/* Blue glow overlay for wave animation */}
               <motion.div
                 className="absolute inset-0 rounded-full pointer-events-none"
                 initial={{ opacity: 0 }}
                 animate={{
-                  opacity: [0, 0.6, 0, 0, 0.6, 0],
+                  opacity: [0, 0.7, 0, 0, 0.7, 0],
                   boxShadow: [
                     "0 0 0 0 rgba(0, 113, 227, 0)",
-                    "0 0 12px 2px rgba(0, 113, 227, 0.5), inset 0 0 8px rgba(0, 113, 227, 0.3)",
+                    "0 0 16px 4px rgba(0, 113, 227, 0.6), inset 0 0 10px rgba(0, 113, 227, 0.35)",
                     "0 0 0 0 rgba(0, 113, 227, 0)",
                     "0 0 0 0 rgba(0, 113, 227, 0)",
-                    "0 0 12px 2px rgba(0, 113, 227, 0.5), inset 0 0 8px rgba(0, 113, 227, 0.3)",
+                    "0 0 16px 4px rgba(0, 113, 227, 0.6), inset 0 0 10px rgba(0, 113, 227, 0.35)",
                     "0 0 0 0 rgba(0, 113, 227, 0)"
                   ]
                 }}
                 transition={{
-                  duration: 0.5,
-                  times: [0, 0.15, 0.3, 0.5, 0.65, 0.8],
+                  duration: 0.7,
+                  times: [0, 0.2, 0.4, 0.5, 0.7, 0.9],
                   delay: forwardDelay,
                   ease: "easeOut"
                 }}
@@ -279,7 +292,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-            </div>
+            </motion.div>
           );
         })}
         
