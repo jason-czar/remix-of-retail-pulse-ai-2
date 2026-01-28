@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useMessagesSidebar } from "@/contexts/MessagesSidebarContext";
+import { useAskDeriveStreetSafe } from "@/contexts/AskDeriveStreetContext";
 
 const SIDEBAR_MIN_WIDTH = 240;
 const SIDEBAR_MAX_WIDTH = 480;
@@ -64,6 +65,7 @@ function CondensedMessageCard({ user, content, time, searchTerm }: Omit<Message,
 
 export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebarProps) {
   const { isOpen, setIsOpen, sidebarWidth, setSidebarWidth } = useMessagesSidebar();
+  const { isOpen: isAskPanelOpen } = useAskDeriveStreetSafe();
   const [searchTerm, setSearchTerm] = useState("");
   const [isResizing, setIsResizing] = useState(false);
   
@@ -134,32 +136,37 @@ export function MessagesSidebar({ symbol, messages, isLoading }: MessagesSidebar
   const displayCount = filteredMessages.length;
   const totalCount = messages.length;
 
+  // Hide edge tab when Ask panel is open
+  const showEdgeTab = !isAskPanelOpen;
+
   return (
     <>
-      {/* Toggle Button - Always visible on right edge */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "fixed right-0 top-1/2 -translate-y-1/2 z-50",
-          "h-24 w-6 flex items-center justify-center",
-          "bg-black/[0.03] dark:bg-white/[0.06] backdrop-blur-lg",
-          "border border-r-0 border-black/[0.08] dark:border-white/[0.1]",
-          "rounded-l-lg",
-          "hover:bg-black/[0.06] dark:hover:bg-white/[0.1]",
-          "transition-all duration-200",
-          "hidden md:flex" // Hide on mobile, show on desktop
-        )}
-        style={isOpen ? { right: `${sidebarWidth + 12}px` } : undefined}
-      >
-        {isOpen ? (
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        ) : (
-          <div className="flex flex-col items-center gap-1">
-            <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-            <ChevronLeft className="h-3 w-3 text-muted-foreground" />
-          </div>
-        )}
-      </button>
+      {/* Toggle Button - Always visible on right edge (hidden when Ask panel is open) */}
+      {showEdgeTab && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "fixed right-0 top-1/2 -translate-y-1/2 z-50",
+            "h-24 w-6 flex items-center justify-center",
+            "bg-black/[0.03] dark:bg-white/[0.06] backdrop-blur-lg",
+            "border border-r-0 border-black/[0.08] dark:border-white/[0.1]",
+            "rounded-l-lg",
+            "hover:bg-black/[0.06] dark:hover:bg-white/[0.1]",
+            "transition-all duration-200",
+            "hidden md:flex" // Hide on mobile, show on desktop
+          )}
+          style={isOpen ? { right: `${sidebarWidth + 12}px` } : undefined}
+        >
+          {isOpen ? (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <div className="flex flex-col items-center gap-1">
+              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+              <ChevronLeft className="h-3 w-3 text-muted-foreground" />
+            </div>
+          )}
+        </button>
+      )}
 
       {/* Sidebar Panel */}
       <AnimatePresence>
