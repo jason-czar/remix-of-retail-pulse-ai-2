@@ -158,10 +158,11 @@ function EmotionSidePanel({
     prevDataRef.current = data;
   }, [data, isMobile]);
   
-  // Base classes differ between mobile (condensed with margins) and desktop (fixed width)
+  // Professional monochromatic card styling matching LensReadinessCard
+  const baseClasses = "relative overflow-hidden rounded-2xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl";
   const containerClasses = isMobile 
-    ? "w-[calc(100%-10px)] mx-[5px] p-3 glass-card"
-    : "w-[280px] flex-shrink-0 p-5 glass-card";
+    ? `w-[calc(100%-10px)] mx-[5px] p-4 ${baseClasses}`
+    : `w-[280px] flex-shrink-0 p-5 ${baseClasses}`;
   
   // Animation classes for mobile panel updates
   const animationClasses = isMobile 
@@ -171,8 +172,8 @@ function EmotionSidePanel({
   if (!data) {
     return (
       <div className={cn(
-        isMobile ? "w-[calc(100%-10px)] mx-[5px] p-3" : "w-[280px] flex-shrink-0 p-5",
-        "glass-card flex items-center justify-center"
+        isMobile ? "w-[calc(100%-10px)] mx-[5px] p-4" : "w-[280px] flex-shrink-0 p-5",
+        baseClasses, "flex items-center justify-center"
       )}>
         <p className={cn(isMobile ? "text-sm" : "text-base", "text-muted-foreground text-center")}>
           No data available
@@ -185,18 +186,18 @@ function EmotionSidePanel({
   if (data.isEmpty) {
     return (
       <div key={animationKey} className={cn(containerClasses, animationClasses, isMobile && "animate-[pulse_0.3s_ease-out]")}>
-        <span className={cn("font-semibold text-card-foreground", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
+        <span className={cn("font-semibold text-foreground tracking-tight", isMobile ? "text-base" : "text-lg")}>{data.label}</span>
         <p className={cn("text-muted-foreground", isMobile ? "text-sm mt-1" : "text-base mt-2")}>
           No data available yet
         </p>
         {data.price != null && (
-          <div className={cn("flex items-center gap-2 border-t border-border/50 dark:border-white/10", isMobile ? "mt-2 pt-2" : "mt-3 pt-3")}>
+          <div className={cn("flex items-center gap-2 border-t border-border/30", isMobile ? "mt-2 pt-2" : "mt-3 pt-3")}>
             <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{ color: priceColor }} />
             <span className={cn("font-bold", isMobile ? "text-lg" : "text-xl")} style={{ color: priceColor }}>${data.price.toFixed(2)}</span>
           </div>
         )}
         {!isHovering && !isMobile && (
-          <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+          <div className="mt-4 pt-3 border-t border-border/30">
             <span className="text-sm text-muted-foreground italic">
               Showing latest • Hover chart to explore
             </span>
@@ -212,14 +213,13 @@ function EmotionSidePanel({
       className={cn(
         containerClasses,
         animationClasses,
-        !isHovering && !isMobile && "ring-1 ring-primary/20",
         isMobile && isHovering && "animate-[pulse_0.3s_ease-out]"
       )}
     >
       {/* Time Header */}
       <div className={cn("flex items-center justify-between", isMobile ? "mb-2" : "mb-3")}>
         <span className={cn(
-          "font-semibold text-card-foreground",
+          "font-semibold text-foreground tracking-tight",
           isMobile ? "text-base" : "text-lg",
           isMobile && "transition-opacity duration-150"
         )}>{data.label}</span>
@@ -234,8 +234,8 @@ function EmotionSidePanel({
       {/* Stock Price */}
       {data.price != null && (
         <div className={cn(
-          "flex items-center gap-2 border-b border-border/50 dark:border-white/10",
-          isMobile ? "mb-2 pb-2" : "mb-3 pb-3",
+          "flex items-center gap-2 border-b border-border/30",
+          isMobile ? "mb-3 pb-2" : "mb-4 pb-3",
           isMobile && "transition-all duration-150"
         )}>
           <DollarSign className={cn(isMobile ? "h-4 w-4" : "h-5 w-5")} style={{ color: priceColor }} />
@@ -247,22 +247,22 @@ function EmotionSidePanel({
       
       {/* Intensity Bar */}
       {data.intensityPercent > 0 && (
-        <div className={isMobile ? "mb-2" : "mb-3"}>
-          <div className={cn("flex items-center justify-between mb-1", isMobile ? "text-xs" : "text-sm")}>
+        <div className={isMobile ? "mb-3" : "mb-4"}>
+          <div className={cn("flex items-center justify-between mb-1.5", isMobile ? "text-xs" : "text-sm")}>
             <span className="text-muted-foreground">Relative Intensity</span>
             <span className={cn(
               "font-medium transition-colors duration-150",
-              data.intensityPercent >= 80 ? "text-amber-400" : 
+              data.intensityPercent >= 80 ? "text-warning" : 
               data.intensityPercent >= 50 ? "text-primary" : "text-muted-foreground"
             )}>
               {data.intensityPercent.toFixed(0)}%
             </span>
           </div>
-          <div className={cn("bg-muted/30 dark:bg-white/10 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
+          <div className={cn("bg-muted/20 dark:bg-white/5 rounded-full overflow-hidden", isMobile ? "h-1.5" : "h-2")}>
             <div 
               className={cn(
                 "h-full rounded-full transition-all duration-200",
-                data.intensityPercent >= 80 ? "bg-amber-400" : 
+                data.intensityPercent >= 80 ? "bg-warning" : 
                 data.intensityPercent >= 50 ? "bg-primary" : "bg-muted-foreground/50"
               )}
               style={{ width: `${Math.min(data.intensityPercent, 100)}%` }}
@@ -273,7 +273,7 @@ function EmotionSidePanel({
       
       {/* Emotion Breakdown */}
       {data.emotions.length > 0 && (
-        <div className={cn("border-t border-border/50 dark:border-white/10", isMobile ? "space-y-1.5 pt-2" : "space-y-2.5 pt-3")}>
+        <div className={cn("border-t border-border/30", isMobile ? "space-y-2 pt-3" : "space-y-3 pt-4")}>
           <div className={cn("text-muted-foreground", isMobile ? "text-xs mb-1" : "text-sm mb-2")}>Signal Emotions:</div>
           {data.emotions.map((emotion, idx) => (
             <div key={idx} className={cn(
@@ -285,8 +285,8 @@ function EmotionSidePanel({
                 className={cn("rounded-sm flex-shrink-0 transition-colors duration-150", isMobile ? "w-2.5 h-2.5" : "w-3.5 h-3.5")} 
                 style={{ backgroundColor: emotion.color }}
               />
-              <span className={cn("text-card-foreground flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>{emotion.name}</span>
-              <span className={cn("text-muted-foreground font-medium", isMobile ? "text-xs" : "text-sm")}>{emotion.score}</span>
+              <span className={cn("text-foreground/80 dark:text-foreground/75 flex-1 truncate", isMobile ? "text-xs" : "text-sm")}>{emotion.name}</span>
+              <span className={cn("text-muted-foreground font-medium tabular-nums", isMobile ? "text-xs" : "text-sm")}>{emotion.score}</span>
             </div>
           ))}
         </div>
@@ -294,7 +294,7 @@ function EmotionSidePanel({
       
       {/* Default indicator - only on desktop */}
       {!isHovering && !isMobile && (
-        <div className="mt-4 pt-3 border-t border-border/50 dark:border-white/10">
+        <div className="mt-4 pt-3 border-t border-border/30">
           <span className="text-sm text-muted-foreground italic">
             Showing latest • Hover chart to explore
           </span>
