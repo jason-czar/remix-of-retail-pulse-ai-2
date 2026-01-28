@@ -57,7 +57,7 @@ export const ConversationMessageComponent = memo(function ConversationMessageCom
             "rounded-2xl px-3.5 py-2.5",
             isUser
               ? [
-                  "bg-[#0F83FF]/20 dark:bg-[#0F83FF]/25",
+                  "bg-[#0F83FF]",
                   "text-foreground",
                   "rounded-tr-md",
                 ]
