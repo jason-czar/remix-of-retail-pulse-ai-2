@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,9 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { useTrending } from "@/hooks/use-stocktwits";
+import { cn } from "@/lib/utils";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -29,6 +28,14 @@ import {
 type SortField = "rank" | "sentiment" | "volume" | "change";
 type SortDirection = "asc" | "desc";
 type TrendFilter = "all" | "bullish" | "bearish" | "neutral";
+
+const TREND_FILTERS: readonly TrendFilter[] = ['all', 'bullish', 'bearish', 'neutral'];
+const FILTER_LABELS: Record<TrendFilter, string> = {
+  all: 'All',
+  bullish: 'Bullish',
+  bearish: 'Bearish',
+  neutral: 'Neutral'
+};
 
 export default function TrendingPage() {
   const { data: trending = [], isLoading, error } = useTrending();
@@ -114,36 +121,65 @@ export default function TrendingPage() {
           </Badge>
         </div>
 
-        {/* Filters */}
+        {/* Filters - Liquid Glass Style */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
-          <Tabs value={trendFilter} onValueChange={(v) => setTrendFilter(v as TrendFilter)}>
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="bullish" className="text-bullish data-[state=active]:text-bullish">
-                Bullish
-              </TabsTrigger>
-              <TabsTrigger value="bearish" className="text-bearish data-[state=active]:text-bearish">
-                Bearish
-              </TabsTrigger>
-              <TabsTrigger value="neutral">Neutral</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className={cn(
+            "relative inline-flex items-center justify-center gap-1.5 rounded-2xl py-2 px-3 overflow-x-auto scrollbar-hide",
+            "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]",
+            "backdrop-blur-[20px] backdrop-saturate-[140%]",
+            "border border-black/[0.04] dark:border-white/[0.06]",
+            "shadow-[0_1px_2px_rgba(0,0,0,0.02)]",
+            "dark:shadow-none"
+          )}>
+            {TREND_FILTERS.map(filter => (
+              <button
+                key={filter}
+                onClick={() => setTrendFilter(filter)}
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap px-4 py-1.5 text-sm font-medium rounded-full ring-offset-background transition-all duration-200 shrink-0",
+                  filter === trendFilter
+                    ? [
+                        "bg-white text-foreground",
+                        "shadow-[0_2px_8px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]",
+                        "border border-black/[0.06]",
+                        "dark:bg-white/[0.12] dark:text-foreground",
+                        "dark:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                        "dark:border-white/[0.12]"
+                      ]
+                    : [
+                        "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
+                        filter === 'bullish' && "text-bullish hover:text-bullish",
+                        filter === 'bearish' && "text-bearish hover:text-bearish"
+                      ]
+                )}
+              >
+                {FILTER_LABELS[filter]}
+              </button>
+            ))}
+          </div>
 
           <div className="text-sm text-muted-foreground ml-auto">
             Showing {visibleItems.length} of {filteredAndSorted.length} symbols
           </div>
         </div>
 
-        {/* Table */}
-        <Card>
+        {/* Table - Liquid Glass Card */}
+        <div className={cn(
+          "rounded-2xl overflow-hidden",
+          "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+          "backdrop-blur-[28px] backdrop-saturate-[140%]",
+          "border border-black/[0.08] dark:border-white/[0.06]",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]",
+          "dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
+        )}>
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="border-b border-black/[0.06] dark:border-white/[0.06] hover:bg-transparent">
                 <TableHead className="w-16">
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="gap-1 -ml-3"
+                    className="gap-1 -ml-3 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                     onClick={() => handleSort("rank")}
                   >
                     Rank
@@ -155,7 +191,7 @@ export default function TrendingPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="gap-1 -ml-3"
+                    className="gap-1 -ml-3 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                     onClick={() => handleSort("sentiment")}
                   >
                     Sentiment
@@ -167,7 +203,7 @@ export default function TrendingPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="gap-1 -ml-3"
+                    className="gap-1 -ml-3 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                     onClick={() => handleSort("change")}
                   >
                     Change
@@ -178,7 +214,7 @@ export default function TrendingPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="gap-1 -ml-3"
+                    className="gap-1 -ml-3 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                     onClick={() => handleSort("volume")}
                   >
                     <BarChart3 className="h-4 w-4 mr-1" />
@@ -192,7 +228,7 @@ export default function TrendingPage() {
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 10 }).map((_, i) => (
-                  <TableRow key={i}>
+                  <TableRow key={i} className="border-b border-black/[0.04] dark:border-white/[0.04]">
                     <TableCell><Skeleton className="h-6 w-8" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
@@ -249,7 +285,10 @@ export default function TrendingPage() {
                   const change = item.change || 0;
 
                   return (
-                    <TableRow key={item.symbol} className="group">
+                    <TableRow 
+                      key={item.symbol} 
+                      className="group border-b border-black/[0.04] dark:border-white/[0.04] hover:bg-black/[0.02] dark:hover:bg-white/[0.03] transition-colors"
+                    >
                       <TableCell className="font-mono text-muted-foreground">
                         #{originalRank}
                       </TableCell>
@@ -269,7 +308,7 @@ export default function TrendingPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{item.sentiment}</span>
-                          <div className="w-16 h-2 bg-secondary rounded-full overflow-hidden">
+                          <div className="w-16 h-2 bg-black/[0.06] dark:bg-white/[0.08] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
                                 item.trend === "bullish"
@@ -317,17 +356,22 @@ export default function TrendingPage() {
           </Table>
 
           {hasMore && (
-            <div className="p-4 border-t border-border">
+            <div className="p-4 border-t border-black/[0.06] dark:border-white/[0.06]">
               <Button
                 variant="outline"
-                className="w-full"
+                className={cn(
+                  "w-full",
+                  "bg-white/50 dark:bg-white/[0.06]",
+                  "border-black/[0.08] dark:border-white/[0.08]",
+                  "hover:bg-black/[0.04] dark:hover:bg-white/[0.08]"
+                )}
                 onClick={() => setVisibleCount((prev) => prev + 20)}
               >
                 Load More ({filteredAndSorted.length - visibleCount} remaining)
               </Button>
             </div>
           )}
-        </Card>
+        </div>
       </div>
     </>
   );
