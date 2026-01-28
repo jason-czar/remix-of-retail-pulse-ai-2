@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,8 +24,24 @@ import {
 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import type { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 
 type SentimentFilter = "all" | "bullish" | "bearish" | "neutral";
+
+const glassCardClasses = cn(
+  "rounded-2xl p-4",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
+);
+
+const glassListItemClasses = cn(
+  "rounded-xl p-4",
+  "bg-white/45 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-black/[0.06] dark:border-white/[0.04]"
+);
 
 export default function MessagesPage() {
   const { symbol: paramSymbol } = useParams<{ symbol: string }>();
@@ -167,7 +182,7 @@ export default function MessagesPage() {
         </div>
 
         {/* Filters */}
-        <Card className="p-4 mb-6">
+        <div className={cn(glassCardClasses, "mb-6")}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Filter className="h-4 w-4" />
@@ -208,13 +223,13 @@ export default function MessagesPage() {
               Showing {visibleMessages.length} of {filteredMessages.length} messages
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Messages Feed */}
         <div className="space-y-4">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <Card key={i} className="p-4">
+              <div key={i} className={glassListItemClasses}>
                 <div className="flex items-start gap-4">
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
@@ -223,17 +238,17 @@ export default function MessagesPage() {
                     <Skeleton className="h-4 w-48" />
                   </div>
                 </div>
-              </Card>
+              </div>
             ))
           ) : error ? (
-            <Card className="p-8 text-center">
+            <div className={cn(glassCardClasses, "p-8 text-center")}>
               <p className="text-muted-foreground mb-4">Failed to load messages</p>
               <Button variant="outline" onClick={() => refetch()}>
                 Try Again
               </Button>
-            </Card>
+            </div>
           ) : visibleMessages.length === 0 ? (
-            <Card className="p-8 text-center">
+            <div className={cn(glassCardClasses, "p-8 text-center")}>
               <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-muted-foreground">
                 {sentimentFilter === "all" 
@@ -241,10 +256,10 @@ export default function MessagesPage() {
                   : `No ${sentimentFilter} messages found`
                 }
               </p>
-            </Card>
+            </div>
           ) : (
             visibleMessages.map((message) => (
-              <div key={message.id} className="p-4 glass-list-item">
+              <div key={message.id} className={glassListItemClasses}>
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
                   <div className="flex-shrink-0">
