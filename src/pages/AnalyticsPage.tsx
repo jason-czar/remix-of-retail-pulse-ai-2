@@ -39,6 +39,34 @@ import {
   Area,
   Rectangle,
 } from "recharts";
+import { cn } from "@/lib/utils";
+
+// Liquid Glass styling constants
+const glassCardClasses = cn(
+  "rounded-2xl p-6",
+  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
+  "backdrop-blur-[28px] backdrop-saturate-[140%]",
+  "border border-black/[0.08] dark:border-white/[0.06]",
+  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]",
+  "dark:shadow-[0_8px_32px_rgba(0,0,0,0.2),0_2px_8px_rgba(0,0,0,0.1)]"
+);
+
+const glassTileClasses = cn(
+  "rounded-xl p-4",
+  "bg-[#F3F3F7] dark:bg-[hsl(0_0%_14%/0.6)]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-black/[0.04] dark:border-white/[0.04]"
+);
+
+const glassListItemClasses = cn(
+  "rounded-xl p-4",
+  "bg-white/40 dark:bg-white/[0.04]",
+  "backdrop-blur-[12px] backdrop-saturate-[120%]",
+  "border border-black/[0.04] dark:border-white/[0.04]",
+  "transition-all duration-200",
+  "hover:bg-white/60 dark:hover:bg-white/[0.06]",
+  "hover:border-black/[0.08] dark:hover:border-white/[0.08]"
+);
 
 export default function AnalyticsPage() {
   const navigate = useNavigate();
@@ -241,17 +269,22 @@ export default function AnalyticsPage() {
           
           <div className="flex gap-3">
             <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as "7" | "14" | "30")}>
-              <TabsList className="glass-card">
-                <TabsTrigger value="7">7D</TabsTrigger>
-                <TabsTrigger value="14">14D</TabsTrigger>
-                <TabsTrigger value="30">30D</TabsTrigger>
+              <TabsList className={cn(
+                "bg-white/45 dark:bg-white/[0.06]",
+                "backdrop-blur-[20px] backdrop-saturate-[140%]",
+                "border border-black/[0.06] dark:border-white/[0.06]",
+                "p-1 rounded-xl"
+              )}>
+                <TabsTrigger value="7" className="rounded-lg data-[state=active]:bg-white/70 dark:data-[state=active]:bg-white/[0.12] data-[state=active]:shadow-sm">7D</TabsTrigger>
+                <TabsTrigger value="14" className="rounded-lg data-[state=active]:bg-white/70 dark:data-[state=active]:bg-white/[0.12] data-[state=active]:shadow-sm">14D</TabsTrigger>
+                <TabsTrigger value="30" className="rounded-lg data-[state=active]:bg-white/70 dark:data-[state=active]:bg-white/[0.12] data-[state=active]:shadow-sm">30D</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
         </div>
 
         {watchlistSymbols.length === 0 ? (
-          <Card className="p-6 glass-card">
+          <div className={glassCardClasses}>
             <EmptyState
               icon={Star}
               title="Unlock Portfolio-Wide Insights"
@@ -265,7 +298,7 @@ export default function AnalyticsPage() {
                 </Link>
               }
             />
-          </Card>
+          </div>
         ) : (
           <>
             {/* Summary Cards */}
@@ -304,7 +337,7 @@ export default function AnalyticsPage() {
             {/* Main Charts */}
             <div className="grid lg:grid-cols-2 gap-6 mb-8">
               {/* Aggregated Sentiment Chart */}
-              <Card className="p-6 glass-card">
+              <div className={glassCardClasses}>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold flex items-center gap-2">
                     <Activity className="h-5 w-5 text-primary" />
@@ -372,10 +405,10 @@ export default function AnalyticsPage() {
                     </ResponsiveContainer>
                   </div>
                 )}
-              </Card>
+              </div>
 
               {/* Volume Distribution Chart */}
-              <Card className="p-6 glass-card">
+              <div className={glassCardClasses}>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-semibold flex items-center gap-2">
                     <MessageSquare className="h-5 w-5 text-primary" />
@@ -467,15 +500,15 @@ export default function AnalyticsPage() {
                     </ResponsiveContainer>
                   </div>
                 )}
-              </Card>
+              </div>
             </div>
 
             {/* Sector & Psychology */}
             <div className="grid lg:grid-cols-3 gap-6 mb-8">
               {/* Sector Breakdown */}
-              <Card className="p-6 glass-card">
+              <div className={glassCardClasses}>
                 <h2 className="text-lg font-semibold mb-6">Market Sectors</h2>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {marketLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
                       <Skeleton key={i} className="h-16 w-full" />
@@ -501,20 +534,20 @@ export default function AnalyticsPage() {
                     </>
                   )}
                 </div>
-              </Card>
+              </div>
 
               {/* Psychology History */}
-              <Card className="p-6 glass-card lg:col-span-2">
+              <div className={cn(glassCardClasses, "lg:col-span-2")}>
                 <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
                   <Brain className="h-5 w-5 text-primary" />
                   Psychology Trends
                 </h2>
                 <PsychologyHistoryChart days={days} />
-              </Card>
+              </div>
             </div>
 
             {/* Symbol Breakdown */}
-            <Card className="p-6 glass-card">
+            <div className={glassCardClasses}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Symbol Performance</h2>
                 <Badge variant="secondary">{watchlistSymbols.length} symbols</Badge>
@@ -524,7 +557,7 @@ export default function AnalyticsPage() {
                   <SymbolCard key={symbol} symbol={symbol} days={days} />
                 ))}
               </div>
-            </Card>
+            </div>
           </>
         )}
       </div>
@@ -552,7 +585,7 @@ function SummaryCard({
   }
 
   return (
-    <Card className="p-4 glass-card">
+    <div className={glassTileClasses}>
       <div className="flex items-center gap-2 mb-2">
         <Icon className="h-4 w-4 text-primary" />
         <span className="text-sm text-muted-foreground">{label}</span>
@@ -566,7 +599,7 @@ function SummaryCard({
         )}
       </div>
       <div className="text-xs text-muted-foreground mt-1">{subtext}</div>
-    </Card>
+    </div>
   );
 }
 
@@ -586,7 +619,12 @@ function SectorItem({
   const ChangeIcon = change >= 0 ? ArrowUpRight : ArrowDownRight;
   
   return (
-    <div className={`p-3 rounded-lg ${isPrimary ? "bg-primary/10 border border-primary/20" : "bg-secondary/40"}`}>
+    <div className={cn(
+      "p-3 rounded-xl transition-all duration-200",
+      isPrimary 
+        ? "bg-primary/8 dark:bg-primary/10 border border-primary/15 dark:border-primary/20" 
+        : "bg-white/40 dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.04]"
+    )}>
       <div className="flex items-center justify-between mb-1">
         <span className={`text-sm ${isPrimary ? "font-semibold" : ""}`}>{label}</span>
         <Badge variant={trend} className="text-xs">{trend}</Badge>
@@ -641,7 +679,7 @@ function SymbolCard({ symbol, days }: { symbol: string; days: number }) {
 
   return (
     <Link to={`/symbol/${symbol}`}>
-      <div className="p-4 glass-list-item group">
+      <div className={cn(glassListItemClasses, "group")}>
         <div className="flex items-center justify-between mb-2">
           <span className="font-mono font-semibold group-hover:text-primary transition-colors">
             ${symbol}
