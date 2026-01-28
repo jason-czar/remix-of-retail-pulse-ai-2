@@ -187,23 +187,23 @@ export function SummaryInsightsCard({
             <div className="relative mb-1 lg:mb-1.5">
               <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Sentiment Score</span>
             </div>
-            <div className="relative flex items-center gap-1.5 lg:gap-2">
+            <div className="relative flex items-baseline gap-0.5 lg:gap-1">
               <span className="text-xl lg:text-3xl font-display font-semibold text-foreground">
                 {symbolStats?.sentiment ?? '--'}
               </span>
               {sentimentIsPositive ? (
-                <TrendingUp className="h-4 w-4 lg:h-5 lg:w-5 text-bullish" />
+                <TrendingUp className="h-4 w-4 text-bullish ml-1" />
               ) : (
-                <TrendingDown className="h-4 w-4 lg:h-5 lg:w-5 text-bearish" />
+                <TrendingDown className="h-4 w-4 text-bearish ml-1" />
               )}
             </div>
-            <div className="relative flex items-center gap-1 mt-1 lg:mt-1.5">
+            <div className="relative flex items-center gap-1 mt-1.5 lg:mt-2">
               {sentimentIsPositive ? (
                 <ArrowUpRight className="h-3 w-3 text-bullish" />
               ) : (
                 <ArrowDownRight className="h-3 w-3 text-bearish" />
               )}
-              <span className={cn("text-xs", sentimentIsPositive ? 'text-bullish' : 'text-bearish')}>
+              <span className={cn("text-[10px] lg:text-xs", sentimentIsPositive ? 'text-bullish' : 'text-bearish')}>
                 {Math.abs(sentimentChange).toFixed(1)}%
               </span>
             </div>
@@ -219,18 +219,18 @@ export function SummaryInsightsCard({
             <div className="relative mb-1 lg:mb-1.5">
               <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">Message Volume</span>
             </div>
-            <div className="relative">
+            <div className="relative flex items-baseline gap-0.5 lg:gap-1">
               <span className="text-xl lg:text-3xl font-display font-semibold text-foreground">
                 {symbolStats?.volume ?? '--'}
               </span>
             </div>
-            <div className="relative flex items-center gap-1 mt-1 lg:mt-1.5">
+            <div className="relative flex items-center gap-1 mt-1.5 lg:mt-2">
               {volumeIsPositive ? (
                 <ArrowUpRight className="h-3 w-3 text-bullish" />
               ) : (
                 <ArrowDownRight className="h-3 w-3 text-bearish" />
               )}
-              <span className={cn("text-xs", volumeIsPositive ? 'text-bullish' : 'text-bearish')}>
+              <span className={cn("text-[10px] lg:text-xs", volumeIsPositive ? 'text-bullish' : 'text-bearish')}>
                 {Math.abs(volumeChange).toFixed(0)}% (24h)
               </span>
             </div>
@@ -246,17 +246,19 @@ export function SummaryInsightsCard({
             <div className="relative mb-1 lg:mb-1.5">
               <span className="text-[10px] lg:text-xs text-muted-foreground font-medium">7D Trend</span>
             </div>
-            <div className="relative flex items-center gap-2">
+            <div className="relative flex items-baseline gap-0.5 lg:gap-1">
               <span className="text-xl lg:text-3xl font-display font-semibold text-foreground">
                 {getTrendLabel()}
               </span>
+            </div>
+            <div className="relative flex items-center gap-1 mt-1.5 lg:mt-2">
               {getTrendIcon()}
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Summary content */}
+      {/* Summary content - matches DecisionQuestionHeader prose styling */}
       {children && (
         <div className="mt-5 pt-5 border-t border-border/30">
           {isLoading || isRegenerating ? (
@@ -267,13 +269,9 @@ export function SummaryInsightsCard({
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
+            <div className="prose prose-sm dark:prose-invert max-w-none">
               {children}
-            </motion.div>
+            </div>
           )}
         </div>
       )}
