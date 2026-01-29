@@ -97,6 +97,13 @@ function DesktopLayoutContent({ children, rightSidebar }: { children: ReactNode;
                   <p className="text-sm font-medium">{user.email}</p>
                   <p className="text-xs text-muted-foreground">Free Plan</p>
                 </div>
+                {user.email === "admin@czar.ing" && (
+                  <DropdownMenuItem asChild className="rounded-lg mx-1 focus:bg-black/[0.05] dark:focus:bg-white/[0.08]">
+                    <a href="/monitoring" className="flex items-center">
+                      Monitoring
+                    </a>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator className="bg-black/[0.06] dark:bg-white/[0.06]" />
                 <DropdownMenuItem onClick={handleSignOut} className="text-bearish">
                   <LogOut className="mr-2 h-4 w-4" />
