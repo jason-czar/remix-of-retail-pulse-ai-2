@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createLogger, createTimer, reportError, recordMetric } from "../_shared/logger.ts";
 
 // Declare EdgeRuntime for background tasks
 declare const EdgeRuntime: {
@@ -10,6 +11,8 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const logger = createLogger('generate-lens-summary');
 
 // Sanitize text by removing non-ASCII characters and normalizing whitespace
 function sanitizeText(text: string): string {
@@ -437,10 +440,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const requestTimer = createTimer();
+  logger.startRequest(requestId);
+
   try {
     const { symbol, lens = 'corporate-strategy', skipCache = false, customLensConfig } = await req.json();
 
     if (!symbol) {
+      logger.warn('Missing symbol parameter', { request_id: requestId });
       return new Response(
         JSON.stringify({ error: "Symbol is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -449,11 +457,14 @@ serve(async (req) => {
 
     // Validate custom lens config if lens is 'custom'
     if (lens === 'custom' && !customLensConfig) {
+      logger.warn('Missing customLensConfig for custom lens', { symbol, request_id: requestId });
       return new Response(
         JSON.stringify({ error: "customLensConfig is required for custom lenses" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    logger.info('Processing lens summary request', { symbol, lens, skipCache, request_id: requestId });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -490,9 +501,19 @@ serve(async (req) => {
         
         // Fresh cache - return immediately
         if (!isExpired) {
-          console.log(`[Cache HIT] ${symbol} ${cacheKey}`);
+          logger.info('Cache hit', { symbol, lens: cacheKey, cache_status: 'hit', request_id: requestId });
           // Record cache hit (background)
           supabase.rpc('increment_cache_stat', { p_cache_name: 'lens_summary', p_column: 'hits' });
+          
+          // Record metrics
+          requestTimer.record(supabase, {
+            metric_type: 'api_latency',
+            function_name: 'generate-lens-summary',
+            endpoint: lens,
+            symbol,
+            cache_status: 'hit',
+            status_code: 200,
+          });
           
           return new Response(
             JSON.stringify({ 
@@ -513,7 +534,9 @@ serve(async (req) => {
         
         // Stale but within grace period - return stale data and refresh in background
         if (isExpired && isWithinGrace) {
-          console.log(`[Cache STALE] ${symbol} ${cacheKey} - serving stale, refreshing in background`);
+          logger.info('Cache stale - serving stale data, refreshing in background', { 
+            symbol, lens: cacheKey, cache_status: 'stale', request_id: requestId 
+          });
           // Record stale hit (background)
           supabase.rpc('increment_cache_stat', { p_cache_name: 'lens_summary', p_column: 'stale_hits' });
           
@@ -521,6 +544,16 @@ serve(async (req) => {
           EdgeRuntime.waitUntil(refreshLensSummaryInBackground(
             supabase, symbol, cacheKey, lens as DecisionLens, customLensConfig, LOVABLE_API_KEY!, STOCKTWITS_API_KEY
           ));
+          
+          // Record metrics
+          requestTimer.record(supabase, {
+            metric_type: 'api_latency',
+            function_name: 'generate-lens-summary',
+            endpoint: lens,
+            symbol,
+            cache_status: 'stale',
+            status_code: 200,
+          });
           
           return new Response(
             JSON.stringify({ 
@@ -542,7 +575,9 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[Cache MISS] ${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${cacheKey}`);
+    logger.info('Cache miss - generating fresh summary', { 
+      symbol, lens: cacheKey, cache_status: 'miss', skipCache, request_id: requestId 
+    });
     // Record cache miss (background)
     supabase.rpc('increment_cache_stat', { p_cache_name: 'lens_summary', p_column: 'misses' });
     
@@ -557,7 +592,19 @@ serve(async (req) => {
     });
 
     if (!messagesResponse.ok) {
-      console.error("Failed to fetch messages:", await messagesResponse.text());
+      const errorText = await messagesResponse.text();
+      logger.error('Failed to fetch messages from stocktwits-proxy', { 
+        symbol, status_code: messagesResponse.status, request_id: requestId 
+      });
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_code: String(messagesResponse.status),
+        error_message: `Failed to fetch StockTwits messages: ${errorText}`,
+        function_name: 'generate-lens-summary',
+        request_id: requestId,
+        symbol,
+        severity: 'error',
+      });
       throw new Error("Failed to fetch StockTwits messages");
     }
 
@@ -568,6 +615,7 @@ serve(async (req) => {
     const lensName = lensConfig.name;
 
     if (messages.length === 0) {
+      logger.info('No messages found for symbol', { symbol, lens: cacheKey, request_id: requestId });
       const noDataSummary = `No recent messages found for ${symbol.toUpperCase()} to analyze through the ${lensName} lens.`;
       return new Response(
         JSON.stringify({ 
@@ -599,11 +647,20 @@ serve(async (req) => {
       themeCounts
     );
 
-    console.log(`Confidence for ${symbol} ${cacheKey}: ${confidence} (relevant: ${relevantMessages.length}/${messageTexts.length}, dominant theme: ${(dominantThemeShare * 100).toFixed(1)}%)`);
+    logger.info('Calculated confidence metrics', { 
+      symbol, 
+      lens: cacheKey, 
+      confidence,
+      relevant_count: relevantMessages.length,
+      total_count: messageTexts.length,
+      dominant_theme_share: dominantThemeShare,
+      request_id: requestId,
+    });
 
-    console.log(`Generating ${lensName} summary for ${symbol} from ${messages.length} messages...`);
+    logger.info('Calling AI for lens summary', { symbol, lens: lensName, message_count: messages.length, request_id: requestId });
 
     // Call Lovable AI for lens-specific summary with enhanced prompt
+    const aiTimer = createTimer();
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -634,9 +691,30 @@ ${messageTexts.join("\n---\n")}`,
       }),
     });
 
+    // Record AI call metrics
+    aiTimer.record(supabase, {
+      metric_type: 'ai_call',
+      function_name: 'generate-lens-summary',
+      endpoint: 'lens-summary',
+      symbol,
+      status_code: aiResponse.status,
+    });
+
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
+      logger.error('AI API error', { 
+        symbol, lens: cacheKey, status_code: aiResponse.status, request_id: requestId 
+      });
+      
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_code: String(aiResponse.status),
+        error_message: `AI API returned ${aiResponse.status}: ${errorText}`,
+        function_name: 'generate-lens-summary',
+        request_id: requestId,
+        symbol,
+        severity: aiResponse.status >= 500 ? 'error' : 'warning',
+      });
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -654,11 +732,12 @@ ${messageTexts.join("\n---\n")}`,
     }
 
     const aiData = await aiResponse.json();
+    logger.info('AI response received', { symbol, lens: cacheKey, request_id: requestId });
     const rawSummary = aiData.choices?.[0]?.message?.content?.trim();
     
     // Only cache if we got a valid AI response
     if (!rawSummary) {
-      console.error("AI returned empty response for", symbol, cacheKey);
+      logger.error('AI returned empty response', { symbol, lens: cacheKey, request_id: requestId });
       return new Response(
         JSON.stringify({ 
           summary: `Unable to generate ${lensName} insights for ${symbol.toUpperCase()} at this time.`,
@@ -673,13 +752,21 @@ ${messageTexts.join("\n---\n")}`,
 
     // Sanitize AI-generated summary to remove non-ASCII characters
     const sanitizedSummary = sanitizeText(rawSummary);
-    console.log(`Sanitized summary for ${symbol} ${cacheKey}: removed ${rawSummary.length - sanitizedSummary.length} chars`);
+    logger.debug('Sanitized AI summary', { 
+      symbol, 
+      lens: cacheKey, 
+      chars_removed: rawSummary.length - sanitizedSummary.length,
+      request_id: requestId,
+    });
 
     // For custom lenses, generate AI-driven concerns and recommended actions
     let keyConcerns: string[] = [];
     let recommendedActions: string[] = [];
     
     if (lens === 'custom' && customLensConfig) {
+      logger.info('Generating concerns and actions for custom lens', { 
+        symbol, custom_lens_name: customLensConfig.name, request_id: requestId 
+      });
       console.log(`Generating concerns and actions for custom lens ${customLensConfig.name}...`);
       
       const concernsActionsPrompt = `Based on this analysis of ${symbol.toUpperCase()} through the "${customLensConfig.name}" lens, generate specific concerns and recommended actions.
@@ -693,6 +780,7 @@ Decision Question: ${customLensConfig.decision_question}
 Generate concerns and actions that are specific, actionable, and directly tied to the lens focus.`;
 
       try {
+        const concernsTimer = createTimer();
         const concernsResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -739,6 +827,15 @@ Generate concerns and actions that are specific, actionable, and directly tied t
           }),
         });
 
+        // Record concerns AI call metrics
+        concernsTimer.record(supabase, {
+          metric_type: 'ai_call',
+          function_name: 'generate-lens-summary',
+          endpoint: 'extract-concerns-actions',
+          symbol,
+          status_code: concernsResponse.status,
+        });
+
         if (concernsResponse.ok) {
           const concernsData = await concernsResponse.json();
           const toolCall = concernsData.choices?.[0]?.message?.tool_calls?.[0];
@@ -748,16 +845,27 @@ Generate concerns and actions that are specific, actionable, and directly tied t
               const parsed = JSON.parse(toolCall.function.arguments);
               keyConcerns = (parsed.key_concerns || []).slice(0, 3).map((c: string) => sanitizeText(c));
               recommendedActions = (parsed.recommended_actions || []).slice(0, 3).map((a: string) => sanitizeText(a));
-              console.log(`Generated ${keyConcerns.length} concerns and ${recommendedActions.length} actions for ${symbol}`);
+              logger.info('Generated concerns and actions', { 
+                symbol, 
+                concerns_count: keyConcerns.length, 
+                actions_count: recommendedActions.length,
+                request_id: requestId,
+              });
             } catch (parseError) {
-              console.error("Failed to parse concerns/actions:", parseError);
+              logger.error('Failed to parse concerns/actions JSON', { symbol, request_id: requestId });
             }
           }
         } else {
-          console.error("Concerns/actions AI call failed:", concernsResponse.status);
+          logger.warn('Concerns/actions AI call failed', { 
+            symbol, status_code: concernsResponse.status, request_id: requestId 
+          });
         }
       } catch (concernsError) {
-        console.error("Error generating concerns/actions:", concernsError);
+        logger.error('Error generating concerns/actions', { 
+          symbol, 
+          error: concernsError instanceof Error ? concernsError.message : 'Unknown error',
+          request_id: requestId,
+        });
       }
     }
 
@@ -777,7 +885,17 @@ Generate concerns and actions that are specific, actionable, and directly tied t
         { onConflict: "symbol,lens" }
       );
 
-    console.log(`Cached ${lensName} summary for ${symbol}`);
+    logger.info('Cached lens summary', { symbol, lens: cacheKey, cache_minutes: cacheMinutes, request_id: requestId });
+    
+    // Record overall request metrics
+    requestTimer.record(supabase, {
+      metric_type: 'api_latency',
+      function_name: 'generate-lens-summary',
+      endpoint: lens,
+      symbol,
+      cache_status: 'miss',
+      status_code: 200,
+    });
 
     const responseData: Record<string, unknown> = { 
       summary: sanitizedSummary, 
@@ -799,7 +917,28 @@ Generate concerns and actions that are specific, actionable, and directly tied t
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("generate-lens-summary error:", error);
+    logger.error('Unhandled error in generate-lens-summary', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      request_id: requestId,
+    });
+    
+    // Record error to database
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    
+    await reportError(supabase, {
+      error_type: 'edge_function',
+      error_message: error instanceof Error ? error.message : 'Unknown error',
+      stack_trace: error instanceof Error ? error.stack : undefined,
+      function_name: 'generate-lens-summary',
+      request_id: requestId,
+      request_path: '/functions/v1/generate-lens-summary',
+      request_method: 'POST',
+      severity: 'error',
+    });
+    
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
