@@ -13,7 +13,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const STOCKTWITS_BASE_URL = 'https://srwjqgmqqsuazsczmywh.supabase.co'
+// External StockTwits data provider URL - this should point to the Supabase project 
+// that hosts the stocktwits-query, stocktwits-sentiment, and stocktwits-trending functions
+const STOCKTWITS_BASE_URL = Deno.env.get('STOCKTWITS_BASE_URL') || 'https://srwjqgmqqsuazsczmywh.supabase.co'
 const CIRCUIT_ID = 'stocktwits-upstream'
 
 // Cache TTL configuration (in seconds)
