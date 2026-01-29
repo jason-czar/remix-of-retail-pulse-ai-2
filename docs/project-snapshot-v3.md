@@ -434,7 +434,7 @@ Recalculates NCS on existing snapshots.
 **Inputs:**
 - action: "messages" | "trending" | "stats"
 - symbol: string
-- limit: number
+- limit: number (max 1000 per page for messages)
 - start/end: date strings (for historical)
 
 **External Services:** StockTwits API
