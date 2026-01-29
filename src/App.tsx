@@ -24,6 +24,7 @@ const ApiDocsPage = lazy(() => import("./pages/ApiDocsPage"));
 const LearnMorePage = lazy(() => import("./pages/LearnMorePage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const MonitoringPage = lazy(() => import("./pages/MonitoringPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
+              <Route path="/monitoring" element={<ProtectedRoute><MonitoringPage /></ProtectedRoute>} />
               <Route path="/api-docs" element={<ApiDocsPage />} />
             </Route>
             
