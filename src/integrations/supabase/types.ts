@@ -482,6 +482,36 @@ export type Database = {
         }
         Relationships: []
       }
+      stocktwits_response_cache: {
+        Row: {
+          action: string
+          cache_key: string
+          created_at: string
+          expires_at: string
+          id: string
+          response_data: Json
+          symbol: string | null
+        }
+        Insert: {
+          action: string
+          cache_key: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          response_data: Json
+          symbol?: string | null
+        }
+        Update: {
+          action?: string
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          response_data?: Json
+          symbol?: string | null
+        }
+        Relationships: []
+      }
       user_custom_lenses: {
         Row: {
           created_at: string
@@ -620,6 +650,7 @@ export type Database = {
       cleanup_old_history: { Args: never; Returns: undefined }
       cleanup_psychology_history: { Args: never; Returns: undefined }
       cleanup_psychology_snapshots: { Args: never; Returns: undefined }
+      cleanup_stocktwits_cache: { Args: never; Returns: undefined }
       cleanup_volume_history: { Args: never; Returns: undefined }
     }
     Enums: {

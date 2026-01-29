@@ -7,6 +7,99 @@ const corsHeaders = {
 
 const STOCKTWITS_BASE_URL = 'https://srwjqgmqqsuazsczmywh.supabase.co'
 
+// Cache TTL configuration (in seconds)
+const CACHE_TTL = {
+  trending: 60,      // 1 minute - trending data changes frequently
+  stats: 30,         // 30 seconds - stats can shift quickly
+  messages: 60,      // 1 minute - balance freshness vs API load
+  sentiment: 60,     // 1 minute
+  analytics: 120,    // 2 minutes - aggregated data, less volatile
+  analyze: 0,        // No caching for analysis requests
+} as const
+
+// Create Supabase client for cache access
+function getSupabaseClient() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  return createClient(supabaseUrl, supabaseKey)
+}
+
+// Generate a unique cache key from request parameters
+function generateCacheKey(action: string, params: Record<string, string | null>): string {
+  const sortedParams = Object.entries(params)
+    .filter(([_, v]) => v !== null && v !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([k, v]) => `${k}=${v}`)
+    .join('&')
+  return `${action}:${sortedParams}`
+}
+
+// Try to get cached response
+async function getCachedResponse(supabase: ReturnType<typeof getSupabaseClient>, cacheKey: string): Promise<unknown | null> {
+  try {
+    const { data, error } = await supabase
+      .from('stocktwits_response_cache')
+      .select('response_data, expires_at')
+      .eq('cache_key', cacheKey)
+      .single()
+    
+    if (error || !data) return null
+    
+    // Check if expired
+    if (new Date(data.expires_at) < new Date()) {
+      // Delete expired entry async (don't wait)
+      supabase.from('stocktwits_response_cache').delete().eq('cache_key', cacheKey)
+      return null
+    }
+    
+    return data.response_data
+  } catch {
+    return null
+  }
+}
+
+// Store response in cache
+async function setCachedResponse(
+  supabase: ReturnType<typeof getSupabaseClient>, 
+  cacheKey: string, 
+  action: string,
+  symbol: string | null,
+  data: unknown, 
+  ttlSeconds: number
+): Promise<void> {
+  if (ttlSeconds <= 0) return
+  
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString()
+  
+  try {
+    await supabase
+      .from('stocktwits_response_cache')
+      .upsert({
+        cache_key: cacheKey,
+        action,
+        symbol,
+        response_data: data,
+        expires_at: expiresAt,
+        created_at: new Date().toISOString(),
+      }, { onConflict: 'cache_key' })
+  } catch (error) {
+    console.error('Failed to cache response:', error)
+  }
+}
+
+// Periodically cleanup old cache entries (run occasionally)
+async function maybeCleanupCache(supabase: ReturnType<typeof getSupabaseClient>): Promise<void> {
+  // Only run cleanup ~5% of requests to avoid overhead
+  if (Math.random() > 0.05) return
+  
+  try {
+    await supabase.rpc('cleanup_stocktwits_cache')
+    console.log('Cache cleanup executed')
+  } catch (error) {
+    console.error('Cache cleanup failed:', error)
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -43,6 +136,9 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Build cache key params (only include params that affect the response)
+    const cacheKeyParams: Record<string, string | null> = { symbol }
+
     switch (action) {
       case 'messages': {
         endpoint = '/functions/v1/stocktwits-query'
@@ -59,6 +155,13 @@ Deno.serve(async (req) => {
         const cursorId = url.searchParams.get('cursor_id')
         if (cursorCreatedAt) queryParams.set('cursor_created_at', cursorCreatedAt)
         if (cursorId) queryParams.set('cursor_id', cursorId)
+        
+        // Add to cache key
+        cacheKeyParams.limit = limit
+        cacheKeyParams.start = start
+        cacheKeyParams.end = end
+        cacheKeyParams.cursor_created_at = cursorCreatedAt
+        cacheKeyParams.cursor_id = cursorId
         break
       }
       
@@ -82,6 +185,11 @@ Deno.serve(async (req) => {
         const { start: analyticsStart, end: analyticsEnd } = getDateParams(30)
         queryParams.set('start', analyticsStart)
         queryParams.set('end', analyticsEnd)
+        
+        // Add to cache key
+        cacheKeyParams.type = type
+        cacheKeyParams.start = analyticsStart
+        cacheKeyParams.end = analyticsEnd
         break
       }
       
@@ -92,6 +200,7 @@ Deno.serve(async (req) => {
       
       case 'trending':
         endpoint = '/functions/v1/stocktwits-trending'
+        cacheKeyParams.symbol = null // Trending doesn't use symbol
         break
       
       case 'analyze':
@@ -103,6 +212,33 @@ Deno.serve(async (req) => {
           JSON.stringify({ error: 'Invalid action' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
+    }
+
+    // Get cache TTL for this action
+    const ttl = CACHE_TTL[action as keyof typeof CACHE_TTL] ?? 0
+    const cacheKey = generateCacheKey(action!, cacheKeyParams)
+    
+    // Initialize Supabase client for caching
+    const supabase = getSupabaseClient()
+    
+    // Try to get cached response first (skip for analyze/POST requests)
+    if (ttl > 0 && req.method !== 'POST') {
+      const cached = await getCachedResponse(supabase, cacheKey)
+      if (cached) {
+        console.log(`[Cache HIT] ${action} - ${cacheKey}`)
+        return new Response(
+          JSON.stringify(cached),
+          { 
+            status: 200,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json',
+              'X-Cache': 'HIT',
+            } 
+          }
+        )
+      }
+      console.log(`[Cache MISS] ${action} - ${cacheKey}`)
     }
 
     const targetUrl = `${STOCKTWITS_BASE_URL}${endpoint}?${queryParams.toString()}`
@@ -152,11 +288,24 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Cache successful responses
+    if (response.ok && ttl > 0) {
+      // Don't await - cache in background
+      setCachedResponse(supabase, cacheKey, action!, symbol, data, ttl)
+      
+      // Occasionally cleanup old entries
+      maybeCleanupCache(supabase)
+    }
+
     return new Response(
       JSON.stringify(data),
       { 
         status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'X-Cache': 'MISS',
+        } 
       }
     )
   } catch (error: unknown) {
