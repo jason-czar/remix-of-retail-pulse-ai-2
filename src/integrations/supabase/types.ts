@@ -170,6 +170,66 @@ export type Database = {
         }
         Relationships: []
       }
+      error_logs: {
+        Row: {
+          created_at: string | null
+          environment: string | null
+          error_code: string | null
+          error_message: string
+          error_type: string
+          function_name: string | null
+          id: string
+          request_id: string | null
+          request_method: string | null
+          request_params: Json | null
+          request_path: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          severity: string | null
+          stack_trace: string | null
+          symbol: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          environment?: string | null
+          error_code?: string | null
+          error_message: string
+          error_type: string
+          function_name?: string | null
+          id?: string
+          request_id?: string | null
+          request_method?: string | null
+          request_params?: Json | null
+          request_path?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string | null
+          stack_trace?: string | null
+          symbol?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          environment?: string | null
+          error_code?: string | null
+          error_message?: string
+          error_type?: string
+          function_name?: string | null
+          id?: string
+          request_id?: string | null
+          request_method?: string | null
+          request_params?: Json | null
+          request_path?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string | null
+          stack_trace?: string | null
+          symbol?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       lens_summary_cache: {
         Row: {
           created_at: string
@@ -305,6 +365,45 @@ export type Database = {
           period_type?: string
           recorded_at?: string
           symbol?: string
+        }
+        Relationships: []
+      }
+      performance_metrics: {
+        Row: {
+          cache_status: string | null
+          circuit_state: string | null
+          duration_ms: number
+          endpoint: string | null
+          function_name: string
+          id: string
+          metric_type: string
+          recorded_at: string | null
+          status_code: number | null
+          symbol: string | null
+        }
+        Insert: {
+          cache_status?: string | null
+          circuit_state?: string | null
+          duration_ms: number
+          endpoint?: string | null
+          function_name: string
+          id?: string
+          metric_type: string
+          recorded_at?: string | null
+          status_code?: number | null
+          symbol?: string | null
+        }
+        Update: {
+          cache_status?: string | null
+          circuit_state?: string | null
+          duration_ms?: number
+          endpoint?: string | null
+          function_name?: string
+          id?: string
+          metric_type?: string
+          recorded_at?: string | null
+          status_code?: number | null
+          symbol?: string | null
         }
         Relationships: []
       }
@@ -677,8 +776,10 @@ export type Database = {
     }
     Functions: {
       cleanup_all_caches: { Args: never; Returns: Json }
+      cleanup_error_logs: { Args: never; Returns: undefined }
       cleanup_lens_cache: { Args: never; Returns: undefined }
       cleanup_old_history: { Args: never; Returns: undefined }
+      cleanup_performance_metrics: { Args: never; Returns: undefined }
       cleanup_psychology_history: { Args: never; Returns: undefined }
       cleanup_psychology_snapshots: { Args: never; Returns: undefined }
       cleanup_stocktwits_cache: { Args: never; Returns: undefined }

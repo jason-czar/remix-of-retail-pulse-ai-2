@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.ask-derive-street]
 verify_jwt = false
+
+[functions.health-check]
+verify_jwt = false
