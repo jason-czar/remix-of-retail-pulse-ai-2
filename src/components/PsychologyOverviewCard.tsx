@@ -285,6 +285,7 @@ export function ContinueToLensButton({ currentLens }: ContinueToLensButtonProps)
 
   const handleNavigateToLens = () => {
     setSearchParams({ lens: nextLens });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
