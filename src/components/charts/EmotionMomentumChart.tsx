@@ -15,11 +15,11 @@ import {
   Area,
 } from "recharts";
 import { useEmotionMomentum, EmotionMomentum, EmotionDivergence } from "@/hooks/use-emotion-momentum";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChartErrorState } from "@/components/ChartErrorState";
+import { ChartSkeleton } from "./ChartSkeleton";
 import { format } from "date-fns";
 import {
   TrendingUp,
@@ -138,9 +138,29 @@ export function EmotionMomentumChart({ symbol, days = 7, enabled = true }: Emoti
 
   if (isLoading) {
     return (
-      <div className="h-[500px] w-full space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[450px] w-full" />
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between p-3 rounded-xl bg-card/60 dark:bg-card/40 border border-border/50 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Zap className="h-5 w-5 text-primary/50" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="h-5 w-40 bg-muted/60 rounded animate-pulse" />
+              <div className="h-4 w-56 bg-muted/40 rounded animate-pulse" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-24 bg-muted/50 rounded-full animate-pulse" />
+            <div className="h-8 w-20 bg-muted/50 rounded-full animate-pulse" />
+          </div>
+        </div>
+        <ChartSkeleton 
+          variant="bar" 
+          showSidePanel={false} 
+          showControls={false} 
+          chartHeight="h-[350px]" 
+        />
       </div>
     );
   }

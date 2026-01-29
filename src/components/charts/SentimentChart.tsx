@@ -9,13 +9,13 @@ import {
   ReferenceLine 
 } from "recharts";
 import { useSentimentAnalytics } from "@/hooks/use-stocktwits";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useMemo, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import { CHART_SIDE_PANEL } from "@/lib/chart-constants";
+import { ChartSkeleton } from "./ChartSkeleton";
 
 interface SentimentChartProps {
   symbol: string;
@@ -424,7 +424,14 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H', enabled 
   const sidePanelData = hoveredData || defaultSidePanelData;
 
   if (isLoading) {
-    return <Skeleton className="h-[300px] md:h-[400px] w-full" />;
+    return (
+      <ChartSkeleton 
+        variant="line" 
+        showSidePanel={true} 
+        showControls={timeRange === '1D'} 
+        chartHeight="h-[300px] md:h-[400px]" 
+      />
+    );
   }
 
   return (

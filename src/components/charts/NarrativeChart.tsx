@@ -14,6 +14,7 @@ import { useStockPrice } from "@/hooks/use-stock-price";
 import { alignPricesToHourSlots, alignPricesToFiveMinSlots } from "@/lib/stock-price-api";
 import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, AlertTriangle, DollarSign, ChevronDown, Calendar } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
+import { ChartSkeleton } from "./ChartSkeleton";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { Button } from "@/components/ui/button";
@@ -852,7 +853,7 @@ function TimeSeriesNarrativeChart({
     prevDataPointRef.current = null;
   }, []);
   if (isLoading) {
-    return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
+    return <ChartSkeleton variant="stacked" showSidePanel={true} showControls={true} chartHeight="h-[350px] md:h-[480px]" />;
   }
   if (error) {
     return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
@@ -2139,7 +2140,7 @@ function HorizontalNarrativeChart({
     }));
   }, [data]);
   if (isLoading) {
-    return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
+    return <ChartSkeleton variant="bar" showSidePanel={false} showControls={false} chartHeight="h-[480px]" />;
   }
   if (error) {
     return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
