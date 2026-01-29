@@ -1753,7 +1753,7 @@ function HourlyStackedNarrativeChart({
     const barWidth = xAxis.width / stackedChartData.length;
     // End at the center of the bar where the price point sits
     const xEnd = xAxis.x + barWidth * firstPriceData.dataIndex + barWidth / 2;
-    return <line x1={xStart} y1={y} x2={xEnd} y2={y} stroke={firstPriceData.color} strokeOpacity={0.5} strokeWidth={2} strokeLinecap="round" />;
+    return <line x1={xStart} y1={y} x2={xEnd} y2={y} stroke={firstPriceData.color} strokeOpacity={0.35} strokeWidth={2} strokeLinecap="round" />;
   }, [firstPriceData, stackedChartData.length]);
 
   // Custom crosshair line that we can control via activeIndex - includes dot on price line
@@ -2026,14 +2026,14 @@ w-[120vw]
                           <stop offset="100%" stopColor={PRICE_DOWN_COLOR} />
                         </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} />}
                     </linearGradient>
-                    {/* Pre-market extension line gradient - 50% opacity */}
+                    {/* Pre-market extension line gradient - 35% opacity */}
                     <linearGradient id="priceExtensionLineGradient" x1="0" y1="0" x2="0" y2="1">
                       {priceGradientStops ? <>
-                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
-                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />
-                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
-                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.5} />
-                        </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.5} />}
+                          <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.35} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_UP_COLOR} stopOpacity={0.35} />
+                          <stop offset={`${priceGradientStops.previousClosePercent}%`} stopColor={PRICE_DOWN_COLOR} stopOpacity={0.35} />
+                          <stop offset="100%" stopColor={PRICE_DOWN_COLOR} stopOpacity={0.35} />
+                        </> : <stop offset="0%" stopColor={PRICE_UP_COLOR} stopOpacity={0.35} />}
                     </linearGradient>
                     {/* Pre-market extension fill - single color based on opening price position */}
                     {firstPriceData && <linearGradient id="priceExtensionFillGradient" x1="0" y1="0" x2="0" y2="1">
