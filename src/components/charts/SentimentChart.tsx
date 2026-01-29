@@ -16,6 +16,7 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { motion } from "framer-motion";
 import { CHART_SIDE_PANEL } from "@/lib/chart-constants";
 import { ChartSkeleton } from "./ChartSkeleton";
+import { ChartFadeIn } from "./ChartFadeIn";
 
 interface SentimentChartProps {
   symbol: string;
@@ -435,7 +436,7 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H', enabled 
   }
 
   return (
-    <div className="w-full">
+    <ChartFadeIn className="w-full">
       {/* Session selector for Today view */}
       {timeRange === '1D' && (
         <div className="flex justify-end mb-2">
@@ -555,6 +556,6 @@ export function SentimentChart({ symbol, start, end, timeRange = '24H', enabled 
           </ResponsiveContainer>
         </div>
       </div>
-    </div>
+    </ChartFadeIn>
   );
 }

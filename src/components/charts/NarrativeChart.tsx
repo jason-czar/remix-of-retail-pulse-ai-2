@@ -15,6 +15,7 @@ import { alignPricesToHourSlots, alignPricesToFiveMinSlots } from "@/lib/stock-p
 import { AlertCircle, RefreshCw, Sparkles, TrendingUp, MessageSquare, AlertTriangle, DollarSign, ChevronDown, Calendar } from "lucide-react";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { ChartSkeleton } from "./ChartSkeleton";
+import { ChartFadeIn } from "./ChartFadeIn";
 import { BackfillIndicator, BackfillBadge } from "@/components/BackfillIndicator";
 import { FillGapsDialog } from "@/components/FillGapsDialog";
 import { Button } from "@/components/ui/button";
@@ -871,7 +872,7 @@ function TimeSeriesNarrativeChart({
         <p className="text-sm">No narrative history found for {symbol}. Data will accumulate over time.</p>
       </div>;
   }
-  return <div className="h-[480px] md:h-[520px] w-full">
+  return <ChartFadeIn className="h-[480px] md:h-[520px] w-full">
       {/* Backfill indicator */}
       {isBackfilling && <div className="mb-3">
           <BackfillIndicator status={backfillStatus} progress={backfillProgress} />
@@ -991,7 +992,7 @@ function TimeSeriesNarrativeChart({
     }}>
           <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
         </motion.div>}
-    </div>;
+    </ChartFadeIn>;
 }
 
 // Hourly stacked bar chart for 1D/24H - Independent hourly view with live AI fallback
@@ -1908,7 +1909,7 @@ function HourlyStackedNarrativeChart({
     return <HorizontalNarrativeChart symbol={symbol} timeRange={timeRange} />;
   }
   if (historyLoading) {
-    return <AIAnalysisLoader symbol={symbol} analysisType="narratives" />;
+    return <ChartSkeleton variant="stacked" showSidePanel={true} showControls={true} chartHeight="h-[350px] md:h-[480px]" />;
   }
   if (error) {
     return <div className="h-[480px] w-full flex flex-col items-center justify-center gap-4 text-muted-foreground">
@@ -1920,7 +1921,7 @@ function HourlyStackedNarrativeChart({
         </Button>
       </div>;
   }
-  return <div className="w-full overflow-x-clip">
+  return <ChartFadeIn className="w-full overflow-x-clip">
       {/* Main chart area with fixed height - wider on mobile via negative margins */}
       {/*  <div className="h-[380px] md:h-[520px] -mx-4 px-0 md:mx-0 md:px-0">   */}
       <div className="w-full overflow-x-clip">
@@ -2112,7 +2113,7 @@ w-[120vw]
     }}>
           <NarrativeSidePanel data={panelData} priceColor={priceLineColor} isHovering={hoveredData !== null} isMobile={true} />
         </motion.div>}
-    </div>;
+    </ChartFadeIn>;
 }
 
 // Horizontal bar chart for 1H/6H
@@ -2158,7 +2159,7 @@ function HorizontalNarrativeChart({
         <p className="text-sm">No narratives found for {symbol}. Try a different time range.</p>
       </div>;
   }
-  return <div className="h-[480px] w-full">
+  return <ChartFadeIn className="h-[480px] w-full">
       {/* Prominent metadata header */}
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
         <div className="flex items-center gap-3">
@@ -2224,7 +2225,7 @@ function HorizontalNarrativeChart({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>;
+    </ChartFadeIn>;
 }
 export function NarrativeChart({
   symbol,
