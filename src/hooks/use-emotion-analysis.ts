@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback, useState } from "react";
+import { CACHE_TTL } from "@/lib/cache-config";
 
 export interface EmotionScore {
   name: string;
@@ -26,6 +27,7 @@ export interface EmotionAnalysisResult {
   aggregated?: boolean;
   snapshotCount?: number;
   timestamp?: string;
+  _stale?: boolean;
 }
 
 export function useEmotionAnalysis(
@@ -59,8 +61,8 @@ export function useEmotionAnalysis(
       } as EmotionAnalysisResult;
     },
     enabled: options?.enabled !== false && !!symbol,
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    gcTime: 60 * 60 * 1000, // 1 hour
+    staleTime: CACHE_TTL.EMOTION_ANALYSIS.staleTime,
+    gcTime: CACHE_TTL.EMOTION_ANALYSIS.gcTime,
     refetchInterval: false, // Don't auto-refetch, rely on cache
     retry: 1,
   });

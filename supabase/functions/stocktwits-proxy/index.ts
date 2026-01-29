@@ -242,6 +242,9 @@ Deno.serve(async (req) => {
       const cached = await getCachedResponse(supabase, cacheKey)
       if (cached && !cached.isStale) {
         console.log(`[Cache HIT] ${action} - ${cacheKey}`)
+        // Record cache hit (background)
+        supabase.rpc('increment_cache_stat', { p_cache_name: 'stocktwits_proxy', p_column: 'hits' })
+        
         return new Response(
           JSON.stringify(cached.data),
           { 
@@ -256,6 +259,8 @@ Deno.serve(async (req) => {
         )
       }
       console.log(`[Cache MISS] ${action} - ${cacheKey}`)
+      // Record cache miss (background)
+      supabase.rpc('increment_cache_stat', { p_cache_name: 'stocktwits_proxy', p_column: 'misses' })
     }
 
     // Check circuit breaker before making upstream request
@@ -266,6 +271,9 @@ Deno.serve(async (req) => {
       const staleCache = await getCachedResponse(supabase, cacheKey, true)
       if (staleCache) {
         console.log(`[Stale Cache Fallback] ${action} - serving degraded response`)
+        // Record stale hit (background)
+        supabase.rpc('increment_cache_stat', { p_cache_name: 'stocktwits_proxy', p_column: 'stale_hits' })
+        
         return new Response(
           JSON.stringify({ ...staleCache.data as object, _degraded: true, _reason: 'circuit_open' }),
           { 

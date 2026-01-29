@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback, useState } from "react";
+import { CACHE_TTL } from "@/lib/cache-config";
 
 export interface Narrative {
   name: string;
@@ -15,6 +16,7 @@ export interface NarrativeAnalysisResult {
   aggregated?: boolean;
   snapshotCount?: number;
   timestamp?: string;
+  _stale?: boolean;
 }
 
 export function useNarrativeAnalysis(
@@ -48,8 +50,8 @@ export function useNarrativeAnalysis(
       } as NarrativeAnalysisResult;
     },
     enabled: options?.enabled !== false && !!symbol,
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    gcTime: 60 * 60 * 1000, // 1 hour (formerly cacheTime)
+    staleTime: CACHE_TTL.NARRATIVE_ANALYSIS.staleTime,
+    gcTime: CACHE_TTL.NARRATIVE_ANALYSIS.gcTime,
     refetchInterval: false, // Don't auto-refetch, rely on cache
     retry: 1,
   });
