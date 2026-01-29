@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, useLocation, useSearchParams } from "react-router-dom";
@@ -11,10 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LazyLoad } from "@/components/ui/LazyLoad";
-import { SentimentChart } from "@/components/charts/SentimentChart";
-import { NarrativeChart } from "@/components/charts/NarrativeChart";
-import { EmotionChart } from "@/components/charts/EmotionChart";
-import { EmotionMomentumChart } from "@/components/charts/EmotionMomentumChart";
+import { ChartSkeleton } from "@/components/charts/ChartSkeleton";
+import { 
+  LazyNarrativeChart, 
+  LazyEmotionChart, 
+  LazySentimentChart, 
+  LazyEmotionMomentumChart 
+} from "@/components/charts/LazyCharts";
 import { AddToWatchlistButton } from "@/components/AddToWatchlistButton";
 import { SymbolAlertDialog } from "@/components/SymbolAlertDialog";
 import { FillTodayGapsButton } from "@/components/FillTodayGapsButton";
@@ -40,7 +43,12 @@ import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2,
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAskDeriveStreet } from "@/contexts/AskDeriveStreetContext";
 import { AskDeriveStreetBar } from "@/components/ask/AskDeriveStreetBar";
-import { AskDeriveStreetPanel } from "@/components/ask/AskDeriveStreetPanel";
+
+// Lazy load the Ask panel since it's only shown when explicitly opened
+const LazyAskDeriveStreetPanel = lazy(() => 
+  import("@/components/ask/AskDeriveStreetPanel").then(m => ({ default: m.AskDeriveStreetPanel }))
+);
+
 type TimeRange = '1H' | '6H' | '1D' | '24H' | '7D' | '30D';
 export default function SymbolPage() {
   return <SymbolPageContent />;
@@ -298,25 +306,33 @@ function SymbolPageContent() {
                 {/* Chart content first - only fetch data for active tab */}
                 <TabsContent value="narratives" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'narratives'} />
+                    <Suspense fallback={<ChartSkeleton variant="stacked" />}>
+                      <LazyNarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'narratives'} />
+                    </Suspense>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="emotions" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'emotions'} />
+                    <Suspense fallback={<ChartSkeleton variant="stacked" />}>
+                      <LazyEmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'emotions'} />
+                    </Suspense>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="sentiment" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'sentiment'} />
+                    <Suspense fallback={<ChartSkeleton variant="line" />}>
+                      <LazySentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'sentiment'} />
+                    </Suspense>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="momentum" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <EmotionMomentumChart symbol={symbol} days={7} enabled={activeTab === 'momentum'} />
+                    <Suspense fallback={<ChartSkeleton variant="bar" />}>
+                      <LazyEmotionMomentumChart symbol={symbol} days={7} enabled={activeTab === 'momentum'} />
+                    </Suspense>
                   </div>
                 </TabsContent>
 
@@ -521,7 +537,9 @@ function SymbolPageContent() {
       
       {/* Ask DeriveStreet - Bottom bar and panel */}
       <AskDeriveStreetBar />
-      <AskDeriveStreetPanel />
+      <Suspense fallback={null}>
+        <LazyAskDeriveStreetPanel />
+      </Suspense>
     </>;
 }
 // Collapsible section for Narrative Coherence with state-based lazy loading
