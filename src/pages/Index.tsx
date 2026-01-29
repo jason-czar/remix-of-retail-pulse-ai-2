@@ -1,16 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useTheme } from "next-themes";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { ProblemSection } from "@/components/landing/ProblemSection";
-import { SolutionSection } from "@/components/landing/SolutionSection";
-import { AudienceSection } from "@/components/landing/AudienceSection";
-import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
-import { IntelligencePatternsSection } from "@/components/landing/IntelligencePatternsSection";
-import { CredibilitySection } from "@/components/landing/CredibilitySection";
-import { FinalCTASection } from "@/components/landing/FinalCTASection";
 import { CursorLight } from "@/components/landing/CursorLight";
+
+// Above-fold section (loaded synchronously for FCP)
+import { HeroSection } from "@/components/landing/HeroSection";
+
+// Below-fold sections (lazy loaded for better initial performance)
+const ProblemSection = lazy(() => import("@/components/landing/ProblemSection").then(m => ({ default: m.ProblemSection })));
+const SolutionSection = lazy(() => import("@/components/landing/SolutionSection").then(m => ({ default: m.SolutionSection })));
+const AudienceSection = lazy(() => import("@/components/landing/AudienceSection").then(m => ({ default: m.AudienceSection })));
+const HowItWorksSection = lazy(() => import("@/components/landing/HowItWorksSection").then(m => ({ default: m.HowItWorksSection })));
+const IntelligencePatternsSection = lazy(() => import("@/components/landing/IntelligencePatternsSection").then(m => ({ default: m.IntelligencePatternsSection })));
+const CredibilitySection = lazy(() => import("@/components/landing/CredibilitySection").then(m => ({ default: m.CredibilitySection })));
+const FinalCTASection = lazy(() => import("@/components/landing/FinalCTASection").then(m => ({ default: m.FinalCTASection })));
+
+// Lightweight skeleton for lazy sections
+function SectionSkeleton() {
+  return <div className="w-full h-[400px] animate-pulse bg-muted/10" />;
+}
 
 const Index = () => {
   const [bgLoaded, setBgLoaded] = useState(false);
@@ -98,13 +107,27 @@ const Index = () => {
       <Header />
       <main>
         <HeroSection />
-        <ProblemSection />
-        <SolutionSection />
-        <AudienceSection />
-        <HowItWorksSection />
-        <IntelligencePatternsSection />
-        <CredibilitySection />
-        <FinalCTASection />
+        <Suspense fallback={<SectionSkeleton />}>
+          <ProblemSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <SolutionSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <AudienceSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <HowItWorksSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <IntelligencePatternsSection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <CredibilitySection />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>
+          <FinalCTASection />
+        </Suspense>
       </main>
       <Footer />
     </div>
