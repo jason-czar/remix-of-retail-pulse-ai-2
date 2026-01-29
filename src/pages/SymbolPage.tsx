@@ -34,6 +34,7 @@ import { HistoricalEpisodeMatcher } from "@/components/HistoricalEpisodeMatcher"
 import { WelcomeTour } from "@/components/WelcomeTour";
 import { useSymbolStats, useSymbolMessages } from "@/hooks/use-stocktwits";
 import { useDecisionLensSummary } from "@/hooks/use-decision-lens-summary";
+import { useLensPrefetch } from "@/hooks/use-lens-prefetch";
 import { useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Clock, Loader2, RefreshCw, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -189,6 +190,10 @@ function SymbolPageContent() {
     isFetching: lensSummaryFetching,
     refetch: refetchLensSummary
   } = useDecisionLensSummary(symbol, decisionLens, activeCustomLens);
+  
+  // Prefetch the next lens in the sequence for faster navigation
+  useLensPrefetch(symbol, decisionLens, activeCustomLens);
+  
   const [isRegenerating, setIsRegenerating] = useState(false);
   const {
     user
