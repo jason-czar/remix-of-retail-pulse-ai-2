@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DecisionLens, LensValue, isDefaultLens } from "@/components/DecisionLensSelector";
 import { ConfidenceLevel } from "@/components/ui/ConfidenceBadge";
 import { CustomLens } from "@/hooks/use-custom-lenses";
+import { CACHE_TTL } from "@/lib/cache-config";
 
 export interface LensSummaryData {
   summary: string;
@@ -14,6 +15,8 @@ export interface LensSummaryData {
   // Custom lens specific fields
   keyConcerns?: string[];
   recommendedActions?: string[];
+  // SWR indicator
+  _stale?: boolean;
 }
 
 // Map backend confidence values to UI ConfidenceLevel
@@ -69,10 +72,13 @@ export function useDecisionLensSummary(
         // Custom lens specific fields
         keyConcerns: data.keyConcerns,
         recommendedActions: data.recommendedActions,
+        // SWR indicator
+        _stale: data._stale,
       } as LensSummaryData;
     },
     enabled: !!symbol && (isDefaultLens(lens) || !!customLens),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000,
+    staleTime: CACHE_TTL.LENS_SUMMARY.staleTime,
+    gcTime: CACHE_TTL.LENS_SUMMARY.gcTime,
+    refetchInterval: CACHE_TTL.LENS_SUMMARY.staleTime,
   });
 }

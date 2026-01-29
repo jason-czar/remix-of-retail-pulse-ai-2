@@ -1,5 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Declare EdgeRuntime for background tasks
+declare const EdgeRuntime: {
+  waitUntil(promise: Promise<unknown>): void;
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -317,6 +322,116 @@ Sentence 3 (optional): Forward-looking implication for decision-makers
 If views are uniform, note the consensus strength in Sentence 2.
 Limit output to exactly 3 sentences maximum.`;
 
+// Background refresh function for stale-while-revalidate
+async function refreshLensSummaryInBackground(
+  supabase: SupabaseClient,
+  symbol: string,
+  cacheKey: string,
+  lens: DecisionLens,
+  customLensConfig: CustomLensConfig | undefined,
+  lovableApiKey: string,
+  stocktwitsApiKey: string | undefined
+): Promise<void> {
+  try {
+    console.log(`[Background Refresh] Starting for ${symbol} ${cacheKey}`);
+    
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    
+    // Fetch messages
+    const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=500`;
+    const messagesResponse = await fetch(stocktwitsUrl, {
+      headers: {
+        "x-api-key": stocktwitsApiKey || "",
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!messagesResponse.ok) {
+      console.error("[Background Refresh] Failed to fetch messages");
+      return;
+    }
+
+    const messagesData = await messagesResponse.json();
+    const messages = messagesData.data?.messages || messagesData.messages || [];
+    
+    if (messages.length === 0) {
+      console.log("[Background Refresh] No messages found");
+      return;
+    }
+
+    const messageTexts = messages
+      .slice(0, 300)
+      .map((m: { body?: string; content?: string }) => m.body || m.content || "")
+      .filter((text: string) => text.length > 10);
+
+    const lensConfig = getLensPromptContext(lens, customLensConfig);
+
+    // Call AI
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: `Analyze these ${messages.length} StockTwits messages about ${symbol.toUpperCase()} through the "${lensConfig.name}" lens.
+
+Decision Question: ${lensConfig.question}
+
+${lensConfig.context}
+${OUTPUT_SKELETON}
+
+Messages:
+${messageTexts.join("\n---\n")}`,
+          },
+        ],
+        max_tokens: 384,
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      console.error("[Background Refresh] AI API error:", aiResponse.status);
+      return;
+    }
+
+    const aiData = await aiResponse.json();
+    const rawSummary = aiData.choices?.[0]?.message?.content?.trim();
+    
+    if (!rawSummary) {
+      console.error("[Background Refresh] AI returned empty response");
+      return;
+    }
+
+    const sanitizedSummary = sanitizeText(rawSummary);
+    
+    // Cache the result
+    const cacheMinutes = lens === 'custom' ? 15 : 30;
+    const expiresAt = new Date(Date.now() + cacheMinutes * 60 * 1000).toISOString();
+    
+    await supabase
+      .from("lens_summary_cache")
+      .upsert(
+        {
+          symbol: symbol.toUpperCase(),
+          lens: cacheKey,
+          summary: sanitizedSummary,
+          message_count: messages.length,
+          expires_at: expiresAt,
+        },
+        { onConflict: "symbol,lens" }
+      );
+
+    console.log(`[Background Refresh] Completed for ${symbol} ${cacheKey}`);
+  } catch (error) {
+    console.error("[Background Refresh] Error:", error);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -356,33 +471,80 @@ serve(async (req) => {
       ? `custom-${customLensConfig.name.toLowerCase().replace(/\s+/g, '-')}`
       : lens;
     
-    // Check cache first (unless skipCache is true)
-    // Note: Custom lenses have shorter cache time and unique keys
+    // Stale-while-revalidate: Check cache with grace period
+    const SWR_GRACE_PERIOD = 5 * 60 * 1000; // 5 minutes
+    
     if (!skipCache) {
       const { data: cached } = await supabase
         .from("lens_summary_cache")
-        .select("summary, message_count")
+        .select("summary, message_count, expires_at")
         .eq("symbol", symbol.toUpperCase())
         .eq("lens", cacheKey)
-        .gt("expires_at", new Date().toISOString())
         .maybeSingle();
 
       if (cached) {
-        console.log(`Cache hit for ${symbol} ${cacheKey}`);
-        return new Response(
-          JSON.stringify({ 
-            summary: cached.summary, 
-            cached: true, 
-            messageCount: cached.message_count,
-            // Return moderate confidence for cached results as we don't have fresh stats
-            confidence: 'moderate' as ConfidenceLevel,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const now = new Date();
+        const expiresAt = new Date(cached.expires_at);
+        const isExpired = expiresAt < now;
+        const isWithinGrace = expiresAt.getTime() + SWR_GRACE_PERIOD > now.getTime();
+        
+        // Fresh cache - return immediately
+        if (!isExpired) {
+          console.log(`[Cache HIT] ${symbol} ${cacheKey}`);
+          // Record cache hit (background)
+          supabase.rpc('increment_cache_stat', { p_cache_name: 'lens_summary', p_column: 'hits' });
+          
+          return new Response(
+            JSON.stringify({ 
+              summary: cached.summary, 
+              cached: true, 
+              messageCount: cached.message_count,
+              confidence: 'moderate' as ConfidenceLevel,
+            }),
+            { 
+              headers: { 
+                ...corsHeaders, 
+                "Content-Type": "application/json",
+                "X-Cache": "HIT",
+              } 
+            }
+          );
+        }
+        
+        // Stale but within grace period - return stale data and refresh in background
+        if (isExpired && isWithinGrace) {
+          console.log(`[Cache STALE] ${symbol} ${cacheKey} - serving stale, refreshing in background`);
+          // Record stale hit (background)
+          supabase.rpc('increment_cache_stat', { p_cache_name: 'lens_summary', p_column: 'stale_hits' });
+          
+          // Trigger background refresh (don't await)
+          EdgeRuntime.waitUntil(refreshLensSummaryInBackground(
+            supabase, symbol, cacheKey, lens as DecisionLens, customLensConfig, LOVABLE_API_KEY!, STOCKTWITS_API_KEY
+          ));
+          
+          return new Response(
+            JSON.stringify({ 
+              summary: cached.summary, 
+              cached: true, 
+              messageCount: cached.message_count,
+              confidence: 'moderate' as ConfidenceLevel,
+              _stale: true,
+            }),
+            { 
+              headers: { 
+                ...corsHeaders, 
+                "Content-Type": "application/json",
+                "X-Cache": "STALE",
+              } 
+            }
+          );
+        }
       }
     }
 
-    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${cacheKey}, fetching messages...`);
+    console.log(`[Cache MISS] ${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${cacheKey}`);
+    // Record cache miss (background)
+    supabase.rpc('increment_cache_stat', { p_cache_name: 'lens_summary', p_column: 'misses' });
     
     // Fetch recent messages from StockTwits (last 24 hours, limit 500)
     const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=500`;

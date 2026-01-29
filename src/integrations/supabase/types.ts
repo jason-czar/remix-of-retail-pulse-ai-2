@@ -80,6 +80,36 @@ export type Database = {
         }
         Relationships: []
       }
+      cache_statistics: {
+        Row: {
+          cache_name: string
+          created_at: string | null
+          hits: number | null
+          id: string
+          misses: number | null
+          recorded_date: string
+          stale_hits: number | null
+        }
+        Insert: {
+          cache_name: string
+          created_at?: string | null
+          hits?: number | null
+          id?: string
+          misses?: number | null
+          recorded_date?: string
+          stale_hits?: number | null
+        }
+        Update: {
+          cache_name?: string
+          created_at?: string | null
+          hits?: number | null
+          id?: string
+          misses?: number | null
+          recorded_date?: string
+          stale_hits?: number | null
+        }
+        Relationships: []
+      }
       emotion_cache: {
         Row: {
           created_at: string | null
@@ -646,12 +676,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_all_caches: { Args: never; Returns: Json }
       cleanup_lens_cache: { Args: never; Returns: undefined }
       cleanup_old_history: { Args: never; Returns: undefined }
       cleanup_psychology_history: { Args: never; Returns: undefined }
       cleanup_psychology_snapshots: { Args: never; Returns: undefined }
       cleanup_stocktwits_cache: { Args: never; Returns: undefined }
       cleanup_volume_history: { Args: never; Returns: undefined }
+      increment_cache_stat: {
+        Args: { p_cache_name: string; p_column: string }
+        Returns: undefined
+      }
     }
     Enums: {
       subscription_plan: "free" | "professional" | "enterprise"
