@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { 
   canMakeRequest, 
   recordSuccess, 
@@ -6,6 +7,7 @@ import {
   getCircuitStateLabel,
   isCircuitTripError 
 } from '../_shared/circuit-breaker.ts';
+import { createLogger, reportError, recordMetric, createTimer } from '../_shared/logger.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +21,16 @@ const CIRCUIT_ID = 'yahoo-finance';
 // In-memory cache for rate limit protection
 const memoryCache: Map<string, { data: PriceResponse; timestamp: number }> = new Map();
 const MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minute in-memory cache
+
+// Create structured logger
+const logger = createLogger('stock-price-proxy');
+
+// Create Supabase client for metrics
+function getSupabaseClient() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 interface PricePoint {
   timestamp: string;
@@ -47,8 +59,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Initialize request tracking
+  const requestId = crypto.randomUUID();
+  const requestTimer = createTimer();
+  const startTime = logger.startRequest(requestId);
+
   // Get circuit state for response headers
   const circuitState = getCircuitStateLabel(CIRCUIT_ID);
+  
+  // Initialize Supabase client for metrics
+  const supabase = getSupabaseClient();
 
   try {
     const url = new URL(req.url);
@@ -56,32 +76,76 @@ serve(async (req) => {
     const timeRange = url.searchParams.get("timeRange") || "1D";
 
     if (!symbol) {
+      logger.warn('Symbol not provided');
       return new Response(
         JSON.stringify({ error: "Symbol is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": circuitState } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": circuitState, "X-Request-Id": requestId } }
       );
     }
+
+    logger.info('Processing request', { 
+      symbol,
+      time_range: timeRange,
+      circuit_state: circuitState as 'closed' | 'open' | 'half-open',
+    });
 
     const cacheKey = `${symbol}-${timeRange}`;
     
     // Check in-memory cache first (fastest, avoids all network calls)
     const memCached = memoryCache.get(cacheKey);
     if (memCached && Date.now() - memCached.timestamp < MEMORY_CACHE_TTL) {
-      console.log(`Memory cache hit for ${symbol} ${timeRange}`);
+      logger.info('Memory cache hit', { 
+        symbol,
+        cache_status: 'hit',
+      });
+      
+      // Record metrics
+      requestTimer.record(supabase, {
+        metric_type: 'api_latency',
+        function_name: 'stock-price-proxy',
+        endpoint: 'quote',
+        symbol,
+        cache_status: 'hit',
+        circuit_state: circuitState,
+        status_code: 200,
+      });
+      
+      logger.endRequest(startTime, 200);
+      
       return new Response(
         JSON.stringify(memCached.data),
-        { headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "HIT", "X-Circuit": circuitState } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "HIT", "X-Circuit": circuitState, "X-Request-Id": requestId } }
       );
     }
 
     // Check circuit breaker before making upstream request
     if (!canMakeRequest(CIRCUIT_ID)) {
-      console.warn(`[Circuit OPEN] ${CIRCUIT_ID} - attempting stale cache fallback`);
+      logger.warn('Circuit breaker open', { 
+        symbol,
+        circuit_state: 'open',
+      });
       
       // Use stale memory cache as fallback
       const staleCache = memoryCache.get(cacheKey);
       if (staleCache) {
-        console.log(`[Stale Cache Fallback] ${symbol} - serving degraded response`);
+        logger.info('Serving stale cache fallback', { 
+          symbol,
+          cache_status: 'stale',
+          circuit_state: 'open',
+        });
+        
+        requestTimer.record(supabase, {
+          metric_type: 'api_latency',
+          function_name: 'stock-price-proxy',
+          endpoint: 'quote',
+          symbol,
+          cache_status: 'stale',
+          circuit_state: 'open',
+          status_code: 200,
+        });
+        
+        logger.endRequest(startTime, 200);
+        
         return new Response(
           JSON.stringify({ ...staleCache.data, _degraded: true, _reason: 'circuit_open' }),
           { 
@@ -91,19 +155,36 @@ serve(async (req) => {
               "X-Cache": "STALE",
               "X-Circuit": "OPEN",
               "X-Degraded": "true",
+              "X-Request-Id": requestId,
             } 
           }
         );
       }
       
       // No cache available - return service unavailable
+      logger.error('Circuit open with no cache fallback', { 
+        symbol,
+        circuit_state: 'open',
+      });
+      
+      requestTimer.record(supabase, {
+        metric_type: 'api_latency',
+        function_name: 'stock-price-proxy',
+        endpoint: 'quote',
+        symbol,
+        circuit_state: 'open',
+        status_code: 503,
+      });
+      
+      logger.endRequest(startTime, 503);
+      
       return new Response(
         JSON.stringify({ 
           error: "Service temporarily unavailable",
           retryAfter: 30,
           _circuit: 'open'
         }),
-        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": "OPEN" } }
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": "OPEN", "X-Request-Id": requestId } }
       );
     }
 
@@ -113,7 +194,11 @@ serve(async (req) => {
     // Fetch from Yahoo Finance with retry logic
     const yahooUrl = `${YAHOO_QUOTE_URL}/${symbol}?range=${range}&interval=${interval}&includePrePost=false`;
     
-    console.log(`Fetching stock price for ${symbol}, range: ${range}, interval: ${interval}`);
+    logger.debug('Fetching from Yahoo Finance', { 
+      symbol,
+      range,
+      interval,
+    });
     
     let response: Response | null = null;
     let retryCount = 0;
@@ -121,12 +206,23 @@ serve(async (req) => {
     
     while (retryCount <= maxRetries) {
       try {
+        const upstreamTimer = createTimer();
+        
         response = await fetch(yahooUrl, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "application/json",
             "Accept-Language": "en-US,en;q=0.9",
           },
+        });
+        
+        // Record upstream call metric
+        upstreamTimer.record(supabase, {
+          metric_type: 'upstream_call',
+          function_name: 'stock-price-proxy',
+          endpoint: 'yahoo-finance',
+          symbol,
+          status_code: response.status,
         });
         
         if (response.ok) {
@@ -137,12 +233,46 @@ serve(async (req) => {
         // Check if this is a circuit-trip error
         if (isCircuitTripError(response.status, false)) {
           recordFailure(CIRCUIT_ID);
-          console.warn(`[Circuit Failure] ${CIRCUIT_ID} - status: ${response.status}`);
+          logger.warn('Circuit failure recorded', { 
+            symbol,
+            status_code: response.status,
+            retry_count: retryCount,
+          });
+          
+          // Report error
+          await reportError(supabase, {
+            error_type: 'edge_function',
+            error_code: String(response.status),
+            error_message: `Yahoo Finance API returned ${response.status}`,
+            function_name: 'stock-price-proxy',
+            request_id: requestId,
+            symbol,
+            request_path: '/functions/v1/stock-price-proxy',
+            request_method: 'GET',
+            request_params: { symbol, timeRange },
+            severity: response.status >= 500 ? 'error' : 'warning',
+          });
           
           // Check if we have stale cache we can use
           const staleCache = memoryCache.get(cacheKey);
           if (staleCache) {
-            console.log(`Rate limited/error, using stale cache for ${symbol}`);
+            logger.info('Using stale cache after rate limit', { 
+              symbol,
+              cache_status: 'stale',
+            });
+            
+            requestTimer.record(supabase, {
+              metric_type: 'api_latency',
+              function_name: 'stock-price-proxy',
+              endpoint: 'quote',
+              symbol,
+              cache_status: 'stale',
+              circuit_state: getCircuitStateLabel(CIRCUIT_ID),
+              status_code: 200,
+            });
+            
+            logger.endRequest(startTime, 200);
+            
             return new Response(
               JSON.stringify({ ...staleCache.data, _degraded: true, _reason: 'upstream_error' }),
               { 
@@ -152,6 +282,7 @@ serve(async (req) => {
                   "X-Cache": "STALE",
                   "X-Circuit": getCircuitStateLabel(CIRCUIT_ID),
                   "X-Degraded": "true",
+                  "X-Request-Id": requestId,
                 } 
               }
             );
@@ -160,7 +291,11 @@ serve(async (req) => {
           if (response.status === 429) {
             // Wait before retry with exponential backoff
             const waitTime = Math.pow(2, retryCount) * 1000;
-            console.log(`Rate limited, waiting ${waitTime}ms before retry ${retryCount + 1}`);
+            logger.info('Rate limited, waiting before retry', { 
+              symbol,
+              wait_ms: waitTime,
+              retry_count: retryCount + 1,
+            });
             await new Promise(resolve => setTimeout(resolve, waitTime));
             retryCount++;
           } else {
@@ -170,7 +305,11 @@ serve(async (req) => {
           break; // Non-circuit-trip error
         }
       } catch (fetchError) {
-        console.error(`Fetch error attempt ${retryCount}:`, fetchError);
+        logger.error('Fetch error during retry', { 
+          symbol,
+          retry_count: retryCount,
+          error: fetchError instanceof Error ? fetchError.message : 'Unknown error',
+        });
         recordFailure(CIRCUIT_ID);
         retryCount++;
         if (retryCount > maxRetries) throw fetchError;
@@ -181,7 +320,23 @@ serve(async (req) => {
       // Try to use stale cache as last resort
       const staleCache = memoryCache.get(cacheKey);
       if (staleCache) {
-        console.log(`API failed, using stale cache for ${symbol}`);
+        logger.info('API failed, using stale cache', { 
+          symbol,
+          cache_status: 'stale',
+        });
+        
+        requestTimer.record(supabase, {
+          metric_type: 'api_latency',
+          function_name: 'stock-price-proxy',
+          endpoint: 'quote',
+          symbol,
+          cache_status: 'stale',
+          circuit_state: getCircuitStateLabel(CIRCUIT_ID),
+          status_code: 200,
+        });
+        
+        logger.endRequest(startTime, 200);
+        
         return new Response(
           JSON.stringify({ ...staleCache.data, _degraded: true, _reason: 'api_failed' }),
           { 
@@ -191,27 +346,63 @@ serve(async (req) => {
               "X-Cache": "STALE",
               "X-Circuit": getCircuitStateLabel(CIRCUIT_ID),
               "X-Degraded": "true",
+              "X-Request-Id": requestId,
             } 
           }
         );
       }
       
-      console.error(`Yahoo Finance API error: ${response?.status}`);
+      logger.error('Yahoo Finance API error', { 
+        symbol,
+        status_code: response?.status || 500,
+      });
+      
+      const errorStatus = response?.status || 500;
+      
+      requestTimer.record(supabase, {
+        metric_type: 'api_latency',
+        function_name: 'stock-price-proxy',
+        endpoint: 'quote',
+        symbol,
+        circuit_state: getCircuitStateLabel(CIRCUIT_ID),
+        status_code: errorStatus,
+      });
+      
+      logger.endRequest(startTime, errorStatus);
+      
       return new Response(
-        JSON.stringify({ error: "Failed to fetch stock data", status: response?.status || 500 }),
-        { status: response?.status || 500, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID) } }
+        JSON.stringify({ error: "Failed to fetch stock data", status: errorStatus }),
+        { status: errorStatus, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID), "X-Request-Id": requestId } }
       );
     }
 
     // Successful response - record success
     recordSuccess(CIRCUIT_ID);
+    
+    logger.info('Yahoo Finance request successful', { 
+      symbol,
+      circuit_state: getCircuitStateLabel(CIRCUIT_ID) as 'closed' | 'open' | 'half-open',
+    });
 
     const data = await response.json();
     
     if (!data.chart?.result?.[0]) {
+      logger.warn('No data found for symbol', { symbol });
+      
+      requestTimer.record(supabase, {
+        metric_type: 'api_latency',
+        function_name: 'stock-price-proxy',
+        endpoint: 'quote',
+        symbol,
+        circuit_state: getCircuitStateLabel(CIRCUIT_ID),
+        status_code: 404,
+      });
+      
+      logger.endRequest(startTime, 404);
+      
       return new Response(
         JSON.stringify({ error: "No data found for symbol", symbol }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID) } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID), "X-Request-Id": requestId } }
       );
     }
 
@@ -270,7 +461,24 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Returning ${prices.length} price points for ${symbol}`);
+    logger.info('Returning price data', { 
+      symbol,
+      price_point_count: prices.length,
+      cache_status: 'miss',
+    });
+
+    // Record metrics
+    requestTimer.record(supabase, {
+      metric_type: 'api_latency',
+      function_name: 'stock-price-proxy',
+      endpoint: 'quote',
+      symbol,
+      cache_status: 'miss',
+      circuit_state: getCircuitStateLabel(CIRCUIT_ID),
+      status_code: 200,
+    });
+    
+    logger.endRequest(startTime, 200);
 
     return new Response(
       JSON.stringify(priceResponse),
@@ -280,16 +488,44 @@ serve(async (req) => {
           "Content-Type": "application/json",
           "X-Cache": "MISS",
           "X-Circuit": getCircuitStateLabel(CIRCUIT_ID),
+          "X-Request-Id": requestId,
         } 
       }
     );
   } catch (error) {
-    console.error("Stock price proxy error:", error);
+    logger.error('Unhandled error', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     recordFailure(CIRCUIT_ID);
+    
+    // Report error
+    await reportError(supabase, {
+      error_type: 'edge_function',
+      error_code: 'UNHANDLED_ERROR',
+      error_message: error instanceof Error ? error.message : 'Unknown error',
+      stack_trace: error instanceof Error ? error.stack : undefined,
+      function_name: 'stock-price-proxy',
+      request_id: requestId,
+      request_path: '/functions/v1/stock-price-proxy',
+      request_method: req.method,
+      severity: 'error',
+    });
+    
+    // Record metrics
+    requestTimer.record(supabase, {
+      metric_type: 'api_latency',
+      function_name: 'stock-price-proxy',
+      circuit_state: getCircuitStateLabel(CIRCUIT_ID),
+      status_code: 500,
+    });
+    
+    logger.endRequest(startTime, 500);
+    
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: "Internal server error", message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID) } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID), "X-Request-Id": requestId } }
     );
   }
 });
