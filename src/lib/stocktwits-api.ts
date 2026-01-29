@@ -255,7 +255,7 @@ export const stocktwitsApi = {
     const allMessages: Message[] = [];
     let cursor: MessageCursor | undefined;
     let hasMore = true;
-    const pageSize = 1000; // Max allowed by API
+    const pageSize = 1000; // Max messages per page allowed by StockTwits API
     
     while (hasMore && allMessages.length < maxMessages) {
       const result = await this.getMessagesPaginated(symbol, pageSize, start, end, cursor);
