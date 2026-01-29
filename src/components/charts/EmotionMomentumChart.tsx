@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ChartErrorState } from "@/components/ChartErrorState";
 import { ChartSkeleton } from "./ChartSkeleton";
+import { ChartFadeIn } from "./ChartFadeIn";
 import { format } from "date-fns";
 import {
   TrendingUp,
@@ -197,7 +198,7 @@ export function EmotionMomentumChart({ symbol, days = 7, enabled = true }: Emoti
   }[data.overallMomentum];
 
   return (
-    <div className="space-y-6">
+    <ChartFadeIn className="space-y-6">
       {/* Header with market signal */}
       <div className="flex items-center justify-between p-3 rounded-xl bg-white/60 dark:bg-[hsl(0_0%_15%/0.55)] backdrop-blur-[20px] backdrop-saturate-[140%] border border-black/[0.08] dark:border-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)]">
         <div className="flex items-center gap-3">
@@ -555,6 +556,6 @@ export function EmotionMomentumChart({ symbol, days = 7, enabled = true }: Emoti
             </div>
           ))}
       </div>
-    </div>
+    </ChartFadeIn>
   );
 }

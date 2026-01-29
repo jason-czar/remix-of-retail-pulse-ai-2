@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
 import { ChartSkeleton } from "./ChartSkeleton";
+import { ChartFadeIn } from "./ChartFadeIn";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 import { CHART_SIDE_PANEL, CHART_SIDE_PANEL_MOBILE } from "@/lib/chart-constants";
 
@@ -762,7 +763,7 @@ export function EmotionChart({ symbol, timeRange = '24H', enabled = true }: Emot
   }
 
   return (
-    <div className="w-full">
+    <ChartFadeIn className="w-full">
       {/* Main chart area with fixed height */}
       <div className="h-[362px] md:h-[562px]">
         {/* Header - Collapsible */}
@@ -1003,7 +1004,7 @@ export function EmotionChart({ symbol, timeRange = '24H', enabled = true }: Emot
           />
         </motion.div>
       )}
-    </div>
+    </ChartFadeIn>
   );
 }
 
@@ -1054,7 +1055,7 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
   }
 
   return (
-    <div className="h-[440px] w-full">
+    <ChartFadeIn className="h-[440px] w-full">
       <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card/50 border border-border">
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-primary" />
@@ -1178,6 +1179,6 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
           </div>
         ))}
       </div>
-    </div>
+    </ChartFadeIn>
   );
 }
