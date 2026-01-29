@@ -268,7 +268,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol, startDate, endDate, forceHourly, type, force } = await req.json();
+    const { symbol, startDate, endDate, forceHourly } = await req.json();
 
     if (!symbol || !startDate || !endDate) {
       return new Response(
@@ -277,11 +277,7 @@ serve(async (req) => {
       );
     }
 
-    // type can be 'messages', 'analytics', or undefined (all)
-    const fetchMessages = !type || type === 'messages' || type === 'all';
-    const generateAnalytics = !type || type === 'analytics' || type === 'all';
-    
-    console.log(`Auto-backfill gaps for ${symbol} from ${startDate} to ${endDate}${forceHourly ? " (hourly mode)" : ""} - type: ${type || 'all'}, force: ${force || false}`);
+    console.log(`Auto-backfill gaps for ${symbol} from ${startDate} to ${endDate}${forceHourly ? " (hourly mode)" : ""}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -440,52 +436,44 @@ serve(async (req) => {
     const expectedDates = getWeekdaysInRange(new Date(startDate), new Date(endDate));
     console.log(`Expected ${expectedDates.length} weekdays in range`);
 
-    let missingDates: string[] = expectedDates;
-    
-    // Only check for existing data if not forced
-    if (!force) {
-      // Determine which table to check based on type
-      const tableToCheck = fetchMessages ? "sentiment_history" : "narrative_history";
-      
-      const { data: existingData, error: queryError } = await supabase
-        .from(tableToCheck)
-        .select("recorded_at")
-        .eq("symbol", symbol.toUpperCase())
-        .gte("recorded_at", startDate)
-        .lte("recorded_at", endDate + "T23:59:59Z");
+    // Query existing narrative_history dates
+    const { data: existingData, error: queryError } = await supabase
+      .from("narrative_history")
+      .select("recorded_at")
+      .eq("symbol", symbol.toUpperCase())
+      .eq("period_type", "daily")
+      .gte("recorded_at", startDate)
+      .lte("recorded_at", endDate + "T23:59:59Z");
 
-      if (queryError) {
-        console.error("Query error:", queryError);
-        throw new Error(`Database query failed: ${queryError.message}`);
-      }
+    if (queryError) {
+      console.error("Query error:", queryError);
+      throw new Error(`Database query failed: ${queryError.message}`);
+    }
 
-      // Get unique dates that already have data
-      const existingDates = new Set(
-        (existingData || []).map(row => 
-          new Date(row.recorded_at).toISOString().split('T')[0]
-        )
+    // Get unique dates that already have data
+    const existingDates = new Set(
+      (existingData || []).map(row => 
+        new Date(row.recorded_at).toISOString().split('T')[0]
+      )
+    );
+    console.log(`Found ${existingDates.size} existing dates with data`);
+
+    // Find missing dates
+    const missingDates = expectedDates.filter(d => !existingDates.has(d));
+    console.log(`Missing data for ${missingDates.length} dates:`, missingDates);
+
+    if (missingDates.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          symbol,
+          message: "No missing dates found",
+          expectedDates: expectedDates.length,
+          existingDates: existingDates.size,
+          backfilledDates: [],
+          skippedDates: expectedDates,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-      console.log(`Found ${existingDates.size} existing dates with ${tableToCheck} data`);
-
-      // Find missing dates
-      missingDates = expectedDates.filter(d => !existingDates.has(d));
-      console.log(`Missing data for ${missingDates.length} dates:`, missingDates);
-
-      if (missingDates.length === 0) {
-        return new Response(
-          JSON.stringify({ 
-            symbol,
-            message: "No missing dates found",
-            expectedDates: expectedDates.length,
-            existingDates: existingDates.size,
-            backfilledDates: [],
-            skippedDates: expectedDates,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } else {
-      console.log(`Force mode enabled - processing all ${expectedDates.length} dates`);
     }
 
     const results = {
@@ -534,57 +522,9 @@ serve(async (req) => {
         
         console.log(`Fetched ${messages.length} messages for ${dateStr}`);
 
-        // Store sentiment data if fetching messages
-        if (fetchMessages && messages.length > 0) {
-          // Calculate sentiment counts
-          let bullishCount = 0;
-          let bearishCount = 0;
-          let neutralCount = 0;
-          
-          for (const msg of messages) {
-            const sentiment = msg.sentiment?.basic?.toLowerCase();
-            if (sentiment === 'bullish') bullishCount++;
-            else if (sentiment === 'bearish') bearishCount++;
-            else neutralCount++;
-          }
-          
-          const totalTagged = bullishCount + bearishCount;
-          const sentimentScore = totalTagged > 0 
-            ? Math.round((bullishCount / totalTagged) * 100) 
-            : 50;
-          
-          const recordedAt = `${dateStr}T23:00:00Z`;
-          
-          // Upsert to avoid duplicates
-          const { error: sentimentError } = await supabase
-            .from("sentiment_history")
-            .upsert({
-              symbol: symbol.toUpperCase(),
-              recorded_at: recordedAt,
-              sentiment_score: sentimentScore,
-              bullish_count: bullishCount,
-              bearish_count: bearishCount,
-              neutral_count: neutralCount,
-              message_volume: messages.length,
-            }, { onConflict: 'symbol,recorded_at' });
-          
-          if (sentimentError) {
-            console.error(`Sentiment insert error for ${dateStr}:`, sentimentError);
-            results.errors.push(`${dateStr}: ${sentimentError.message}`);
-          } else {
-            console.log(`Stored sentiment data for ${dateStr}: ${messages.length} messages, score: ${sentimentScore}`);
-          }
-        }
-
-        // Skip analytics generation if not enough messages or not requested
-        if (!generateAnalytics) {
-          results.backfilledDates.push(dateStr);
-          continue;
-        }
-        
         if (messages.length < 10) {
-          console.log(`Skipping analytics for ${dateStr}: only ${messages.length} messages (minimum 10 required)`);
-          results.backfilledDates.push(dateStr);
+          console.log(`Skipping ${dateStr}: only ${messages.length} messages (minimum 10 required)`);
+          results.skippedDates.push(dateStr);
           continue;
         }
 
