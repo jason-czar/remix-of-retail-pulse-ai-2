@@ -28,6 +28,8 @@ interface EmotionScore {
   percentage: number;
 }
 
+type IngestionType = 'messages' | 'analytics' | 'all';
+
 // Check if a date is a weekday (Mon-Fri)
 function isWeekday(date: Date): boolean {
   const day = date.getUTCDay();
@@ -55,6 +57,40 @@ function getWeekdaysInRange(startDate: Date, endDate: Date): string[] {
 
 // Delay helper
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Compute sentiment aggregates from messages
+function computeSentimentFromMessages(messages: StocktwitsMessage[]): {
+  sentimentScore: number;
+  bullishCount: number;
+  bearishCount: number;
+  neutralCount: number;
+} {
+  let bullish = 0, bearish = 0, neutral = 0;
+  
+  for (const msg of messages) {
+    const sentiment = msg.sentiment?.basic?.toLowerCase();
+    if (sentiment === 'bullish') bullish++;
+    else if (sentiment === 'bearish') bearish++;
+    else neutral++;
+  }
+  
+  const total = bullish + bearish + neutral;
+  if (total === 0) {
+    return { sentimentScore: 50, bullishCount: 0, bearishCount: 0, neutralCount: 0 };
+  }
+  
+  // Score: 0 = all bearish, 50 = neutral, 100 = all bullish
+  const sentimentScore = Math.round(((bullish - bearish) / total + 1) * 50);
+  
+  return { sentimentScore, bullishCount: bullish, bearishCount: bearish, neutralCount: neutral };
+}
+
+// Get end-of-day timestamp for consistent alignment with other history tables
+function getEndOfDayTimestamp(dateStr: string): string {
+  const recordedAt = new Date(`${dateStr}T00:00:00Z`);
+  recordedAt.setUTCHours(23, 59, 59, 999);
+  return recordedAt.toISOString();
+}
 
 async function analyzeNarratives(messages: StocktwitsMessage[], apiKey: string): Promise<Narrative[]> {
   const messageContent = messages
@@ -262,13 +298,64 @@ async function getMissingHoursForToday(
   return expectedHours.filter(hour => !hoursWithData.has(hour));
 }
 
+// Check if sentiment data exists for a date
+async function hasSentimentData(
+  supabase: any,
+  symbol: string,
+  dateStr: string
+): Promise<boolean> {
+  const dayStart = `${dateStr}T00:00:00Z`;
+  const dayEnd = `${dateStr}T23:59:59Z`;
+  
+  const { data, error } = await supabase
+    .from('sentiment_history')
+    .select('id')
+    .eq('symbol', symbol.toUpperCase())
+    .gte('recorded_at', dayStart)
+    .lte('recorded_at', dayEnd)
+    .limit(1);
+  
+  if (error) {
+    console.error('Error checking sentiment_history:', error);
+    return false;
+  }
+  
+  return data && data.length > 0;
+}
+
+// Check if analytics data exists for a date
+async function hasAnalyticsData(
+  supabase: any,
+  symbol: string,
+  dateStr: string
+): Promise<boolean> {
+  const dayStart = `${dateStr}T00:00:00Z`;
+  const dayEnd = `${dateStr}T23:59:59Z`;
+  
+  const { data, error } = await supabase
+    .from('narrative_history')
+    .select('id')
+    .eq('symbol', symbol.toUpperCase())
+    .eq('period_type', 'daily')
+    .gte('recorded_at', dayStart)
+    .lte('recorded_at', dayEnd)
+    .limit(1);
+  
+  if (error) {
+    console.error('Error checking narrative_history:', error);
+    return false;
+  }
+  
+  return data && data.length > 0;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { symbol, startDate, endDate, forceHourly } = await req.json();
+    const { symbol, startDate, endDate, forceHourly, type, force } = await req.json();
 
     if (!symbol || !startDate || !endDate) {
       return new Response(
@@ -277,7 +364,11 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Auto-backfill gaps for ${symbol} from ${startDate} to ${endDate}${forceHourly ? " (hourly mode)" : ""}`);
+    // Parse ingestion type (default to 'all' for backwards compatibility)
+    const ingestionType: IngestionType = type || 'all';
+    const forceRefetch = force === true;
+
+    console.log(`Auto-backfill gaps for ${symbol} from ${startDate} to ${endDate}${forceHourly ? " (hourly mode)" : ""} [type=${ingestionType}, force=${forceRefetch}]`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -431,67 +522,60 @@ serve(async (req) => {
       );
     }
 
-    // DAILY MODE: Original daily backfill logic
+    // DAILY MODE: Original daily backfill logic with type/force support
     // Get expected weekdays in range
     const expectedDates = getWeekdaysInRange(new Date(startDate), new Date(endDate));
     console.log(`Expected ${expectedDates.length} weekdays in range`);
 
-    // Query existing narrative_history dates
-    const { data: existingData, error: queryError } = await supabase
-      .from("narrative_history")
-      .select("recorded_at")
-      .eq("symbol", symbol.toUpperCase())
-      .eq("period_type", "daily")
-      .gte("recorded_at", startDate)
-      .lte("recorded_at", endDate + "T23:59:59Z");
-
-    if (queryError) {
-      console.error("Query error:", queryError);
-      throw new Error(`Database query failed: ${queryError.message}`);
-    }
-
-    // Get unique dates that already have data
-    const existingDates = new Set(
-      (existingData || []).map(row => 
-        new Date(row.recorded_at).toISOString().split('T')[0]
-      )
-    );
-    console.log(`Found ${existingDates.size} existing dates with data`);
-
-    // Find missing dates
-    const missingDates = expectedDates.filter(d => !existingDates.has(d));
-    console.log(`Missing data for ${missingDates.length} dates:`, missingDates);
-
-    if (missingDates.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          symbol,
-          message: "No missing dates found",
-          expectedDates: expectedDates.length,
-          existingDates: existingDates.size,
-          backfilledDates: [],
-          skippedDates: expectedDates,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const results = {
       symbol,
-      missingDates: missingDates.length,
-      backfilledDates: [] as string[],
+      ingestionType,
+      force: forceRefetch,
+      processedDates: [] as string[],
       skippedDates: [] as string[],
+      sentimentRecords: 0,
+      narrativeRecords: 0,
+      emotionRecords: 0,
       errors: [] as string[],
     };
 
-    // Process each missing date (limit to 3 per request to avoid timeouts)
-    const datesToProcess = missingDates.slice(0, 3);
+    // Process each date (limit to 3 per request to avoid timeouts)
+    const datesToProcess = expectedDates.slice(0, 3);
     
     for (const dateStr of datesToProcess) {
-      console.log(`Processing missing date: ${dateStr}`);
+      console.log(`Processing date: ${dateStr}`);
       
       try {
-        // Fetch messages from our local StockTwits proxy for this date
+        // Determine what needs to be done based on type and existing data
+        const needsMessages = ingestionType === 'messages' || ingestionType === 'all';
+        const needsAnalytics = ingestionType === 'analytics' || ingestionType === 'all';
+        
+        let shouldFetchMessages = false;
+        let shouldRunAnalytics = false;
+        
+        if (forceRefetch) {
+          // Force mode: always process
+          shouldFetchMessages = needsMessages;
+          shouldRunAnalytics = needsAnalytics;
+        } else {
+          // Check what data already exists
+          if (needsMessages) {
+            const hasSentiment = await hasSentimentData(supabase, symbol, dateStr);
+            shouldFetchMessages = !hasSentiment;
+          }
+          if (needsAnalytics) {
+            const hasAnalytics = await hasAnalyticsData(supabase, symbol, dateStr);
+            shouldRunAnalytics = !hasAnalytics;
+          }
+        }
+        
+        if (!shouldFetchMessages && !shouldRunAnalytics) {
+          console.log(`Skipping ${dateStr}: data already exists`);
+          results.skippedDates.push(dateStr);
+          continue;
+        }
+        
+        // Fetch messages from StockTwits proxy
         const dayStart = `${dateStr}T00:00:00Z`;
         const dayEnd = `${dateStr}T23:59:59Z`;
         
@@ -528,56 +612,91 @@ serve(async (req) => {
           continue;
         }
 
-        // Analyze narratives
-        const narratives = await analyzeNarratives(messages, lovableApiKey);
-        
-        if (narratives.length > 0) {
-          const dominantNarrative = narratives.sort((a, b) => b.count - a.count)[0]?.name || null;
-          
-          // Store with timestamp at end of the day
-          const recordedAt = `${dateStr}T23:00:00Z`;
-          
-          const { error: narrativeError } = await supabase.from("narrative_history").insert({
-            symbol: symbol.toUpperCase(),
-            period_type: "daily",
-            recorded_at: recordedAt,
-            narratives: narratives,
-            dominant_narrative: dominantNarrative,
-            message_count: messages.length,
-          });
+        const recordedAt = getEndOfDayTimestamp(dateStr);
 
-          if (narrativeError) {
-            console.error(`Narrative insert error for ${dateStr}:`, narrativeError);
-            results.errors.push(`${dateStr}: ${narrativeError.message}`);
+        // MESSAGES FLOW: Compute and store sentiment aggregates
+        if (shouldFetchMessages) {
+          const { sentimentScore, bullishCount, bearishCount, neutralCount } = 
+            computeSentimentFromMessages(messages);
+          
+          console.log(`Sentiment for ${dateStr}: score=${sentimentScore}, bullish=${bullishCount}, bearish=${bearishCount}, neutral=${neutralCount}`);
+          
+          const { error: sentimentError } = await supabase
+            .from('sentiment_history')
+            .upsert({
+              symbol: symbol.toUpperCase(),
+              recorded_at: recordedAt,
+              sentiment_score: sentimentScore,
+              bullish_count: bullishCount,
+              bearish_count: bearishCount,
+              neutral_count: neutralCount,
+              message_volume: messages.length,
+            }, { 
+              onConflict: 'symbol,recorded_at',
+              ignoreDuplicates: false 
+            });
+          
+          if (sentimentError) {
+            console.error(`Sentiment insert error for ${dateStr}:`, sentimentError);
+            results.errors.push(`${dateStr}: ${sentimentError.message}`);
+          } else {
+            results.sentimentRecords++;
+            console.log(`Stored sentiment data for ${dateStr}`);
           }
         }
 
-        await delay(300);
-
-        // Analyze emotions
-        const emotions = await analyzeEmotions(messages, lovableApiKey);
-        
-        if (emotions.length > 0) {
-          const dominantEmotion = emotions.sort((a, b) => b.score - a.score)[0]?.name || null;
+        // ANALYTICS FLOW: Run AI analysis for narratives and emotions
+        if (shouldRunAnalytics) {
+          // Analyze narratives
+          const narratives = await analyzeNarratives(messages, lovableApiKey);
           
-          const recordedAt = `${dateStr}T23:00:00Z`;
-          
-          const { error: emotionError } = await supabase.from("emotion_history").insert({
-            symbol: symbol.toUpperCase(),
-            period_type: "daily",
-            recorded_at: recordedAt,
-            emotions: emotions,
-            dominant_emotion: dominantEmotion,
-            message_count: messages.length,
-          });
+          if (narratives.length > 0) {
+            const dominantNarrative = narratives.sort((a, b) => b.count - a.count)[0]?.name || null;
+            
+            const { error: narrativeError } = await supabase.from("narrative_history").insert({
+              symbol: symbol.toUpperCase(),
+              period_type: "daily",
+              recorded_at: recordedAt,
+              narratives: narratives,
+              dominant_narrative: dominantNarrative,
+              message_count: messages.length,
+            });
 
-          if (emotionError) {
-            console.error(`Emotion insert error for ${dateStr}:`, emotionError);
-            results.errors.push(`${dateStr}: ${emotionError.message}`);
+            if (narrativeError) {
+              console.error(`Narrative insert error for ${dateStr}:`, narrativeError);
+              results.errors.push(`${dateStr}: ${narrativeError.message}`);
+            } else {
+              results.narrativeRecords++;
+            }
+          }
+
+          await delay(300);
+
+          // Analyze emotions
+          const emotions = await analyzeEmotions(messages, lovableApiKey);
+          
+          if (emotions.length > 0) {
+            const dominantEmotion = emotions.sort((a, b) => b.score - a.score)[0]?.name || null;
+            
+            const { error: emotionError } = await supabase.from("emotion_history").insert({
+              symbol: symbol.toUpperCase(),
+              period_type: "daily",
+              recorded_at: recordedAt,
+              emotions: emotions,
+              dominant_emotion: dominantEmotion,
+              message_count: messages.length,
+            });
+
+            if (emotionError) {
+              console.error(`Emotion insert error for ${dateStr}:`, emotionError);
+              results.errors.push(`${dateStr}: ${emotionError.message}`);
+            } else {
+              results.emotionRecords++;
+            }
           }
         }
 
-        results.backfilledDates.push(dateStr);
+        results.processedDates.push(dateStr);
         
         await delay(500); // Rate limit between dates
         
@@ -589,7 +708,7 @@ serve(async (req) => {
     }
 
     // Check if there are more dates to process
-    const hasMore = missingDates.length > datesToProcess.length;
+    const hasMore = expectedDates.length > datesToProcess.length;
     
     console.log("Auto-backfill complete:", results);
 
@@ -597,7 +716,7 @@ serve(async (req) => {
       JSON.stringify({ 
         ...results,
         hasMore,
-        remainingDates: hasMore ? missingDates.length - datesToProcess.length : 0,
+        remainingDates: hasMore ? expectedDates.length - datesToProcess.length : 0,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -1,117 +1,40 @@
 
-# Fix Data Coverage Ingestion - Implementation Plan
+# Fix Data Coverage Ingestion - COMPLETED ✓
 
-## Overview
+## Summary
 
-Fix the "Fetch Messages" and "Re-fetch All Data" buttons so they correctly update coverage status. The core issues are:
-1. `type` parameter is ignored in `auto-backfill-gaps`
-2. Messages are never stored in `sentiment_history`
-3. Wrong tables checked for existing data
+Fixed the "Fetch Messages" and "Re-fetch All Data" buttons so they correctly update coverage status.
 
-## Changes
+## Changes Made
 
-### 1. Database Migration
+### 1. Database Migration ✓
+Added unique constraint on `sentiment_history(symbol, recorded_at)` to enable UPSERT.
 
-Add unique constraint on `sentiment_history` to enable proper UPSERT:
+### 2. Updated `auto-backfill-gaps` Edge Function ✓
 
-```sql
-ALTER TABLE public.sentiment_history 
-ADD CONSTRAINT sentiment_history_symbol_recorded_unique 
-UNIQUE (symbol, recorded_at);
-```
+**Key changes:**
+- Added `type` parameter (`'messages' | 'analytics' | 'all'`) - default: `'all'`
+- Added `force` parameter to bypass existing data checks
+- Added `computeSentimentFromMessages()` helper to aggregate sentiment
+- Added `hasSentimentData()` - checks `sentiment_history` for messages coverage
+- Added `hasAnalyticsData()` - checks `narrative_history` for analytics coverage
+- Uses end-of-day timestamp (`23:59:59.999Z`) consistent with other history tables
+- Uses UPSERT for `sentiment_history` to avoid duplicates
 
-### 2. Update `auto-backfill-gaps` Edge Function
+**Flow by type:**
+| Type | Tables Written | Checks |
+|------|----------------|--------|
+| `messages` | `sentiment_history` | `sentiment_history` |
+| `analytics` | `narrative_history`, `emotion_history` | `narrative_history` |
+| `all` | All three tables | Both |
 
-**File:** `supabase/functions/auto-backfill-gaps/index.ts`
+### 3. Updated `use-data-coverage.ts` Hook ✓
+- Now passes `force: true` when `type === 'all'` ("Re-fetch All Data")
 
-#### a) Accept New Parameters
-- `type`: 'messages' | 'analytics' | 'all' (default: 'all')
-- `force`: boolean to bypass existing data checks
+## Result
 
-#### b) Add Sentiment Computation Helper
-```typescript
-function computeSentimentFromMessages(messages: StocktwitsMessage[]): {
-  sentimentScore: number;
-  bullishCount: number;
-  bearishCount: number;
-  neutralCount: number;
-}
-```
-
-#### c) Check Correct Tables Based on Type
-- `type='messages'` → check `sentiment_history`
-- `type='analytics'` → check `narrative_history`
-- `type='all'` → check both
-
-#### d) Store Sentiment Data with UPSERT
-Use consistent timestamp alignment (end of trading day for the target date, matching existing patterns in the codebase):
-
-```typescript
-// Use end-of-day timestamp consistent with other history tables
-const recordedAt = new Date(`${dateStr}T00:00:00Z`);
-recordedAt.setUTCHours(23, 59, 59, 999);
-
-await supabase
-  .from('sentiment_history')
-  .upsert({
-    symbol: symbol.toUpperCase(),
-    recorded_at: recordedAt.toISOString(),
-    sentiment_score: sentimentScore,
-    bullish_count: bullishCount,
-    bearish_count: bearishCount,
-    neutral_count: neutralCount,
-    message_volume: messages.length,
-  }, { onConflict: 'symbol,recorded_at' });
-```
-
-#### e) Conditional Flow
-- `type='messages'`: Fetch messages → compute sentiment → store in `sentiment_history`
-- `type='analytics'`: Fetch messages → run AI analysis → store in `narrative_history` + `emotion_history`
-- `type='all'`: Fetch messages once → do both flows
-
-### 3. Update `use-data-coverage.ts` Hook
-
-**File:** `src/hooks/use-data-coverage.ts`
-
-Pass `force: true` when "Re-fetch All Data" is clicked:
-
-```typescript
-const { error: backfillError } = await supabase.functions.invoke('auto-backfill-gaps', {
-  body: {
-    symbol,
-    startDate: date,
-    endDate: date,
-    type,
-    force: type === 'all',
-  },
-});
-```
-
-## Technical Details
-
-### Timestamp Alignment
-
-Looking at existing code patterns in `auto-backfill-gaps`, the function already uses end-of-day timestamps for narrative/emotion history. The sentiment data will follow the same pattern to ensure consistency when `compute-coverage-status` checks for data presence.
-
-### Data Flow After Fix
-
-| Action | Tables Updated | Coverage Result |
-|--------|----------------|-----------------|
-| Fetch Messages | `sentiment_history` | hasMessages = true |
-| Generate Analytics | `narrative_history`, `emotion_history` | hasAnalytics = true |
-| Re-fetch All | All three tables | Both = true |
-
-## Implementation Steps
-
-1. Create migration for unique constraint on `sentiment_history`
-2. Update `auto-backfill-gaps` edge function with type/force handling
-3. Update `use-data-coverage.ts` hook to pass force parameter
-4. Deploy and test
-
-## Files Modified
-
-| File | Change |
-|------|--------|
-| `supabase/functions/auto-backfill-gaps/index.ts` | Add type/force params, sentiment computation, correct table checks |
-| `src/hooks/use-data-coverage.ts` | Pass force=true for "Re-fetch All" |
-| New migration | Add unique constraint on sentiment_history |
+| Action | Data Written | Coverage Result |
+|--------|--------------|-----------------|
+| **Fetch Messages** | `sentiment_history` | Green dot for Messages |
+| **Generate Analytics** | `narrative_history` + `emotion_history` | Green dot for Analytics |
+| **Re-fetch All Data** | All three tables (with force) | Green dots for All |

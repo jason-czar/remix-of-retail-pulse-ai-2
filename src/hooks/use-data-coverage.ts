@@ -99,7 +99,8 @@ export function useTriggerIngestion() {
             symbol,
             startDate: date,
             endDate: date,
-            type: type === 'all' ? undefined : type,
+            type,
+            force: type === 'all', // Force refetch when Re-fetch All is clicked
           },
         });
 
