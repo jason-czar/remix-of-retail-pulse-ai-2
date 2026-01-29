@@ -1,215 +1,380 @@
 
-# Phase 1: Database Performance & Security Quick Wins
+# Phase 2: Reliability Improvements
 
-A targeted set of database optimizations focused on indexes, statistics, and RLS policy hardening that can be implemented in a single migration with immediate benefits.
+A targeted set of reliability enhancements focused on circuit breaker patterns for upstream API protection and parallel data fetching to reduce request waterfalls in the frontend.
 
 ---
 
 ## Summary
 
-This plan addresses three categories of quick wins identified in the architecture review:
-1. **Missing Composite Indexes** — Add optimized indexes for common query patterns
-2. **Table Statistics Refresh** — Run ANALYZE to ensure query planner has current data
-3. **RLS Policy Hardening** — Fix the cache poisoning vulnerability in `stocktwits_response_cache`
+This plan addresses two major reliability gaps identified in the architecture review:
 
-Estimated implementation time: ~30 minutes
-Risk level: Low (all changes are additive or security-improving)
+1. **Circuit Breaker Pattern** - Protect edge functions from cascading failures when upstream APIs (StockTwits, Yahoo Finance) are unavailable or rate-limited
+2. **Parallel Data Fetching** - Reduce SymbolPage load times by parallelizing independent data requests
 
----
-
-## 1. Database Indexes
-
-### Current State
-The query analysis revealed these access patterns:
-
-| Table | Common Filter Pattern | Existing Index |
-|-------|----------------------|----------------|
-| `psychology_snapshots` | `symbol + period_type + snapshot_start DESC` | Has it |
-| `emotion_history` | `symbol + period_type + recorded_at DESC` | Missing composite |
-| `narrative_history` | `symbol + period_type + recorded_at DESC` | Missing composite |
-| `sentiment_history` | `symbol + recorded_at DESC` | Has it |
-| `volume_history` | `symbol + period_type + recorded_at DESC` | Has it |
-
-### Action: Add Composite Indexes
-
-Create composite indexes for `emotion_history` and `narrative_history` to support the common three-column filter pattern used by chart components:
-
-```sql
--- Emotion history: supports use-emotion-history.ts queries
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_emotion_history_symbol_period_recorded 
-ON public.emotion_history(symbol, period_type, recorded_at DESC);
-
--- Narrative history: supports use-narrative-history.ts and FillTodayGapsButton.tsx
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_narrative_history_symbol_period_recorded 
-ON public.narrative_history(symbol, period_type, recorded_at DESC);
-```
-
-**Why**: Queries that filter by `symbol`, then `period_type`, then sort by `recorded_at` currently require index intersection or sequential scans. A covering composite index allows single-index lookups.
+Estimated implementation time: 2-3 hours
+Risk level: Low-Medium (new patterns, but isolated to specific modules)
 
 ---
 
-## 2. Table Statistics
+## Problem Statement
 
-### Current State
-Auto-analyze is running (last auto-analyze on key tables: 1-2 days ago), but explicit ANALYZE ensures the query planner has the freshest cardinality estimates after index changes.
+### Current Vulnerabilities
 
-### Action: Run ANALYZE
+**Upstream API Failures**
+- StockTwits API returns HTML 500/502 error pages instead of JSON ~5% of requests
+- Yahoo Finance rate limits aggressively (429 responses)
+- No circuit breaker = every user request hammers failing upstream, worsening outages
 
-```sql
--- Refresh statistics on high-traffic tables
-ANALYZE public.psychology_snapshots;
-ANALYZE public.emotion_history;
-ANALYZE public.narrative_history;
-ANALYZE public.sentiment_history;
-ANALYZE public.volume_history;
-ANALYZE public.price_history;
-ANALYZE public.stocktwits_response_cache;
-```
-
-**Why**: Index changes invalidate some planner statistics. Running ANALYZE immediately after index creation ensures optimal query plans.
+**Frontend Request Waterfall**
+- SymbolPage makes 5-8 sequential API calls on mount
+- Each call waits for auth session check before firing
+- Users see loading states for 3-5+ seconds even when data is cached
 
 ---
 
-## 3. RLS Policy Hardening
+## 1. Circuit Breaker Implementation
 
-### Critical Vulnerability Found
+### Design Overview
 
-The `stocktwits_response_cache` table has an overly permissive RLS policy:
+Create a lightweight circuit breaker module for edge functions that:
+- Tracks failure rates per upstream endpoint
+- Opens circuit after 5 consecutive failures (stops calling upstream)
+- Returns cached data or graceful degradation during open state
+- Auto-resets after 30s cooldown period (half-open state)
 
-```sql
--- CURRENT (DANGEROUS)
-CREATE POLICY "Allow public cache access" 
-ON public.stocktwits_response_cache 
-FOR ALL 
-USING (true) 
-WITH CHECK (true);
+```text
+┌─────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ Edge Func   │───▶│  Circuit Breaker │───▶│   Upstream API  │
+│ Request     │    │                  │    │ (StockTwits)    │
+└─────────────┘    │ State: CLOSED    │    └─────────────────┘
+                   │ Failures: 0/5    │
+                   └──────────────────┘
+                            │
+                   ┌────────▼────────┐
+                   │   5 failures    │
+                   └────────┬────────┘
+                            │
+                   ┌────────▼────────┐
+                   │  State: OPEN    │───▶ Return cached/fallback
+                   │  Wait 30s       │     (no upstream call)
+                   └────────┬────────┘
+                            │ 30s elapsed
+                   ┌────────▼────────┐
+                   │ State: HALF-OPEN│───▶ Allow 1 test request
+                   └─────────────────┘
 ```
 
-**Risk**: Any anonymous user can INSERT, UPDATE, or DELETE cache entries via the Supabase client. An attacker could:
-- Poison the cache with malicious/misleading data
-- Delete cache entries causing unnecessary API calls
-- Insert fake trending symbols or manipulated stats
+### Implementation: Shared Circuit Breaker Module
 
-### Action: Restrict to Service Role
+Create a new shared module at `supabase/functions/_shared/circuit-breaker.ts`:
 
-```sql
--- Drop the dangerous policy
-DROP POLICY IF EXISTS "Allow public cache access" ON public.stocktwits_response_cache;
+```typescript
+interface CircuitState {
+  failures: number;
+  lastFailure: number;
+  state: 'closed' | 'open' | 'half-open';
+  lastSuccess: number;
+}
 
--- Create read-only public access
-CREATE POLICY "Allow public read cache" 
-ON public.stocktwits_response_cache 
-FOR SELECT 
-USING (true);
+const circuits: Map<string, CircuitState> = new Map();
 
--- Create service-role-only write access  
-CREATE POLICY "Allow service role write cache" 
-ON public.stocktwits_response_cache 
-FOR ALL 
-USING (auth.role() = 'service_role')
-WITH CHECK (auth.role() = 'service_role');
+const CONFIG = {
+  failureThreshold: 5,      // Open after 5 failures
+  resetTimeout: 30000,      // 30 seconds before half-open
+  halfOpenSuccesses: 2,     // Successes needed to close
+};
+
+export function canMakeRequest(circuitId: string): boolean {
+  const state = circuits.get(circuitId);
+  if (!state) return true; // No circuit = allow
+  
+  if (state.state === 'closed') return true;
+  
+  if (state.state === 'open') {
+    // Check if cooldown elapsed
+    if (Date.now() - state.lastFailure > CONFIG.resetTimeout) {
+      state.state = 'half-open';
+      return true;
+    }
+    return false;
+  }
+  
+  // half-open: allow limited requests
+  return true;
+}
+
+export function recordSuccess(circuitId: string): void {
+  const state = circuits.get(circuitId) || createInitialState();
+  state.failures = 0;
+  state.state = 'closed';
+  state.lastSuccess = Date.now();
+  circuits.set(circuitId, state);
+}
+
+export function recordFailure(circuitId: string): void {
+  const state = circuits.get(circuitId) || createInitialState();
+  state.failures++;
+  state.lastFailure = Date.now();
+  
+  if (state.failures >= CONFIG.failureThreshold) {
+    state.state = 'open';
+    console.warn(`Circuit ${circuitId} OPENED after ${state.failures} failures`);
+  }
+  
+  circuits.set(circuitId, state);
+}
+
+export function getCircuitState(circuitId: string): CircuitState | undefined {
+  return circuits.get(circuitId);
+}
 ```
 
-**Why**: The edge function uses the service role key and will continue to work. Client-side reads remain possible. Only writes are restricted.
+### Integration: stocktwits-proxy
+
+Update `supabase/functions/stocktwits-proxy/index.ts` to use the circuit breaker:
+
+```typescript
+import { canMakeRequest, recordSuccess, recordFailure, getCircuitState } from '../_shared/circuit-breaker.ts';
+
+const CIRCUIT_ID = 'stocktwits-upstream';
+
+// Inside request handler, before upstream fetch:
+if (!canMakeRequest(CIRCUIT_ID)) {
+  const circuitState = getCircuitState(CIRCUIT_ID);
+  console.warn(`Circuit OPEN for ${CIRCUIT_ID}, attempting cache fallback`);
+  
+  // Try to serve from cache even if stale
+  const staleCache = await getCachedResponse(supabase, cacheKey);
+  if (staleCache) {
+    return new Response(
+      JSON.stringify({ ...staleCache, _degraded: true, _reason: 'circuit_open' }),
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'X-Circuit': 'OPEN',
+          'X-Cache': 'STALE',
+        } 
+      }
+    );
+  }
+  
+  // No cache available - return service unavailable
+  return new Response(
+    JSON.stringify({ 
+      error: 'Service temporarily unavailable',
+      retryAfter: 30,
+      _circuit: 'open'
+    }),
+    { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// After successful fetch:
+recordSuccess(CIRCUIT_ID);
+
+// On failure (429, 5xx, non-JSON response):
+recordFailure(CIRCUIT_ID);
+```
+
+### Integration: stock-price-proxy
+
+Apply the same pattern to `supabase/functions/stock-price-proxy/index.ts`:
+
+```typescript
+const CIRCUIT_ID = 'yahoo-finance';
+
+// Before Yahoo fetch:
+if (!canMakeRequest(CIRCUIT_ID)) {
+  // Use stale memory cache as fallback
+  const staleCache = memoryCache.get(cacheKey);
+  if (staleCache) {
+    return new Response(
+      JSON.stringify({ ...staleCache.data, _degraded: true }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Circuit': 'OPEN' } }
+    );
+  }
+  // Return 503 if no cache
+}
+```
 
 ---
 
-## 4. Implementation Details
+## 2. Parallel Data Fetching
 
-### Single Migration File
+### Current Problem
 
-All changes will be combined into one migration:
+The SymbolPage initiates requests sequentially because:
+1. Each hook independently calls `supabase.auth.getSession()` before fetching
+2. React Query defaults to serial execution per component mount order
+3. No request batching or coordination
 
-```sql
--- Phase 1: Performance & Security Quick Wins
+### Solution: Parallel Query Coordination
 
--- ============================================
--- SECTION 1: Composite Indexes
--- ============================================
+**Option A: React Query's useQueries (Recommended)**
 
--- Emotion history: optimize (symbol, period_type, recorded_at) lookups
-CREATE INDEX IF NOT EXISTS idx_emotion_history_symbol_period_recorded 
-ON public.emotion_history(symbol, period_type, recorded_at DESC);
+Consolidate independent queries into a single `useQueries` call that fires all requests in parallel:
 
--- Narrative history: optimize (symbol, period_type, recorded_at) lookups
-CREATE INDEX IF NOT EXISTS idx_narrative_history_symbol_period_recorded 
-ON public.narrative_history(symbol, period_type, recorded_at DESC);
+```typescript
+// src/hooks/use-symbol-page-data.ts
+import { useQueries } from '@tanstack/react-query';
 
--- ============================================
--- SECTION 2: RLS Policy Hardening
--- ============================================
+export function useSymbolPageData(symbol: string, enabled: boolean = true) {
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: ['symbol-stats', symbol],
+        queryFn: () => stocktwitsApi.getSymbolStats(symbol),
+        enabled,
+        staleTime: 30_000,
+      },
+      {
+        queryKey: ['symbol-messages', symbol],
+        queryFn: () => stocktwitsApi.getMessages(symbol, 50),
+        enabled,
+        staleTime: 60_000,
+      },
+      {
+        queryKey: ['decision-lens-summary', symbol, 'summary'],
+        queryFn: async () => {
+          const { data } = await supabase.functions.invoke('generate-lens-summary', {
+            body: { symbol, lens: 'summary' }
+          });
+          return data;
+        },
+        enabled,
+        staleTime: 5 * 60_000,
+      },
+    ],
+  });
 
--- Fix stocktwits_response_cache: remove public write access
-DROP POLICY IF EXISTS "Allow public cache access" ON public.stocktwits_response_cache;
-
--- Allow public reads (cache hits)
-CREATE POLICY "Allow public read cache" 
-ON public.stocktwits_response_cache 
-FOR SELECT 
-USING (true);
-
--- Restrict writes to service role (edge functions only)
-CREATE POLICY "Allow service role write cache" 
-ON public.stocktwits_response_cache 
-FOR ALL 
-USING (auth.role() = 'service_role')
-WITH CHECK (auth.role() = 'service_role');
-
--- ============================================
--- SECTION 3: Refresh Statistics
--- ============================================
-
-ANALYZE public.psychology_snapshots;
-ANALYZE public.emotion_history;
-ANALYZE public.narrative_history;
-ANALYZE public.sentiment_history;
-ANALYZE public.volume_history;
-ANALYZE public.price_history;
-ANALYZE public.stocktwits_response_cache;
+  return {
+    stats: results[0],
+    messages: results[1],
+    lensSummary: results[2],
+    isLoading: results.some(r => r.isLoading),
+    isError: results.some(r => r.isError),
+  };
+}
 ```
 
----
+**Option B: Session Pre-warming**
 
-## 5. Verification Steps
+Cache the auth session once at app mount and reuse across all hooks:
 
-After deployment, verify the changes:
+```typescript
+// src/lib/auth-session.ts
+let cachedSession: Session | null = null;
+let sessionPromise: Promise<Session | null> | null = null;
 
-### Verify Indexes
-```sql
-SELECT indexname, indexdef 
-FROM pg_indexes 
-WHERE tablename IN ('emotion_history', 'narrative_history')
-  AND indexname LIKE '%period_recorded%';
+export async function getSession(): Promise<Session | null> {
+  if (cachedSession) return cachedSession;
+  
+  if (!sessionPromise) {
+    sessionPromise = supabase.auth.getSession().then(({ data }) => {
+      cachedSession = data.session;
+      return cachedSession;
+    });
+  }
+  
+  return sessionPromise;
+}
+
+// Use in stocktwits-api.ts:
+const session = await getSession(); // Instant after first call
 ```
 
-### Verify RLS Policies
-```sql
-SELECT policyname, cmd, qual, with_check 
-FROM pg_policies 
-WHERE tablename = 'stocktwits_response_cache';
-```
+### Implementation Plan
 
-### Test Cache Still Works
-Navigate to any symbol page and check:
-- Network tab shows `X-Cache: MISS` on first load
-- Refresh shows `X-Cache: HIT`
-- No RLS errors in console
+1. **Create `use-symbol-page-data.ts`** - New hook combining core data fetches
+2. **Update `stocktwits-api.ts`** - Add session caching to eliminate redundant auth calls
+3. **Update `SymbolPage.tsx`** - Use the new consolidated hook for initial data
 
----
-
-## 6. Expected Outcomes
+### Expected Performance Impact
 
 | Metric | Before | After |
 |--------|--------|-------|
-| Emotion/Narrative chart queries | Potential index intersection | Single index scan |
-| `stocktwits_response_cache` write access | Public (vulnerable) | Service role only |
-| Query planner statistics | Auto-updated | Freshly analyzed |
+| Initial API calls | 5-8 sequential | 3-5 parallel |
+| Time to interactive | 3-5s | 1-2s |
+| Auth session calls | 5-8 per page | 1 per session |
+
+---
+
+## 3. Implementation Sequence
+
+### Step 1: Circuit Breaker Module (Backend)
+1. Create `supabase/functions/_shared/circuit-breaker.ts`
+2. Update `stocktwits-proxy/index.ts` to use circuit breaker
+3. Update `stock-price-proxy/index.ts` to use circuit breaker
+4. Deploy and test with forced failures
+
+### Step 2: Parallel Data Fetching (Frontend)
+1. Create `src/lib/auth-session.ts` for session caching
+2. Update `src/lib/stocktwits-api.ts` to use cached session
+3. Create `src/hooks/use-symbol-page-data.ts` with useQueries
+4. Update `src/pages/SymbolPage.tsx` to use new consolidated hook
+5. Verify parallel requests in Network tab
+
+### Step 3: Observability Headers
+Add response headers for debugging:
+- `X-Circuit: OPEN|CLOSED|HALF-OPEN`
+- `X-Cache: HIT|MISS|STALE`
+- `X-Degraded: true` (when serving fallback data)
+
+---
+
+## 4. Verification Steps
+
+### Circuit Breaker Testing
+1. Temporarily block upstream API in edge function
+2. Make 6+ requests - observe circuit opens after 5th
+3. Wait 30s - observe half-open state allows test request
+4. Restore API - observe circuit closes on success
+
+### Parallel Fetch Testing
+1. Open Network tab in browser
+2. Navigate to SymbolPage
+3. Observe API requests firing simultaneously (not waterfall)
+4. Check that total load time is reduced by ~50%
+
+### Degraded Mode Testing
+1. With circuit open, observe `X-Degraded: true` header
+2. UI should show data with subtle "Data may be stale" indicator
+3. Retry button should force fresh fetch (bypass circuit for single request)
+
+---
+
+## 5. Risk Mitigation
+
+| Risk | Mitigation |
+|------|------------|
+| Circuit opens too aggressively | Start with 5 failures threshold, tune based on logs |
+| Memory leaks in circuit state | Circuit map is small (2-3 entries), auto-cleanup on success |
+| Parallel queries cause rate limits | Already rate-limited by server cache; queries share cached data |
+| Breaking existing hook consumers | Keep existing hooks, add new consolidated hook as opt-in |
+
+---
+
+## 6. Files to Create/Modify
+
+### New Files
+- `supabase/functions/_shared/circuit-breaker.ts` - Circuit breaker module
+- `src/lib/auth-session.ts` - Session caching utility
+- `src/hooks/use-symbol-page-data.ts` - Consolidated data hook
+
+### Modified Files
+- `supabase/functions/stocktwits-proxy/index.ts` - Add circuit breaker integration
+- `supabase/functions/stock-price-proxy/index.ts` - Add circuit breaker integration
+- `src/lib/stocktwits-api.ts` - Use cached session
+- `src/pages/SymbolPage.tsx` - Use parallel data hook
 
 ---
 
 ## Technical Notes
 
-- `CREATE INDEX IF NOT EXISTS` is used to make the migration idempotent
-- The existing 2-column indexes (`idx_emotion_history_symbol_recorded`) are not dropped as they may still be useful for queries that don't filter by `period_type`
-- The `ANALYZE` commands have minimal overhead on tables under 10,000 rows
-- No application code changes required — all improvements are at the database layer
+- Circuit breaker uses in-memory state (resets on function cold start) - acceptable for edge functions as each instance handles burst traffic
+- Session caching persists for tab lifetime via module scope
+- Existing individual hooks remain functional for components that don't need parallel loading
+- `X-Degraded` header allows frontend to show stale data indicators when serving from circuit-open fallback
