@@ -1,5 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { 
+  canMakeRequest, 
+  recordSuccess, 
+  recordFailure, 
+  getCircuitStateLabel,
+  isCircuitTripError 
+} from '../_shared/circuit-breaker.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +14,7 @@ const corsHeaders = {
 
 // Yahoo Finance API endpoints
 const YAHOO_QUOTE_URL = "https://query1.finance.yahoo.com/v8/finance/chart";
+const CIRCUIT_ID = 'yahoo-finance';
 
 // In-memory cache for rate limit protection
 const memoryCache: Map<string, { data: PriceResponse; timestamp: number }> = new Map();
@@ -30,6 +37,8 @@ interface PriceResponse {
   changePercent: number | null;
   marketState: string;
   symbol: string;
+  _degraded?: boolean;
+  _reason?: string;
 }
 
 serve(async (req) => {
@@ -37,6 +46,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Get circuit state for response headers
+  const circuitState = getCircuitStateLabel(CIRCUIT_ID);
 
   try {
     const url = new URL(req.url);
@@ -46,7 +58,7 @@ serve(async (req) => {
     if (!symbol) {
       return new Response(
         JSON.stringify({ error: "Symbol is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": circuitState } }
       );
     }
 
@@ -58,7 +70,40 @@ serve(async (req) => {
       console.log(`Memory cache hit for ${symbol} ${timeRange}`);
       return new Response(
         JSON.stringify(memCached.data),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "HIT", "X-Circuit": circuitState } }
+      );
+    }
+
+    // Check circuit breaker before making upstream request
+    if (!canMakeRequest(CIRCUIT_ID)) {
+      console.warn(`[Circuit OPEN] ${CIRCUIT_ID} - attempting stale cache fallback`);
+      
+      // Use stale memory cache as fallback
+      const staleCache = memoryCache.get(cacheKey);
+      if (staleCache) {
+        console.log(`[Stale Cache Fallback] ${symbol} - serving degraded response`);
+        return new Response(
+          JSON.stringify({ ...staleCache.data, _degraded: true, _reason: 'circuit_open' }),
+          { 
+            headers: { 
+              ...corsHeaders, 
+              "Content-Type": "application/json", 
+              "X-Cache": "STALE",
+              "X-Circuit": "OPEN",
+              "X-Degraded": "true",
+            } 
+          }
+        );
+      }
+      
+      // No cache available - return service unavailable
+      return new Response(
+        JSON.stringify({ 
+          error: "Service temporarily unavailable",
+          retryAfter: 30,
+          _circuit: 'open'
+        }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": "OPEN" } }
       );
     }
 
@@ -84,29 +129,49 @@ serve(async (req) => {
           },
         });
         
-        if (response.ok) break;
+        if (response.ok) {
+          // Successful response - exit retry loop
+          break;
+        }
         
-        if (response.status === 429) {
-          // Rate limited - check if we have stale cache we can use
+        // Check if this is a circuit-trip error
+        if (isCircuitTripError(response.status, false)) {
+          recordFailure(CIRCUIT_ID);
+          console.warn(`[Circuit Failure] ${CIRCUIT_ID} - status: ${response.status}`);
+          
+          // Check if we have stale cache we can use
           const staleCache = memoryCache.get(cacheKey);
           if (staleCache) {
-            console.log(`Rate limited, using stale cache for ${symbol}`);
+            console.log(`Rate limited/error, using stale cache for ${symbol}`);
             return new Response(
-              JSON.stringify(staleCache.data),
-              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              JSON.stringify({ ...staleCache.data, _degraded: true, _reason: 'upstream_error' }),
+              { 
+                headers: { 
+                  ...corsHeaders, 
+                  "Content-Type": "application/json",
+                  "X-Cache": "STALE",
+                  "X-Circuit": getCircuitStateLabel(CIRCUIT_ID),
+                  "X-Degraded": "true",
+                } 
+              }
             );
           }
           
-          // Wait before retry with exponential backoff
-          const waitTime = Math.pow(2, retryCount) * 1000;
-          console.log(`Rate limited, waiting ${waitTime}ms before retry ${retryCount + 1}`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          retryCount++;
+          if (response.status === 429) {
+            // Wait before retry with exponential backoff
+            const waitTime = Math.pow(2, retryCount) * 1000;
+            console.log(`Rate limited, waiting ${waitTime}ms before retry ${retryCount + 1}`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            retryCount++;
+          } else {
+            break; // Non-429 error, don't retry
+          }
         } else {
-          break; // Non-429 error, don't retry
+          break; // Non-circuit-trip error
         }
       } catch (fetchError) {
         console.error(`Fetch error attempt ${retryCount}:`, fetchError);
+        recordFailure(CIRCUIT_ID);
         retryCount++;
         if (retryCount > maxRetries) throw fetchError;
       }
@@ -118,24 +183,35 @@ serve(async (req) => {
       if (staleCache) {
         console.log(`API failed, using stale cache for ${symbol}`);
         return new Response(
-          JSON.stringify(staleCache.data),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ ...staleCache.data, _degraded: true, _reason: 'api_failed' }),
+          { 
+            headers: { 
+              ...corsHeaders, 
+              "Content-Type": "application/json",
+              "X-Cache": "STALE",
+              "X-Circuit": getCircuitStateLabel(CIRCUIT_ID),
+              "X-Degraded": "true",
+            } 
+          }
         );
       }
       
       console.error(`Yahoo Finance API error: ${response?.status}`);
       return new Response(
         JSON.stringify({ error: "Failed to fetch stock data", status: response?.status || 500 }),
-        { status: response?.status || 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: response?.status || 500, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID) } }
       );
     }
+
+    // Successful response - record success
+    recordSuccess(CIRCUIT_ID);
 
     const data = await response.json();
     
     if (!data.chart?.result?.[0]) {
       return new Response(
         JSON.stringify({ error: "No data found for symbol", symbol }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID) } }
       );
     }
 
@@ -198,14 +274,22 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(priceResponse),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json",
+          "X-Cache": "MISS",
+          "X-Circuit": getCircuitStateLabel(CIRCUIT_ID),
+        } 
+      }
     );
   } catch (error) {
     console.error("Stock price proxy error:", error);
+    recordFailure(CIRCUIT_ID);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: "Internal server error", message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Circuit": getCircuitStateLabel(CIRCUIT_ID) } }
     );
   }
 });

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { cachedApiCall, CACHE_TTL } from "./api-cache";
+import { getAccessToken } from "./auth-session";
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stocktwits-proxy`;
 
@@ -7,11 +8,12 @@ async function callApi(action: string, params: Record<string, string> = {}, skip
   const fetchData = async () => {
     const queryParams = new URLSearchParams({ action, ...params });
     
-    const { data: { session } } = await supabase.auth.getSession();
+    // Use cached session to avoid redundant auth calls
+    const accessToken = await getAccessToken();
     
     const response = await fetch(`${EDGE_FUNCTION_URL}?${queryParams.toString()}`, {
       headers: {
-        'Authorization': `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
     });

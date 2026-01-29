@@ -1,4 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { 
+  canMakeRequest, 
+  recordSuccess, 
+  recordFailure, 
+  getCircuitStateLabel,
+  isCircuitTripError 
+} from '../_shared/circuit-breaker.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +13,7 @@ const corsHeaders = {
 }
 
 const STOCKTWITS_BASE_URL = 'https://srwjqgmqqsuazsczmywh.supabase.co'
+const CIRCUIT_ID = 'stocktwits-upstream'
 
 // Cache TTL configuration (in seconds)
 const CACHE_TTL = {
@@ -34,8 +42,12 @@ function generateCacheKey(action: string, params: Record<string, string | null>)
   return `${action}:${sortedParams}`
 }
 
-// Try to get cached response
-async function getCachedResponse(supabase: ReturnType<typeof getSupabaseClient>, cacheKey: string): Promise<unknown | null> {
+// Try to get cached response (including stale entries for fallback)
+async function getCachedResponse(
+  supabase: ReturnType<typeof getSupabaseClient>, 
+  cacheKey: string,
+  allowStale = false
+): Promise<{ data: unknown; isStale: boolean } | null> {
   try {
     const { data, error } = await supabase
       .from('stocktwits_response_cache')
@@ -45,14 +57,15 @@ async function getCachedResponse(supabase: ReturnType<typeof getSupabaseClient>,
     
     if (error || !data) return null
     
-    // Check if expired
-    if (new Date(data.expires_at) < new Date()) {
+    const isExpired = new Date(data.expires_at) < new Date()
+    
+    if (isExpired && !allowStale) {
       // Delete expired entry async (don't wait)
       supabase.from('stocktwits_response_cache').delete().eq('cache_key', cacheKey)
       return null
     }
     
-    return data.response_data
+    return { data: data.response_data, isStale: isExpired }
   } catch {
     return null
   }
@@ -105,12 +118,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Get circuit state for response headers
+  const circuitState = getCircuitStateLabel(CIRCUIT_ID)
+
   try {
     const stocktwitsApiKey = Deno.env.get('STOCKTWITS_API_KEY')
     if (!stocktwitsApiKey) {
       return new Response(
         JSON.stringify({ error: 'StockTwits API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Circuit': circuitState } }
       )
     }
 
@@ -210,7 +226,7 @@ Deno.serve(async (req) => {
       default:
         return new Response(
           JSON.stringify({ error: 'Invalid action' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Circuit': circuitState } }
         )
     }
 
@@ -224,21 +240,56 @@ Deno.serve(async (req) => {
     // Try to get cached response first (skip for analyze/POST requests)
     if (ttl > 0 && req.method !== 'POST') {
       const cached = await getCachedResponse(supabase, cacheKey)
-      if (cached) {
+      if (cached && !cached.isStale) {
         console.log(`[Cache HIT] ${action} - ${cacheKey}`)
         return new Response(
-          JSON.stringify(cached),
+          JSON.stringify(cached.data),
           { 
             status: 200,
             headers: { 
               ...corsHeaders, 
               'Content-Type': 'application/json',
               'X-Cache': 'HIT',
+              'X-Circuit': circuitState,
             } 
           }
         )
       }
       console.log(`[Cache MISS] ${action} - ${cacheKey}`)
+    }
+
+    // Check circuit breaker before making upstream request
+    if (!canMakeRequest(CIRCUIT_ID)) {
+      console.warn(`[Circuit OPEN] ${CIRCUIT_ID} - attempting stale cache fallback`)
+      
+      // Try to serve stale cache as fallback
+      const staleCache = await getCachedResponse(supabase, cacheKey, true)
+      if (staleCache) {
+        console.log(`[Stale Cache Fallback] ${action} - serving degraded response`)
+        return new Response(
+          JSON.stringify({ ...staleCache.data as object, _degraded: true, _reason: 'circuit_open' }),
+          { 
+            status: 200, 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json',
+              'X-Cache': 'STALE',
+              'X-Circuit': 'OPEN',
+              'X-Degraded': 'true',
+            } 
+          }
+        )
+      }
+      
+      // No cache available - return service unavailable
+      return new Response(
+        JSON.stringify({ 
+          error: 'Service temporarily unavailable',
+          retryAfter: 30,
+          _circuit: 'open'
+        }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Circuit': 'OPEN' } }
+      )
     }
 
     const targetUrl = `${STOCKTWITS_BASE_URL}${endpoint}?${queryParams.toString()}`
@@ -263,8 +314,38 @@ Deno.serve(async (req) => {
     const contentType = response.headers.get('content-type') || ''
     const responseText = await response.text()
     
+    // Detect non-JSON responses (HTML error pages, rate limit pages)
+    const isNonJsonResponse = !contentType.includes('application/json') || 
+      responseText.startsWith('<!DOCTYPE') || 
+      responseText.startsWith('<')
+
+    // Check if this is a circuit-trip error
+    if (isCircuitTripError(response.status, isNonJsonResponse)) {
+      recordFailure(CIRCUIT_ID)
+      console.warn(`[Circuit Failure] ${CIRCUIT_ID} - status: ${response.status}, non-json: ${isNonJsonResponse}`)
+      
+      // Try stale cache fallback
+      const staleCache = await getCachedResponse(supabase, cacheKey, true)
+      if (staleCache) {
+        console.log(`[Stale Cache Fallback] ${action} - serving after upstream failure`)
+        return new Response(
+          JSON.stringify({ ...staleCache.data as object, _degraded: true, _reason: 'upstream_error' }),
+          { 
+            status: 200, 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json',
+              'X-Cache': 'STALE',
+              'X-Circuit': getCircuitStateLabel(CIRCUIT_ID),
+              'X-Degraded': 'true',
+            } 
+          }
+        )
+      }
+    }
+
     // If response is not JSON (e.g., HTML error page), return a proper error
-    if (!contentType.includes('application/json') || responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<')) {
+    if (isNonJsonResponse) {
       console.error(`Upstream API returned non-JSON response (status ${response.status}):`, responseText.substring(0, 500))
       return new Response(
         JSON.stringify({ 
@@ -272,7 +353,7 @@ Deno.serve(async (req) => {
           status: response.status,
           details: response.status === 429 ? 'Rate limited' : 'Service error'
         }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Circuit': getCircuitStateLabel(CIRCUIT_ID) } }
       )
     }
     
@@ -282,11 +363,15 @@ Deno.serve(async (req) => {
       data = JSON.parse(responseText)
     } catch (parseError) {
       console.error('Failed to parse JSON response:', responseText.substring(0, 500))
+      recordFailure(CIRCUIT_ID)
       return new Response(
         JSON.stringify({ error: 'Invalid response from upstream API' }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Circuit': getCircuitStateLabel(CIRCUIT_ID) } }
       )
     }
+
+    // Successful response - record success and cache
+    recordSuccess(CIRCUIT_ID)
 
     // Cache successful responses
     if (response.ok && ttl > 0) {
@@ -305,15 +390,17 @@ Deno.serve(async (req) => {
           ...corsHeaders, 
           'Content-Type': 'application/json',
           'X-Cache': 'MISS',
+          'X-Circuit': getCircuitStateLabel(CIRCUIT_ID),
         } 
       }
     )
   } catch (error: unknown) {
     console.error('StockTwits proxy error:', error)
+    recordFailure(CIRCUIT_ID)
     const message = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Circuit': getCircuitStateLabel(CIRCUIT_ID) } }
     )
   }
 })
