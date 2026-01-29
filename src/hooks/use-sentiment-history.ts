@@ -84,12 +84,13 @@ async function fetchSentimentHistory(
 export function useSentimentHistory(
   symbol: string,
   days: number = 30,
+  enabled: boolean = true,
   compareSymbols: string[] = []
 ) {
   return useQuery({
     queryKey: ["sentiment-history", symbol, days, compareSymbols.join(",")],
     queryFn: () => fetchSentimentHistory(symbol, days, compareSymbols),
-    enabled: !!symbol,
+    enabled: enabled && !!symbol,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
   });

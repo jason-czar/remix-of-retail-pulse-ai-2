@@ -26,6 +26,7 @@ const glassToggleClasses = cn(
 
 interface NCSTrendChartProps {
   symbol: string;
+  enabled?: boolean;
 }
 
 // Minimum snapshots required per range (accounting for weekends)
@@ -121,9 +122,9 @@ function CustomDot(props: any) {
   );
 }
 
-export function NCSTrendChart({ symbol }: NCSTrendChartProps) {
+export function NCSTrendChart({ symbol, enabled = true }: NCSTrendChartProps) {
   const [range, setRange] = useState<NCSTimeRange>("30D");
-  const { data: ncsData, isLoading, error } = useNCSHistory(symbol, range);
+  const { data: ncsData, isLoading, error } = useNCSHistory(symbol, range, enabled);
   
   if (isLoading) {
     return (

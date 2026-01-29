@@ -36,7 +36,7 @@ export function SentimentHistoryChart({
   showVolume = true,
   periodType = "daily",
 }: SentimentHistoryChartProps) {
-  const { data, isLoading, error, refetch } = useSentimentHistory(symbol, days, compareSymbols);
+  const { data, isLoading, error, refetch } = useSentimentHistory(symbol, days, true, compareSymbols);
 
   const chartData = useMemo(() => {
     if (!data?.history || data.history.length === 0) return [];

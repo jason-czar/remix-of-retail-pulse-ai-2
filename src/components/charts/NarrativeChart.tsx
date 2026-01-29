@@ -34,6 +34,7 @@ interface NarrativeChartProps {
   timeRange?: TimeRange;
   start?: string;
   end?: string;
+  enabled?: boolean;
 }
 
 // Color palette for stacked bar chart themes
@@ -2226,8 +2227,14 @@ function HorizontalNarrativeChart({
 }
 export function NarrativeChart({
   symbol,
-  timeRange = "24H"
+  timeRange = "24H",
+  enabled = true
 }: NarrativeChartProps) {
+  // Don't render anything if not enabled (saves resources)
+  if (!enabled) {
+    return null;
+  }
+
   // Use time series stacked bar chart for 7D and 30D
   if (timeRange === "7D" || timeRange === "30D") {
     return <TimeSeriesNarrativeChart symbol={symbol} timeRange={timeRange} />;

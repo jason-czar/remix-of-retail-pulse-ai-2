@@ -73,7 +73,8 @@ function normalizeNarrativeName(name: string): string {
 export function useNarrativeHistory(
   symbol: string, 
   days: number = 7,
-  periodType: "hourly" | "daily" | "all" = "all"
+  periodType: "hourly" | "daily" | "all" = "all",
+  enabled: boolean = true
 ) {
   return useQuery({
     queryKey: ["narrative-history", symbol, days, periodType],
@@ -180,6 +181,6 @@ export function useNarrativeHistory(
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!symbol,
+    enabled: enabled && !!symbol,
   });
 }

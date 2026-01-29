@@ -22,6 +22,7 @@ interface SentimentChartProps {
   start?: string;
   end?: string;
   timeRange?: string;
+  enabled?: boolean;
 }
 
 // Types for side panel data
@@ -282,7 +283,7 @@ const generateDataPoints = (timeRange: string) => {
   return data;
 };
 
-export function SentimentChart({ symbol, start, end, timeRange = '24H' }: SentimentChartProps) {
+export function SentimentChart({ symbol, start, end, timeRange = '24H', enabled = true }: SentimentChartProps) {
   const { data: apiData, isLoading } = useSentimentAnalytics(symbol, timeRange, start, end);
   const [marketSession, setMarketSession] = useState<MarketSession>('regular');
   const [hoveredData, setHoveredData] = useState<SentimentSidePanelData | null>(null);

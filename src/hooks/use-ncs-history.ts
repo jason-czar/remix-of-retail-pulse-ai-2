@@ -92,7 +92,7 @@ function getDaysFromRange(range: NCSTimeRange): number {
   }
 }
 
-export function useNCSHistory(symbol: string, range: NCSTimeRange = "30D") {
+export function useNCSHistory(symbol: string, range: NCSTimeRange = "30D", enabled: boolean = true) {
   const days = getDaysFromRange(range);
   
   return useQuery({
@@ -176,6 +176,6 @@ export function useNCSHistory(symbol: string, range: NCSTimeRange = "30D") {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     gcTime: 30 * 60 * 1000, // 30 minutes garbage collection
-    enabled: !!symbol,
+    enabled: enabled && !!symbol,
   });
 }

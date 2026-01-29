@@ -41,6 +41,7 @@ interface EmotionChartProps {
   timeRange?: TimeRange;
   start?: string;
   end?: string;
+  enabled?: boolean;
 }
 
 // Default signal emotions to display
@@ -396,7 +397,7 @@ const WideBarShape = (props: any) => {
   );
 };
 
-export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
+export function EmotionChart({ symbol, timeRange = '24H', enabled = true }: EmotionChartProps) {
   const [showPriceOverlay, setShowPriceOverlay] = useState(true);
   const [activeHour, setActiveHour] = useState<number | null>(null);
   const [marketSession, setMarketSession] = useState<MarketSession>("regular");
@@ -413,7 +414,7 @@ export function EmotionChart({ symbol, timeRange = '24H' }: EmotionChartProps) {
   const periodType = (is1DView || is24HView) ? "hourly" : "daily";
   const days = is1DView ? 1 : is24HView ? 1 : timeRange === '7D' ? 7 : 30;
   
-  const { data: historyData, isLoading: historyLoading, refetch, isFetching } = useEmotionHistory(symbol, days, periodType);
+  const { data: historyData, isLoading: historyLoading, refetch, isFetching } = useEmotionHistory(symbol, days, periodType, enabled);
   
   // Fallback to live AI analysis if no history
   const { data: liveData, isLoading: liveLoading, forceRefresh } = useEmotionAnalysis(symbol, timeRange);
