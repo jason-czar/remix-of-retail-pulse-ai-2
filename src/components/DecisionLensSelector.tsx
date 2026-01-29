@@ -127,6 +127,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
       
       const newOption = allLensOptions[newIndex];
       onChange(newOption.value, newOption.customLens);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       
       // Scroll the selected lens into view
       setTimeout(() => {
@@ -202,7 +203,10 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
                     : "text-muted-foreground hover:text-foreground/80 hover:bg-black/[0.03] dark:hover:bg-white/[0.06]",
                   option.isCustom && "pr-7"
                 )}
-                onClick={() => onChange(option.value, option.customLens)}
+                onClick={() => {
+                  onChange(option.value, option.customLens);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               >
                 {option.label}
               </button>
