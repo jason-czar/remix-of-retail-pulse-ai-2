@@ -1,11 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createLogger, createTimer, reportError, recordMetric } from "../_shared/logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const logger = createLogger("ask-derive-street");
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -124,6 +127,10 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const requestTimer = createTimer();
+  logger.startRequest(requestId);
+
   try {
     const { symbol, messages, context } = (await req.json()) as {
       symbol: string;
@@ -132,15 +139,23 @@ serve(async (req) => {
     };
 
     if (!symbol) {
+      logger.warn("Missing symbol parameter", { request_id: requestId });
       return new Response(
         JSON.stringify({ error: "Symbol is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    logger.info("Processing chat request", { 
+      symbol: symbol.toUpperCase(), 
+      request_id: requestId,
+      message_count: messages.length,
+      has_context: !!context 
+    });
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY is not configured");
+      logger.error("LOVABLE_API_KEY is not configured", { request_id: requestId });
       return new Response(
         JSON.stringify({ error: "AI service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -156,9 +171,13 @@ serve(async (req) => {
       ...messages.slice(-20), // Keep last 20 messages for context
     ];
 
-    console.log(`[ask-derive-street] Symbol: ${symbol}, Messages: ${messages.length}`);
+    logger.info("Calling AI gateway with streaming", { 
+      symbol: symbol.toUpperCase(), 
+      conversation_length: aiMessages.length 
+    });
 
     // Call Lovable AI Gateway with streaming
+    const aiTimer = createTimer();
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -174,7 +193,38 @@ serve(async (req) => {
       }),
     });
 
+    // Initialize Supabase for metrics (after getting response to not delay)
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Record AI call metric
+    recordMetric(supabase, {
+      metric_type: 'ai_call',
+      function_name: 'ask-derive-street',
+      endpoint: 'gemini-3-flash-preview',
+      duration_ms: aiTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      status_code: response.status,
+    });
+
     if (!response.ok) {
+      logger.error("AI gateway error", { 
+        symbol: symbol.toUpperCase(), 
+        status_code: response.status 
+      });
+      
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_code: String(response.status),
+        error_message: `AI gateway returned ${response.status}`,
+        function_name: 'ask-derive-street',
+        request_id: requestId,
+        symbol: symbol.toUpperCase(),
+        severity: response.status >= 500 ? 'error' : 'warning',
+      });
+      
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limits exceeded, please try again later." }),
@@ -188,12 +238,30 @@ serve(async (req) => {
         );
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      logger.error("AI gateway response error", { 
+        symbol: symbol.toUpperCase(), 
+        error: errorText 
+      });
       return new Response(
         JSON.stringify({ error: "AI gateway error" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    logger.info("Streaming response initiated", { 
+      symbol: symbol.toUpperCase(), 
+      request_id: requestId 
+    });
+
+    // Record API latency metric
+    recordMetric(supabase, {
+      metric_type: 'api_latency',
+      function_name: 'ask-derive-street',
+      endpoint: 'chat',
+      duration_ms: requestTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      status_code: 200,
+    });
 
     // Return streaming response
     return new Response(response.body, {
@@ -205,7 +273,29 @@ serve(async (req) => {
       },
     });
   } catch (error) {
-    console.error("[ask-derive-street] Error:", error);
+    logger.error("ask-derive-street error", { 
+      request_id: requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    
+    // Try to report error
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_message: error instanceof Error ? error.message : String(error),
+        stack_trace: error instanceof Error ? error.stack : undefined,
+        function_name: 'ask-derive-street',
+        request_id: requestId,
+        severity: 'error',
+      });
+    } catch (e) {
+      // Silent fail for error reporting
+    }
+    
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
