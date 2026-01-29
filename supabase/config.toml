@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.health-check]
 verify_jwt = false
+
+[functions.compute-coverage-status]
+verify_jwt = false
