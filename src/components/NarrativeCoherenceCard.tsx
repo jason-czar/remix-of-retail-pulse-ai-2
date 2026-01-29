@@ -25,6 +25,7 @@ const glassTileClasses = cn(
 
 interface NarrativeCoherenceCardProps {
   symbol: string;
+  enabled?: boolean;
 }
 
 interface NarrativeCoherence {
@@ -136,8 +137,8 @@ function computeCoherenceFromState(observedState: any): NarrativeCoherence | nul
   };
 }
 
-export function NarrativeCoherenceCard({ symbol }: NarrativeCoherenceCardProps) {
-  const { data: snapshot, isLoading, error } = useLatestPsychologySnapshot(symbol);
+export function NarrativeCoherenceCard({ symbol, enabled = true }: NarrativeCoherenceCardProps) {
+  const { data: snapshot, isLoading, error } = useLatestPsychologySnapshot(symbol, enabled);
   
   if (isLoading) {
     return (

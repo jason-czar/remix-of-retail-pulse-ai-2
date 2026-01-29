@@ -27,6 +27,7 @@ const glassTileClasses = cn(
 );
 interface NarrativeImpactHistorySectionProps {
   symbol: string;
+  enabled?: boolean;
 }
 function getPersistenceBadge(persistence: NarrativeOutcome["persistence"]) {
   const config = {
@@ -355,13 +356,14 @@ function OutcomeDistributionChart({
     </div>;
 }
 export function NarrativeImpactHistorySection({
-  symbol
+  symbol,
+  enabled = true
 }: NarrativeImpactHistorySectionProps) {
   const {
     data: snapshot,
     isLoading,
     error
-  } = useLatestSnapshotWithOutcomes(symbol);
+  } = useLatestSnapshotWithOutcomes(symbol, enabled);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
   const [isOpen, setIsOpen] = useState(false);

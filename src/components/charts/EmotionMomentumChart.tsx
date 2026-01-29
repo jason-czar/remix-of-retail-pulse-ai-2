@@ -37,6 +37,7 @@ import {
 interface EmotionMomentumChartProps {
   symbol: string;
   days?: number;
+  enabled?: boolean;
 }
 
 // Color mapping for emotions
@@ -97,7 +98,7 @@ function getSignalBadgeVariant(type: string): "default" | "destructive" | "outli
   }
 }
 
-export function EmotionMomentumChart({ symbol, days = 7 }: EmotionMomentumChartProps) {
+export function EmotionMomentumChart({ symbol, days = 7, enabled = true }: EmotionMomentumChartProps) {
   const { data, isLoading, error, refetch } = useEmotionMomentum(symbol, days);
   const [viewMode, setViewMode] = useState<"velocity" | "timeline">("velocity");
   const [showSignalsOnly, setShowSignalsOnly] = useState(false);

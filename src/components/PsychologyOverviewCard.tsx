@@ -11,6 +11,7 @@ import { useSearchParams } from "react-router-dom";
 interface PsychologyOverviewCardProps {
   symbol: string;
   hideMetricTiles?: boolean; // Hide Sentiment Score, Message Volume, 7D Trend tiles
+  enabled?: boolean; // Control data fetching
 }
 
 const glassCardClasses = cn(
@@ -28,10 +29,10 @@ const glassTileClasses = cn(
   "border border-black/[0.06] dark:border-white/[0.04]"
 );
 
-export function PsychologyOverviewCard({ symbol, hideMetricTiles = false }: PsychologyOverviewCardProps) {
-  const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol);
+export function PsychologyOverviewCard({ symbol, hideMetricTiles = false, enabled = true }: PsychologyOverviewCardProps) {
+  const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol, enabled);
   const { data: symbolStats } = useSymbolStats(symbol);
-  const { data: sentimentHistory } = useSentimentHistory(symbol, 7);
+  const { data: sentimentHistory } = useSentimentHistory(symbol, 7, enabled);
 
   if (isLoading) {
     return (

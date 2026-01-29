@@ -30,6 +30,7 @@ const glassEpisodeCardClasses = cn(
 );
 interface HistoricalEpisodeMatcherProps {
   symbol: string;
+  enabled?: boolean;
 }
 function getOutcomeColor(change: number | undefined): string {
   if (change === undefined) return "text-muted-foreground";
@@ -181,7 +182,8 @@ function EpisodeCard({
     </div>;
 }
 export function HistoricalEpisodeMatcher({
-  symbol
+  symbol,
+  enabled = true
 }: HistoricalEpisodeMatcherProps) {
   const [showAll, setShowAll] = useState(false);
   const {
@@ -190,6 +192,7 @@ export function HistoricalEpisodeMatcher({
     error
   } = useHistoricalEpisodeMatcher({
     symbol,
+    enabled,
     lookbackDays: 90,
     minSimilarity: 40,
     maxResults: 10

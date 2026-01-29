@@ -30,7 +30,8 @@ const EMOTION_NAMES = [
 export function useEmotionHistory(
   symbol: string,
   days: number = 7,
-  periodType: "hourly" | "daily" | "all" = "all"
+  periodType: "hourly" | "daily" | "all" = "all",
+  enabled: boolean = true
 ) {
   const query = useQuery({
     queryKey: ["emotion-history", symbol, days, periodType],
@@ -125,7 +126,7 @@ export function useEmotionHistory(
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!symbol,
+    enabled: enabled && !!symbol,
   });
   
   return {

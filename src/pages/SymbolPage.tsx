@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LazyLoad } from "@/components/ui/LazyLoad";
 import { SentimentChart } from "@/components/charts/SentimentChart";
 import { NarrativeChart } from "@/components/charts/NarrativeChart";
 import { EmotionChart } from "@/components/charts/EmotionChart";
@@ -289,28 +290,28 @@ function SymbolPageContent() {
           ease: "easeOut"
         }}>
               <Tabs value={activeTab} className="mb-6 md:mb-8 overflow-visible " onValueChange={setActiveTab} data-tour="chart-tabs">
-                {/* Chart content first */}
+                {/* Chart content first - only fetch data for active tab */}
                 <TabsContent value="narratives" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                    <NarrativeChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'narratives'} />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="emotions" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                    <EmotionChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'emotions'} />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="sentiment" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} />
+                    <SentimentChart symbol={symbol} timeRange={timeRange} start={start} end={end} enabled={activeTab === 'sentiment'} />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="momentum" className="mt-0 mb-1.5 md:mb-2">
                   <div className="-mx-4 md:mx-0">
-                    <EmotionMomentumChart symbol={symbol} days={7} />
+                    <EmotionMomentumChart symbol={symbol} days={7} enabled={activeTab === 'momentum'} />
                   </div>
                 </TabsContent>
 
@@ -476,47 +477,38 @@ function SymbolPageContent() {
             </motion.div>}
         </AnimatePresence>
 
-        {/* Narrative Coherence Score */}
-        <Collapsible defaultOpen={false} className="mb-8 md:mb-12 mt-12 md:mt-16">
-          <CollapsibleTrigger className={cn(
-            "flex items-center gap-2 w-full group px-4 py-3 rounded-xl",
-            "bg-white/45 dark:bg-white/[0.04]",
-            "backdrop-blur-[12px]",
-            "border border-black/[0.04] dark:border-white/[0.04]",
-            "transition-all duration-200",
-            "hover:bg-white/60 dark:hover:bg-white/[0.06]"
-          )}>
-            <h3 className="text-lg font-semibold">Narrative Coherence</h3>
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4">
-            <motion.div initial={{
-            opacity: 0,
-            y: -10
-          }} animate={{
-            opacity: 1,
-            y: 0
-          }} transition={{
-            duration: 0.25,
-            ease: "easeOut"
-          }}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                <NarrativeCoherenceCard symbol={symbol} />
-                <NCSTrendChart symbol={symbol} />
-              </div>
-            </motion.div>
-          </CollapsibleContent>
-        </Collapsible>
+        {/* Narrative Coherence Score - Collapsible with state-based lazy loading */}
+        <NarrativeCoherenceSection symbol={symbol} />
 
-        {/* Historical Episode Matcher */}
-        <div className="mb-8 md:mb-12">
-          <HistoricalEpisodeMatcher symbol={symbol} />
-        </div>
+        {/* Historical Episode Matcher - Viewport-based lazy loading */}
+        <LazyLoad 
+          fallback={
+            <div className="mb-8 md:mb-12">
+              <Skeleton className="h-64 w-full rounded-2xl" />
+            </div>
+          }
+        >
+          {(enabled) => (
+            <div className="mb-8 md:mb-12">
+              <HistoricalEpisodeMatcher symbol={symbol} enabled={enabled} />
+            </div>
+          )}
+        </LazyLoad>
 
-        {/* Narrative Impact History Section */}
-        <div className="mb-8 md:mb-12">
-          <NarrativeImpactHistorySection symbol={symbol} />
-        </div>
+        {/* Narrative Impact History Section - Viewport-based lazy loading */}
+        <LazyLoad 
+          fallback={
+            <div className="mb-8 md:mb-12">
+              <Skeleton className="h-48 w-full rounded-2xl" />
+            </div>
+          }
+        >
+          {(enabled) => (
+            <div className="mb-8 md:mb-12">
+              <NarrativeImpactHistorySection symbol={symbol} enabled={enabled} />
+            </div>
+          )}
+        </LazyLoad>
       </div>
       
       {/* Right sidebar - rendered directly as part of page content */}
@@ -527,6 +519,40 @@ function SymbolPageContent() {
       <AskDeriveStreetPanel />
     </>;
 }
+// Collapsible section for Narrative Coherence with state-based lazy loading
+function NarrativeCoherenceSection({ symbol }: { symbol: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="mb-8 md:mb-12 mt-12 md:mt-16">
+      <CollapsibleTrigger className={cn(
+        "flex items-center gap-2 w-full group px-4 py-3 rounded-xl",
+        "bg-white/45 dark:bg-white/[0.04]",
+        "backdrop-blur-[12px]",
+        "border border-black/[0.04] dark:border-white/[0.04]",
+        "transition-all duration-200",
+        "hover:bg-white/60 dark:hover:bg-white/[0.06]"
+      )}>
+        <h3 className="text-lg font-semibold">Narrative Coherence</h3>
+        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-4">
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            {/* Only fetch data when collapsible is open */}
+            <NarrativeCoherenceCard symbol={symbol} enabled={isOpen} />
+            <NCSTrendChart symbol={symbol} enabled={isOpen} />
+          </div>
+        </motion.div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 // Liquid Glass styling constants
 const glassCardClasses = cn(
   "rounded-2xl p-3 md:p-4",
