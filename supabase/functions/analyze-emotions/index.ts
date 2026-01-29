@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createLogger, createTimer, reportError, recordMetric } from "../_shared/logger.ts";
 
 // Cache version - increment this when making breaking changes to cache format
 const CACHE_VERSION = 2;
@@ -8,6 +9,8 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const logger = createLogger("analyze-emotions");
 
 interface EmotionScore {
   name: string;
@@ -245,15 +248,27 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const requestTimer = createTimer();
+  logger.startRequest(requestId);
+
   try {
     const { symbol, timeRange = "24H", skipCache = false } = await req.json();
 
     if (!symbol) {
+      logger.warn("Missing symbol parameter", { request_id: requestId });
       return new Response(
         JSON.stringify({ error: "Symbol is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    logger.info("Processing emotion analysis request", { 
+      symbol: symbol.toUpperCase(), 
+      request_id: requestId,
+      time_range: timeRange,
+      skip_cache: skipCache 
+    });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -285,10 +300,30 @@ serve(async (req) => {
           : undefined;
         
         if (cacheVersion !== CACHE_VERSION) {
-          console.log(`Cache version mismatch for emotions ${symbol} ${timeRange} (have: ${cacheVersion}, need: ${CACHE_VERSION})`);
+          logger.info("Cache version mismatch, regenerating", { 
+            symbol: symbol.toUpperCase(), 
+            have_version: cacheVersion, 
+            need_version: CACHE_VERSION 
+          });
           // Continue to regenerate cache
         } else {
-          console.log(`Cache hit for emotions ${symbol} ${timeRange} (v${CACHE_VERSION})`);
+          logger.info("Cache hit", { 
+            symbol: symbol.toUpperCase(), 
+            cache_status: 'hit',
+            time_range: timeRange 
+          });
+          
+          // Record cache hit metric
+          recordMetric(supabase, {
+            metric_type: 'cache_operation',
+            function_name: 'analyze-emotions',
+            endpoint: 'emotion_cache',
+            duration_ms: requestTimer.elapsed(),
+            symbol: symbol.toUpperCase(),
+            cache_status: 'hit',
+            status_code: 200,
+          });
+          
           let cachedData: any;
           
           if (Array.isArray(rawEmotions)) {
@@ -307,6 +342,7 @@ serve(async (req) => {
             cachedData = { emotions: [], messageCount: 0 };
           }
           
+          logger.endRequest(requestTimer.elapsed(), 200);
           return new Response(
             JSON.stringify({ 
               ...cachedData,
@@ -324,7 +360,10 @@ serve(async (req) => {
       const daysBack = timeRange === "7D" ? 7 : 30;
       const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
       
-      console.log(`Checking emotion_history for ${symbol} since ${startDate.toISOString()}`);
+      logger.info("Checking emotion history for aggregation", { 
+        symbol: symbol.toUpperCase(), 
+        since: startDate.toISOString() 
+      });
       
       const { data: historyData, error: historyError } = await supabase
         .from("emotion_history")
@@ -338,7 +377,11 @@ serve(async (req) => {
         const minSnapshots = timeRange === "7D" ? 8 : 20;
         
         if (historyData.length >= minSnapshots) {
-          console.log(`Aggregating ${historyData.length} emotion snapshots for ${symbol} ${timeRange}`);
+          logger.info("Aggregating emotion snapshots", { 
+            symbol: symbol.toUpperCase(), 
+            snapshot_count: historyData.length,
+            time_range: timeRange 
+          });
           
           const aggregated = aggregateEmotions(historyData);
           const totalMessages = historyData.reduce((sum, h) => sum + (h.message_count || 0), 0);
@@ -364,6 +407,18 @@ serve(async (req) => {
               { onConflict: "symbol,time_range" }
             );
           
+          // Record aggregation metric
+          recordMetric(supabase, {
+            metric_type: 'api_latency',
+            function_name: 'analyze-emotions',
+            endpoint: 'aggregation',
+            duration_ms: requestTimer.elapsed(),
+            symbol: symbol.toUpperCase(),
+            cache_status: 'miss',
+            status_code: 200,
+          });
+          
+          logger.endRequest(requestTimer.elapsed(), 200);
           return new Response(
             JSON.stringify({ 
               ...cacheData,
@@ -373,19 +428,27 @@ serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         } else {
-          console.log(`Only ${historyData.length} emotion snapshots found, need ${minSnapshots}. Falling back to AI analysis.`);
+          logger.info("Insufficient snapshots for aggregation", { 
+            symbol: symbol.toUpperCase(), 
+            found: historyData.length, 
+            needed: minSnapshots 
+          });
         }
       }
     }
 
-    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for emotions ${symbol} ${timeRange}, fetching messages...`);
+    logger.info("Cache miss, fetching messages", { 
+      symbol: symbol.toUpperCase(), 
+      cache_status: 'miss',
+      time_range: timeRange 
+    });
 
     // Get date range based on timeRange
     const { start, end, limit } = getDateRange(timeRange);
 
     // Fetch messages from StockTwits proxy with date range
     const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=${limit}&start=${start}&end=${end}`;
-    console.log(`Fetching from: ${stocktwitsUrl}`);
+    const upstreamTimer = createTimer();
     
     const messagesResponse = await fetch(stocktwitsUrl, {
       headers: {
@@ -394,8 +457,34 @@ serve(async (req) => {
       },
     });
 
+    // Record upstream call metric
+    recordMetric(supabase, {
+      metric_type: 'upstream_call',
+      function_name: 'analyze-emotions',
+      endpoint: 'stocktwits-proxy',
+      duration_ms: upstreamTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      status_code: messagesResponse.status,
+    });
+
     if (!messagesResponse.ok) {
-      console.error("Failed to fetch messages:", await messagesResponse.text());
+      const errorText = await messagesResponse.text();
+      logger.error("Failed to fetch messages from StockTwits", { 
+        symbol: symbol.toUpperCase(), 
+        status_code: messagesResponse.status,
+        error: errorText 
+      });
+      
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_code: String(messagesResponse.status),
+        error_message: `StockTwits proxy returned ${messagesResponse.status}`,
+        function_name: 'analyze-emotions',
+        request_id: requestId,
+        symbol: symbol.toUpperCase(),
+        severity: messagesResponse.status >= 500 ? 'error' : 'warning',
+      });
+      
       throw new Error("Failed to fetch StockTwits messages");
     }
 
@@ -403,6 +492,7 @@ serve(async (req) => {
     const messages = messagesData.data?.messages || messagesData.messages || [];
 
     if (messages.length === 0) {
+      logger.info("No messages found for analysis", { symbol: symbol.toUpperCase() });
       return new Response(
         JSON.stringify({ emotions: [], messageCount: 0, message: "No messages found for analysis" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -410,6 +500,10 @@ serve(async (req) => {
     }
 
     const totalMessages = messages.length;
+    logger.info("Fetched messages for analysis", { 
+      symbol: symbol.toUpperCase(), 
+      message_count: totalMessages 
+    });
 
     // Group messages by time periods for historical analysis
     const messagesWithTime = messages.slice(0, 1000).map((m: any) => ({
@@ -463,9 +557,13 @@ serve(async (req) => {
       .map((m: any) => m.text)
       .join("\n---\n");
 
-    console.log(`Analyzing emotions in ${messages.length} messages for ${symbol}...`);
+    logger.info("Calling AI for emotion analysis", { 
+      symbol: symbol.toUpperCase(), 
+      message_count: messages.length 
+    });
 
     // Call Lovable AI with tool calling for structured output
+    const aiTimer = createTimer();
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -609,9 +707,33 @@ ${messageTexts}`
       }),
     });
 
+    // Record AI call metric
+    recordMetric(supabase, {
+      metric_type: 'ai_call',
+      function_name: 'analyze-emotions',
+      endpoint: 'gemini-3-flash-preview',
+      duration_ms: aiTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      status_code: aiResponse.status,
+    });
+
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
+      logger.error("AI API error", { 
+        symbol: symbol.toUpperCase(), 
+        status_code: aiResponse.status, 
+        error: errorText 
+      });
+      
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_code: String(aiResponse.status),
+        error_message: `AI gateway returned ${aiResponse.status}`,
+        function_name: 'analyze-emotions',
+        request_id: requestId,
+        symbol: symbol.toUpperCase(),
+        severity: 'error',
+      });
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -629,7 +751,7 @@ ${messageTexts}`
     }
 
     const aiData = await aiResponse.json();
-    console.log("AI emotion response:", JSON.stringify(aiData, null, 2));
+    logger.debug("AI emotion response received", { symbol: symbol.toUpperCase() });
 
     // Extract emotions from tool call response
     let result = { emotions: [] as EmotionScore[], dominantEmotion: "", emotionalIntensity: "moderate", historicalData: [] as any[] };
@@ -639,7 +761,10 @@ ${messageTexts}`
       try {
         result = JSON.parse(toolCall.function.arguments);
       } catch (e) {
-        console.error("Failed to parse tool call arguments:", e);
+        logger.error("Failed to parse AI tool call arguments", { 
+          symbol: symbol.toUpperCase(), 
+          error: String(e) 
+        });
       }
     }
 
@@ -699,14 +824,52 @@ ${messageTexts}`
         { onConflict: "symbol,time_range" }
       );
 
-    console.log(`Cached emotion analysis for ${symbol} ${timeRange}`);
+    logger.info("Cached emotion analysis", { 
+      symbol: symbol.toUpperCase(), 
+      time_range: timeRange,
+      emotion_count: completeEmotions.length 
+    });
 
+    // Record final API latency metric
+    recordMetric(supabase, {
+      metric_type: 'api_latency',
+      function_name: 'analyze-emotions',
+      endpoint: 'analyze',
+      duration_ms: requestTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      cache_status: 'miss',
+      status_code: 200,
+    });
+
+    logger.endRequest(requestTimer.elapsed(), 200);
     return new Response(
       JSON.stringify({ ...cacheData, cached: false, aggregated: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("analyze-emotions error:", error);
+    logger.error("analyze-emotions error", { 
+      request_id: requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    
+    // Try to report error if we have supabase client
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_message: error instanceof Error ? error.message : String(error),
+        stack_trace: error instanceof Error ? error.stack : undefined,
+        function_name: 'analyze-emotions',
+        request_id: requestId,
+        severity: 'error',
+      });
+    } catch (e) {
+      // Silent fail for error reporting
+    }
+    
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

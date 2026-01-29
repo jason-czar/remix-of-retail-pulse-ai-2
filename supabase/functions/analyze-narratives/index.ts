@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createLogger, createTimer, reportError, recordMetric } from "../_shared/logger.ts";
 
 // Cache version - increment this when making breaking changes to cache format
 const CACHE_VERSION = 2;
@@ -8,6 +9,8 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const logger = createLogger("analyze-narratives");
 
 interface Narrative {
   name: string;
@@ -125,15 +128,27 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  const requestTimer = createTimer();
+  logger.startRequest(requestId);
+
   try {
     const { symbol, timeRange = "24H", skipCache = false } = await req.json();
 
     if (!symbol) {
+      logger.warn("Missing symbol parameter", { request_id: requestId });
       return new Response(
         JSON.stringify({ error: "Symbol is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    logger.info("Processing narrative analysis request", { 
+      symbol: symbol.toUpperCase(), 
+      request_id: requestId,
+      time_range: timeRange,
+      skip_cache: skipCache 
+    });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -167,11 +182,32 @@ serve(async (req) => {
         const narrativesData = Array.isArray(cachedNarratives) ? cachedNarratives : cachedNarratives?.narratives || cachedNarratives;
         
         if (cacheVersion !== CACHE_VERSION) {
-          console.log(`Cache version mismatch for ${symbol} ${timeRange} (have: ${cacheVersion}, need: ${CACHE_VERSION})`);
+          logger.info("Cache version mismatch, regenerating", { 
+            symbol: symbol.toUpperCase(), 
+            have_version: cacheVersion, 
+            need_version: CACHE_VERSION 
+          });
           // Continue to regenerate cache
         } else {
-          console.log(`Cache hit for ${symbol} ${timeRange} (v${CACHE_VERSION})`);
+          logger.info("Cache hit", { 
+            symbol: symbol.toUpperCase(), 
+            cache_status: 'hit',
+            time_range: timeRange 
+          });
+          
+          // Record cache hit metric
+          recordMetric(supabase, {
+            metric_type: 'cache_operation',
+            function_name: 'analyze-narratives',
+            endpoint: 'narrative_cache',
+            duration_ms: requestTimer.elapsed(),
+            symbol: symbol.toUpperCase(),
+            cache_status: 'hit',
+            status_code: 200,
+          });
+          
           const messageCount = cached.message_count || 0;
+          logger.endRequest(requestTimer.elapsed(), 200);
           return new Response(
             JSON.stringify({ narratives: narrativesData, messageCount, cached: true }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -185,7 +221,10 @@ serve(async (req) => {
       const daysBack = timeRange === "7D" ? 7 : 30;
       const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
       
-      console.log(`Checking narrative_history for ${symbol} since ${startDate.toISOString()}`);
+      logger.info("Checking narrative history for aggregation", { 
+        symbol: symbol.toUpperCase(), 
+        since: startDate.toISOString() 
+      });
       
       const { data: historyData, error: historyError } = await supabase
         .from("narrative_history")
@@ -201,7 +240,11 @@ serve(async (req) => {
         const minSnapshots = timeRange === "7D" ? 8 : 20;
         
         if (historyData.length >= minSnapshots) {
-          console.log(`Aggregating ${historyData.length} historical snapshots for ${symbol} ${timeRange}`);
+          logger.info("Aggregating narrative snapshots", { 
+            symbol: symbol.toUpperCase(), 
+            snapshot_count: historyData.length,
+            time_range: timeRange 
+          });
           
           const aggregatedNarratives = aggregateNarratives(historyData);
           const totalMessages = historyData.reduce((sum, h) => sum + (h.message_count || 0), 0);
@@ -225,6 +268,18 @@ serve(async (req) => {
               { onConflict: "symbol,time_range" }
             );
           
+          // Record aggregation metric
+          recordMetric(supabase, {
+            metric_type: 'api_latency',
+            function_name: 'analyze-narratives',
+            endpoint: 'aggregation',
+            duration_ms: requestTimer.elapsed(),
+            symbol: symbol.toUpperCase(),
+            cache_status: 'miss',
+            status_code: 200,
+          });
+          
+          logger.endRequest(requestTimer.elapsed(), 200);
           return new Response(
             JSON.stringify({ 
               narratives: aggregatedNarratives, 
@@ -236,19 +291,27 @@ serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         } else {
-          console.log(`Only ${historyData.length} snapshots found, need ${minSnapshots}. Falling back to AI analysis.`);
+          logger.info("Insufficient snapshots for aggregation", { 
+            symbol: symbol.toUpperCase(), 
+            found: historyData.length, 
+            needed: minSnapshots 
+          });
         }
       }
     }
 
-    console.log(`${skipCache ? 'Force refresh' : 'Cache miss'} for ${symbol} ${timeRange}, fetching messages...`);
+    logger.info("Cache miss, fetching messages", { 
+      symbol: symbol.toUpperCase(), 
+      cache_status: 'miss',
+      time_range: timeRange 
+    });
 
     // Get date range based on timeRange
     const { start, end, limit } = getDateRange(timeRange);
 
     // Fetch messages from StockTwits proxy with date range
     const stocktwitsUrl = `${SUPABASE_URL}/functions/v1/stocktwits-proxy?action=messages&symbol=${symbol}&limit=${limit}&start=${start}&end=${end}`;
-    console.log(`Fetching from: ${stocktwitsUrl}`);
+    const upstreamTimer = createTimer();
     
     const messagesResponse = await fetch(stocktwitsUrl, {
       headers: {
@@ -257,8 +320,34 @@ serve(async (req) => {
       },
     });
 
+    // Record upstream call metric
+    recordMetric(supabase, {
+      metric_type: 'upstream_call',
+      function_name: 'analyze-narratives',
+      endpoint: 'stocktwits-proxy',
+      duration_ms: upstreamTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      status_code: messagesResponse.status,
+    });
+
     if (!messagesResponse.ok) {
-      console.error("Failed to fetch messages:", await messagesResponse.text());
+      const errorText = await messagesResponse.text();
+      logger.error("Failed to fetch messages from StockTwits", { 
+        symbol: symbol.toUpperCase(), 
+        status_code: messagesResponse.status,
+        error: errorText 
+      });
+      
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_code: String(messagesResponse.status),
+        error_message: `StockTwits proxy returned ${messagesResponse.status}`,
+        function_name: 'analyze-narratives',
+        request_id: requestId,
+        symbol: symbol.toUpperCase(),
+        severity: messagesResponse.status >= 500 ? 'error' : 'warning',
+      });
+      
       throw new Error("Failed to fetch StockTwits messages");
     }
 
@@ -266,6 +355,7 @@ serve(async (req) => {
     const messages = messagesData.data?.messages || messagesData.messages || [];
 
     if (messages.length === 0) {
+      logger.info("No messages found for analysis", { symbol: symbol.toUpperCase() });
       return new Response(
         JSON.stringify({ narratives: [], messageCount: 0, message: "No messages found for analysis" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -273,6 +363,10 @@ serve(async (req) => {
     }
 
     const totalMessages = messages.length;
+    logger.info("Fetched messages for analysis", { 
+      symbol: symbol.toUpperCase(), 
+      message_count: totalMessages 
+    });
 
     // Prepare message content for AI analysis
     const messageTexts = messages
@@ -281,9 +375,13 @@ serve(async (req) => {
       .filter((text: string) => text.length > 10)
       .join("\n---\n");
 
-    console.log(`Analyzing ${messages.length} messages for ${symbol}...`);
+    logger.info("Calling AI for narrative analysis", { 
+      symbol: symbol.toUpperCase(), 
+      message_count: messages.length 
+    });
 
     // Call Lovable AI with tool calling for structured output
+    const aiTimer = createTimer();
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -361,9 +459,33 @@ ${messageTexts}`,
       }),
     });
 
+    // Record AI call metric
+    recordMetric(supabase, {
+      metric_type: 'ai_call',
+      function_name: 'analyze-narratives',
+      endpoint: 'gemini-3-flash-preview',
+      duration_ms: aiTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      status_code: aiResponse.status,
+    });
+
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
+      logger.error("AI API error", { 
+        symbol: symbol.toUpperCase(), 
+        status_code: aiResponse.status, 
+        error: errorText 
+      });
+      
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_code: String(aiResponse.status),
+        error_message: `AI gateway returned ${aiResponse.status}`,
+        function_name: 'analyze-narratives',
+        request_id: requestId,
+        symbol: symbol.toUpperCase(),
+        severity: 'error',
+      });
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -381,7 +503,7 @@ ${messageTexts}`,
     }
 
     const aiData = await aiResponse.json();
-    console.log("AI response:", JSON.stringify(aiData, null, 2));
+    logger.debug("AI narrative response received", { symbol: symbol.toUpperCase() });
 
     // Extract narratives from tool call response
     let narratives: Narrative[] = [];
@@ -392,7 +514,10 @@ ${messageTexts}`,
         const parsed = JSON.parse(toolCall.function.arguments);
         narratives = parsed.narratives || [];
       } catch (e) {
-        console.error("Failed to parse tool call arguments:", e);
+        logger.error("Failed to parse AI tool call arguments", { 
+          symbol: symbol.toUpperCase(), 
+          error: String(e) 
+        });
       }
     }
 
@@ -426,14 +551,52 @@ ${messageTexts}`,
         { onConflict: "symbol,time_range" }
       );
 
-    console.log(`Cached ${narratives.length} narratives for ${symbol} ${timeRange}`);
+    logger.info("Cached narrative analysis", { 
+      symbol: symbol.toUpperCase(), 
+      time_range: timeRange,
+      narrative_count: narratives.length 
+    });
 
+    // Record final API latency metric
+    recordMetric(supabase, {
+      metric_type: 'api_latency',
+      function_name: 'analyze-narratives',
+      endpoint: 'analyze',
+      duration_ms: requestTimer.elapsed(),
+      symbol: symbol.toUpperCase(),
+      cache_status: 'miss',
+      status_code: 200,
+    });
+
+    logger.endRequest(requestTimer.elapsed(), 200);
     return new Response(
       JSON.stringify({ narratives, messageCount: totalMessages, cached: false, aggregated: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("analyze-narratives error:", error);
+    logger.error("analyze-narratives error", { 
+      request_id: requestId, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    
+    // Try to report error if we have supabase client
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      await reportError(supabase, {
+        error_type: 'edge_function',
+        error_message: error instanceof Error ? error.message : String(error),
+        stack_trace: error instanceof Error ? error.stack : undefined,
+        function_name: 'analyze-narratives',
+        request_id: requestId,
+        severity: 'error',
+      });
+    } catch (e) {
+      // Silent fail for error reporting
+    }
+    
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
