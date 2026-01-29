@@ -9,7 +9,8 @@ import {
   XCircle,
   Zap,
   BarChart3,
-  AlertCircle
+  AlertCircle,
+  Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ import {
   calculatePerformanceAggregates,
   useErrorSummary
 } from '@/hooks/use-monitoring-data';
+import { DataCoverageTab } from '@/components/monitoring/DataCoverageTab';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -222,6 +224,10 @@ export default function MonitoringPage() {
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="errors">Errors</TabsTrigger>
           <TabsTrigger value="cache">Cache</TabsTrigger>
+          <TabsTrigger value="coverage" className="gap-1">
+            <Calendar className="h-3.5 w-3.5" />
+            Coverage
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -420,6 +426,10 @@ export default function MonitoringPage() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="coverage">
+          <DataCoverageTab />
         </TabsContent>
       </Tabs>
     </div>

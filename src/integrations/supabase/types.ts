@@ -641,6 +641,39 @@ export type Database = {
         }
         Relationships: []
       }
+      symbol_daily_coverage: {
+        Row: {
+          date: string
+          has_analytics: boolean
+          has_messages: boolean
+          id: string
+          ingestion_status: string | null
+          last_updated: string | null
+          message_count: number | null
+          symbol: string
+        }
+        Insert: {
+          date: string
+          has_analytics?: boolean
+          has_messages?: boolean
+          id?: string
+          ingestion_status?: string | null
+          last_updated?: string | null
+          message_count?: number | null
+          symbol: string
+        }
+        Update: {
+          date?: string
+          has_analytics?: boolean
+          has_messages?: boolean
+          id?: string
+          ingestion_status?: string | null
+          last_updated?: string | null
+          message_count?: number | null
+          symbol?: string
+        }
+        Relationships: []
+      }
       user_custom_lenses: {
         Row: {
           created_at: string
