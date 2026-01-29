@@ -1,387 +1,215 @@
 
-# Symbol Page Performance Optimization: Tabbed Data Loading Strategy
+# Phase 1: Database Performance & Security Quick Wins
 
-## Overview
-
-This plan implements a comprehensive lazy-loading strategy to reduce the data waterfall on `SymbolPage`. Currently, ~15+ queries fire simultaneously on every page load and lens switch, regardless of what the user actually needs to see.
+A targeted set of database optimizations focused on indexes, statistics, and RLS policy hardening that can be implemented in a single migration with immediate benefits.
 
 ---
 
-## Current Problem Analysis
+## Summary
 
-### Queries Firing on Every Page Load
+This plan addresses three categories of quick wins identified in the architecture review:
+1. **Missing Composite Indexes** — Add optimized indexes for common query patterns
+2. **Table Statistics Refresh** — Run ANALYZE to ensure query planner has current data
+3. **RLS Policy Hardening** — Fix the cache poisoning vulnerability in `stocktwits_response_cache`
 
-| Query | Component | Always Needed? |
-|-------|-----------|----------------|
-| `useSymbolStats` | SymbolPage, SummaryInsightsCard, PsychologyOverviewCard | **Yes** - header data |
-| `useSymbolMessages` | SymbolPage → MessagesSidebar | **Yes** - sidebar |
-| `useDecisionLensSummary` | SymbolPage | Only for active lens |
-| `useLatestPsychologySnapshot` | PsychologyOverviewCard, NarrativeCoherenceCard, LensReadinessCard | Only on Summary lens |
-| `useSentimentHistory` | SummaryInsightsCard, PsychologyOverviewCard | Only on Summary lens |
-| `useNCSHistory` | NCSTrendChart | Only when collapsible opened |
-| `useHistoricalEpisodeMatcher` | HistoricalEpisodeMatcher | Visible but below fold |
-| `useLatestSnapshotWithOutcomes` | NarrativeImpactHistorySection | Visible but below fold |
-| Chart data (narrative/emotion/sentiment history) | NarrativeChart, EmotionChart, SentimentChart | Only for active chart tab |
-| Stock price data | Charts | Only for active chart tab |
-| Volume analytics | NarrativeChart | Only for narratives tab |
-
-### Key Issues
-1. **Summary lens** loads data for non-summary lenses
-2. **Non-summary lenses** load chart data unnecessarily
-3. **Collapsible sections** fetch data even when closed
-4. **All chart tabs** fetch data even when inactive
-5. **Duplicate queries** - `useSymbolStats` called 3x, `useLatestPsychologySnapshot` called 3x
+Estimated implementation time: ~30 minutes
+Risk level: Low (all changes are additive or security-improving)
 
 ---
 
-## Implementation Strategy
+## 1. Database Indexes
 
-### Phase 1: Lens-Aware Data Loading
+### Current State
+The query analysis revealed these access patterns:
 
-**Principle**: Only fetch data relevant to the currently active lens.
+| Table | Common Filter Pattern | Existing Index |
+|-------|----------------------|----------------|
+| `psychology_snapshots` | `symbol + period_type + snapshot_start DESC` | Has it |
+| `emotion_history` | `symbol + period_type + recorded_at DESC` | Missing composite |
+| `narrative_history` | `symbol + period_type + recorded_at DESC` | Missing composite |
+| `sentiment_history` | `symbol + recorded_at DESC` | Has it |
+| `volume_history` | `symbol + period_type + recorded_at DESC` | Has it |
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                     SYMBOL PAGE                              │
-├─────────────────────────────────────────────────────────────┤
-│ ALWAYS FETCH:                                               │
-│  • Symbol Stats (useSymbolStats)                            │
-│  • Messages (useSymbolMessages)                             │
-│  • Decision Lens Summary (for current lens only)            │
-├─────────────────────────────────────────────────────────────┤
-│ SUMMARY LENS ONLY:                                          │
-│  • Charts (based on active tab)                             │
-│  • Psychology Snapshot (useLatestPsychologySnapshot)        │
-│  • Sentiment History (useSentimentHistory)                  │
-├─────────────────────────────────────────────────────────────┤
-│ NON-SUMMARY LENSES:                                         │
-│  • LensReadinessCard data (useLatestPsychologySnapshot)     │
-│  • (Charts NOT loaded - they're hidden)                     │
-└─────────────────────────────────────────────────────────────┘
+### Action: Add Composite Indexes
+
+Create composite indexes for `emotion_history` and `narrative_history` to support the common three-column filter pattern used by chart components:
+
+```sql
+-- Emotion history: supports use-emotion-history.ts queries
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_emotion_history_symbol_period_recorded 
+ON public.emotion_history(symbol, period_type, recorded_at DESC);
+
+-- Narrative history: supports use-narrative-history.ts and FillTodayGapsButton.tsx
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_narrative_history_symbol_period_recorded 
+ON public.narrative_history(symbol, period_type, recorded_at DESC);
 ```
 
-#### Changes Required
-
-**1. Modify hooks to accept `enabled` flag**
-
-Update `PsychologyOverviewCard`:
-```tsx
-// Pass isEnabled based on whether we're on summary lens
-export function PsychologyOverviewCard({ 
-  symbol, 
-  hideMetricTiles = false,
-  enabled = true  // NEW PROP
-}: PsychologyOverviewCardProps) {
-  const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol, enabled);
-  const { data: symbolStats } = useSymbolStats(symbol); // Always needed
-  const { data: sentimentHistory } = useSentimentHistory(symbol, 7, enabled);
-  // ...
-}
-```
-
-**2. Update SymbolPage to pass enabled flags**
-
-```tsx
-// Only load Summary lens specific data when on summary
-const isSummaryLens = decisionLens === 'summary';
-
-// Charts section already conditionally renders, but hooks inside still fire
-// We need to prevent the hooks from running when not on summary
-```
+**Why**: Queries that filter by `symbol`, then `period_type`, then sort by `recorded_at` currently require index intersection or sequential scans. A covering composite index allows single-index lookups.
 
 ---
 
-### Phase 2: Chart Tab Lazy Loading
+## 2. Table Statistics
 
-**Principle**: Only fetch data for the active chart tab.
+### Current State
+Auto-analyze is running (last auto-analyze on key tables: 1-2 days ago), but explicit ANALYZE ensures the query planner has the freshest cardinality estimates after index changes.
 
-#### Current Problem
-All 4 chart components mount when summary lens is active, and each fires its own queries:
+### Action: Run ANALYZE
 
-- `NarrativeChart`: useNarrativeHistory, useVolumeAnalytics, useStockPrice
-- `EmotionChart`: useEmotionHistory, useStockPrice  
-- `SentimentChart`: useSentimentAnalytics
-- `EmotionMomentumChart`: useEmotionMomentum
-
-#### Solution: Add `enabled` prop to chart hooks
-
-**1. Modify chart hooks** (`use-narrative-history.ts`, `use-emotion-history.ts`, etc.):
-
-```tsx
-export function useNarrativeHistory(
-  symbol: string,
-  options?: { 
-    periodType?: 'hourly' | 'daily';
-    limit?: number;
-    start?: string;
-    end?: string;
-    enabled?: boolean;  // NEW
-  }
-) {
-  return useQuery({
-    // ...
-    enabled: options?.enabled !== false && !!symbol,
-  });
-}
+```sql
+-- Refresh statistics on high-traffic tables
+ANALYZE public.psychology_snapshots;
+ANALYZE public.emotion_history;
+ANALYZE public.narrative_history;
+ANALYZE public.sentiment_history;
+ANALYZE public.volume_history;
+ANALYZE public.price_history;
+ANALYZE public.stocktwits_response_cache;
 ```
 
-**2. Update SymbolPage to track active tab and pass to charts**:
-
-```tsx
-// In chart rendering section:
-<TabsContent value="narratives" className="mt-0 mb-1.5 md:mb-2">
-  <div className="-mx-4 md:mx-0">
-    <NarrativeChart 
-      symbol={symbol} 
-      timeRange={timeRange} 
-      start={start} 
-      end={end}
-      enabled={activeTab === 'narratives'}  // Only fetch when active
-    />
-  </div>
-</TabsContent>
-```
-
-**3. Update chart components to accept `enabled` prop**:
-
-```tsx
-interface NarrativeChartProps {
-  symbol: string;
-  timeRange?: TimeRange;
-  start?: string;
-  end?: string;
-  enabled?: boolean;  // NEW
-}
-
-export function NarrativeChart({ 
-  symbol, 
-  timeRange = '1D', 
-  start, 
-  end,
-  enabled = true 
-}: NarrativeChartProps) {
-  const { data: narrativeHistory } = useNarrativeHistory(symbol, {
-    // ...
-    enabled,
-  });
-  // Pass enabled to all hooks...
-}
-```
+**Why**: Index changes invalidate some planner statistics. Running ANALYZE immediately after index creation ensures optimal query plans.
 
 ---
 
-### Phase 3: Collapsible Section Lazy Loading
+## 3. RLS Policy Hardening
 
-**Principle**: Only fetch data when collapsible is opened.
+### Critical Vulnerability Found
 
-#### Target Components
-1. **Narrative Coherence** section (contains `NarrativeCoherenceCard` + `NCSTrendChart`)
+The `stocktwits_response_cache` table has an overly permissive RLS policy:
 
-#### Solution: State-based enabled flag
-
-```tsx
-// In SymbolPage.tsx - replace defaultOpen={false} with controlled state
-const [ncsOpen, setNcsOpen] = useState(false);
-
-<Collapsible open={ncsOpen} onOpenChange={setNcsOpen} className="mb-8 md:mb-12 mt-12 md:mt-16">
-  <CollapsibleTrigger>
-    {/* ... */}
-  </CollapsibleTrigger>
-  <CollapsibleContent className="pt-4">
-    {/* Only render children when opened, or pass enabled flag */}
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-      <NarrativeCoherenceCard symbol={symbol} enabled={ncsOpen} />
-      <NCSTrendChart symbol={symbol} enabled={ncsOpen} />
-    </div>
-  </CollapsibleContent>
-</Collapsible>
+```sql
+-- CURRENT (DANGEROUS)
+CREATE POLICY "Allow public cache access" 
+ON public.stocktwits_response_cache 
+FOR ALL 
+USING (true) 
+WITH CHECK (true);
 ```
 
-Update components to accept `enabled`:
-```tsx
-// NarrativeCoherenceCard.tsx
-export function NarrativeCoherenceCard({ symbol, enabled = true }: Props) {
-  const { data: snapshot, isLoading } = useLatestPsychologySnapshot(symbol, enabled);
-  // ...
-}
+**Risk**: Any anonymous user can INSERT, UPDATE, or DELETE cache entries via the Supabase client. An attacker could:
+- Poison the cache with malicious/misleading data
+- Delete cache entries causing unnecessary API calls
+- Insert fake trending symbols or manipulated stats
 
-// NCSTrendChart.tsx  
-export function NCSTrendChart({ symbol, enabled = true }: Props) {
-  const { data: ncsData, isLoading } = useNCSHistory(symbol, range, enabled);
-  // ...
-}
+### Action: Restrict to Service Role
+
+```sql
+-- Drop the dangerous policy
+DROP POLICY IF EXISTS "Allow public cache access" ON public.stocktwits_response_cache;
+
+-- Create read-only public access
+CREATE POLICY "Allow public read cache" 
+ON public.stocktwits_response_cache 
+FOR SELECT 
+USING (true);
+
+-- Create service-role-only write access  
+CREATE POLICY "Allow service role write cache" 
+ON public.stocktwits_response_cache 
+FOR ALL 
+USING (auth.role() = 'service_role')
+WITH CHECK (auth.role() = 'service_role');
+```
+
+**Why**: The edge function uses the service role key and will continue to work. Client-side reads remain possible. Only writes are restricted.
+
+---
+
+## 4. Implementation Details
+
+### Single Migration File
+
+All changes will be combined into one migration:
+
+```sql
+-- Phase 1: Performance & Security Quick Wins
+
+-- ============================================
+-- SECTION 1: Composite Indexes
+-- ============================================
+
+-- Emotion history: optimize (symbol, period_type, recorded_at) lookups
+CREATE INDEX IF NOT EXISTS idx_emotion_history_symbol_period_recorded 
+ON public.emotion_history(symbol, period_type, recorded_at DESC);
+
+-- Narrative history: optimize (symbol, period_type, recorded_at) lookups
+CREATE INDEX IF NOT EXISTS idx_narrative_history_symbol_period_recorded 
+ON public.narrative_history(symbol, period_type, recorded_at DESC);
+
+-- ============================================
+-- SECTION 2: RLS Policy Hardening
+-- ============================================
+
+-- Fix stocktwits_response_cache: remove public write access
+DROP POLICY IF EXISTS "Allow public cache access" ON public.stocktwits_response_cache;
+
+-- Allow public reads (cache hits)
+CREATE POLICY "Allow public read cache" 
+ON public.stocktwits_response_cache 
+FOR SELECT 
+USING (true);
+
+-- Restrict writes to service role (edge functions only)
+CREATE POLICY "Allow service role write cache" 
+ON public.stocktwits_response_cache 
+FOR ALL 
+USING (auth.role() = 'service_role')
+WITH CHECK (auth.role() = 'service_role');
+
+-- ============================================
+-- SECTION 3: Refresh Statistics
+-- ============================================
+
+ANALYZE public.psychology_snapshots;
+ANALYZE public.emotion_history;
+ANALYZE public.narrative_history;
+ANALYZE public.sentiment_history;
+ANALYZE public.volume_history;
+ANALYZE public.price_history;
+ANALYZE public.stocktwits_response_cache;
 ```
 
 ---
 
-### Phase 4: Viewport-Based Loading (Intersection Observer)
+## 5. Verification Steps
 
-**Principle**: Defer loading components that are below the initial viewport.
+After deployment, verify the changes:
 
-#### Target Components
-- `HistoricalEpisodeMatcher` 
-- `NarrativeImpactHistorySection`
-
-#### Solution: Create a reusable `LazyLoad` wrapper
-
-```tsx
-// src/components/ui/LazyLoad.tsx
-import { useInView } from 'react-intersection-observer';
-import { useState, useEffect, ReactNode } from 'react';
-
-interface LazyLoadProps {
-  children: (enabled: boolean) => ReactNode;
-  fallback?: ReactNode;
-  threshold?: number;
-  rootMargin?: string;
-}
-
-export function LazyLoad({ 
-  children, 
-  fallback = null,
-  threshold = 0.1,
-  rootMargin = '100px'  // Start loading 100px before entering viewport
-}: LazyLoadProps) {
-  const [hasBeenVisible, setHasBeenVisible] = useState(false);
-  const { ref, inView } = useInView({
-    threshold,
-    rootMargin,
-    triggerOnce: true,  // Only trigger once
-  });
-
-  useEffect(() => {
-    if (inView) {
-      setHasBeenVisible(true);
-    }
-  }, [inView]);
-
-  return (
-    <div ref={ref}>
-      {hasBeenVisible ? children(true) : fallback}
-    </div>
-  );
-}
+### Verify Indexes
+```sql
+SELECT indexname, indexdef 
+FROM pg_indexes 
+WHERE tablename IN ('emotion_history', 'narrative_history')
+  AND indexname LIKE '%period_recorded%';
 ```
 
-**Usage in SymbolPage**:
-
-```tsx
-import { LazyLoad } from '@/components/ui/LazyLoad';
-
-{/* Historical Episode Matcher - lazy loaded */}
-<LazyLoad 
-  fallback={
-    <div className="mb-8 md:mb-12">
-      <Skeleton className="h-64 w-full rounded-2xl" />
-    </div>
-  }
->
-  {(enabled) => (
-    <div className="mb-8 md:mb-12">
-      <HistoricalEpisodeMatcher symbol={symbol} enabled={enabled} />
-    </div>
-  )}
-</LazyLoad>
-
-{/* Narrative Impact History - lazy loaded */}
-<LazyLoad 
-  fallback={
-    <div className="mb-8 md:mb-12">
-      <Skeleton className="h-48 w-full rounded-2xl" />
-    </div>
-  }
->
-  {(enabled) => (
-    <div className="mb-8 md:mb-12">
-      <NarrativeImpactHistorySection symbol={symbol} enabled={enabled} />
-    </div>
-  )}
-</LazyLoad>
+### Verify RLS Policies
+```sql
+SELECT policyname, cmd, qual, with_check 
+FROM pg_policies 
+WHERE tablename = 'stocktwits_response_cache';
 ```
 
----
-
-### Phase 5: Eliminate Duplicate Queries
-
-**Problem**: Same hooks called multiple times across components:
-- `useSymbolStats`: SymbolPage, SummaryInsightsCard, PsychologyOverviewCard
-- `useLatestPsychologySnapshot`: PsychologyOverviewCard, NarrativeCoherenceCard, LensReadinessCard
-
-**Solution**: React Query's deduplication handles this automatically - queries with the same key only fire once. However, we should verify the query keys are identical and consider:
-
-1. **Lift data up** where practical (pass snapshot data as props instead of re-fetching)
-2. **Ensure consistent query keys** (already handled by the hooks)
+### Test Cache Still Works
+Navigate to any symbol page and check:
+- Network tab shows `X-Cache: MISS` on first load
+- Refresh shows `X-Cache: HIT`
+- No RLS errors in console
 
 ---
 
-## Files to Modify
+## 6. Expected Outcomes
 
-### Core Implementation Files
-
-| File | Changes |
-|------|---------|
-| `src/pages/SymbolPage.tsx` | Add lens-aware loading, chart tab enabled flags, collapsible state management, LazyLoad wrappers |
-| `src/components/ui/LazyLoad.tsx` | **NEW FILE** - Intersection Observer wrapper |
-| `src/components/PsychologyOverviewCard.tsx` | Add `enabled` prop to control hook execution |
-| `src/components/SummaryInsightsCard.tsx` | Add `enabled` prop (optional - inherits from parent) |
-| `src/components/charts/NarrativeChart.tsx` | Add `enabled` prop, pass to all hooks |
-| `src/components/charts/EmotionChart.tsx` | Add `enabled` prop, pass to all hooks |
-| `src/components/charts/SentimentChart.tsx` | Add `enabled` prop, pass to hooks |
-| `src/components/charts/EmotionMomentumChart.tsx` | Add `enabled` prop, pass to hooks |
-| `src/components/NarrativeCoherenceCard.tsx` | Add `enabled` prop |
-| `src/components/NCSTrendChart.tsx` | Add `enabled` prop |
-| `src/components/HistoricalEpisodeMatcher.tsx` | Add `enabled` prop |
-| `src/components/NarrativeImpactHistorySection.tsx` | Add `enabled` prop |
-| `src/components/LensReadinessCard.tsx` | Add `enabled` prop |
-
-### Hook Modifications
-
-| File | Changes |
-|------|---------|
-| `src/hooks/use-narrative-history.ts` | Add `enabled` option |
-| `src/hooks/use-emotion-history.ts` | Add `enabled` option |
-| `src/hooks/use-sentiment-history.ts` | Verify `enabled` support |
-| `src/hooks/use-ncs-history.ts` | Add `enabled` parameter |
-| `src/hooks/use-historical-episode-matcher.ts` | Verify `enabled` support |
-
----
-
-## Dependencies
-
-Need to install `react-intersection-observer` for viewport-based loading:
-```bash
-npm install react-intersection-observer
-```
-
----
-
-## Expected Impact
-
-### Before Optimization
-- **Initial page load**: ~15+ parallel queries
-- **Lens switch**: Re-fetches chart data unnecessarily
-- **Time to interactive**: Delayed by low-priority data
-
-### After Optimization
-- **Summary lens initial load**: ~6 queries (stats, messages, lens summary, psychology snapshot, sentiment history, active chart data)
-- **Non-summary lens load**: ~4 queries (stats, messages, lens summary, readiness data)
-- **Collapsible sections**: 0 queries until opened
-- **Below-fold components**: Deferred until scrolled into view
-
-### Estimated Performance Improvement
-- **40-60% reduction** in initial query count
-- **Faster First Contentful Paint** on mobile
-- **Reduced backend load** for casual browsing
-- **Better perceived performance** with progressive loading
+| Metric | Before | After |
+|--------|--------|-------|
+| Emotion/Narrative chart queries | Potential index intersection | Single index scan |
+| `stocktwits_response_cache` write access | Public (vulnerable) | Service role only |
+| Query planner statistics | Auto-updated | Freshly analyzed |
 
 ---
 
 ## Technical Notes
 
-1. **React Query Caching**: Cached data persists across lens switches - users returning to Summary lens won't re-fetch chart data within the stale time window.
-
-2. **Skeleton Consistency**: All lazy-loaded sections should show appropriate skeleton states to prevent layout shift.
-
-3. **Error Boundaries**: Existing error boundaries remain intact - lazy loading doesn't affect error handling.
-
-4. **State Preservation**: Chart selections (active tab, time range, session) persist in URL query params, so returning to Summary lens restores the user's preferences.
+- `CREATE INDEX IF NOT EXISTS` is used to make the migration idempotent
+- The existing 2-column indexes (`idx_emotion_history_symbol_recorded`) are not dropped as they may still be useful for queries that don't filter by `period_type`
+- The `ANALYZE` commands have minimal overhead on tables under 10,000 rows
+- No application code changes required — all improvements are at the database layer
