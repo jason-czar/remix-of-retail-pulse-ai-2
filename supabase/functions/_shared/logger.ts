@@ -4,7 +4,9 @@
  * Provides consistent JSON logging, error reporting, and performance metrics.
  */
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+// Use a more permissive type for SupabaseClient to avoid version conflicts
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnySupabaseClient = any;
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -111,7 +113,7 @@ export interface ErrorReport {
  * Fire-and-forget pattern to avoid impacting request latency
  */
 export async function reportError(
-  supabase: SupabaseClient,
+  supabase: AnySupabaseClient,
   report: ErrorReport
 ): Promise<void> {
   try {
@@ -154,7 +156,7 @@ export interface PerformanceMetric {
  * Fire-and-forget pattern to avoid impacting request latency
  */
 export async function recordMetric(
-  supabase: SupabaseClient,
+  supabase: AnySupabaseClient,
   metric: PerformanceMetric
 ): Promise<void> {
   try {
@@ -182,7 +184,7 @@ export function createTimer() {
   return {
     elapsed: () => Date.now() - start,
     record: (
-      supabase: SupabaseClient,
+      supabase: AnySupabaseClient,
       metric: Omit<PerformanceMetric, 'duration_ms'>
     ) => {
       recordMetric(supabase, {
