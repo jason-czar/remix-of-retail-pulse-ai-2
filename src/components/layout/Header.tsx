@@ -103,6 +103,13 @@ export function Header() {
                           API
                         </Link>
                       </DropdownMenuItem>
+                      {user.email === "admin@czar.ing" && (
+                        <DropdownMenuItem asChild className="rounded-lg mx-1 focus:bg-black/[0.05] dark:focus:bg-white/[0.08]">
+                          <Link to="/monitoring" className="flex items-center">
+                            Monitoring
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator className="bg-black/[0.06] dark:bg-white/[0.08]" />
                       <DropdownMenuItem onClick={handleSignOut} className="text-bearish rounded-lg mx-1 focus:bg-bearish/10">
                         <LogOut className="mr-2 h-4 w-4" />
