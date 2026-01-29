@@ -25,6 +25,8 @@ const LearnMorePage = lazy(() => import("./pages/LearnMorePage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="/onboarding" element={<Suspense fallback={<PageLoader />}><OnboardingPage /></Suspense>} />
             <Route path="/learn-more" element={<Suspense fallback={<PageLoader />}><LearnMorePage /></Suspense>} />
             <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><PricingPage /></Suspense>} />
+            <Route path="/terms" element={<Suspense fallback={<PageLoader />}><TermsPage /></Suspense>} />
+            <Route path="/privacy" element={<Suspense fallback={<PageLoader />}><PrivacyPage /></Suspense>} />
             
             {/* Routes with persistent sidebar layout */}
             <Route element={<AppLayout />}>
