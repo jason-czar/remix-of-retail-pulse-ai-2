@@ -1,218 +1,117 @@
 
-# Data Coverage Feature - Final Implementation Plan
+# Fix Data Coverage Ingestion - Implementation Plan
 
 ## Overview
 
-Add a **Data Coverage** tab to the admin Monitoring page (`/monitoring`) with a calendar-based visualization of data ingestion status per symbol. Administrators can identify gaps and trigger ingestion for missing dates.
+Fix the "Fetch Messages" and "Re-fetch All Data" buttons so they correctly update coverage status. The core issues are:
+1. `type` parameter is ignored in `auto-backfill-gaps`
+2. Messages are never stored in `sentiment_history`
+3. Wrong tables checked for existing data
 
-## Database Schema
+## Changes
 
-Minimal schema with only essential columns:
+### 1. Database Migration
+
+Add unique constraint on `sentiment_history` to enable proper UPSERT:
 
 ```sql
-CREATE TABLE public.symbol_daily_coverage (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  symbol TEXT NOT NULL,
-  date DATE NOT NULL,
-  has_messages BOOLEAN NOT NULL DEFAULT false,
-  has_analytics BOOLEAN NOT NULL DEFAULT false,
-  message_count INTEGER DEFAULT 0,
-  ingestion_status TEXT DEFAULT NULL, -- queued | running | completed | failed
-  last_updated TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  UNIQUE(symbol, date)
-);
-
-CREATE INDEX idx_coverage_symbol_date ON public.symbol_daily_coverage(symbol, date);
-
--- RLS: public read access
-ALTER TABLE public.symbol_daily_coverage ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read" ON public.symbol_daily_coverage FOR SELECT USING (true);
-CREATE POLICY "Allow service role write" ON public.symbol_daily_coverage FOR ALL USING (true);
+ALTER TABLE public.sentiment_history 
+ADD CONSTRAINT sentiment_history_symbol_recorded_unique 
+UNIQUE (symbol, recorded_at);
 ```
 
-## Coverage State Logic
+### 2. Update `auto-backfill-gaps` Edge Function
 
-Simple, clear coloring rules per filter:
+**File:** `supabase/functions/auto-backfill-gaps/index.ts`
 
-| Filter | Green | Amber | Gray |
-|--------|-------|-------|------|
-| **Messages** | has_messages = true | - | has_messages = false |
-| **Analytics** | has_analytics = true | has_messages = true AND has_analytics = false | both false |
-| **All** | has_messages AND has_analytics | has_messages XOR has_analytics | neither |
+#### a) Accept New Parameters
+- `type`: 'messages' | 'analytics' | 'all' (default: 'all')
+- `force`: boolean to bypass existing data checks
 
-## Architecture
-
-```text
-MonitoringPage
-├── Tabs: Overview | Performance | Errors | Cache | Coverage
-│                                                    │
-│                                        ┌───────────▼───────────┐
-│                                        │   DataCoverageTab     │
-│                                        └───────────┬───────────┘
-│                              ┌─────────────────────┼─────────────────────┐
-│                              │                     │                     │
-│                      ┌───────▼────────┐    ┌──────▼──────┐    ┌────────▼────────┐
-│                      │  ControlsRow   │    │CoverageGrid │    │ DayDetailSheet  │
-│                      │ - Symbol Input │    │ - Month View│    │ - Status Cards  │
-│                      │ - Data Type    │    │ - Day Cells │    │ - Fetch Actions │
-│                      │ - Month Nav    │    └─────────────┘    └─────────────────┘
-│                      └────────────────┘
-└────────────────────────────────────────────────────────────────────────────────────
+#### b) Add Sentiment Computation Helper
+```typescript
+function computeSentimentFromMessages(messages: StocktwitsMessage[]): {
+  sentimentScore: number;
+  bullishCount: number;
+  bearishCount: number;
+  neutralCount: number;
+}
 ```
 
-## Components
+#### c) Check Correct Tables Based on Type
+- `type='messages'` → check `sentiment_history`
+- `type='analytics'` → check `narrative_history`
+- `type='all'` → check both
 
-### 1. DataCoverageTab
-Main orchestrator component:
-- **Symbol Input**: Text input with uppercase formatting (existing pattern)
-- **Data Type Select**: Messages | Analytics | All
-- **Month Navigation**: Previous/Next arrows with month/year display
-- **Refresh Button**: Re-fetches coverage data
-
-### 2. CoverageCalendar
-Month grid with minimal cell density:
-- Standard 7-column weekday layout (Sun-Sat)
-- Day cells show only:
-  - Day number
-  - Small colored dot indicator (Green/Amber/Gray)
-- **Future dates**: Muted appearance, non-clickable, no hover effects
-- **Past/present dates**: Clickable to open detail sheet
-- Hover tooltip shows: Date, Messages status, Analytics status
-
-### 3. DayCoverageCell
-Individual cell component:
-- Day number centered
-- 6px colored dot below number
-- Disabled state for future dates
-- Loading spinner overlay when ingestion running
-
-### 4. DayDetailSheet
-Slide-out sheet (right side) containing:
-- **Header**: Symbol + formatted date
-- **Status Cards**:
-  - Messages: count or "No data"
-  - Analytics: "Computed" or "Missing"
-- **Ingestion Status Badge**: queued/running/completed/failed (when applicable)
-- **Actions** (disabled for future dates):
-  - "Fetch Messages" - triggers stocktwits fetch + sentiment
-  - "Generate Analytics" - triggers narrative/emotion analysis
-  - "Re-fetch All Data" - runs full pipeline
-
-## Hook: use-data-coverage.ts
+#### d) Store Sentiment Data with UPSERT
+Use consistent timestamp alignment (end of trading day for the target date, matching existing patterns in the codebase):
 
 ```typescript
-interface DayCoverage {
-  date: string;
-  hasMessages: boolean;
-  hasAnalytics: boolean;
-  messageCount: number;
-  ingestionStatus: 'queued' | 'running' | 'completed' | 'failed' | null;
-}
+// Use end-of-day timestamp consistent with other history tables
+const recordedAt = new Date(`${dateStr}T00:00:00Z`);
+recordedAt.setUTCHours(23, 59, 59, 999);
 
-// Single query per symbol/month with 5-min client-side cache
-export function useMonthCoverage(symbol: string, year: number, month: number) {
-  return useQuery({
-    queryKey: ['coverage', symbol, year, month],
-    queryFn: async () => {
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      
-      const { data } = await supabase
-        .from('symbol_daily_coverage')
-        .select('*')
-        .eq('symbol', symbol)
-        .gte('date', startDate.toISOString().split('T')[0])
-        .lte('date', endDate.toISOString().split('T')[0]);
-      
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000, // 5 min cache
-    enabled: !!symbol,
-  });
-}
-
-export function useTriggerIngestion() {
-  return useMutation({
-    mutationFn: async ({ symbol, date, type }: { 
-      symbol: string; 
-      date: string; 
-      type: 'messages' | 'analytics' | 'all' 
-    }) => {
-      // Update status to 'queued'
-      // Trigger appropriate edge function
-      // Update status to 'running' -> 'completed'/'failed'
-    }
-  });
-}
+await supabase
+  .from('sentiment_history')
+  .upsert({
+    symbol: symbol.toUpperCase(),
+    recorded_at: recordedAt.toISOString(),
+    sentiment_score: sentimentScore,
+    bullish_count: bullishCount,
+    bearish_count: bearishCount,
+    neutral_count: neutralCount,
+    message_volume: messages.length,
+  }, { onConflict: 'symbol,recorded_at' });
 ```
 
-## Edge Function: compute-coverage-status
+#### e) Conditional Flow
+- `type='messages'`: Fetch messages → compute sentiment → store in `sentiment_history`
+- `type='analytics'`: Fetch messages → run AI analysis → store in `narrative_history` + `emotion_history`
+- `type='all'`: Fetch messages once → do both flows
 
-Recalculates coverage by checking data existence:
+### 3. Update `use-data-coverage.ts` Hook
+
+**File:** `src/hooks/use-data-coverage.ts`
+
+Pass `force: true` when "Re-fetch All Data" is clicked:
 
 ```typescript
-// POST /compute-coverage-status
-// Body: { symbol: string, dates?: string[] }
-// Default: recalculates last 30 days (not 90)
-
-// Coverage logic:
-// has_messages = sentiment_history records exist for date
-// has_analytics = narrative_history OR emotion_history records exist for date
-// message_count = sum of message_count from sentiment_history
+const { error: backfillError } = await supabase.functions.invoke('auto-backfill-gaps', {
+  body: {
+    symbol,
+    startDate: date,
+    endDate: date,
+    type,
+    force: type === 'all',
+  },
+});
 ```
 
-## Integration with Existing Functions
+## Technical Details
 
-Ingestion actions will call existing functions:
+### Timestamp Alignment
 
-| Action | Function Called | Parameters |
-|--------|-----------------|------------|
-| Fetch Messages | `auto-backfill-gaps` | `{ symbol, startDate: date, endDate: date }` |
-| Generate Analytics | `auto-backfill-gaps` | `{ symbol, startDate: date, endDate: date }` |
-| Re-fetch All | `auto-backfill-gaps` + refresh | Full pipeline for date |
+Looking at existing code patterns in `auto-backfill-gaps`, the function already uses end-of-day timestamps for narrative/emotion history. The sentiment data will follow the same pattern to ensure consistency when `compute-coverage-status` checks for data presence.
 
-## File Structure
+### Data Flow After Fix
 
-```
-src/
-├── components/
-│   └── monitoring/
-│       ├── DataCoverageTab.tsx      # Main container
-│       ├── CoverageCalendar.tsx     # Month grid
-│       ├── DayCoverageCell.tsx      # Individual cell
-│       └── DayDetailSheet.tsx       # Detail panel
-├── hooks/
-│   └── use-data-coverage.ts         # Coverage hooks
-└── pages/
-    └── MonitoringPage.tsx           # Add Coverage tab
-
-supabase/
-└── functions/
-    └── compute-coverage-status/
-        └── index.ts
-```
+| Action | Tables Updated | Coverage Result |
+|--------|----------------|-----------------|
+| Fetch Messages | `sentiment_history` | hasMessages = true |
+| Generate Analytics | `narrative_history`, `emotion_history` | hasAnalytics = true |
+| Re-fetch All | All three tables | Both = true |
 
 ## Implementation Steps
 
-1. **Database**: Create `symbol_daily_coverage` table with migration
-2. **Edge Function**: Build `compute-coverage-status` with 30-day default
-3. **Hook**: Implement `use-data-coverage` with caching
-4. **Components**: Build DataCoverageTab, CoverageCalendar, DayCoverageCell, DayDetailSheet
-5. **Integration**: Add Coverage tab to MonitoringPage TabsList
-6. **Actions**: Wire ingestion buttons to existing backfill functions
+1. Create migration for unique constraint on `sentiment_history`
+2. Update `auto-backfill-gaps` edge function with type/force handling
+3. Update `use-data-coverage.ts` hook to pass force parameter
+4. Deploy and test
 
-## Phase 1 Scope (Locked)
+## Files Modified
 
-**Included:**
-- Coverage table with minimal schema
-- Calendar visualization with simple coloring
-- Single-day ingestion triggers
-- Detail sheet with status and actions
-- Coverage refresh functionality
-
-**Deferred to Phase 2:**
-- Shift-click range selection
-- Batch fetch operations
-- Full job history panel
-- Automated scheduling
-- Export/reporting
+| File | Change |
+|------|--------|
+| `supabase/functions/auto-backfill-gaps/index.ts` | Add type/force params, sentiment computation, correct table checks |
+| `src/hooks/use-data-coverage.ts` | Pass force=true for "Re-fetch All" |
+| New migration | Add unique constraint on sentiment_history |
