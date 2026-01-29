@@ -18,12 +18,12 @@ export function CompactFooter() {
           <Link to="/api-docs" className="hover:text-foreground transition-colors">
             API
           </Link>
-          <a href="#" className="hover:text-foreground transition-colors">
+          <Link to="/privacy" className="hover:text-foreground transition-colors">
             Privacy
-          </a>
-          <a href="#" className="hover:text-foreground transition-colors">
+          </Link>
+          <Link to="/terms" className="hover:text-foreground transition-colors">
             Terms
-          </a>
+          </Link>
           <a href="#" className="hover:text-foreground transition-colors">
             Status
           </a>
