@@ -94,21 +94,29 @@ export function useTriggerIngestion() {
 
       try {
         // Call auto-backfill-gaps to do the actual work
-        const { error: backfillError } = await supabase.functions.invoke('auto-backfill-gaps', {
+        // Force=true for 'all' to re-fetch everything regardless of existing data
+        const { data, error: backfillError } = await supabase.functions.invoke('auto-backfill-gaps', {
           body: {
             symbol,
             startDate: date,
             endDate: date,
             type: type === 'all' ? undefined : type,
+            force: type === 'all', // Force re-fetch when doing 'all'
           },
         });
 
         if (backfillError) throw backfillError;
+        
+        console.log('Backfill result:', data);
 
         // Refresh coverage status after backfill
-        await supabase.functions.invoke('compute-coverage-status', {
+        const { error: coverageError } = await supabase.functions.invoke('compute-coverage-status', {
           body: { symbol, dates: [date] },
         });
+        
+        if (coverageError) {
+          console.error('Coverage refresh error:', coverageError);
+        }
 
         // Update status to 'completed'
         await supabase
@@ -117,7 +125,7 @@ export function useTriggerIngestion() {
           .eq('symbol', symbol)
           .eq('date', date);
 
-        return { success: true };
+        return { success: true, data };
       } catch (error) {
         // Update status to 'failed'
         await supabase
@@ -129,10 +137,15 @@ export function useTriggerIngestion() {
         throw error;
       }
     },
-    onSuccess: (_, { symbol }) => {
-      const now = new Date();
+    onSuccess: (result, { symbol, date }) => {
+      // Invalidate coverage queries for the relevant month
+      const dateObj = new Date(date);
       queryClient.invalidateQueries({ 
-        queryKey: ['coverage', symbol, now.getFullYear(), now.getMonth()] 
+        queryKey: ['coverage', symbol, dateObj.getFullYear(), dateObj.getMonth()] 
+      });
+      // Also invalidate stocktwits data queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['stocktwits'] 
       });
       toast.success('Ingestion completed successfully');
     },
