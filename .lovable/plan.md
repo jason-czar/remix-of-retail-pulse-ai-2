@@ -1,65 +1,218 @@
-# Phase 5: Monitoring and Observability - COMPLETED ✅
 
-Implementation completed on 2026-01-29.
+# Data Coverage Feature - Final Implementation Plan
 
-## Summary
+## Overview
 
-All four key areas have been implemented:
+Add a **Data Coverage** tab to the admin Monitoring page (`/monitoring`) with a calendar-based visualization of data ingestion status per symbol. Administrators can identify gaps and trigger ingestion for missing dates.
 
-1. ✅ **Structured Logging System** - Created `supabase/functions/_shared/logger.ts` with JSON logging
-2. ✅ **Error Tracking Infrastructure** - Created `error_logs` table with frontend and backend reporting
-3. ✅ **Performance Metrics Collection** - Created `performance_metrics` table with recording helpers
-4. ✅ **Monitoring Dashboard** - Built admin monitoring page at `/monitoring`
+## Database Schema
 
-## What Was Built
+Minimal schema with only essential columns:
 
-### Database Tables
-- `public.error_logs` - Persistent error tracking with context, stack traces, and severity
-- `public.performance_metrics` - API latency and throughput metrics
+```sql
+CREATE TABLE public.symbol_daily_coverage (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  symbol TEXT NOT NULL,
+  date DATE NOT NULL,
+  has_messages BOOLEAN NOT NULL DEFAULT false,
+  has_analytics BOOLEAN NOT NULL DEFAULT false,
+  message_count INTEGER DEFAULT 0,
+  ingestion_status TEXT DEFAULT NULL, -- queued | running | completed | failed
+  last_updated TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(symbol, date)
+);
 
-### Edge Functions
-- `health-check` - Real-time system health endpoint with circuit breaker and cache status
+CREATE INDEX idx_coverage_symbol_date ON public.symbol_daily_coverage(symbol, date);
 
-### Shared Modules
-- `supabase/functions/_shared/logger.ts` - Structured logging, error reporting, and metrics helpers
-
-### Frontend Components
-- `src/pages/MonitoringPage.tsx` - Admin dashboard with health status, performance metrics, errors, and cache stats
-- `src/lib/error-reporter.ts` - Frontend error capture and reporting
-- `src/hooks/use-monitoring-data.ts` - React Query hooks for monitoring data
-
-### Updated Files
-- `src/components/ErrorBoundary.tsx` - Now reports errors to backend
-- `src/main.tsx` - Initializes global error handlers
-- `src/App.tsx` - Added `/monitoring` route
-- `supabase/config.toml` - Added health-check function config
-
-## API Endpoints
-
-### Health Check
+-- RLS: public read access
+ALTER TABLE public.symbol_daily_coverage ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read" ON public.symbol_daily_coverage FOR SELECT USING (true);
+CREATE POLICY "Allow service role write" ON public.symbol_daily_coverage FOR ALL USING (true);
 ```
-GET /functions/v1/health-check
+
+## Coverage State Logic
+
+Simple, clear coloring rules per filter:
+
+| Filter | Green | Amber | Gray |
+|--------|-------|-------|------|
+| **Messages** | has_messages = true | - | has_messages = false |
+| **Analytics** | has_analytics = true | has_messages = true AND has_analytics = false | both false |
+| **All** | has_messages AND has_analytics | has_messages XOR has_analytics | neither |
+
+## Architecture
+
+```text
+MonitoringPage
+├── Tabs: Overview | Performance | Errors | Cache | Coverage
+│                                                    │
+│                                        ┌───────────▼───────────┐
+│                                        │   DataCoverageTab     │
+│                                        └───────────┬───────────┘
+│                              ┌─────────────────────┼─────────────────────┐
+│                              │                     │                     │
+│                      ┌───────▼────────┐    ┌──────▼──────┐    ┌────────▼────────┐
+│                      │  ControlsRow   │    │CoverageGrid │    │ DayDetailSheet  │
+│                      │ - Symbol Input │    │ - Month View│    │ - Status Cards  │
+│                      │ - Data Type    │    │ - Day Cells │    │ - Fetch Actions │
+│                      │ - Month Nav    │    └─────────────┘    └─────────────────┘
+│                      └────────────────┘
+└────────────────────────────────────────────────────────────────────────────────────
 ```
-Returns:
-```json
-{
-  "status": "healthy" | "degraded" | "unhealthy",
-  "timestamp": "2026-01-29T03:38:59.377Z",
-  "checks": {
-    "database": { "status": "ok", "latency_ms": 179 },
-    "stocktwits_circuit": { "status": "CLOSED" },
-    "yahoo_circuit": { "status": "CLOSED" },
-    "cache_hit_rate": { "value": 0, "status": "no_data" }
-  },
-  "version": "1.0.0",
-  "uptime_ms": 243
+
+## Components
+
+### 1. DataCoverageTab
+Main orchestrator component:
+- **Symbol Input**: Text input with uppercase formatting (existing pattern)
+- **Data Type Select**: Messages | Analytics | All
+- **Month Navigation**: Previous/Next arrows with month/year display
+- **Refresh Button**: Re-fetches coverage data
+
+### 2. CoverageCalendar
+Month grid with minimal cell density:
+- Standard 7-column weekday layout (Sun-Sat)
+- Day cells show only:
+  - Day number
+  - Small colored dot indicator (Green/Amber/Gray)
+- **Future dates**: Muted appearance, non-clickable, no hover effects
+- **Past/present dates**: Clickable to open detail sheet
+- Hover tooltip shows: Date, Messages status, Analytics status
+
+### 3. DayCoverageCell
+Individual cell component:
+- Day number centered
+- 6px colored dot below number
+- Disabled state for future dates
+- Loading spinner overlay when ingestion running
+
+### 4. DayDetailSheet
+Slide-out sheet (right side) containing:
+- **Header**: Symbol + formatted date
+- **Status Cards**:
+  - Messages: count or "No data"
+  - Analytics: "Computed" or "Missing"
+- **Ingestion Status Badge**: queued/running/completed/failed (when applicable)
+- **Actions** (disabled for future dates):
+  - "Fetch Messages" - triggers stocktwits fetch + sentiment
+  - "Generate Analytics" - triggers narrative/emotion analysis
+  - "Re-fetch All Data" - runs full pipeline
+
+## Hook: use-data-coverage.ts
+
+```typescript
+interface DayCoverage {
+  date: string;
+  hasMessages: boolean;
+  hasAnalytics: boolean;
+  messageCount: number;
+  ingestionStatus: 'queued' | 'running' | 'completed' | 'failed' | null;
+}
+
+// Single query per symbol/month with 5-min client-side cache
+export function useMonthCoverage(symbol: string, year: number, month: number) {
+  return useQuery({
+    queryKey: ['coverage', symbol, year, month],
+    queryFn: async () => {
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      
+      const { data } = await supabase
+        .from('symbol_daily_coverage')
+        .select('*')
+        .eq('symbol', symbol)
+        .gte('date', startDate.toISOString().split('T')[0])
+        .lte('date', endDate.toISOString().split('T')[0]);
+      
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 min cache
+    enabled: !!symbol,
+  });
+}
+
+export function useTriggerIngestion() {
+  return useMutation({
+    mutationFn: async ({ symbol, date, type }: { 
+      symbol: string; 
+      date: string; 
+      type: 'messages' | 'analytics' | 'all' 
+    }) => {
+      // Update status to 'queued'
+      // Trigger appropriate edge function
+      // Update status to 'running' -> 'completed'/'failed'
+    }
+  });
 }
 ```
 
-## Next Steps (Future Phases)
+## Edge Function: compute-coverage-status
 
-1. Integrate structured logging into all Edge Functions
-2. Add performance metrics recording to stocktwits-proxy and other functions
-3. Set up scheduled cleanup for error_logs and performance_metrics tables
-4. Add alerting based on error rate thresholds
-5. Implement RBAC for monitoring dashboard access
+Recalculates coverage by checking data existence:
+
+```typescript
+// POST /compute-coverage-status
+// Body: { symbol: string, dates?: string[] }
+// Default: recalculates last 30 days (not 90)
+
+// Coverage logic:
+// has_messages = sentiment_history records exist for date
+// has_analytics = narrative_history OR emotion_history records exist for date
+// message_count = sum of message_count from sentiment_history
+```
+
+## Integration with Existing Functions
+
+Ingestion actions will call existing functions:
+
+| Action | Function Called | Parameters |
+|--------|-----------------|------------|
+| Fetch Messages | `auto-backfill-gaps` | `{ symbol, startDate: date, endDate: date }` |
+| Generate Analytics | `auto-backfill-gaps` | `{ symbol, startDate: date, endDate: date }` |
+| Re-fetch All | `auto-backfill-gaps` + refresh | Full pipeline for date |
+
+## File Structure
+
+```
+src/
+├── components/
+│   └── monitoring/
+│       ├── DataCoverageTab.tsx      # Main container
+│       ├── CoverageCalendar.tsx     # Month grid
+│       ├── DayCoverageCell.tsx      # Individual cell
+│       └── DayDetailSheet.tsx       # Detail panel
+├── hooks/
+│   └── use-data-coverage.ts         # Coverage hooks
+└── pages/
+    └── MonitoringPage.tsx           # Add Coverage tab
+
+supabase/
+└── functions/
+    └── compute-coverage-status/
+        └── index.ts
+```
+
+## Implementation Steps
+
+1. **Database**: Create `symbol_daily_coverage` table with migration
+2. **Edge Function**: Build `compute-coverage-status` with 30-day default
+3. **Hook**: Implement `use-data-coverage` with caching
+4. **Components**: Build DataCoverageTab, CoverageCalendar, DayCoverageCell, DayDetailSheet
+5. **Integration**: Add Coverage tab to MonitoringPage TabsList
+6. **Actions**: Wire ingestion buttons to existing backfill functions
+
+## Phase 1 Scope (Locked)
+
+**Included:**
+- Coverage table with minimal schema
+- Calendar visualization with simple coloring
+- Single-day ingestion triggers
+- Detail sheet with status and actions
+- Coverage refresh functionality
+
+**Deferred to Phase 2:**
+- Shift-click range selection
+- Batch fetch operations
+- Full job history panel
+- Automated scheduling
+- Export/reporting
