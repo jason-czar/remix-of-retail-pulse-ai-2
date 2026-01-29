@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { AIAnalysisLoader } from "@/components/AIAnalysisLoader";
+import { ChartSkeleton } from "./ChartSkeleton";
 import { MarketSessionSelector, MarketSession, SESSION_RANGES } from "./MarketSessionSelector";
 import { CHART_SIDE_PANEL, CHART_SIDE_PANEL_MOBILE } from "@/lib/chart-constants";
 
@@ -752,7 +753,7 @@ export function EmotionChart({ symbol, timeRange = '24H', enabled = true }: Emot
   }, []);
 
   if (isLoading) {
-    return <AIAnalysisLoader symbol={symbol} analysisType="emotions" />;
+    return <ChartSkeleton variant="stacked" showSidePanel={true} showControls={true} chartHeight="h-[350px] md:h-[480px]" />;
   }
 
   // For non-today views or no data, show horizontal bar chart fallback
@@ -1031,7 +1032,7 @@ function HorizontalEmotionChart({ symbol, timeRange }: { symbol: string; timeRan
   }, [data]);
 
   if (isLoading) {
-    return <AIAnalysisLoader symbol={symbol} analysisType="emotions" />;
+    return <ChartSkeleton variant="bar" showSidePanel={false} showControls={false} chartHeight="h-[400px]" />;
   }
 
   if (error) {
