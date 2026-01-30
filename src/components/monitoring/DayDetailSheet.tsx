@@ -19,7 +19,7 @@ interface DayDetailSheetProps {
   symbol: string;
   date: Date;
   coverage: DayCoverage | null;
-  onTriggerIngestion: (type: 'messages' | 'analytics' | 'psychology' | 'all') => void;
+  onTriggerIngestion: (type: 'messages' | 'analytics' | 'psychology' | 'price' | 'all') => void;
   isIngesting: boolean;
 }
 
@@ -205,6 +205,20 @@ export function DayDetailSheet({
                 <Brain className="h-4 w-4 mr-2" />
               )}
               Generate Psychology Snapshot
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start glass-card"
+              disabled={isFutureDate || isIngesting}
+              onClick={() => onTriggerIngestion('price')}
+            >
+              {isIngesting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <DollarSign className="h-4 w-4 mr-2" />
+              )}
+              Backfill Price History
             </Button>
 
             <Button

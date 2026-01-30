@@ -79,7 +79,7 @@ export function useTriggerIngestion() {
     }: { 
       symbol: string; 
       date: string; 
-      type: 'messages' | 'analytics' | 'psychology' | 'all';
+      type: 'messages' | 'analytics' | 'psychology' | 'price' | 'all';
     }) => {
       // Update status to 'queued'
       await supabase
@@ -111,6 +111,16 @@ export function useTriggerIngestion() {
           });
 
           if (psychError) throw psychError;
+        } else if (type === 'price') {
+          // Call backfill-price-history for this symbol (fetches full year, upserts)
+          const { error: priceError } = await supabase.functions.invoke('backfill-price-history', {
+            body: {
+              symbol,
+              days: 30, // Only fetch last 30 days for targeted backfill
+            },
+          });
+
+          if (priceError) throw priceError;
         } else {
           // Call auto-backfill-gaps for messages/analytics
           const { error: backfillError } = await supabase.functions.invoke('auto-backfill-gaps', {
