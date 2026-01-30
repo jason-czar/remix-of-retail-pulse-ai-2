@@ -539,41 +539,48 @@ serve(async (req) => {
       errors: [] as string[],
     };
 
-    // Process each date (limit to 3 per request to avoid timeouts)
-    const datesToProcess = expectedDates.slice(0, 3);
+    // Find missing dates based on ingestion type
+    const missingDates: string[] = [];
+    
+    if (forceRefetch) {
+      // Force mode: process all expected dates
+      missingDates.push(...expectedDates);
+    } else {
+      // Check each date for missing data
+      for (const dateStr of expectedDates) {
+        const needsMessages = ingestionType === 'messages' || ingestionType === 'all';
+        const needsAnalytics = ingestionType === 'analytics' || ingestionType === 'all';
+        
+        let isMissing = false;
+        
+        if (needsMessages) {
+          const hasSentiment = await hasSentimentData(supabase, symbol, dateStr);
+          if (!hasSentiment) isMissing = true;
+        }
+        
+        if (needsAnalytics && !isMissing) {
+          const hasAnalytics = await hasAnalyticsData(supabase, symbol, dateStr);
+          if (!hasAnalytics) isMissing = true;
+        }
+        
+        if (isMissing) {
+          missingDates.push(dateStr);
+        }
+      }
+    }
+    
+    console.log(`Found ${missingDates.length} missing dates out of ${expectedDates.length} expected`);
+
+    // Process only missing dates (limit to 3 per request to avoid timeouts)
+    const datesToProcess = missingDates.slice(0, 3);
     
     for (const dateStr of datesToProcess) {
       console.log(`Processing date: ${dateStr}`);
       
       try {
-        // Determine what needs to be done based on type and existing data
-        const needsMessages = ingestionType === 'messages' || ingestionType === 'all';
-        const needsAnalytics = ingestionType === 'analytics' || ingestionType === 'all';
-        
-        let shouldFetchMessages = false;
-        let shouldRunAnalytics = false;
-        
-        if (forceRefetch) {
-          // Force mode: always process
-          shouldFetchMessages = needsMessages;
-          shouldRunAnalytics = needsAnalytics;
-        } else {
-          // Check what data already exists
-          if (needsMessages) {
-            const hasSentiment = await hasSentimentData(supabase, symbol, dateStr);
-            shouldFetchMessages = !hasSentiment;
-          }
-          if (needsAnalytics) {
-            const hasAnalytics = await hasAnalyticsData(supabase, symbol, dateStr);
-            shouldRunAnalytics = !hasAnalytics;
-          }
-        }
-        
-        if (!shouldFetchMessages && !shouldRunAnalytics) {
-          console.log(`Skipping ${dateStr}: data already exists`);
-          results.skippedDates.push(dateStr);
-          continue;
-        }
+        // Determine what needs to be done based on type
+        const shouldFetchMessages = ingestionType === 'messages' || ingestionType === 'all';
+        const shouldRunAnalytics = ingestionType === 'analytics' || ingestionType === 'all';
         
         // Fetch messages from StockTwits proxy
         const dayStart = `${dateStr}T00:00:00Z`;
@@ -707,8 +714,8 @@ serve(async (req) => {
       }
     }
 
-    // Check if there are more dates to process
-    const hasMore = expectedDates.length > datesToProcess.length;
+    // Check if there are more missing dates to process
+    const hasMore = missingDates.length > datesToProcess.length;
     
     console.log("Auto-backfill complete:", results);
 
@@ -716,7 +723,7 @@ serve(async (req) => {
       JSON.stringify({ 
         ...results,
         hasMore,
-        remainingDates: hasMore ? expectedDates.length - datesToProcess.length : 0,
+        remainingDates: hasMore ? missingDates.length - datesToProcess.length : 0,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
