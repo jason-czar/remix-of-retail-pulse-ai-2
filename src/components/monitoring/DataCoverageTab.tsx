@@ -14,14 +14,12 @@ import {
 import { useMonthCoverage, useRefreshCoverage, useTriggerIngestion } from '@/hooks/use-data-coverage';
 import { CoverageCalendar } from './CoverageCalendar';
 import { DayDetailSheet } from './DayDetailSheet';
-import type { DayCoverage } from '@/hooks/use-data-coverage';
-
-type FilterType = 'all' | 'messages' | 'analytics';
+import type { DayCoverage, CoverageFilter } from '@/hooks/use-data-coverage';
 
 export function DataCoverageTab() {
   const [symbol, setSymbol] = useState('NVDA');
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<CoverageFilter>('all');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -94,7 +92,7 @@ export function DataCoverageTab() {
           </div>
 
           {/* Filter Select */}
-          <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
+          <Select value={filter} onValueChange={(v) => setFilter(v as CoverageFilter)}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -102,6 +100,8 @@ export function DataCoverageTab() {
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="messages">Messages</SelectItem>
               <SelectItem value="analytics">Analytics</SelectItem>
+              <SelectItem value="psychology">Psychology</SelectItem>
+              <SelectItem value="price">Price</SelectItem>
             </SelectContent>
           </Select>
 

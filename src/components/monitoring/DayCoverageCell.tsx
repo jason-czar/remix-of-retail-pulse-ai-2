@@ -7,18 +7,18 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import type { DayCoverage } from '@/hooks/use-data-coverage';
+import type { DayCoverage, CoverageFilter } from '@/hooks/use-data-coverage';
 
 interface DayCoverageCellProps {
   date: Date;
   coverage: DayCoverage | null;
-  filter: 'all' | 'messages' | 'analytics';
+  filter: CoverageFilter;
   onClick: () => void;
 }
 
 function getCoverageColor(
   coverage: DayCoverage | null,
-  filter: 'all' | 'messages' | 'analytics'
+  filter: CoverageFilter
 ): 'green' | 'amber' | 'gray' {
   if (!coverage) return 'gray';
 
@@ -29,10 +29,19 @@ function getCoverageColor(
       if (coverage.hasAnalytics) return 'green';
       if (coverage.hasMessages) return 'amber';
       return 'gray';
+    case 'psychology':
+      return coverage.hasPsychology ? 'green' : 'gray';
+    case 'price':
+      return coverage.hasPrice ? 'green' : 'gray';
     case 'all':
     default:
-      if (coverage.hasMessages && coverage.hasAnalytics) return 'green';
-      if (coverage.hasMessages || coverage.hasAnalytics) return 'amber';
+      // All = messages + analytics + psychology + price
+      const hasAll = coverage.hasMessages && coverage.hasAnalytics && 
+                     coverage.hasPsychology && coverage.hasPrice;
+      const hasSome = coverage.hasMessages || coverage.hasAnalytics || 
+                      coverage.hasPsychology || coverage.hasPrice;
+      if (hasAll) return 'green';
+      if (hasSome) return 'amber';
       return 'gray';
   }
 }
@@ -96,6 +105,12 @@ export function DayCoverageCell({ date, coverage, filter, onClick }: DayCoverage
                 </p>
                 <p>
                   Analytics: {coverage?.hasAnalytics ? 'Computed' : 'Missing'}
+                </p>
+                <p>
+                  Psychology: {coverage?.hasPsychology ? 'Available' : 'Missing'}
+                </p>
+                <p>
+                  Price: {coverage?.hasPrice ? 'Available' : 'Missing'}
                 </p>
               </>
             )}

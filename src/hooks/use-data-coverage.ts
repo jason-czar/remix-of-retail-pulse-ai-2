@@ -6,9 +6,13 @@ export interface DayCoverage {
   date: string;
   hasMessages: boolean;
   hasAnalytics: boolean;
+  hasPsychology: boolean;
+  hasPrice: boolean;
   messageCount: number;
   ingestionStatus: 'queued' | 'running' | 'completed' | 'failed' | null;
 }
+
+export type CoverageFilter = 'all' | 'messages' | 'analytics' | 'psychology' | 'price';
 
 export function useMonthCoverage(symbol: string, year: number, month: number) {
   return useQuery({
@@ -31,6 +35,8 @@ export function useMonthCoverage(symbol: string, year: number, month: number) {
         date: row.date,
         hasMessages: row.has_messages,
         hasAnalytics: row.has_analytics,
+        hasPsychology: row.has_psychology ?? false,
+        hasPrice: row.has_price ?? false,
         messageCount: row.message_count || 0,
         ingestionStatus: row.ingestion_status as DayCoverage['ingestionStatus'],
       }));

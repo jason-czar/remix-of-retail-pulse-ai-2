@@ -646,6 +646,8 @@ export type Database = {
           date: string
           has_analytics: boolean
           has_messages: boolean
+          has_price: boolean
+          has_psychology: boolean
           id: string
           ingestion_status: string | null
           last_updated: string | null
@@ -656,6 +658,8 @@ export type Database = {
           date: string
           has_analytics?: boolean
           has_messages?: boolean
+          has_price?: boolean
+          has_psychology?: boolean
           id?: string
           ingestion_status?: string | null
           last_updated?: string | null
@@ -666,6 +670,8 @@ export type Database = {
           date?: string
           has_analytics?: boolean
           has_messages?: boolean
+          has_price?: boolean
+          has_psychology?: boolean
           id?: string
           ingestion_status?: string | null
           last_updated?: string | null
