@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameMonth } from 'date-fns';
 import { DayCoverageCell } from './DayCoverageCell';
-import type { DayCoverage } from '@/hooks/use-data-coverage';
+import type { DayCoverage, CoverageFilter } from '@/hooks/use-data-coverage';
 
 interface CoverageCalendarProps {
   year: number;
   month: number;
   coverage: DayCoverage[];
-  filter: 'all' | 'messages' | 'analytics';
+  filter: CoverageFilter;
   onDayClick: (date: Date) => void;
 }
 

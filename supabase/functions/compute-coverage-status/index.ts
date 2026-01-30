@@ -62,7 +62,7 @@ serve(async (req) => {
       const hasMessages = sentimentData && sentimentData.length > 0;
       const messageCount = sentimentData?.reduce((sum, r) => sum + (r.message_volume || 0), 0) || 0;
 
-      // Check for analytics (narrative_history OR emotion_history)
+      // Check for analytics (narrative_history AND emotion_history)
       const { data: narrativeData } = await supabase
         .from('narrative_history')
         .select('id')
@@ -82,6 +82,27 @@ serve(async (req) => {
       const hasAnalytics = (narrativeData && narrativeData.length > 0) || 
                            (emotionData && emotionData.length > 0);
 
+      // Check for psychology snapshots (critical for Decision Readiness)
+      const { data: psychologyData } = await supabase
+        .from('psychology_snapshots')
+        .select('id')
+        .eq('symbol', symbol)
+        .gte('snapshot_start', `${date}T00:00:00Z`)
+        .lt('snapshot_start', `${date}T23:59:59Z`)
+        .limit(1);
+
+      const hasPsychology = psychologyData && psychologyData.length > 0;
+
+      // Check for price history (required for narrative outcomes)
+      const { data: priceData } = await supabase
+        .from('price_history')
+        .select('id')
+        .eq('symbol', symbol)
+        .eq('date', date)
+        .limit(1);
+
+      const hasPrice = priceData && priceData.length > 0;
+
       // Upsert coverage record
       const { error: upsertError } = await supabase
         .from('symbol_daily_coverage')
@@ -90,6 +111,8 @@ serve(async (req) => {
           date,
           has_messages: hasMessages,
           has_analytics: hasAnalytics,
+          has_psychology: hasPsychology,
+          has_price: hasPrice,
           message_count: messageCount,
           last_updated: new Date().toISOString(),
         }, { onConflict: 'symbol,date' });
@@ -97,7 +120,7 @@ serve(async (req) => {
       if (upsertError) {
         console.error(`Error upserting coverage for ${date}:`, upsertError);
       } else {
-        results.push({ date, hasMessages, hasAnalytics, messageCount });
+        results.push({ date, hasMessages, hasAnalytics, hasPsychology, hasPrice, messageCount });
       }
     }
 

@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { MessageSquare, BarChart3, RefreshCw, Loader2, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { MessageSquare, BarChart3, RefreshCw, Loader2, CheckCircle, XCircle, Clock, Brain, DollarSign } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -55,6 +55,47 @@ function IngestionStatusBadge({ status }: { status: string | null }) {
   );
 }
 
+interface StatusCardProps {
+  icon: React.ReactNode;
+  label: string;
+  hasData: boolean;
+  dataLabel?: string;
+  pendingLabel?: string;
+  hasPendingState?: boolean;
+  isPending?: boolean;
+}
+
+function StatusCard({ icon, label, hasData, dataLabel, pendingLabel, hasPendingState, isPending }: StatusCardProps) {
+  const showPending = hasPendingState && isPending && !hasData;
+  
+  return (
+    <Card className={cn(
+      "glass-card",
+      hasData 
+        ? "border-green-500/30 bg-green-500/5" 
+        : showPending
+          ? "border-amber-500/30 bg-amber-500/5"
+          : "border-muted"
+    )}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-muted-foreground mb-2">
+          {icon}
+          <span className="text-xs font-medium">{label}</span>
+        </div>
+        {hasData ? (
+          <div className="text-sm font-semibold text-green-500">
+            {dataLabel || 'Available'}
+          </div>
+        ) : showPending ? (
+          <div className="text-sm text-amber-500">{pendingLabel || 'Pending'}</div>
+        ) : (
+          <div className="text-sm text-muted-foreground">Missing</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function DayDetailSheet({
   open,
   onOpenChange,
@@ -81,53 +122,41 @@ export function DayDetailSheet({
         </SheetHeader>
 
         <div className="mt-6 space-y-4">
-          {/* Status Cards */}
+          {/* Status Cards - 2x2 grid */}
           <div className="grid grid-cols-2 gap-3">
-            {/* Messages Status */}
-            <Card className={cn(
-              "glass-card",
-              coverage?.hasMessages 
-                ? "border-green-500/30 bg-green-500/5" 
-                : "border-muted"
-            )}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="text-xs font-medium">Messages</span>
-                </div>
-                {coverage?.hasMessages ? (
-                  <div className="text-lg font-semibold text-green-500">
-                    {coverage.messageCount.toLocaleString()}
-                  </div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">No data</div>
-                )}
-              </CardContent>
-            </Card>
+            <StatusCard
+              icon={<MessageSquare className="h-4 w-4" />}
+              label="Messages"
+              hasData={coverage?.hasMessages ?? false}
+              dataLabel={coverage?.messageCount ? `${coverage.messageCount.toLocaleString()} msgs` : 'Available'}
+            />
 
-            {/* Analytics Status */}
-            <Card className={cn(
-              "glass-card",
-              coverage?.hasAnalytics 
-                ? "border-green-500/30 bg-green-500/5" 
-                : coverage?.hasMessages
-                  ? "border-amber-500/30 bg-amber-500/5"
-                  : "border-muted"
-            )}>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="text-xs font-medium">Analytics</span>
-                </div>
-                {coverage?.hasAnalytics ? (
-                  <div className="text-sm font-semibold text-green-500">Computed</div>
-                ) : coverage?.hasMessages ? (
-                  <div className="text-sm text-amber-500">Pending</div>
-                ) : (
-                  <div className="text-sm text-muted-foreground">Missing</div>
-                )}
-              </CardContent>
-            </Card>
+            <StatusCard
+              icon={<BarChart3 className="h-4 w-4" />}
+              label="Analytics"
+              hasData={coverage?.hasAnalytics ?? false}
+              dataLabel="Computed"
+              pendingLabel="Pending"
+              hasPendingState
+              isPending={coverage?.hasMessages ?? false}
+            />
+
+            <StatusCard
+              icon={<Brain className="h-4 w-4" />}
+              label="Psychology"
+              hasData={coverage?.hasPsychology ?? false}
+              dataLabel="Snapshot"
+              pendingLabel="Pending"
+              hasPendingState
+              isPending={coverage?.hasAnalytics ?? false}
+            />
+
+            <StatusCard
+              icon={<DollarSign className="h-4 w-4" />}
+              label="Price"
+              hasData={coverage?.hasPrice ?? false}
+              dataLabel="Recorded"
+            />
           </div>
 
           {/* Actions */}
@@ -183,6 +212,34 @@ export function DayDetailSheet({
                 Cannot fetch data for future dates
               </p>
             )}
+          </div>
+
+          {/* Coverage Summary */}
+          <div className="pt-4 border-t border-border/50">
+            <p className="text-xs text-muted-foreground mb-2">
+              Symbol Page Health
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { label: 'Msgs', ok: coverage?.hasMessages },
+                { label: 'Analytics', ok: coverage?.hasAnalytics },
+                { label: 'Psychology', ok: coverage?.hasPsychology },
+                { label: 'Price', ok: coverage?.hasPrice },
+              ].map(({ label, ok }) => (
+                <Badge 
+                  key={label}
+                  variant="outline" 
+                  className={cn(
+                    'text-xs',
+                    ok 
+                      ? 'bg-green-500/10 text-green-600 border-green-500/30' 
+                      : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {ok ? '✓' : '✗'} {label}
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
       </SheetContent>
