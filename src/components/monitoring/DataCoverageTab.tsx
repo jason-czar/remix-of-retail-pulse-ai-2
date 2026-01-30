@@ -1,10 +1,13 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, Loader2, Zap } from 'lucide-react';
-import { format, addMonths, subMonths } from 'date-fns';
+import { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, RefreshCw, Loader2, Zap, CalendarIcon } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -34,6 +37,10 @@ export function DataCoverageTab() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [batchDialogOpen, setBatchDialogOpen] = useState(false);
   const [batchTypes, setBatchTypes] = useState<('messages' | 'analytics' | 'psychology' | 'price')[]>(['messages', 'analytics']);
+  
+  // Date range for batch backfill - defaults to current month
+  const [batchStartDate, setBatchStartDate] = useState<Date>(() => startOfMonth(new Date()));
+  const [batchEndDate, setBatchEndDate] = useState<Date>(() => endOfMonth(new Date()));
 
   const { data: coverage, isLoading, refetch } = useMonthCoverage(
     symbol,
@@ -79,10 +86,11 @@ export function DataCoverageTab() {
   };
 
   const handleBatchBackfill = () => {
-    if (symbol && coverage && batchTypes.length > 0) {
+    if (symbol && batchTypes.length > 0 && batchStartDate && batchEndDate) {
       batchBackfill.mutate({
         symbol,
-        coverage,
+        startDate: batchStartDate.toISOString().split('T')[0],
+        endDate: batchEndDate.toISOString().split('T')[0],
         types: batchTypes,
       });
       setBatchDialogOpen(false);
@@ -97,31 +105,24 @@ export function DataCoverageTab() {
     );
   };
 
-  // Count missing dates for the batch dialog
-  const getMissingCounts = () => {
-    if (!coverage) return { messages: 0, analytics: 0, psychology: 0, price: 0 };
-    
+  // Count trading days in the selected range
+  const tradingDaysInRange = useMemo(() => {
+    if (!batchStartDate || !batchEndDate) return 0;
     const today = new Date();
     today.setHours(23, 59, 59, 999);
     
-    let messages = 0, analytics = 0, psychology = 0, price = 0;
-    
-    for (const day of coverage) {
-      const dayDate = new Date(day.date + 'T12:00:00');
-      if (dayDate > today) continue;
-      const dayOfWeek = dayDate.getDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-      
-      if (!day.hasMessages) messages++;
-      if (!day.hasAnalytics) analytics++;
-      if (!day.hasPsychology) psychology++;
-      if (!day.hasPrice) price++;
-    }
-    
-    return { messages, analytics, psychology, price };
-  };
+    const days = eachDayOfInterval({ start: batchStartDate, end: batchEndDate });
+    return days.filter(d => !isWeekend(d) && d <= today).length;
+  }, [batchStartDate, batchEndDate]);
 
-  const missingCounts = getMissingCounts();
+  // Reset date range to current month when dialog opens
+  const handleOpenBatchDialog = (open: boolean) => {
+    if (open) {
+      setBatchStartDate(startOfMonth(currentMonth));
+      setBatchEndDate(endOfMonth(currentMonth));
+    }
+    setBatchDialogOpen(open);
+  };
 
   const selectedCoverage = selectedDate 
     ? coverage?.find(c => c.date === selectedDate.toISOString().split('T')[0]) || null
@@ -177,7 +178,7 @@ export function DataCoverageTab() {
           </div>
 
           {/* Batch Backfill Button */}
-          <Dialog open={batchDialogOpen} onOpenChange={setBatchDialogOpen}>
+          <Dialog open={batchDialogOpen} onOpenChange={handleOpenBatchDialog}>
             <DialogTrigger asChild>
               <Button
                 variant="default"
@@ -188,59 +189,110 @@ export function DataCoverageTab() {
                 Backfill All
               </Button>
             </DialogTrigger>
-            <DialogContent className="glass-card">
+            <DialogContent className="glass-card max-w-md">
               <DialogHeader>
                 <DialogTitle>Batch Backfill Missing Data</DialogTitle>
                 <DialogDescription>
-                  Select which data types to backfill for all missing dates in {format(currentMonth, 'MMMM yyyy')}.
+                  Select a date range and data types to backfill for {symbol}.
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-4 py-4">
+              <div className="space-y-5 py-4">
+                {/* Date Range Pickers */}
                 <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={batchTypes.includes('messages')}
-                      onCheckedChange={() => toggleBatchType('messages')}
-                    />
-                    <span className="flex-1">Messages</span>
-                    <span className="text-sm text-muted-foreground">
-                      {missingCounts.messages} missing
-                    </span>
-                  </label>
-                  
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={batchTypes.includes('analytics')}
-                      onCheckedChange={() => toggleBatchType('analytics')}
-                    />
-                    <span className="flex-1">Analytics</span>
-                    <span className="text-sm text-muted-foreground">
-                      {missingCounts.analytics} missing
-                    </span>
-                  </label>
-                  
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={batchTypes.includes('psychology')}
-                      onCheckedChange={() => toggleBatchType('psychology')}
-                    />
-                    <span className="flex-1">Psychology Snapshots</span>
-                    <span className="text-sm text-muted-foreground">
-                      {missingCounts.psychology} missing
-                    </span>
-                  </label>
-                  
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={batchTypes.includes('price')}
-                      onCheckedChange={() => toggleBatchType('price')}
-                    />
-                    <span className="flex-1">Price History</span>
-                    <span className="text-sm text-muted-foreground">
-                      {missingCounts.price} missing
-                    </span>
-                  </label>
+                  <label className="text-sm font-medium">Date Range</label>
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "flex-1 justify-start text-left font-normal",
+                            !batchStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {batchStartDate ? format(batchStartDate, "MMM d, yyyy") : "Start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={batchStartDate}
+                          onSelect={(date) => date && setBatchStartDate(date)}
+                          disabled={(date) => date > new Date() || (batchEndDate && date > batchEndDate)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">to</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "flex-1 justify-start text-left font-normal",
+                            !batchEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {batchEndDate ? format(batchEndDate, "MMM d, yyyy") : "End date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={batchEndDate}
+                          onSelect={(date) => date && setBatchEndDate(date)}
+                          disabled={(date) => date > new Date() || (batchStartDate && date < batchStartDate)}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {tradingDaysInRange} trading days in selected range
+                  </p>
+                </div>
+
+                {/* Data Type Selection */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Data Types</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={batchTypes.includes('messages')}
+                        onCheckedChange={() => toggleBatchType('messages')}
+                      />
+                      <span className="flex-1">Messages</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={batchTypes.includes('analytics')}
+                        onCheckedChange={() => toggleBatchType('analytics')}
+                      />
+                      <span className="flex-1">Analytics</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={batchTypes.includes('psychology')}
+                        onCheckedChange={() => toggleBatchType('psychology')}
+                      />
+                      <span className="flex-1">Psychology Snapshots</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <Checkbox
+                        checked={batchTypes.includes('price')}
+                        onCheckedChange={() => toggleBatchType('price')}
+                      />
+                      <span className="flex-1">Price History</span>
+                    </label>
+                  </div>
                 </div>
 
                 {batchTypes.length === 0 && (

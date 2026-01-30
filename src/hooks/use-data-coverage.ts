@@ -180,17 +180,30 @@ export interface BatchBackfillResult {
   skipped: number;
 }
 
+// Helper to generate all dates in a range
+function eachDayOfInterval(start: Date, end: Date): Date[] {
+  const dates: Date[] = [];
+  const current = new Date(start);
+  while (current <= end) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+}
+
 export function useBatchBackfill() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ 
       symbol, 
-      coverage,
+      startDate,
+      endDate,
       types
     }: { 
       symbol: string; 
-      coverage: DayCoverage[];
+      startDate: string;
+      endDate: string;
       types: ('messages' | 'analytics' | 'psychology' | 'price')[];
     }): Promise<BatchBackfillResult> => {
       const today = new Date();
@@ -203,24 +216,41 @@ export function useBatchBackfill() {
         skipped: 0,
       };
 
-      // Find dates with missing coverage based on selected types
+      // First, fetch existing coverage for the date range
+      const { data: existingCoverage } = await supabase
+        .from('symbol_daily_coverage')
+        .select('*')
+        .eq('symbol', symbol)
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      const coverageMap = new Map<string, typeof existingCoverage extends (infer T)[] ? T : never>();
+      existingCoverage?.forEach(c => coverageMap.set(c.date, c));
+
+      // Generate all dates in range and find ones with missing coverage
+      const start = new Date(startDate + 'T12:00:00');
+      const end = new Date(endDate + 'T12:00:00');
+      const allDates = eachDayOfInterval(start, end);
+
       const datesToProcess: { date: string; missingTypes: string[] }[] = [];
       
-      for (const day of coverage) {
-        const dayDate = new Date(day.date + 'T12:00:00');
+      for (const dayDate of allDates) {
         // Skip future dates and weekends
         if (dayDate > today) continue;
         const dayOfWeek = dayDate.getDay();
         if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
+        const dateStr = dayDate.toISOString().split('T')[0];
+        const existing = coverageMap.get(dateStr);
+
         const missingTypes: string[] = [];
-        if (types.includes('messages') && !day.hasMessages) missingTypes.push('messages');
-        if (types.includes('analytics') && !day.hasAnalytics) missingTypes.push('analytics');
-        if (types.includes('psychology') && !day.hasPsychology) missingTypes.push('psychology');
-        if (types.includes('price') && !day.hasPrice) missingTypes.push('price');
+        if (types.includes('messages') && !existing?.has_messages) missingTypes.push('messages');
+        if (types.includes('analytics') && !existing?.has_analytics) missingTypes.push('analytics');
+        if (types.includes('psychology') && !existing?.has_psychology) missingTypes.push('psychology');
+        if (types.includes('price') && !existing?.has_price) missingTypes.push('price');
 
         if (missingTypes.length > 0) {
-          datesToProcess.push({ date: day.date, missingTypes });
+          datesToProcess.push({ date: dateStr, missingTypes });
         }
       }
 
@@ -228,6 +258,18 @@ export function useBatchBackfill() {
 
       if (datesToProcess.length === 0) {
         return result;
+      }
+
+      // For price, we can do a single bulk fetch if it's in the types
+      if (types.includes('price')) {
+        try {
+          const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 30;
+          await supabase.functions.invoke('backfill-price-history', {
+            body: { symbol, days: Math.min(daysDiff, 365) },
+          });
+        } catch (error) {
+          console.error('Price backfill failed:', error);
+        }
       }
 
       // Process dates sequentially to avoid overwhelming the API
@@ -243,8 +285,8 @@ export function useBatchBackfill() {
               last_updated: new Date().toISOString(),
             }, { onConflict: 'symbol,date' });
 
-          // Process each missing type
-          for (const type of missingTypes) {
+          // Process each missing type (skip price as we did bulk above)
+          for (const type of missingTypes.filter(t => t !== 'price')) {
             if (type === 'messages' || type === 'analytics') {
               await supabase.functions.invoke('auto-backfill-gaps', {
                 body: { symbol, startDate: date, endDate: date, type },
@@ -252,11 +294,6 @@ export function useBatchBackfill() {
             } else if (type === 'psychology') {
               await supabase.functions.invoke('record-psychology-snapshot', {
                 body: { periodType: 'daily', forceRun: true, targetSymbol: symbol, targetDate: date },
-              });
-            } else if (type === 'price') {
-              // Price backfill fetches a range, so we only need to call it once
-              await supabase.functions.invoke('backfill-price-history', {
-                body: { symbol, days: 60 },
               });
             }
           }
