@@ -1548,17 +1548,21 @@ Deno.serve(async (req) => {
     // Parse request body
     let periodType: "hourly" | "daily" | "weekly" | "monthly" = "hourly";
     let forceRun = false;
+    let targetSymbol: string | null = null;
+    let targetDate: string | null = null;
     
     try {
       const body = await req.json();
       if (body.periodType) periodType = body.periodType;
       if (body.forceRun) forceRun = body.forceRun;
+      if (body.targetSymbol) targetSymbol = body.targetSymbol.toUpperCase();
+      if (body.targetDate) targetDate = body.targetDate;
     } catch {
       // Use defaults
     }
 
-    // Check if we should run
-    if (periodType === "hourly" && !forceRun) {
+    // Check if we should run (skip checks if targeting specific symbol/date)
+    if (!targetSymbol && periodType === "hourly" && !forceRun) {
       if (!isWeekday()) {
         return new Response(
           JSON.stringify({ message: "Skipping - weekend", recorded: 0 }),
@@ -1573,48 +1577,81 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get all unique symbols from watchlists
-    const { data: watchlists, error: watchlistError } = await supabase
-      .from("watchlists")
-      .select("symbols");
+    // Determine symbols to process
+    let symbols: string[];
+    
+    if (targetSymbol) {
+      // Process only the targeted symbol
+      symbols = [targetSymbol];
+      console.log(`Processing targeted symbol: ${targetSymbol}${targetDate ? ` for date ${targetDate}` : ''}`);
+    } else {
+      // Get all unique symbols from watchlists
+      const { data: watchlists, error: watchlistError } = await supabase
+        .from("watchlists")
+        .select("symbols");
 
-    if (watchlistError) {
-      throw new Error(`Failed to fetch watchlists: ${watchlistError.message}`);
-    }
-
-    const allSymbols = new Set<string>();
-    for (const watchlist of watchlists || []) {
-      for (const symbol of watchlist.symbols || []) {
-        allSymbols.add(symbol.toUpperCase());
+      if (watchlistError) {
+        throw new Error(`Failed to fetch watchlists: ${watchlistError.message}`);
       }
-    }
 
-    const symbols = Array.from(allSymbols);
-    console.log(`Processing ${symbols.length} symbols: ${symbols.join(", ")}`);
+      const allSymbols = new Set<string>();
+      for (const watchlist of watchlists || []) {
+        for (const symbol of watchlist.symbols || []) {
+          allSymbols.add(symbol.toUpperCase());
+        }
+      }
+
+      symbols = Array.from(allSymbols);
+      console.log(`Processing ${symbols.length} symbols: ${symbols.join(", ")}`);
+    }
 
     if (symbols.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No symbols in watchlists", recorded: 0 }),
+        JSON.stringify({ message: "No symbols to process", recorded: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const snapshotEnd = new Date();
+    // Calculate snapshot time window
+    let snapshotEnd: Date;
     let snapshotStart: Date;
     
-    switch (periodType) {
-      case "hourly":
-        snapshotStart = new Date(snapshotEnd.getTime() - 60 * 60 * 1000);
-        break;
-      case "daily":
-        snapshotStart = new Date(snapshotEnd.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case "weekly":
-        snapshotStart = new Date(snapshotEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "monthly":
-        snapshotStart = new Date(snapshotEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
+    if (targetDate) {
+      // For targeted date, use end of that day as snapshot end
+      snapshotEnd = new Date(`${targetDate}T23:59:59.999Z`);
+      
+      switch (periodType) {
+        case "hourly":
+          snapshotStart = new Date(snapshotEnd.getTime() - 60 * 60 * 1000);
+          break;
+        case "daily":
+          snapshotStart = new Date(`${targetDate}T00:00:00.000Z`);
+          break;
+        case "weekly":
+          snapshotStart = new Date(snapshotEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case "monthly":
+          snapshotStart = new Date(snapshotEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+      }
+    } else {
+      // Current time snapshot
+      snapshotEnd = new Date();
+      
+      switch (periodType) {
+        case "hourly":
+          snapshotStart = new Date(snapshotEnd.getTime() - 60 * 60 * 1000);
+          break;
+        case "daily":
+          snapshotStart = new Date(snapshotEnd.getTime() - 24 * 60 * 60 * 1000);
+          break;
+        case "weekly":
+          snapshotStart = new Date(snapshotEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case "monthly":
+          snapshotStart = new Date(snapshotEnd.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+      }
     }
 
     const results: { symbol: string; success: boolean; error?: string }[] = [];

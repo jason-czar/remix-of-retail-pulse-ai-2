@@ -19,7 +19,7 @@ interface DayDetailSheetProps {
   symbol: string;
   date: Date;
   coverage: DayCoverage | null;
-  onTriggerIngestion: (type: 'messages' | 'analytics' | 'all') => void;
+  onTriggerIngestion: (type: 'messages' | 'analytics' | 'psychology' | 'all') => void;
   isIngesting: boolean;
 }
 
@@ -191,6 +191,20 @@ export function DayDetailSheet({
                 <BarChart3 className="h-4 w-4 mr-2" />
               )}
               Generate Analytics
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full justify-start glass-card"
+              disabled={isFutureDate || isIngesting || !coverage?.hasAnalytics}
+              onClick={() => onTriggerIngestion('psychology')}
+            >
+              {isIngesting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Brain className="h-4 w-4 mr-2" />
+              )}
+              Generate Psychology Snapshot
             </Button>
 
             <Button
