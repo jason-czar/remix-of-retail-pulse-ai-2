@@ -32,7 +32,7 @@ export function HeroSection() {
             delay: 0.2,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              <span className="block font-normal font-sans text-3xl text-balance">Actionable insights derived from the retail investor market.</span>
+              <span className="block font-normal font-sans text-3xl text-balance">Retail investors now move markets.<br />We explain when - and why.</span>
             </motion.h1>
 
             <motion.p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8" initial={{
@@ -46,7 +46,7 @@ export function HeroSection() {
             delay: 0.35,
             ease: [0.25, 0.4, 0.25, 1]
           }}>
-              Institutional-grade intelligence on retail investor sentiment, narratives, and behavior - delivered in real-time for strategic decision-making.
+              Real-time insight into retail sentiment, narratives, and behavior - so institutions can act before price moves.
             </motion.p>
 
             <motion.div className="flex flex-row flex-nowrap items-center justify-center gap-3 max-w-full overflow-visible py-0 sm:gap-[17px]" initial={{
