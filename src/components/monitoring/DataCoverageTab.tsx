@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, RefreshCw, Loader2, Zap, CalendarIcon } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
+import { Progress } from '@/components/ui/progress';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
@@ -24,7 +25,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useMonthCoverage, useRefreshCoverage, useTriggerIngestion, useBatchBackfill } from '@/hooks/use-data-coverage';
+import { 
+  useMonthCoverage, 
+  useRefreshCoverage, 
+  useTriggerIngestion, 
+  useBatchBackfill,
+  setBatchBackfillProgressCallback,
+  type BatchBackfillProgress 
+} from '@/hooks/use-data-coverage';
 import { CoverageCalendar } from './CoverageCalendar';
 import { DayDetailSheet } from './DayDetailSheet';
 import type { DayCoverage, CoverageFilter } from '@/hooks/use-data-coverage';
@@ -41,6 +49,9 @@ export function DataCoverageTab() {
   // Date range for batch backfill - defaults to current month
   const [batchStartDate, setBatchStartDate] = useState<Date>(() => startOfMonth(new Date()));
   const [batchEndDate, setBatchEndDate] = useState<Date>(() => endOfMonth(new Date()));
+  
+  // Progress tracking
+  const [batchProgress, setBatchProgress] = useState<BatchBackfillProgress | null>(null);
 
   const { data: coverage, isLoading, refetch } = useMonthCoverage(
     symbol,
@@ -51,6 +62,20 @@ export function DataCoverageTab() {
   const refreshCoverage = useRefreshCoverage();
   const triggerIngestion = useTriggerIngestion();
   const batchBackfill = useBatchBackfill();
+  
+  // Set up progress callback
+  useEffect(() => {
+    if (batchBackfill.isPending) {
+      setBatchBackfillProgressCallback(setBatchProgress);
+    } else {
+      setBatchBackfillProgressCallback(null);
+      // Clear progress after a delay when done
+      if (batchProgress) {
+        const timer = setTimeout(() => setBatchProgress(null), 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [batchBackfill.isPending]);
 
   const handleSymbolChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSymbol(e.target.value.toUpperCase());
@@ -300,11 +325,36 @@ export function DataCoverageTab() {
                     Select at least one data type to backfill.
                   </p>
                 )}
+                
+                {/* Progress Indicator */}
+                {batchBackfill.isPending && batchProgress && (
+                  <div className="space-y-2 pt-2 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Processing {batchProgress.current} of {batchProgress.total} dates...
+                      </span>
+                      <span className="font-medium">
+                        {Math.round((batchProgress.current / batchProgress.total) * 100)}%
+                      </span>
+                    </div>
+                    <Progress 
+                      value={(batchProgress.current / batchProgress.total) * 100} 
+                      className="h-2"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Current: {format(new Date(batchProgress.currentDate + 'T12:00:00'), 'MMM d, yyyy')}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setBatchDialogOpen(false)}>
-                  Cancel
+                <Button 
+                  variant="outline" 
+                  onClick={() => setBatchDialogOpen(false)}
+                  disabled={batchBackfill.isPending}
+                >
+                  {batchBackfill.isPending ? 'Running...' : 'Cancel'}
                 </Button>
                 <Button 
                   onClick={handleBatchBackfill}

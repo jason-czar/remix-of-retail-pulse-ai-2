@@ -180,6 +180,13 @@ export interface BatchBackfillResult {
   skipped: number;
 }
 
+export interface BatchBackfillProgress {
+  current: number;
+  total: number;
+  currentDate: string;
+  status: 'running' | 'completed' | 'failed';
+}
+
 // Helper to generate all dates in a range
 function eachDayOfInterval(start: Date, end: Date): Date[] {
   const dates: Date[] = [];
@@ -189,6 +196,13 @@ function eachDayOfInterval(start: Date, end: Date): Date[] {
     current.setDate(current.getDate() + 1);
   }
   return dates;
+}
+
+// Store for progress callbacks - allows updating UI during mutation
+let progressCallback: ((progress: BatchBackfillProgress) => void) | null = null;
+
+export function setBatchBackfillProgressCallback(cb: ((progress: BatchBackfillProgress) => void) | null) {
+  progressCallback = cb;
 }
 
 export function useBatchBackfill() {
@@ -273,7 +287,20 @@ export function useBatchBackfill() {
       }
 
       // Process dates sequentially to avoid overwhelming the API
+      let processed = 0;
       for (const { date, missingTypes } of datesToProcess) {
+        processed++;
+        
+        // Report progress
+        if (progressCallback) {
+          progressCallback({
+            current: processed,
+            total: datesToProcess.length,
+            currentDate: date,
+            status: 'running',
+          });
+        }
+        
         try {
           // Update status to running
           await supabase
