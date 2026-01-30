@@ -79,7 +79,7 @@ export function useTriggerIngestion() {
     }: { 
       symbol: string; 
       date: string; 
-      type: 'messages' | 'analytics' | 'all';
+      type: 'messages' | 'analytics' | 'psychology' | 'all';
     }) => {
       // Update status to 'queued'
       await supabase
@@ -99,20 +99,34 @@ export function useTriggerIngestion() {
         .eq('date', date);
 
       try {
-        // Call auto-backfill-gaps to do the actual work
-        const { error: backfillError } = await supabase.functions.invoke('auto-backfill-gaps', {
-          body: {
-            symbol,
-            startDate: date,
-            endDate: date,
-            type,
-            force: type === 'all', // Force refetch when Re-fetch All is clicked
-          },
-        });
+        if (type === 'psychology') {
+          // Call record-psychology-snapshot for this specific symbol
+          const { error: psychError } = await supabase.functions.invoke('record-psychology-snapshot', {
+            body: {
+              periodType: 'daily',
+              forceRun: true,
+              targetSymbol: symbol,
+              targetDate: date,
+            },
+          });
 
-        if (backfillError) throw backfillError;
+          if (psychError) throw psychError;
+        } else {
+          // Call auto-backfill-gaps for messages/analytics
+          const { error: backfillError } = await supabase.functions.invoke('auto-backfill-gaps', {
+            body: {
+              symbol,
+              startDate: date,
+              endDate: date,
+              type: type === 'all' ? 'all' : type,
+              force: type === 'all', // Force refetch when Re-fetch All is clicked
+            },
+          });
 
-        // Refresh coverage status after backfill
+          if (backfillError) throw backfillError;
+        }
+
+        // Refresh coverage status after ingestion
         await supabase.functions.invoke('compute-coverage-status', {
           body: { symbol, dates: [date] },
         });
