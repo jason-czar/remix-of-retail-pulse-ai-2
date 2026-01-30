@@ -55,7 +55,7 @@ export function DataCoverageTab() {
     setSheetOpen(true);
   };
 
-  const handleTriggerIngestion = (type: 'messages' | 'analytics' | 'psychology' | 'all') => {
+  const handleTriggerIngestion = (type: 'messages' | 'analytics' | 'psychology' | 'price' | 'all') => {
     if (selectedDate && symbol) {
       triggerIngestion.mutate({
         symbol,
