@@ -172,3 +172,140 @@ export function useTriggerIngestion() {
     },
   });
 }
+
+export interface BatchBackfillResult {
+  total: number;
+  successful: number;
+  failed: number;
+  skipped: number;
+}
+
+export function useBatchBackfill() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      symbol, 
+      coverage,
+      types
+    }: { 
+      symbol: string; 
+      coverage: DayCoverage[];
+      types: ('messages' | 'analytics' | 'psychology' | 'price')[];
+    }): Promise<BatchBackfillResult> => {
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      
+      const result: BatchBackfillResult = {
+        total: 0,
+        successful: 0,
+        failed: 0,
+        skipped: 0,
+      };
+
+      // Find dates with missing coverage based on selected types
+      const datesToProcess: { date: string; missingTypes: string[] }[] = [];
+      
+      for (const day of coverage) {
+        const dayDate = new Date(day.date + 'T12:00:00');
+        // Skip future dates and weekends
+        if (dayDate > today) continue;
+        const dayOfWeek = dayDate.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+        const missingTypes: string[] = [];
+        if (types.includes('messages') && !day.hasMessages) missingTypes.push('messages');
+        if (types.includes('analytics') && !day.hasAnalytics) missingTypes.push('analytics');
+        if (types.includes('psychology') && !day.hasPsychology) missingTypes.push('psychology');
+        if (types.includes('price') && !day.hasPrice) missingTypes.push('price');
+
+        if (missingTypes.length > 0) {
+          datesToProcess.push({ date: day.date, missingTypes });
+        }
+      }
+
+      result.total = datesToProcess.length;
+
+      if (datesToProcess.length === 0) {
+        return result;
+      }
+
+      // Process dates sequentially to avoid overwhelming the API
+      for (const { date, missingTypes } of datesToProcess) {
+        try {
+          // Update status to running
+          await supabase
+            .from('symbol_daily_coverage')
+            .upsert({
+              symbol,
+              date,
+              ingestion_status: 'running',
+              last_updated: new Date().toISOString(),
+            }, { onConflict: 'symbol,date' });
+
+          // Process each missing type
+          for (const type of missingTypes) {
+            if (type === 'messages' || type === 'analytics') {
+              await supabase.functions.invoke('auto-backfill-gaps', {
+                body: { symbol, startDate: date, endDate: date, type },
+              });
+            } else if (type === 'psychology') {
+              await supabase.functions.invoke('record-psychology-snapshot', {
+                body: { periodType: 'daily', forceRun: true, targetSymbol: symbol, targetDate: date },
+              });
+            } else if (type === 'price') {
+              // Price backfill fetches a range, so we only need to call it once
+              await supabase.functions.invoke('backfill-price-history', {
+                body: { symbol, days: 60 },
+              });
+            }
+          }
+
+          // Refresh coverage for this date
+          await supabase.functions.invoke('compute-coverage-status', {
+            body: { symbol, dates: [date] },
+          });
+
+          // Update status to completed
+          await supabase
+            .from('symbol_daily_coverage')
+            .update({ ingestion_status: 'completed', last_updated: new Date().toISOString() })
+            .eq('symbol', symbol)
+            .eq('date', date);
+
+          result.successful++;
+        } catch (error) {
+          console.error(`Batch backfill failed for ${date}:`, error);
+          
+          // Update status to failed
+          await supabase
+            .from('symbol_daily_coverage')
+            .update({ ingestion_status: 'failed', last_updated: new Date().toISOString() })
+            .eq('symbol', symbol)
+            .eq('date', date);
+
+          result.failed++;
+        }
+      }
+
+      return result;
+    },
+    onSuccess: (result, { symbol }) => {
+      const now = new Date();
+      queryClient.invalidateQueries({ 
+        queryKey: ['coverage', symbol, now.getFullYear(), now.getMonth()] 
+      });
+      
+      if (result.total === 0) {
+        toast.info('No missing dates found to backfill');
+      } else if (result.failed === 0) {
+        toast.success(`Batch backfill complete: ${result.successful}/${result.total} dates processed`);
+      } else {
+        toast.warning(`Batch backfill: ${result.successful} succeeded, ${result.failed} failed`);
+      }
+    },
+    onError: (error) => {
+      toast.error('Batch backfill failed: ' + (error as Error).message);
+    },
+  });
+}
