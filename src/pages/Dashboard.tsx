@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { GlassCard } from "@/components/ui/glass-card";
 import { SearchCommand } from "@/components/SearchCommand";
 import { WatchlistManager } from "@/components/WatchlistManager";
 import { MarketPsychologyCard } from "@/components/MarketPsychologyCard";
@@ -16,16 +17,6 @@ import { useMarketOverview } from "@/hooks/use-market-overview";
 import { formatDistanceToNow } from "date-fns";
 import { getAlertTypeLabel, getAlertTypeIcon, isEmotionAlert } from "@/lib/alert-types";
 import { cn } from "@/lib/utils";
-
-// Shared Liquid Glass card styles
-const glassCardClasses = cn(
-  "rounded-2xl p-6",
-  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
-  "backdrop-blur-[28px] backdrop-saturate-[140%]",
-  "border border-black/[0.08] dark:border-white/[0.06]",
-  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]",
-  "dark:shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
-);
 
 const glassListItemClasses = cn(
   "rounded-xl p-3",
@@ -119,14 +110,14 @@ export default function Dashboard() {
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Watchlist */}
-            <div className={glassCardClasses}>
+            <GlassCard size="lg">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   Your Watchlist
                 </h2>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
                   onClick={() => setWatchlistManagerOpen(true)}
                 >
@@ -151,10 +142,10 @@ export default function Dashboard() {
                     compact
                   /> : watchlistData.map(item => <WatchlistItem key={item.symbol} {...item} />)}
               </div>
-            </div>
+            </GlassCard>
 
             {/* Market Overview */}
-            <div className={glassCardClasses}>
+            <GlassCard size="lg">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">Market Sentiment Overview</h2>
                 <Badge variant="glow">
@@ -171,7 +162,7 @@ export default function Dashboard() {
                     {sectors.slice(0, 3).map(sector => <OverviewCard key={sector.label} label={sector.label} value={sector.value} trend={sector.trend} change={sector.change} />)}
                   </>}
               </div>
-            </div>
+            </GlassCard>
           </div>
 
           {/* Sidebar */}
@@ -183,7 +174,7 @@ export default function Dashboard() {
             <PsychologyHistoryChart days={30} />
 
             {/* Alerts */}
-            <div className={glassCardClasses}>
+            <GlassCard size="lg">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Bell className="h-5 w-5 text-primary" />
@@ -214,10 +205,10 @@ export default function Dashboard() {
                     compact
                   /> : alerts.slice(0, 3).map(alert => <RealAlertItem key={alert.id} alert={alert} />)}
               </div>
-            </div>
+            </GlassCard>
 
             {/* Trending Now */}
-            <div className={glassCardClasses}>
+            <GlassCard size="lg">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-bullish" />
@@ -233,7 +224,7 @@ export default function Dashboard() {
                 length: 4
               }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />) : trending.length > 0 ? trending.slice(0, 4).map(item => <TrendingItem key={item.symbol} symbol={item.symbol} sentiment={item.sentiment} volume={formatVolume(item.volume)} trend={item.trend} />) : <p className="text-sm text-muted-foreground">No trending data available</p>}
               </div>
-            </div>
+            </GlassCard>
           </div>
         </div>
       </div>

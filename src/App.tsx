@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +8,8 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { DemoProvider, isDemoSymbol } from "@/contexts/DemoContext";
+import { useParams } from "react-router-dom";
 import Index from "./pages/Index";
 
 // Lazy load all non-landing pages to reduce initial bundle size
@@ -38,6 +40,19 @@ const PageLoader = () => (
   </div>
 );
 
+// Wrapper that allows demo symbols to bypass authentication
+const DemoWrapper = ({ children }: { children: ReactNode }) => {
+  const { symbol } = useParams<{ symbol: string }>();
+
+  // If it's a demo symbol, allow access without auth
+  if (symbol && isDemoSymbol(symbol)) {
+    return <DemoProvider>{children}</DemoProvider>;
+  }
+
+  // Otherwise, require authentication
+  return <ProtectedRoute><DemoProvider>{children}</DemoProvider></ProtectedRoute>;
+};
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
     <QueryClientProvider client={queryClient}>
@@ -61,12 +76,8 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/trending" element={<ProtectedRoute><TrendingPage /></ProtectedRoute>} />
-              <Route path="/symbol/AAPL" element={<SymbolPage />} />
-              <Route path="/symbol/NVDA" element={<SymbolPage />} />
-              <Route path="/symbol/:symbol" element={<ProtectedRoute><SymbolPage /></ProtectedRoute>} />
-              <Route path="/symbol/AAPL/messages" element={<MessagesPage />} />
-              <Route path="/symbol/NVDA/messages" element={<MessagesPage />} />
-              <Route path="/symbol/:symbol/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+              <Route path="/symbol/:symbol" element={<DemoWrapper><SymbolPage /></DemoWrapper>} />
+              <Route path="/symbol/:symbol/messages" element={<DemoWrapper><MessagesPage /></DemoWrapper>} />
               <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/settings/api-keys" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />

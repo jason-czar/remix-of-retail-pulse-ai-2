@@ -1,21 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { ConfidenceBadge, getConfidenceLevel, ConfidenceDrivers } from "@/components/ui/ConfidenceBadge";
-import { 
+import {
   AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Liquid Glass styling constants
-const glassCardClasses = cn(
-  "rounded-2xl p-4 md:p-5 h-full flex flex-col",
-  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
-  "backdrop-blur-[28px] backdrop-saturate-[140%]",
-  "border border-black/[0.08] dark:border-white/[0.06]",
-  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
-);
 
 const glassTileClasses = cn(
   "p-3 rounded-xl",
@@ -142,7 +134,7 @@ export function NarrativeCoherenceCard({ symbol, enabled = true }: NarrativeCohe
   
   if (isLoading) {
     return (
-      <div className={glassCardClasses}>
+      <GlassCard size="md" className="h-full flex flex-col">
         <div className="flex items-center gap-3 mb-4">
           <Skeleton className="h-10 w-10 rounded-lg" />
           <div className="flex-1">
@@ -156,7 +148,7 @@ export function NarrativeCoherenceCard({ symbol, enabled = true }: NarrativeCohe
           <Skeleton className="h-16" />
           <Skeleton className="h-16" />
         </div>
-      </div>
+      </GlassCard>
     );
   }
   
@@ -175,7 +167,7 @@ export function NarrativeCoherenceCard({ symbol, enabled = true }: NarrativeCohe
   const confidenceLevel = getConfidenceLevel(snapshot.data_confidence.score);
   
   return (
-    <div className={glassCardClasses}>
+    <GlassCard size="md" className="h-full flex flex-col">
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="font-semibold text-sm md:text-base">Narrative Coherence</h3>
@@ -296,6 +288,6 @@ export function NarrativeCoherenceCard({ symbol, enabled = true }: NarrativeCohe
       <div className="pt-3 mt-auto border-t border-border/30">
         <ConfidenceDrivers drivers={snapshot.data_confidence.drivers} />
       </div>
-    </div>
+    </GlassCard>
   );
 }

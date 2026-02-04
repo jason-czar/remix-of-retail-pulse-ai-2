@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { useLatestPsychologySnapshot } from "@/hooks/use-psychology-snapshot";
 import { useSymbolStats } from "@/hooks/use-stocktwits";
 import { useSentimentHistory } from "@/hooks/use-sentiment-history";
@@ -13,14 +14,6 @@ interface PsychologyOverviewCardProps {
   hideMetricTiles?: boolean; // Hide Sentiment Score, Message Volume, 7D Trend tiles
   enabled?: boolean; // Control data fetching
 }
-
-const glassCardClasses = cn(
-  "rounded-2xl p-4 md:p-5 h-full",
-  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
-  "backdrop-blur-[28px] backdrop-saturate-[140%]",
-  "border border-black/[0.08] dark:border-white/[0.06]",
-  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
-);
 
 const glassTileClasses = cn(
   "rounded-xl p-4 flex flex-col",
@@ -36,7 +29,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false, enable
 
   if (isLoading) {
     return (
-      <div className={glassCardClasses}>
+      <GlassCard size="md" className="h-full">
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Skeleton className="h-5 w-40" />
@@ -54,15 +47,15 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false, enable
             <Skeleton className="h-16 w-full" />
           </div>
         </div>
-      </div>
+      </GlassCard>
     );
   }
 
   if (!snapshot) {
     return (
-      <div className={glassCardClasses}>
+      <GlassCard size="md" className="h-full">
         <p className="text-sm text-muted-foreground">No psychology data available.</p>
-      </div>
+      </GlassCard>
     );
   }
 
@@ -96,7 +89,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false, enable
   };
 
   return (
-    <div className={glassCardClasses}>
+    <GlassCard size="md" className="h-full">
       <div className="flex flex-col">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           <h3 className="font-semibold text-sm md:text-base">Psychology Overview</h3>
@@ -234,7 +227,7 @@ export function PsychologyOverviewCard({ symbol, hideMetricTiles = false, enable
           </div>
         )}
       </div>
-    </div>
+    </GlassCard>
   );
 }
 

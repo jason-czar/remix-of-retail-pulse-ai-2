@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDemo } from "@/contexts/DemoContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link, useLocation, useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LazyLoad } from "@/components/ui/LazyLoad";
+import { GlassCard } from "@/components/ui/glass-card";
 import { ChartSkeleton } from "@/components/charts/ChartSkeleton";
 import { 
   LazyNarrativeChart, 
@@ -207,6 +209,9 @@ function SymbolPageContent() {
     user
   } = useAuth();
   const isAdmin = user?.email === 'admin@czar.ing';
+
+  // Check if we're in demo mode
+  const { isDemoMode } = useDemo();
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     // Invalidate the cache to force a fresh fetch
@@ -243,6 +248,29 @@ function SymbolPageContent() {
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
   return <>
       <WelcomeTour />
+      {isDemoMode && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 border-b border-blue-500/20"
+        >
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30">
+                  Demo Mode
+                </Badge>
+                <p className="text-sm text-muted-foreground">
+                  You're viewing a demo symbol. <Link to="/signup" className="text-blue-600 hover:underline font-medium">Sign up</Link> to track any symbol.
+                </p>
+              </div>
+              <Button asChild variant="default" size="sm">
+                <Link to="/signup">Get Started</Link>
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
       <div className="container mx-auto px-4 py-6 md:py-8">
         {/* Symbol Header - Mobile Optimized */}
         <div className="flex flex-row items-start justify-between gap-4 mb-4 md:mb-6 md:mt-[23px] mt-[15px]">
@@ -576,15 +604,6 @@ function NarrativeCoherenceSection({ symbol }: { symbol: string }) {
   );
 }
 
-// Liquid Glass styling constants
-const glassCardClasses = cn(
-  "rounded-2xl p-3 md:p-4",
-  "bg-white/60 dark:bg-[hsl(0_0%_12%/0.55)]",
-  "backdrop-blur-[28px] backdrop-saturate-[140%]",
-  "border border-black/[0.08] dark:border-white/[0.06]",
-  "shadow-[0_8px_32px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.02)]"
-);
-
 function MetricCard({
   label,
   value,
@@ -601,7 +620,7 @@ function MetricCard({
   trend?: "bullish" | "bearish" | "neutral";
 }) {
   const ChangeIcon = change && change >= 0 ? ArrowUpRight : ArrowDownRight;
-  return <div className={glassCardClasses}>
+  return <GlassCard size="sm">
       <div className="text-xs md:text-sm text-muted-foreground mb-1">{label}</div>
       <div className="flex items-center gap-1.5 md:gap-2">
         <span className="text-lg md:text-2xl font-display">{value}</span>
@@ -611,7 +630,7 @@ function MetricCard({
           <ChangeIcon className="h-3 w-3 md:h-4 md:w-4" />
           {Math.abs(change)}%{suffix}
         </div>}
-    </div>;
+    </GlassCard>;
 }
 function TimeRangeSelector({
   value,
