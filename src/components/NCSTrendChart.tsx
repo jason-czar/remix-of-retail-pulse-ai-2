@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChartDescription } from "@/components/ui/chart-description";
 import { useNCSHistory, NCSTimeRange, NCSDataPoint } from "@/hooks/use-ncs-history";
 import { ConfidenceBadge, getConfidenceLevel } from "@/components/ui/ConfidenceBadge";
 import { LineChart, Line, Area, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip, ReferenceLine, Dot, ComposedChart } from "recharts";
@@ -293,6 +294,9 @@ export function NCSTrendChart({ symbol, enabled = true }: NCSTrendChartProps) {
           
           {/* Chart */}
           <div className="h-[100px] md:h-[120px] -mx-2">
+            <ChartDescription>
+              {`NCS trend chart showing ${interpretation?.label.toLowerCase() || "narrative"} pattern over ${range}. ${stats ? `Average score ${stats.avg}, ranging from ${stats.min} to ${stats.max} with ${stats.volatility} volatility.` : ""} ${interpretation?.explanation || ""}`}
+            </ChartDescription>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={ncsData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                 <defs>
@@ -301,15 +305,15 @@ export function NCSTrendChart({ symbol, enabled = true }: NCSTrendChartProps) {
                     <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   tickFormatter={(date) => format(parseISO(date), "M/d")}
                   tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
                   axisLine={false}
                   tickLine={false}
                   interval="preserveStartEnd"
                 />
-                <YAxis 
+                <YAxis
                   domain={[
                     (dataMin: number) => Math.max(0, Math.floor(dataMin - (stats?.range || 10) * 0.3)),
                     (dataMax: number) => Math.min(100, Math.ceil(dataMax + (stats?.range || 10) * 0.3))

@@ -3,9 +3,10 @@ import { Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarLayout } from "./SidebarLayout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  DashboardSkeleton, 
-  SymbolPageSkeleton, 
+import { SkipToContent } from "@/components/ui/skip-to-content";
+import {
+  DashboardSkeleton,
+  SymbolPageSkeleton,
   AnalyticsSkeleton,
   TrendingSkeleton,
   AlertsSkeleton
@@ -87,6 +88,7 @@ export function AppLayout() {
 
   return (
     <SidebarLayout>
+      <SkipToContent />
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}
@@ -95,6 +97,7 @@ export function AppLayout() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="h-full"
+          id="main-content"
         >
           <Suspense fallback={skeletonFallback}>
             <Outlet />

@@ -128,11 +128,18 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
       const newOption = allLensOptions[newIndex];
       onChange(newOption.value, newOption.customLens);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      
+
+      // Announce to screen readers
+      const announcement = `${newOption.label} lens selected, ${newIndex + 1} of ${allLensOptions.length}`;
+      const liveRegion = document.getElementById('lens-navigation-announcement');
+      if (liveRegion) {
+        liveRegion.textContent = announcement;
+      }
+
       // Scroll the selected lens into view
       setTimeout(() => {
         const container = scrollContainerRef.current;
-        const buttons = container?.querySelectorAll('button');
+        const buttons = container?.querySelectorAll('button[role="tab"]');
         const targetButton = buttons?.[newIndex];
         if (targetButton && container) {
           targetButton.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -158,6 +165,15 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
   
   return (
     <>
+      {/* Screen reader announcement region for keyboard navigation */}
+      <div
+        id="lens-navigation-announcement"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
+
       <div className="relative max-w-full">
         {/* Left scroll fade indicator - only visible when can scroll left */}
         <div className={cn(
@@ -171,7 +187,7 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
           canScrollRight ? "opacity-100" : "opacity-0"
         )} />
         
-        <div 
+        <div
           ref={scrollContainerRef}
           className={cn(
             "relative inline-flex items-center gap-1.5 rounded-2xl py-2.5 px-3 overflow-x-auto scrollbar-hide mx-[4px] max-w-full",
@@ -179,7 +195,10 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
             "bg-white/45 dark:bg-[hsl(0_0%_15%/0.45)]",
             "backdrop-blur-[20px] backdrop-saturate-[140%]",
             "border border-black/[0.04] dark:border-white/[0.06]"
-        )}>
+        )}
+          role="tablist"
+          aria-label="Decision lens selector"
+        >
         {allLensOptions.map((option) => {
           return (
             <div 
@@ -187,6 +206,9 @@ export function DecisionLensSelector({ value, onChange }: DecisionLensSelectorPr
               className="relative flex items-center shrink-0"
             >
               <button
+                role="tab"
+                aria-selected={value === option.value}
+                aria-controls="main-content"
                 className={cn(
                   "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full ring-offset-background transition-all duration-200",
                   value === option.value
