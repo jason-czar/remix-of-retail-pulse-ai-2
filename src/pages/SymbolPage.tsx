@@ -248,7 +248,7 @@ function SymbolPageContent() {
   const TrendIcon = data.trend === "bullish" ? TrendingUp : TrendingDown;
   return <>
       <WelcomeTour />
-      {isDemoMode && (
+      {isDemoMode && !user && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
